@@ -1,0 +1,32 @@
+{"execution": 1, "exit_code": 1, "inputs": {"command": ["bash", "-lc", "cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/generations && bun run typecheck && bash scripts/curl-chat-stream-proof.sh"], "environment": {"cwd": ".", "dependencies": {}, "environment": {"LANG": "ed8e9a8e277e89e97fb391676cb629b3a326002a82296f2abbc38135c3a106c2"}, "executable_resolution": "/bin/bash", "platform": {"machine": "arm64", "python": "3.14", "system": "Darwin"}, "workspace": {"changed_files": ["server/scripts/curl-chat-stream-proof.sh", "server/src/generations/manager.test.ts", "server/src/generations/manager.ts"], "sha256": "4fab1efb3bcb1781abdc6e26fe7a047cc6000f2dfe447299b7ebe500724743fd"}}, "environment_fingerprint": "ec8c695c8b30cd6d593aca1ef51131233cd29272a92fc3ab94f555134eabb65f", "head": "7d22640aaede544827aef8799ebfb7f738beab99", "purpose": "worker"}, "key": "878f3a28700da3d886b328422cde3263365919f09dac1b6963d2057b01060a43"}
+--- stdout ---
+bun test v1.4.0 (1381054db)
+
+--- stderr ---
+
+src/generations/manager.test.ts:
+60 |     } catch (e) {
+61 |       caughtError = e as Error;
+62 |     }
+63 | 
+64 |     expect(caughtError).toBeDefined();
+65 |     expect(caughtError?.message).toContain("Generation already in progress");
+                                      ^
+error: Received value must be an array type, or both received and expected values must be strings.
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/generations/manager.test.ts:65:34)
+31 |   async startGeneration(
+32 |     genId: string,
+33 |     request: ChatRequest
+34 |   ): Promise<AsyncGenerator<SSEEvent, void, unknown>> {
+35 |     if (this.activeGenId !== null && this.activeGenId !== genId) {
+36 |       throw new Error(`Generation already in progress: ${this.activeGenId}`);
+                     ^
+error: Generation already in progress: gen-1
+      at startGeneration (/Users/ryankenny/Projects/CodingHarnessv2/server/src/generations/manager.ts:36:17)
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/generations/manager.test.ts:59:28)
+(fail) GenerationManager > should prevent concurrent generations [0.33ms]
+
+ 5 pass
+ 1 fail
+ 8 expect() calls
+Ran 6 tests across 1 file. [10.00ms]

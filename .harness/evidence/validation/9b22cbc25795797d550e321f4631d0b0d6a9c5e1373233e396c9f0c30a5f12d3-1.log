@@ -1,0 +1,15 @@
+{"execution": 1, "exit_code": 0, "inputs": {"command": ["bash", "-lc", "cd /Users/ryankenny/Projects/CodingHarnessv2/ops && bun test src/token && bash scripts/verify-ops-install.sh"], "environment": {"cwd": ".", "dependencies": {}, "environment": {"LANG": "ed8e9a8e277e89e97fb391676cb629b3a326002a82296f2abbc38135c3a106c2"}, "executable_resolution": "/bin/bash", "platform": {"machine": "arm64", "python": "3.14", "system": "Darwin"}, "workspace": {"changed_files": ["ops/package.json", "ops/scripts/com.harness.bundle-host.plist", "ops/scripts/com.harness.pf.anchor", "ops/scripts/com.harness.server.plist", "ops/scripts/configure-tailscale-serve.sh", "ops/scripts/create-pf-anchor.sh", "ops/scripts/install-bundle-host-agent.sh", "ops/scripts/install-server-agent.sh", "ops/scripts/verify-ops-install.sh", "ops/src/token.test.ts", "ops/src/token.ts", "ops/tsconfig.json"], "sha256": "bc1e6bcd9a785ff8da5ecd3a1bbe69c41d058a6492394748830c147e88f4caff"}}, "environment_fingerprint": "4b405035f6a4c96b7ec9f0f6db9ac1d887477554fd662af08aafc2497df3db7e", "head": "c7fd15b7c0c3d24b63eb0778c027393755edf40a", "purpose": "worker"}, "key": "9b22cbc25795797d550e321f4631d0b0d6a9c5e1373233e396c9f0c30a5f12d3"}
+--- stdout ---
+bun test v1.4.0 (1381054db)
+Verifying ops installation scripts...
+Verifying LaunchAgent plist files...
+Verifying token command integration...
+Verifying pf anchor configuration...
+All verification checks passed!
+
+--- stderr ---
+
+ 14 pass
+ 0 fail
+ 20 expect() calls
+Ran 14 tests across 1 file. [37.00ms]

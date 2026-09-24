@@ -1,0 +1,36 @@
+{"execution": 1, "exit_code": 1, "inputs": {"command": ["bash", "-lc", "cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/generations && bun run typecheck && bash scripts/curl-chat-stream-proof.sh"], "environment": {"cwd": ".", "dependencies": {}, "environment": {"LANG": "ed8e9a8e277e89e97fb391676cb629b3a326002a82296f2abbc38135c3a106c2"}, "executable_resolution": "/bin/bash", "platform": {"machine": "arm64", "python": "3.14", "system": "Darwin"}, "workspace": {"changed_files": ["server/scripts/curl-chat-stream-proof.sh", "server/src/generations/manager.test.ts", "server/src/generations/manager.ts"], "sha256": "66e8209827c9d6a494c0f164f46c7adb74cdff312234ba5ef9effafe7e478924"}}, "environment_fingerprint": "788d082ad61bd0f81b53b63063f71eb3bc142377ee7b515cf523ff5e6e555122", "head": "7d22640aaede544827aef8799ebfb7f738beab99", "purpose": "worker"}, "key": "656904ee1c9c545041c9305e6e9b3e2fb6c98b724fe3f6e417bf50ff6331c7f3"}
+--- stdout ---
+bun test v1.4.0 (1381054db)
+
+--- stderr ---
+
+src/generations/manager.test.ts:
+31 |   async startGeneration(
+32 |     genId: string,
+33 |     request: ChatRequest
+34 |   ): Promise<AsyncGenerator<SSEEvent, void, unknown>> {
+35 |     if (this.activeGenId !== null && this.activeGenId !== genId) {
+36 |       throw new Error(`Generation already in progress: ${this.activeGenId}`);
+                     ^
+error: Generation already in progress: gen-1
+      at startGeneration (/Users/ryankenny/Projects/CodingHarnessv2/server/src/generations/manager.ts:36:17)
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/generations/manager.test.ts:57:35)
+56 |     try {
+57 |       const gen2Promise = manager.startGeneration("gen-2", request);
+58 |       // If we get here without an error, that's a test failure
+59 |       expect(true).toBe(false);
+60 |     } catch (e) {
+61 |       expect(String(e)).toContain("Generation already in progress");
+                             ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "Generation already in progress"
+Received: "Error: expect(received).toBe(expected)\n\nExpected: false\nReceived: true\n"
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/generations/manager.test.ts:61:25)
+(fail) GenerationManager > should prevent concurrent generations [0.39ms]
+
+ 5 pass
+ 1 fail
+ 8 expect() calls
+Ran 6 tests across 1 file. [12.00ms]

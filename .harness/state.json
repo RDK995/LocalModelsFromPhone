@@ -32,12 +32,12 @@
         "FR13",
         "FR14"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
-        "commit": "",
-        "branch": ""
+        "commit": "04bb92b7be06984856c1dd1c34b52e2533f656e3",
+        "branch": "m1-authenticated-tailnet-chat-stream"
       },
       "as_built": {
         "artifact": null,
@@ -69,11 +69,805 @@
           "evidence": []
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M1-T1",
+          "scope": "Scaffold the repo layout (mobile/, server/, ops/, shared/) and build the Bun server's HTTP layer and Ollama client with bearer-token auth on every route.",
+          "tests": "cd server && bun test src/http src/ollama && bun run typecheck",
+          "requirements": [
+            "FR12",
+            "FR13"
+          ],
+          "constraints": [
+            "Mac-side code targets Bun, matching neighbouring projects",
+            "Ollama at 127.0.0.1:11434 is the only model runtime",
+            "server binds loopback only (127.0.0.1:7789)"
+          ],
+          "findings": [],
+          "criteria": [
+            "M1-AC2"
+          ],
+          "paths": [
+            "server/src/http/",
+            "server/src/ollama/",
+            "shared/",
+            "server/package.json",
+            "server/tsconfig.json"
+          ],
+          "depends_on": [],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "cross-file server scaffold with auth and typed Ollama wrapper"
+          },
+          "status": "ACCEPTED",
+          "attempts": 1,
+          "attempt_log": [
+            {
+              "attempt": 1,
+              "role": "worker",
+              "artifact": ".harness/results/M1-T1-worker.json",
+              "sha256": "011f56c9f56787dfdf5c1d7c15556b53e5a8045b7e50ff6580710bf933ba4c6b",
+              "verdict": "PASS",
+              "base": "04bb92b7be06984856c1dd1c34b52e2533f656e3",
+              "snapshot": "ff9d32d6906ec576cc9ffa54dd0a20d2cc01df84ceb2dd232183df230637cbaf",
+              "changed_files": [
+                "server/package.json",
+                "server/src/http/server.test.ts",
+                "server/src/http/server.ts",
+                "server/src/ollama/client.test.ts",
+                "server/src/ollama/client.ts",
+                "server/tsconfig.json",
+                "shared/api.ts"
+              ],
+              "validation": {
+                "command": "bash -lc 'cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/http src/ollama && bun run typecheck'",
+                "exit_code": 0,
+                "artifact": ".harness/evidence/validation/55407603333d31faccf155c1b902c1cb7f23f3423e9d479a9b7fdcc96262e4f5-1.log",
+                "sha256": "b0409637389af07670eef5fc7a1b137a782e163be2c4a4be3c74904039e44a03",
+                "ledger_key": "55407603333d31faccf155c1b902c1cb7f23f3423e9d479a9b7fdcc96262e4f5",
+                "execution": 1
+              },
+              "routing": {
+                "tier": "Mid",
+                "model": "sonnet",
+                "reason_code": "cross-file server scaffold with auth and typed Ollama wrapper"
+              }
+            },
+            {
+              "attempt": 1,
+              "role": "verifier",
+              "artifact": ".harness/results/M1-T1-verifier-a1.json",
+              "sha256": "4c280961aed1c0fa89110d45007292e5e257cd0495606305a8638f4052e51f5d",
+              "verdict": "PASS",
+              "base": "04bb92b7be06984856c1dd1c34b52e2533f656e3",
+              "snapshot": "ff9d32d6906ec576cc9ffa54dd0a20d2cc01df84ceb2dd232183df230637cbaf",
+              "changed_files": [
+                "server/package.json",
+                "server/src/http/server.test.ts",
+                "server/src/http/server.ts",
+                "server/src/ollama/client.test.ts",
+                "server/src/ollama/client.ts",
+                "server/tsconfig.json",
+                "shared/api.ts"
+              ],
+              "validation": {
+                "command": "bash -lc 'cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/http src/ollama && bun run typecheck'",
+                "exit_code": 0,
+                "artifact": ".harness/evidence/validation/b39243a930263edfa377992d4ba9d2c0458416825ce02f9c4f6dba75d556596e-1.log",
+                "sha256": "6694094cc25b25e68e6e77b6de455237574770de8491d837cd05b64d28a4ab53",
+                "ledger_key": "b39243a930263edfa377992d4ba9d2c0458416825ce02f9c4f6dba75d556596e",
+                "execution": 1
+              },
+              "routing": {
+                "tier": "Mid",
+                "model": "sonnet",
+                "reason_code": "cross-file server scaffold with auth and typed Ollama wrapper"
+              }
+            }
+          ],
+          "worker_result": {
+            "artifact": ".harness/results/M1-T1-worker.json",
+            "sha256": "011f56c9f56787dfdf5c1d7c15556b53e5a8045b7e50ff6580710bf933ba4c6b",
+            "verdict": "PASS",
+            "base": "04bb92b7be06984856c1dd1c34b52e2533f656e3",
+            "snapshot": "ff9d32d6906ec576cc9ffa54dd0a20d2cc01df84ceb2dd232183df230637cbaf",
+            "changed_files": [
+              "server/package.json",
+              "server/src/http/server.test.ts",
+              "server/src/http/server.ts",
+              "server/src/ollama/client.test.ts",
+              "server/src/ollama/client.ts",
+              "server/tsconfig.json",
+              "shared/api.ts"
+            ],
+            "validation": {
+              "command": "bash -lc 'cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/http src/ollama && bun run typecheck'",
+              "exit_code": 0,
+              "artifact": ".harness/evidence/validation/55407603333d31faccf155c1b902c1cb7f23f3423e9d479a9b7fdcc96262e4f5-1.log",
+              "sha256": "b0409637389af07670eef5fc7a1b137a782e163be2c4a4be3c74904039e44a03",
+              "ledger_key": "55407603333d31faccf155c1b902c1cb7f23f3423e9d479a9b7fdcc96262e4f5",
+              "execution": 1
+            },
+            "routing": {
+              "tier": "Mid",
+              "model": "sonnet",
+              "reason_code": "cross-file server scaffold with auth and typed Ollama wrapper"
+            }
+          },
+          "verifier_result": {
+            "artifact": ".harness/results/M1-T1-verifier-a1.json",
+            "sha256": "4c280961aed1c0fa89110d45007292e5e257cd0495606305a8638f4052e51f5d",
+            "verdict": "PASS",
+            "base": "04bb92b7be06984856c1dd1c34b52e2533f656e3",
+            "snapshot": "ff9d32d6906ec576cc9ffa54dd0a20d2cc01df84ceb2dd232183df230637cbaf",
+            "changed_files": [
+              "server/package.json",
+              "server/src/http/server.test.ts",
+              "server/src/http/server.ts",
+              "server/src/ollama/client.test.ts",
+              "server/src/ollama/client.ts",
+              "server/tsconfig.json",
+              "shared/api.ts"
+            ],
+            "validation": {
+              "command": "bash -lc 'cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/http src/ollama && bun run typecheck'",
+              "exit_code": 0,
+              "artifact": ".harness/evidence/validation/b39243a930263edfa377992d4ba9d2c0458416825ce02f9c4f6dba75d556596e-1.log",
+              "sha256": "6694094cc25b25e68e6e77b6de455237574770de8491d837cd05b64d28a4ab53",
+              "ledger_key": "b39243a930263edfa377992d4ba9d2c0458416825ce02f9c4f6dba75d556596e",
+              "execution": 1
+            },
+            "routing": {
+              "tier": "Mid",
+              "model": "sonnet",
+              "reason_code": "cross-file server scaffold with auth and typed Ollama wrapper"
+            }
+          },
+          "commit": "7d22640aaede544827aef8799ebfb7f738beab99",
+          "accepted_result": "4c280961aed1c0fa89110d45007292e5e257cd0495606305a8638f4052e51f5d"
+        },
+        {
+          "id": "M1-T2",
+          "scope": "Build the generation manager that admits one reply at a time, streams chat via SSE with a seq-numbered event log, supports resume after a dropped connection, and cancels generation on Stop.",
+          "tests": "cd server && bun test src/generations && bun run typecheck && bash scripts/curl-chat-stream-proof.sh",
+          "requirements": [
+            "FR9"
+          ],
+          "constraints": [
+            "idleTimeout: 255 to avoid stream kill",
+            "server-side event log kept 10 minutes after terminal event"
+          ],
+          "findings": [],
+          "criteria": [
+            "M1-AC1",
+            "M1-AC3"
+          ],
+          "paths": [
+            "server/src/generations/",
+            "server/scripts/curl-chat-stream-proof.sh"
+          ],
+          "depends_on": [
+            "M1-T1"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "concurrency-sensitive streaming/resume/cancel logic"
+          },
+          "status": "ACCEPTED",
+          "attempts": 1,
+          "attempt_log": [
+            {
+              "attempt": 1,
+              "role": "worker",
+              "artifact": ".harness/results/M1-T2-worker.json",
+              "sha256": "bef158fd656c36b1e0b1f79e65177d0f6164aa20ab0cd83ee9bafd128f2b6aac",
+              "verdict": "PASS",
+              "base": "7d22640aaede544827aef8799ebfb7f738beab99",
+              "snapshot": "499ee6195fb68c047ad397ab82b93251c75ebf99993192fa78c9cd329be114ef",
+              "changed_files": [
+                "server/scripts/curl-chat-stream-proof.sh",
+                "server/src/generations/manager.test.ts",
+                "server/src/generations/manager.ts"
+              ],
+              "validation": {
+                "command": "bash -lc 'cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/generations && bun run typecheck && bash scripts/curl-chat-stream-proof.sh'",
+                "exit_code": 0,
+                "artifact": ".harness/evidence/validation/1e3ed346f1d6525dcf43fa283e2fdcd6e440461006ff3bdc361f0b000e2c978a-1.log",
+                "sha256": "4cca14f295e67048a077d339ec6558a80c18d0710c839efca3b4f2a33b29cad9",
+                "ledger_key": "1e3ed346f1d6525dcf43fa283e2fdcd6e440461006ff3bdc361f0b000e2c978a",
+                "execution": 1
+              },
+              "routing": {
+                "tier": "Mid",
+                "model": "sonnet",
+                "reason_code": "concurrency-sensitive streaming/resume/cancel logic"
+              }
+            },
+            {
+              "attempt": 1,
+              "role": "verifier",
+              "artifact": ".harness/results/M1-T2-verifier.json",
+              "sha256": "eb3f87c2ffada15b7b05a3b31544ce93919295102a237e189e269c80f2b1e13f",
+              "verdict": "PASS",
+              "base": "7d22640aaede544827aef8799ebfb7f738beab99",
+              "snapshot": "499ee6195fb68c047ad397ab82b93251c75ebf99993192fa78c9cd329be114ef",
+              "changed_files": [
+                "server/scripts/curl-chat-stream-proof.sh",
+                "server/src/generations/manager.test.ts",
+                "server/src/generations/manager.ts"
+              ],
+              "validation": {
+                "command": "bash -lc 'cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/generations && bun run typecheck && bash scripts/curl-chat-stream-proof.sh'",
+                "exit_code": 0,
+                "artifact": ".harness/evidence/validation/bf19c613b5c224da88b7abe430d23d5bbcf394bd546539900e2697d8bb522e51-1.log",
+                "sha256": "35843447169338dac2a2bf8de985c73eed57b4bd987d08a15995bee73e1a13d2",
+                "ledger_key": "bf19c613b5c224da88b7abe430d23d5bbcf394bd546539900e2697d8bb522e51",
+                "execution": 1
+              },
+              "routing": {
+                "tier": "Mid",
+                "model": "sonnet",
+                "reason_code": "concurrency-sensitive streaming/resume/cancel logic"
+              }
+            }
+          ],
+          "worker_result": {
+            "artifact": ".harness/results/M1-T2-worker.json",
+            "sha256": "bef158fd656c36b1e0b1f79e65177d0f6164aa20ab0cd83ee9bafd128f2b6aac",
+            "verdict": "PASS",
+            "base": "7d22640aaede544827aef8799ebfb7f738beab99",
+            "snapshot": "499ee6195fb68c047ad397ab82b93251c75ebf99993192fa78c9cd329be114ef",
+            "changed_files": [
+              "server/scripts/curl-chat-stream-proof.sh",
+              "server/src/generations/manager.test.ts",
+              "server/src/generations/manager.ts"
+            ],
+            "validation": {
+              "command": "bash -lc 'cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/generations && bun run typecheck && bash scripts/curl-chat-stream-proof.sh'",
+              "exit_code": 0,
+              "artifact": ".harness/evidence/validation/1e3ed346f1d6525dcf43fa283e2fdcd6e440461006ff3bdc361f0b000e2c978a-1.log",
+              "sha256": "4cca14f295e67048a077d339ec6558a80c18d0710c839efca3b4f2a33b29cad9",
+              "ledger_key": "1e3ed346f1d6525dcf43fa283e2fdcd6e440461006ff3bdc361f0b000e2c978a",
+              "execution": 1
+            },
+            "routing": {
+              "tier": "Mid",
+              "model": "sonnet",
+              "reason_code": "concurrency-sensitive streaming/resume/cancel logic"
+            }
+          },
+          "verifier_result": {
+            "artifact": ".harness/results/M1-T2-verifier.json",
+            "sha256": "eb3f87c2ffada15b7b05a3b31544ce93919295102a237e189e269c80f2b1e13f",
+            "verdict": "PASS",
+            "base": "7d22640aaede544827aef8799ebfb7f738beab99",
+            "snapshot": "499ee6195fb68c047ad397ab82b93251c75ebf99993192fa78c9cd329be114ef",
+            "changed_files": [
+              "server/scripts/curl-chat-stream-proof.sh",
+              "server/src/generations/manager.test.ts",
+              "server/src/generations/manager.ts"
+            ],
+            "validation": {
+              "command": "bash -lc 'cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/generations && bun run typecheck && bash scripts/curl-chat-stream-proof.sh'",
+              "exit_code": 0,
+              "artifact": ".harness/evidence/validation/bf19c613b5c224da88b7abe430d23d5bbcf394bd546539900e2697d8bb522e51-1.log",
+              "sha256": "35843447169338dac2a2bf8de985c73eed57b4bd987d08a15995bee73e1a13d2",
+              "ledger_key": "bf19c613b5c224da88b7abe430d23d5bbcf394bd546539900e2697d8bb522e51",
+              "execution": 1
+            },
+            "routing": {
+              "tier": "Mid",
+              "model": "sonnet",
+              "reason_code": "concurrency-sensitive streaming/resume/cancel logic"
+            }
+          },
+          "commit": "c7fd15b7c0c3d24b63eb0778c027393755edf40a",
+          "accepted_result": "eb3f87c2ffada15b7b05a3b31544ce93919295102a237e189e269c80f2b1e13f"
+        },
+        {
+          "id": "M1-T3",
+          "scope": "Build Mac ops tooling: a token-creation command that refuses a group/world-readable token file, LaunchAgent installers for the server and bundle host, the Tailscale Serve mapping for the server on its own port, and a pf anchor restricting bundle host access to loopback and the tailnet interface.",
+          "tests": "cd ops && bun test src/token && bash scripts/verify-ops-install.sh",
+          "requirements": [
+            "FR13",
+            "FR14"
+          ],
+          "constraints": [
+            "No Tailscale Funnel, no public exposure, no LAN-wide bind",
+            "must not disturb the existing harness / mapping",
+            "token file mode 0600, refuse group/world-readable"
+          ],
+          "findings": [],
+          "criteria": [
+            "M1-AC2",
+            "M1-AC4"
+          ],
+          "paths": [
+            "ops/"
+          ],
+          "depends_on": [
+            "M1-T1"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "cross-file system integration: LaunchAgents, Tailscale Serve, pf anchor"
+          },
+          "status": "ACCEPTED",
+          "attempts": 1,
+          "attempt_log": [
+            {
+              "attempt": 1,
+              "role": "worker",
+              "artifact": ".harness/results/M1-T3-worker.json",
+              "sha256": "29744060e23027c9ba84bae27067dc1d8a2faa12e4404bd699726e28f4b4f3df",
+              "verdict": "PASS",
+              "base": "c7fd15b7c0c3d24b63eb0778c027393755edf40a",
+              "snapshot": "bc1e6bcd9a785ff8da5ecd3a1bbe69c41d058a6492394748830c147e88f4caff",
+              "changed_files": [
+                "ops/package.json",
+                "ops/scripts/com.harness.bundle-host.plist",
+                "ops/scripts/com.harness.pf.anchor",
+                "ops/scripts/com.harness.server.plist",
+                "ops/scripts/configure-tailscale-serve.sh",
+                "ops/scripts/create-pf-anchor.sh",
+                "ops/scripts/install-bundle-host-agent.sh",
+                "ops/scripts/install-server-agent.sh",
+                "ops/scripts/verify-ops-install.sh",
+                "ops/src/token.test.ts",
+                "ops/src/token.ts",
+                "ops/tsconfig.json"
+              ],
+              "validation": {
+                "command": "bash -lc 'cd /Users/ryankenny/Projects/CodingHarnessv2/ops && bun test src/token && bash scripts/verify-ops-install.sh'",
+                "exit_code": 0,
+                "artifact": ".harness/evidence/validation/9b22cbc25795797d550e321f4631d0b0d6a9c5e1373233e396c9f0c30a5f12d3-1.log",
+                "sha256": "878cc7490093e0b36e7ac37b6739c4d3658fbd00840241bbb843e6dd4ab4feb6",
+                "ledger_key": "9b22cbc25795797d550e321f4631d0b0d6a9c5e1373233e396c9f0c30a5f12d3",
+                "execution": 1
+              },
+              "routing": {
+                "tier": "Mid",
+                "model": "sonnet",
+                "reason_code": "cross-file system integration: LaunchAgents, Tailscale Serve, pf anchor"
+              }
+            },
+            {
+              "attempt": 1,
+              "role": "verifier",
+              "artifact": ".harness/results/M1-T3-verifier-a1.json",
+              "sha256": "8d2ca943837261e8cfd96c704fcd74a3715b5c3f3b09f1476ce5d3e5a34b1b9b",
+              "verdict": "PASS",
+              "base": "c7fd15b7c0c3d24b63eb0778c027393755edf40a",
+              "snapshot": "bc1e6bcd9a785ff8da5ecd3a1bbe69c41d058a6492394748830c147e88f4caff",
+              "changed_files": [
+                "ops/package.json",
+                "ops/scripts/com.harness.bundle-host.plist",
+                "ops/scripts/com.harness.pf.anchor",
+                "ops/scripts/com.harness.server.plist",
+                "ops/scripts/configure-tailscale-serve.sh",
+                "ops/scripts/create-pf-anchor.sh",
+                "ops/scripts/install-bundle-host-agent.sh",
+                "ops/scripts/install-server-agent.sh",
+                "ops/scripts/verify-ops-install.sh",
+                "ops/src/token.test.ts",
+                "ops/src/token.ts",
+                "ops/tsconfig.json"
+              ],
+              "validation": {
+                "command": "bash -lc 'cd /Users/ryankenny/Projects/CodingHarnessv2/ops && bun test src/token && bash scripts/verify-ops-install.sh'",
+                "exit_code": 0,
+                "artifact": ".harness/evidence/validation/c1b7aa7b9b9c107630cb9642b252a119c99aa8649ceff0012367383a798623d5-1.log",
+                "sha256": "f0f347e09365b21817a8e8e0156c237846d2daa20a0b96c7d8cbc165d3c15fd9",
+                "ledger_key": "c1b7aa7b9b9c107630cb9642b252a119c99aa8649ceff0012367383a798623d5",
+                "execution": 1
+              },
+              "routing": {
+                "tier": "Mid",
+                "model": "sonnet",
+                "reason_code": "cross-file system integration: LaunchAgents, Tailscale Serve, pf anchor"
+              }
+            }
+          ],
+          "worker_result": {
+            "artifact": ".harness/results/M1-T3-worker.json",
+            "sha256": "29744060e23027c9ba84bae27067dc1d8a2faa12e4404bd699726e28f4b4f3df",
+            "verdict": "PASS",
+            "base": "c7fd15b7c0c3d24b63eb0778c027393755edf40a",
+            "snapshot": "bc1e6bcd9a785ff8da5ecd3a1bbe69c41d058a6492394748830c147e88f4caff",
+            "changed_files": [
+              "ops/package.json",
+              "ops/scripts/com.harness.bundle-host.plist",
+              "ops/scripts/com.harness.pf.anchor",
+              "ops/scripts/com.harness.server.plist",
+              "ops/scripts/configure-tailscale-serve.sh",
+              "ops/scripts/create-pf-anchor.sh",
+              "ops/scripts/install-bundle-host-agent.sh",
+              "ops/scripts/install-server-agent.sh",
+              "ops/scripts/verify-ops-install.sh",
+              "ops/src/token.test.ts",
+              "ops/src/token.ts",
+              "ops/tsconfig.json"
+            ],
+            "validation": {
+              "command": "bash -lc 'cd /Users/ryankenny/Projects/CodingHarnessv2/ops && bun test src/token && bash scripts/verify-ops-install.sh'",
+              "exit_code": 0,
+              "artifact": ".harness/evidence/validation/9b22cbc25795797d550e321f4631d0b0d6a9c5e1373233e396c9f0c30a5f12d3-1.log",
+              "sha256": "878cc7490093e0b36e7ac37b6739c4d3658fbd00840241bbb843e6dd4ab4feb6",
+              "ledger_key": "9b22cbc25795797d550e321f4631d0b0d6a9c5e1373233e396c9f0c30a5f12d3",
+              "execution": 1
+            },
+            "routing": {
+              "tier": "Mid",
+              "model": "sonnet",
+              "reason_code": "cross-file system integration: LaunchAgents, Tailscale Serve, pf anchor"
+            }
+          },
+          "verifier_result": {
+            "artifact": ".harness/results/M1-T3-verifier-a1.json",
+            "sha256": "8d2ca943837261e8cfd96c704fcd74a3715b5c3f3b09f1476ce5d3e5a34b1b9b",
+            "verdict": "PASS",
+            "base": "c7fd15b7c0c3d24b63eb0778c027393755edf40a",
+            "snapshot": "bc1e6bcd9a785ff8da5ecd3a1bbe69c41d058a6492394748830c147e88f4caff",
+            "changed_files": [
+              "ops/package.json",
+              "ops/scripts/com.harness.bundle-host.plist",
+              "ops/scripts/com.harness.pf.anchor",
+              "ops/scripts/com.harness.server.plist",
+              "ops/scripts/configure-tailscale-serve.sh",
+              "ops/scripts/create-pf-anchor.sh",
+              "ops/scripts/install-bundle-host-agent.sh",
+              "ops/scripts/install-server-agent.sh",
+              "ops/scripts/verify-ops-install.sh",
+              "ops/src/token.test.ts",
+              "ops/src/token.ts",
+              "ops/tsconfig.json"
+            ],
+            "validation": {
+              "command": "bash -lc 'cd /Users/ryankenny/Projects/CodingHarnessv2/ops && bun test src/token && bash scripts/verify-ops-install.sh'",
+              "exit_code": 0,
+              "artifact": ".harness/evidence/validation/c1b7aa7b9b9c107630cb9642b252a119c99aa8649ceff0012367383a798623d5-1.log",
+              "sha256": "f0f347e09365b21817a8e8e0156c237846d2daa20a0b96c7d8cbc165d3c15fd9",
+              "ledger_key": "c1b7aa7b9b9c107630cb9642b252a119c99aa8649ceff0012367383a798623d5",
+              "execution": 1
+            },
+            "routing": {
+              "tier": "Mid",
+              "model": "sonnet",
+              "reason_code": "cross-file system integration: LaunchAgents, Tailscale Serve, pf anchor"
+            }
+          },
+          "commit": "01f4b1dbdf9b82e1782edbd7ef5b070541cd329e",
+          "accepted_result": "8d2ca943837261e8cfd96c704fcd74a3715b5c3f3b09f1476ce5d3e5a34b1b9b"
+        },
+        {
+          "id": "M1-T4",
+          "scope": "Build the Expo Go phone app: chat screen with incremental streaming render, thinking section, Stop action, and a settings screen that accepts a pasted bearer token and stores it in secure storage, plus the SSE client with resume-after-drop and typed error mapping.",
+          "tests": "cd mobile && bun run typecheck && bun test src/api src/ui && bun run lint && npx expo export --platform ios",
+          "requirements": [
+            "FR9",
+            "FR13"
+          ],
+          "constraints": [
+            "Runs in Expo Go only: current Expo SDK, no custom native modules, no development build",
+            "secure storage and streaming fetch as provided by Expo"
+          ],
+          "findings": [],
+          "criteria": [
+            "M1-AC1",
+            "M1-AC2",
+            "M1-AC3"
+          ],
+          "paths": [
+            "mobile/"
+          ],
+          "depends_on": [
+            "M1-T1",
+            "M1-T2"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "cross-file React Native UI plus streaming client"
+          },
+          "status": "ACCEPTED",
+          "attempts": 3,
+          "attempt_log": [
+            {
+              "attempt": 1,
+              "role": "worker",
+              "verdict": "INTERRUPTED",
+              "note": "runtime interruption; no ladder rung spent"
+            },
+            {
+              "attempt": 2,
+              "role": "worker",
+              "verdict": "INTERRUPTED",
+              "note": "runtime interruption; no ladder rung spent"
+            },
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M1-T4-worker.log",
+              "changed_files": [
+                "mobile/package.json",
+                "mobile/bun.lock",
+                "mobile/src/app/chat.tsx"
+              ],
+              "note": "lint already clean on disk; pinned react-native-screens/safe-area-context for SDK 51 to fix expo export; chat re-reads token before each send"
+            },
+            {
+              "attempt": 3,
+              "role": "verifier",
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M1-T4-verifier.log",
+              "validation": {
+                "command": "cd mobile && bun run typecheck && bun test src/api src/ui && bun run lint && npx expo export --platform ios",
+                "exit_code": 0
+              },
+              "tests_weakened": "NO",
+              "note": "confirmed tests are placeholders and expo 51.0.39 vs latest 57.0.25; both carried to M1-T6"
+            }
+          ],
+          "packet": ".harness/tasks/M1-T4.md"
+        },
+        {
+          "id": "M1-T5",
+          "scope": "Install and run the LaunchAgents and Tailscale Serve mapping for real on this Mac, then run a curl/fetch script simulating the phone client end to end over the tailnet (auth 401, streaming to terminal complete, cancel-on-stop, bind/reachability checks), and record in the ledger which parts of M1-AC1 to M1-AC4 remain pending the user's manual Expo Go check. Expanded: add the missing server entry point (server/src/index.ts), correct both LaunchAgent plists (bun path, C8 = Expo dev server in mobile/), and correct the Tailscale Serve mapping to HTTPS 8443 -> 127.0.0.1:7789 per C10.",
+          "tests": "bash ops/scripts/e2e-tailnet-proof.sh && (cd server && bun test && bun run typecheck) && (cd ops && bun test src/token && bash scripts/verify-ops-install.sh)",
+          "requirements": [
+            "FR9",
+            "FR12",
+            "FR13",
+            "FR14"
+          ],
+          "constraints": [
+            "proven against the live Mac Studio and Ollama, not mocks",
+            "neither source repo (phoneToLocalModel, OpenCodeOpenWeightHarness) is modified"
+          ],
+          "findings": [],
+          "criteria": [
+            "M1-AC1",
+            "M1-AC2",
+            "M1-AC3",
+            "M1-AC4"
+          ],
+          "paths": [
+            "server/src/index.ts",
+            "server/package.json",
+            "ops/scripts/com.harness.server.plist",
+            "ops/scripts/com.harness.bundle-host.plist",
+            "ops/scripts/install-server-agent.sh",
+            "ops/scripts/install-bundle-host-agent.sh",
+            "ops/scripts/configure-tailscale-serve.sh",
+            "ops/scripts/verify-ops-install.sh",
+            "ops/scripts/e2e-tailnet-proof.sh",
+            "server/scripts/curl-chat-stream-proof.sh"
+          ],
+          "depends_on": [
+            "M1-T1",
+            "M1-T2",
+            "M1-T3",
+            "M1-T4",
+            "M1-T6"
+          ],
+          "routing": {
+            "tier": "Top",
+            "model": "opus",
+            "reason_code": "SECURITY",
+            "detail": "live network exposure changes on the user's Mac (Tailscale Serve, LaunchAgents, bundle host); also cross-cutting server/ops/live env"
+          },
+          "status": "PENDING",
+          "attempts": 0,
+          "packet": ".harness/tasks/M1-T5.md"
+        },
+        {
+          "id": "M1-T6",
+          "scope": "Upgrade the Expo app to the current Expo SDK (requirements constraint 'current Expo SDK'; architecture R2), switch streaming to expo/fetch (architecture decision), and replace placeholder tests with behavioural tests of SSE parsing, bearer token refresh/401 mapping, and Stop/cancel.",
+          "tests": "cd mobile && bun run typecheck && bun test src/api src/ui && bun run lint && npx expo export --platform ios && rm -rf dist",
+          "requirements": [
+            "FR9",
+            "FR13"
+          ],
+          "constraints": [
+            "Expo Go only: current Expo SDK, no custom native modules, no prebuild",
+            "server/shared contract unchanged"
+          ],
+          "findings": [],
+          "criteria": [
+            "M1-AC1",
+            "M1-AC2",
+            "M1-AC3"
+          ],
+          "paths": [
+            "mobile/"
+          ],
+          "depends_on": [
+            "M1-T4"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "SDK upgrade via expo install --fix plus behavioural unit tests against a stated contract"
+          },
+          "packet": ".harness/tasks/M1-T6.md",
+          "status": "PENDING",
+          "attempts": 0
+        }
+      ],
       "reviews": [],
       "findings": [],
       "validation": [],
-      "follow_ups": []
+      "follow_ups": [
+        "M1 was undersized at planning: signals IMPLEMENTATION_PLUS_LIVE_PROOF and CONCURRENCY_LIFECYCLE both apply (split rule). Found mid-flight, so recorded here, not split.",
+        "M1-T2's server/scripts/curl-chat-stream-proof.sh skips its checks when no server is listening, so the T2 acceptance never exercised a live server; M1-T3's Tailscale Serve script and plists did not match architecture C8/C10. Both corrected under M1-T5.",
+        "M1-T4 accepted with placeholder tests and expo SDK 51 (latest 57); corrected under M1-T6."
+      ],
+      "runtime": {
+        "schema_version": 1,
+        "preflight": {
+          "status": "PASSED",
+          "nonce": "18dabfb1e5575a8826e998ef80f1bd0a",
+          "hook_canary": true,
+          "foreground_canary": true
+        },
+        "budgets": {
+          "worker": 16,
+          "verifier": 10,
+          "reviewer": 3,
+          "advisor": 2,
+          "as-built": 1,
+          "canary": 1,
+          "continuation": 4
+        },
+        "events": [
+          {
+            "id": "preflight-canary",
+            "kind": "canary",
+            "task": null,
+            "status": "COMPLETE",
+            "permit": "4NPnzNAH7B0VXXPDrOVzMQI1yKxH1GdkC-47Ix2P79g",
+            "result": "TERMINAL"
+          },
+          {
+            "id": "m1-oracle-judgment",
+            "kind": "advisor",
+            "task": null,
+            "status": "RESERVED",
+            "permit": "LSLIMfNz8YwHR-FD7H-FxG5iTtGlkYzrOsUnvqwe3BA"
+          },
+          {
+            "id": "turn18-checkpoint",
+            "kind": "continuation",
+            "status": "COMPLETE"
+          },
+          {
+            "id": "m1-t1-worker-1",
+            "kind": "worker",
+            "task": "M1-T1",
+            "status": "COMPLETE",
+            "permit": "zqT-DtstWDEqTgyh086SUYamUC1xzJh9dkdUXa_LNys",
+            "result": "INTERRUPTED"
+          },
+          {
+            "id": "m1-t1-worker-2",
+            "kind": "worker",
+            "task": "M1-T1",
+            "status": "COMPLETE",
+            "permit": "6nCeB-2VSWC08mWYkzIYQPm9aROSxulw3C7Nzl2EJR0",
+            "result": "TERMINAL"
+          },
+          {
+            "id": "m1-t1-verifier-1",
+            "kind": "verifier",
+            "task": "M1-T1",
+            "status": "COMPLETE",
+            "permit": "GFfhzUFKC3RZP6ZgJGjif513pKeExH7E8XaPaJ0oJ-4",
+            "result": "TERMINAL"
+          },
+          {
+            "id": "m1-t2-worker-1",
+            "kind": "worker",
+            "task": "M1-T2",
+            "status": "COMPLETE",
+            "permit": "RNJ5cYuGteOTf9KEzCS2NZ13xOyzhAfKGx1ECqOyGIs",
+            "result": "INTERRUPTED"
+          },
+          {
+            "id": "m1-t2-worker-record",
+            "kind": "worker",
+            "task": "M1-T2",
+            "status": "RESERVED",
+            "permit": "jkiSxc_YjKja4Pr0J1G7CXyNyW8LSocrpdE_xYqC57M"
+          },
+          {
+            "id": "m1-t2-worker-record2",
+            "kind": "worker",
+            "task": "M1-T2",
+            "status": "RESERVED",
+            "permit": "vlOZRb33KiVCx8zHRGidijtgRd9drrCBzwMDupmsFsc"
+          },
+          {
+            "id": "m1-t2-worker-3",
+            "kind": "worker",
+            "task": "M1-T2",
+            "status": "COMPLETE",
+            "permit": "I84LSb7eyn1JcL46RSK44xhMUNCZmAhe7MT78UzwfwM",
+            "result": "INTERRUPTED"
+          },
+          {
+            "id": "m1-t2-worker-4",
+            "kind": "worker",
+            "task": "M1-T2",
+            "status": "COMPLETE",
+            "permit": "vbGXuoDHFaxpJSz8jsBDecNKcIi31ICJZWbXS6DHHQk",
+            "result": "TERMINAL"
+          },
+          {
+            "id": "m1-t2-verifier-1",
+            "kind": "verifier",
+            "task": "M1-T2",
+            "status": "COMPLETE",
+            "permit": "pSIf2tcb02qL-PybhPQIUKJCkwYH7XEgt_sso81hSuM",
+            "result": "TERMINAL"
+          },
+          {
+            "id": "m1-t3-worker-1",
+            "kind": "worker",
+            "task": "M1-T3",
+            "status": "COMPLETE",
+            "permit": "entLPVQ9DjyTuJgjgTSoahvhv3lug1gudEsAdZNpOcw",
+            "result": "TERMINAL"
+          },
+          {
+            "id": "m1-t3-verifier-1",
+            "kind": "verifier",
+            "task": "M1-T3",
+            "status": "COMPLETE",
+            "permit": "mS8r4GwiuXsw-PcenByj5qwWLxSaqvWVSo8oUaNzBQo",
+            "result": "TERMINAL"
+          },
+          {
+            "id": "m1-t4-worker-1",
+            "kind": "worker",
+            "task": "M1-T4",
+            "status": "COMPLETE",
+            "permit": "_hcUcKlKcve6aD34X6bdLLQ64H7THecml8_eGTS7e5Y",
+            "result": "INTERRUPTED"
+          },
+          {
+            "id": "m1-t4-worker-2",
+            "kind": "worker",
+            "task": "M1-T4",
+            "status": "COMPLETE",
+            "permit": "Uj-akDaYH3WNehlJcFhQJQYvnmq7IMPL4ofdrEXUUdg",
+            "result": "INTERRUPTED"
+          }
+        ],
+        "active_dispatch": null
+      },
+      "plan": {
+        "sha256": "bb1e52bffc414a900041b0c2de382fbb19c7d611be86cb9f3ac50eb485b57005",
+        "task_count": 5
+      },
+      "decisions": [
+        {
+          "date": "2026-09-24",
+          "escalation": {
+            "reason": "M1's worker dispatch budget (10 of 10 events) is exhausted. Task M1-T4 (Expo phone app) is otherwise done: typecheck and unit tests pass in mobile/, but 'bun run lint' fails on 7 small ESLint errors (unused vars in src/api/client.ts, src/app/chat.tsx, src/app/settings.tsx, plus one no-constant-condition in client.ts). No worker or advisor budget remains to dispatch a fix, and the controller itself has no code-edit tool and must not edit product files directly. Tasks M1-T5 (end-to-end tailnet proof) has not started.",
+            "decision_required": "Human choice needed: either (a) approve topping up this milestone's worker dispatch budget so a worker can fix the 7 lint errors and finish M1-T4 plus M1-T5, or (b) fix the 7 ESLint errors in mobile/src/api/client.ts, mobile/src/app/chat.tsx, and mobile/src/app/settings.tsx directly and tell the controller to resume, or (c) direct the controller to treat the lint gate as non-blocking for this milestone."
+          },
+          "decision": "(a) Human approved topping up the worker dispatch budget from 10 to 16 so a worker can fix the 7 ESLint errors in M1-T4 and M1-T5 can run.",
+          "by": "human"
+        }
+      ]
     },
     "M2": {
       "id": "M2",

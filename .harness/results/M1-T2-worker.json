@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "role": "worker",
+  "milestone": "M1",
+  "task": "M1-T2",
+  "attempt": 1,
+  "result": "PASS",
+  "base": "7d22640aaede544827aef8799ebfb7f738beab99",
+  "changed_files": [
+    "server/scripts/curl-chat-stream-proof.sh",
+    "server/src/generations/manager.test.ts",
+    "server/src/generations/manager.ts"
+  ],
+  "snapshot": "499ee6195fb68c047ad397ab82b93251c75ebf99993192fa78c9cd329be114ef",
+  "validation": {
+    "ledger_key": "1e3ed346f1d6525dcf43fa283e2fdcd6e440461006ff3bdc361f0b000e2c978a",
+    "execution": 1,
+    "command": "bash -lc 'cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/generations && bun run typecheck && bash scripts/curl-chat-stream-proof.sh'",
+    "exit_code": 0,
+    "artifact": ".harness/evidence/validation/1e3ed346f1d6525dcf43fa283e2fdcd6e440461006ff3bdc361f0b000e2c978a-1.log",
+    "sha256": "4cca14f295e67048a077d339ec6558a80c18d0710c839efca3b4f2a33b29cad9"
+  }
+}

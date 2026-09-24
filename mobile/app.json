@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "Phone Models",
+    "slug": "phone-models",
+    "version": "0.1.0",
+    "scheme": "phonemodels",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.harness.phonemodels",
+      "deploymentTarget": "13.0"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.harness.phonemodels",
+      "minSdkVersion": 24
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "68fa3c3c-82ba-4f81-8fea-e0cdff5c0fa5"
+      }
+    },
+    "owner": "harness"
+  }
+}

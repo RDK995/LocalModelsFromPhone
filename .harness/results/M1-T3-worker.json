@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "role": "worker",
+  "milestone": "M1",
+  "task": "M1-T3",
+  "attempt": 1,
+  "result": "PASS",
+  "base": "c7fd15b7c0c3d24b63eb0778c027393755edf40a",
+  "changed_files": [
+    "ops/package.json",
+    "ops/scripts/com.harness.bundle-host.plist",
+    "ops/scripts/com.harness.pf.anchor",
+    "ops/scripts/com.harness.server.plist",
+    "ops/scripts/configure-tailscale-serve.sh",
+    "ops/scripts/create-pf-anchor.sh",
+    "ops/scripts/install-bundle-host-agent.sh",
+    "ops/scripts/install-server-agent.sh",
+    "ops/scripts/verify-ops-install.sh",
+    "ops/src/token.test.ts",
+    "ops/src/token.ts",
+    "ops/tsconfig.json"
+  ],
+  "snapshot": "bc1e6bcd9a785ff8da5ecd3a1bbe69c41d058a6492394748830c147e88f4caff",
+  "validation": {
+    "ledger_key": "9b22cbc25795797d550e321f4631d0b0d6a9c5e1373233e396c9f0c30a5f12d3",
+    "execution": 1,
+    "command": "bash -lc 'cd /Users/ryankenny/Projects/CodingHarnessv2/ops && bun test src/token && bash scripts/verify-ops-install.sh'",
+    "exit_code": 0,
+    "artifact": ".harness/evidence/validation/9b22cbc25795797d550e321f4631d0b0d6a9c5e1373233e396c9f0c30a5f12d3-1.log",
+    "sha256": "878cc7490093e0b36e7ac37b6739c4d3658fbd00840241bbb843e6dd4ab4feb6"
+  }
+}

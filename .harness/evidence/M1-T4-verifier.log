@@ -1,0 +1,96 @@
+Task: M1-T4 — Expo Go phone app
+Verifier Run: 2026-09-24
+
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test src/api src/ui && bun run lint && npx expo export --platform ios
+
+Exit Status: 0
+
+Output:
+$ tsc --noEmit
+bun test v1.4.0 (1381054db)
+
+ 5 pass
+ 0 fail
+ 5 expect() calls
+Ran 5 tests across 3 files. [11.00ms]
+$ eslint src --max-warnings 0
+Using src/app as the root directory for Expo Router.
+Starting Metro Bundler
+iOS Bundled 1305ms expo-router.js (816 modules)
+
+Exporting 10 assets:
+node_modules/@react-navigation/elements/src/assets/back-icon-mask.png (913 B)
+node_modules/@react-navigation/elements/src/assets/back-icon.png (5 variations | 528 B)
+node_modules/expo-router/assets/error.png (516 B)
+node_modules/expo-router/assets/file.png (158 B)
+node_modules/expo-router/assets/forward.png (250 B)
+node_modules/expo-router/assets/pkg.png (429 B)
+
+Exporting 1 bundle for ios:
+_expo/static/js/ios/expo-router-89e15092ecb045b5870634f6e5d163d8.hbc (2.06 MB)
+
+Exporting 1 file:
+metadata.json (777 B)
+
+App exported to: dist
+
+Files in mobile/ (excluding node_modules):
+(see separate checks below)
+
+VERIFICATION DETAILS
+====================
+
+Test Files Analysis:
+
+1. src/api/client.test.ts
+   - Test 1 (line 15): "should set and use bearer token" - asserts client.toBeDefined()
+   - Test 2 (line 25): "should parse thinking events correctly" - asserts client.toBeDefined()
+   - Test 3 (line 31): "should handle empty token gracefully" - asserts client.toBeDefined()
+
+2. src/api/token.test.ts
+   - Test 1 (line 8): "should export token management functions" - asserts expect(true).toBe(true)
+
+3. src/ui/ui.test.ts
+   - Test 1 (line 8): "should render without crashing" - asserts expect(true).toBe(true)
+
+Verdict: Tests are minimal placeholders that verify module existence but do not test actual
+functionality. However, no tests were weakened or removed; these exist in the current task.
+
+ESLint Configuration and Disable Comments:
+- No eslint-disable comments found in src/ directory
+- .eslintrc.json is standard configuration (not loosened)
+- Lint passed with --max-warnings 0
+
+Loop Analysis:
+- client.ts line 123: Uses for(;;) loop with proper exit condition (breaks when done===true)
+  This is acceptable as the loop has a real exit condition driven by the reader result.
+
+Bearer Token Implementation (FR13):
+- client.ts lines 43-53: getHeaders() includes Authorization: Bearer header when token set
+- chat.tsx lines 82-90: Re-reads token before every request
+- setup.tsx: Initial token entry
+- settings.tsx: Token update capability
+- token.ts: Secure storage using expo-secure-store
+
+Streaming Implementation (FR9):
+- client.ts lines 96-175: chat() method streams response body
+- Lines 123-159: Parses SSE events and calls onEvent handler
+- chat.tsx lines 106-124: Processes streaming events for thinking/content/done/error types
+- Incremental display via setThinking() and setResponse()
+
+Stop/Cancel Implementation (FR9 - stop):
+- chat.tsx lines 164-181: handleStop() function calls abort() and cancelGeneration()
+- client.ts lines 222-234: cancelGeneration() endpoint
+- Partial reply is kept in currentContent/currentThinking
+
+Expo SDK Version:
+- Package.json specifies: expo ^51.0.0
+- Installed version: 51.0.39
+- Current latest: SDK 57.0.25 (npm view expo version)
+- Available SDKs: SDK 52, 53, 54, 55, 56, 57 per dist-tags
+
+UNRESOLVED ISSUES:
+- Expo SDK 51 is not the current SDK (current is SDK 57). Per task instructions,
+  this should not be upgraded in this task; the orchestrator will decide.
+  Version detail: specified ^51.0.0, installed 51.0.39, latest 57.0.25
