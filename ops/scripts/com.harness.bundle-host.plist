@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.harness.bundle-host</string>
+
+  <key>Program</key>
+  <string>/usr/local/bin/bun</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/local/bin/bun</string>
+    <string>run</string>
+    <string>--cwd=/Users/ryankenny/Projects/CodingHarnessv2/bundle-host</string>
+    <string>src/index.ts</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/ryankenny/Projects/CodingHarnessv2/bundle-host</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>TOKEN_FILE</key>
+    <string>~/.harness/bundle-host.token</string>
+  </dict>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>KeepAlive</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>/var/log/harness-bundle-host.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/var/log/harness-bundle-host.log</string>
+
+  <key>Umask</key>
+  <integer>0077</integer>
+
+  <key>ProcessType</key>
+  <string>Standard</string>
+</dict>
+</plist>
