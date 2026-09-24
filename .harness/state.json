@@ -698,8 +698,35 @@
             "detail": "SDK upgrade via expo install --fix plus behavioural unit tests against a stated contract"
           },
           "packet": ".harness/tasks/M1-T6.md",
-          "status": "PENDING",
-          "attempts": 0
+          "status": "IN_PROGRESS",
+          "attempts": 3,
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "verdict": "INTERRUPTED",
+              "note": "hit 40-turn limit, no report; left SDK 57 upgrade in package.json/bun.lock"
+            },
+            {
+              "attempt": 3,
+              "role": "worker",
+              "continuation": 1,
+              "handoff": ".harness/tasks/M1-T6-handoff-1.md",
+              "verdict": "INTERRUPTED",
+              "note": "hit 40-turn limit, no report; left expo/fetch client + behavioural client tests; bun test crashed 'Unexpected typeof', lint 4 quotes errors"
+            },
+            {
+              "attempt": 3,
+              "role": "worker",
+              "continuation": 2,
+              "handoff": ".harness/tasks/M1-T6-handoff-2.md",
+              "verdict": "INTERRUPTED",
+              "note": "hit 40-turn limit, no report. Orchestrator-observed disk state afterwards: typecheck exit 0; bun test src/api src/ui 15 pass 0 fail; lint exit 0; expo export ios and expo-doctor NOT yet run by anyone; new files src/api/expoFetchClient.ts, src/api/secureStoreToken.ts, src/ui/streamReducer.ts. Uncommitted, unverified."
+            }
+          ],
+          "next_step": "Continuation cap (2) is spent, so this is not a third continuation. Dispatch ONE new bounded worker (Cheap or Mid) with a finish-only packet: run the full T6 gate including `npx expo export --platform ios` and `npx expo-doctor`, fix only what fails, and confirm no placeholder tests remain. Then verifier, then commit. Do not repeat the SDK upgrade."
         }
       ],
       "reviews": [],
@@ -867,7 +894,8 @@
           "decision": "(a) Human approved topping up the worker dispatch budget from 10 to 16 so a worker can fix the 7 ESLint errors in M1-T4 and M1-T5 can run.",
           "by": "human"
         }
-      ]
+      ],
+      "budget_note": "Worker dispatch events used: 14 of 16 (T1 x2, T2 x5, T3 x1, T4 x3, T6 x3). Remaining 2 are needed for T6-finish and T5 (Top, live). There is no spare for a retry; T5 at risk of the same 40-turn interruption \u2014 consider splitting T5 (entry point + plists + serve mapping) from (live install + e2e proof) and/or asking the human for more budget before dispatching it."
     },
     "M2": {
       "id": "M2",

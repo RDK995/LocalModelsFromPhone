@@ -25,11 +25,17 @@ Pending.
 
 ### Baseline
 
-Pending.
+04bb92b7be06984856c1dd1c34b52e2533f656e3 on m1-authenticated-tailnet-chat-stream
 
 ### Evidence
 
-Pending.
+Tasks (structured detail in state.json):
+- M1-T1 server HTTP + Ollama client + bearer auth — Mid, attempt 3, PASS; verified; commit 7d22640
+- M1-T2 generation manager (SSE, resume, cancel) — Mid, attempt 3, PASS; verified; commit c7fd15b (its curl proof skipped: no live server)
+- M1-T3 Mac ops tooling — Mid, attempt 3, PASS; verified; commit 01f4b1d
+- M1-T4 Expo Go app (SDK 51) — Mid, 2 runtime interruptions then attempt 3 PASS; verifier PASS (typecheck, tests, lint, ios export exit 0); commit d87a597
+- M1-T6 current Expo SDK + expo/fetch + real tests — Mid, attempt 3 interrupted three times (continuation cap spent); partial work uncommitted and unverified; next: one finish-only worker
+- M1-T5 live tailnet integration + e2e proof — Top (SECURITY), not started; packet expanded for integration gaps (.harness/tasks/M1-T5.md)
 
 ### Validation
 
@@ -45,7 +51,10 @@ Pending.
 
 ### Follow-ups
 
-None.
+- M1 was undersized at planning: IMPLEMENTATION_PLUS_LIVE_PROOF and CONCURRENCY_LIFECYCLE both apply. Found mid-flight, so noted, not split.
+- M1-T2's curl proof skips when no server is listening; M1-T3's Serve script and plists did not match architecture C8/C10; no server entry point exists. Corrected under M1-T5.
+- M1-T4 was accepted with placeholder tests on Expo SDK 51 (latest is 57); corrected under M1-T6.
+- Worker budget: 14 of 16 used, 2 left for T6-finish and T5, with no spare for a retry.
 
 ## M2 — Model list, swap-load, and unload with busy confirmation
 
