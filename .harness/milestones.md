@@ -2,7 +2,7 @@
 
 ## M1 — Authenticated tailnet chat stream proof
 
-Status: REVIEW
+Status: BLOCKED
 
 ### Outcome
 
@@ -147,9 +147,47 @@ Record pass/fail on M1-AC1 (steps 1, 4, 5), M1-AC2 (steps 2, 3, 7), M1-AC3 (step
 Recommended decision:
 Do the re-test. If all pass, record them and set M1 back to REVIEW for the scoped final review of cycle 3's corrections. If any fails, record exactly what the screen showed; the cap is spent, so the milestone needs a human decision.
 
+Cycle 4 (human-authorised override, second extra fix cycle; answers cycle-2 finding B after the human's 15:51/15:53 re-test: fresh bundle crashes at launch in RootLayout 'Cannot convert Symbol to string'; Chat keyboard covered the message box on the cached bundle)
+Pre-correction: e40f26ac82d8a330c1cfe473d8643a6abf2db5cf
+Corrections (each verifier-confirmed, committed):
+- M1-C11 B: launch crash. Cause: RootLayout wrapped its token-present Stack.Screens in a Fragment; expo-router's Stack does not flatten Fragments and interpolates the Fragment's Symbol type into a warning string, which throws "Cannot convert a Symbol value to a string" during render, on every launch with a stored token. Present since d87a597, not a cycle-3 regression; the 15:51 run most likely began with no stored token. Fix: no Fragment. Added a runtime check (mobile/scripts/runtime-smoke.sh + runtime-smoke.mjs, `bun run smoke:runtime`) that executes the production iOS bundle in Node with fake native modules and fails on any JS exception or a missing first screen — Top (AMBIGUOUS) attempt 4 INTERRUPTED (turn limit; handoff .harness/tasks/M1-C11-handoff-1.md) → continuation 1 PASS; verifier (interrupted, log written) tests 0, smoke GREEN; orchestrator reproduced RED on git archive e40f26a (token present: fatal Symbol exception; token absent: PASS); 6fec6a1
+- M1-C12 B: Chat double top bar / keyboard over the message box. Cause: RootLayout read the token once at launch and declared chat/settings only if one existed, so after first-time Setup's router.replace("/chat") Chat was an undeclared screen with a default Stack header ("chat") above its own header, and chat.tsx's keyboardVerticalOffset={0} (premised on no Stack header) fell short by the header height. Fix: all three screens declared unconditionally (index.tsx and the screens already route by token); runtime check extended to drive Setup -> Chat and require one top bar — Mid attempt 3 INTERRUPTED → continuation 1 INTERRUPTED (handoffs .harness/tasks/M1-C12-handoff-{1,2}.md) → continuation 2 PASS; verifier PASS; orchestrator re-ran RED/GREEN with a cleared Metro cache (.harness/evidence/M1-C12-orchestrator-red.log): pre-fix header {chat, hidden false} FAIL, fixed PASS; 49bb53f
+- M1-C13 B: runtime check exports with --clear (a stale Metro cache made a scratch export judge an older bundle) — Cheap attempt 1 PASS; verifier PASS; 0376cf3
+What the runtime check proves: the bundled JS launches, RootLayout renders, the first screen appears without a JS exception (Chat with a token, Setup without), and Setup -> Chat reaches Chat with one top bar. What it cannot: Hermes-only behaviour (it runs on V8), native layout and keyboard geometry, the phone's Expo Go version, networking, anything past those screens.
+Bundle host restarted (no sudo); the tailnet-served bundle (manifest 200, launchAsset 200) contains the fixed RootLayout and passes the runtime check. pf anchor and Tailscale Serve mappings untouched (/ -> 7787, /app -> 7788, :8443 -> 7789).
+Validation artifacts: .harness/evidence/M1-C11-worker.log, M1-C11-verifier.log, M1-C12-verifier.log, M1-C12-orchestrator-red.log, M1-C13-verifier.log (mobile 0, 35 tests, smoke PASS)
+Correction diff: git diff e40f26ac82d8a330c1cfe473d8643a6abf2db5cf HEAD
+Files changed by corrections: mobile/src/app/_layout.tsx; mobile/src/app-routing/stackChildren.test.ts; mobile/scripts/{runtime-smoke.mjs,runtime-smoke.sh}; mobile/package.json (smoke:runtime script entry only). No file outside the finding's scope.
+
+Problem:
+Cycle-4 corrections are done, verified and served to the phone. Finding B (M1-AC1, AC2 app half, AC3 phone half) can only be closed by the human's on-phone checks. The review cap, including both override cycles, is now spent.
+
+Requirement/milestone affected:
+M1-AC1, M1-AC2, M1-AC3 (finding B).
+
+Attempts made:
+1. M1-C11 found the launch crash: the Chat and Settings screens were wrapped in a grouping element the navigation library cannot read, which crashed every launch where a token was already saved. Removed it.
+2. M1-C12 found why Chat had two top bars and the keyboard covered the message box: after first-time Setup, Chat's settings were never applied. All screens are now always declared.
+3. A new check runs the real app bundle on the Mac and would have caught both; it cannot measure the keyboard on a real phone.
+
+Remaining issue:
+Human re-test on the iPhone, Tailscale ON:
+1. Fully force-close Expo Go (swipe it away in the app switcher), reopen it, open exp://ryans-mac-studio.tailc3648a.ts.net:8081 (first open may take ~20-30s while the bundle builds). A token is already saved, so expect the Chat screen, no error screen.
+2. Check Chat has a single top bar (title "Chat" and a Settings link), not two.
+3. Tap the message box: the box and Send stay visible above the keyboard; dragging the message list down closes the keyboard.
+4. Send a short prompt. Expect the reply word by word, finishing.
+5. Send a long prompt, tap Stop while it is writing. Expect the text to stop and not resume.
+6. Tap Settings, tap Update Token: Save and Cancel stay visible above the keyboard; tap Cancel; use the back arrow to return to Chat.
+7. In Settings tap Logout: expect Setup. Tap the token box: Continue stays visible above the keyboard; tap an empty area to close it. On the Mac run `pbcopy < ~/.phone-models/token`, paste, tap Continue. Expect Chat with a single top bar, and repeat step 3 there.
+8. Force-close Expo Go again and reopen the project: expect Chat directly, no error screen.
+Record pass/fail on M1-AC1 (steps 1-4, 8), M1-AC2 (steps 6-7), M1-AC3 (step 5).
+
+Recommended decision:
+Do the re-test. If all pass, record them and set M1 back to REVIEW for the scoped final review of cycle 4's corrections. If any fails, record exactly what the screen showed; both override cycles are spent, so the milestone needs a human decision.
+
 ### Review Cycles
 
-3
+4
 
 ### Follow-ups
 
@@ -170,6 +208,10 @@ Do the re-test. If all pass, record them and set M1 back to REVIEW for the scope
 - Bundle host serves a production build that takes ~23s to build cold after each restart; Expo Go shows "Opening project" meanwhile (cycle 2, M1-C6 log).
 - mobile/src/app-routing/rootIndexRoute.test.ts checks index.tsx statically (bun cannot import expo-router/react-native sources); a real route-resolution test needs a jest-expo style runner.
 - Cycle-1 server API changes: invalid chat body code is now bad_request; SSE streams begin with ": connected"; client disconnect no longer cancels a reply (Stop POSTs cancel).
+- Runtime smoke check (mobile/scripts/runtime-smoke.sh) runs on V8 with faked native modules; Hermes-only or native-layout defects pass it. An Expo Go-in-Simulator check would close more of the gap.
+- Runtime smoke logs a harmless RNCMaskedView new-architecture console.error from a library.
+- Served bundle is not minified despite minify=true in its URL; not investigated.
+- Cycle 4: workers and verifiers hit turn limits repeatedly on mobile tasks (C11, C12 needed continuations).
 
 ## M2 — Model list, swap-load, and unload with busy confirmation
 
