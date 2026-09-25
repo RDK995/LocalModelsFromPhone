@@ -1,0 +1,26 @@
+=== Model List Proof ===
+
+Restarting LaunchAgents...
+Waiting for server to be ready...
+Server is up and enforcing auth
+
+--- Initial state check ---
+A model is already resident, skipping load/unload cycle
+
+--- Run 1: Current state ---
+PASS (a): model names match Ollama /api/tags (count=5)
+PASS (b): all model sizes match Ollama /api/tags
+PASS (c): resident label matches Ollama /api/ps: "Loaded: devstral:24b"
+
+Models: [nemotron3:33b, qwen3.8:27b, devstral:24b, qwen3-coder:30b, qwen3.6:27b]
+Sizes:  [nemotron3:33b=27.6 GB, qwen3.8:27b=17.7 GB, devstral:24b=14.3 GB, qwen3-coder:30b=18.6 GB, qwen3.6:27b=17.4 GB]
+
+
+--- Hardcoded name check ---
+PASS: no hardcoded model names found in source
+
+[0;32mAll proof checks passed![0m
+---
+$ tsc --noEmit
+---
+$ eslint src --max-warnings 0
