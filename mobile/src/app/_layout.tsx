@@ -4,7 +4,7 @@
 
 import { Stack } from "expo-router";
 import { useEffect, useState } from "react";
-import { getToken } from "@/api/token";
+import { getToken } from "@/api/secureStoreToken";
 
 export default function RootLayout() {
   const [hasToken, setHasToken] = useState<boolean | null>(null);

@@ -1,0 +1,107 @@
+=== M1-T6 Verification Log ===
+Date: 2026-09-25
+Commit: 835cac036f1f494f937f7d2cf1e2dfcc8bd99b69
+
+Command Executed (from /Users/ryankenny/Projects/CodingHarnessv2):
+cd mobile && bun run typecheck && bun test src/api src/ui && bun run lint && npx expo export --platform ios && rm -rf dist
+
+=== Output ===
+
+$ tsc --noEmit
+[typecheck passed with no output]
+
+bun test v1.4.0 (1381054db)
+
+ 15 pass
+ 0 fail
+ 32 expect() calls
+Ran 15 tests across 3 files. [20.00ms]
+
+$ eslint src --max-warnings 0
+[lint passed with no output]
+
+Using src/app as the root directory for Expo Router.
+Starting Metro Bundler
+
+iOS Bundled 3061ms expo-router.js (1112 modules)
+
+› Assets (23):
+node_modules/expo-router/assets/arrow_down.png (9.5KB)
+node_modules/expo-router/assets/error.png (469B)
+node_modules/expo-router/assets/file.png (138B)
+node_modules/expo-router/assets/forward.png (188B)
+node_modules/expo-router/assets/pkg.png (364B)
+node_modules/expo-router/assets/react-navigation/elements/back-icon-mask.png (653B)
+node_modules/expo-router/assets/react-navigation/elements/back-icon.png (4 variations | 566B)
+node_modules/expo-router/assets/react-navigation/elements/clear-icon.png (4 variations | 425B)
+node_modules/expo-router/assets/react-navigation/elements/clear-icon.png (4 variations | 425B)
+node_modules/expo-router/assets/react-navigation/elements/close-icon.png (4 variations | 235B)
+node_modules/expo-router/assets/react-navigation/elements/search-icon.png (3 variations | 582B)
+node_modules/expo-router/assets/sitemap.png (465B)
+node_modules/expo-router/assets/unmatched.png (4.8KB)
+
+› ios bundles (1):
+_expo/static/js/ios/expo-router-800c9cd9d95fecd2a89a576a858f3760.hbc (2.4MB)
+
+› Files (1):
+metadata.json (1.6KB)
+
+Exported: dist
+
+Exit Status: 0
+
+=== Additional Checks ===
+
+1. expo-doctor output:
+Running 21 checks on your project...
+21/21 checks passed. No issues detected!
+
+2. Expo version verification:
+"expo": "^57.0.0" in package.json
+
+3. Streaming client imports from "expo/fetch":
+File src/api/expoFetchClient.ts line 10:
+import { fetch as expoFetch } from "expo/fetch";
+
+4. Injectable fetch implementation:
+File src/api/client.ts lines 43-46:
+export type FetchImpl = (
+  url: string,
+  init?: RequestInit
+) => Promise<Response>;
+
+5. Test files verification:
+- mobile/src/api/client.test.ts: 6 behavioural tests
+  - Authorization (3 tests): bearer token, token rotation, 401 mapping
+  - SSE streaming (1 test): events split across chunks, terminal complete
+  - Cancellation (2 tests): abort handling, cancel route
+- mobile/src/api/token.test.ts: 5 behavioural tests
+  - Token store save/read/delete round-trips against mocked SecureStore
+  - Error handling for store access
+- mobile/src/ui/ui.test.ts: 4 behavioural tests
+  - Stream event application to accumulator (thinking, content, done, error)
+
+6. No eslint-disable comments found in changed files.
+
+7. Changed files (all within mobile/):
+mobile/app.json
+mobile/bun.lock
+mobile/package.json
+mobile/src/api/client.test.ts
+mobile/src/api/client.ts
+mobile/src/api/token.test.ts
+mobile/src/api/token.ts
+mobile/src/app/_layout.tsx
+mobile/src/app/chat.tsx
+mobile/src/app/settings.tsx
+mobile/src/app/setup.tsx
+mobile/src/ui/ui.test.ts
+mobile/tsconfig.json
+
+8. Untracked files (all legitimate source files):
+mobile/src/api/expoFetchClient.ts
+mobile/src/api/secureStoreToken.ts
+mobile/src/ui/streamReducer.ts
+
+9. No node_modules/, dist/, ios/, android/ tracked in git.
+

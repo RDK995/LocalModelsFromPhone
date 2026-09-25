@@ -618,8 +618,63 @@
           "packet": ".harness/tasks/M1-T4.md"
         },
         {
-          "id": "M1-T5",
-          "scope": "Install and run the LaunchAgents and Tailscale Serve mapping for real on this Mac, then run a curl/fetch script simulating the phone client end to end over the tailnet (auth 401, streaming to terminal complete, cancel-on-stop, bind/reachability checks), and record in the ledger which parts of M1-AC1 to M1-AC4 remain pending the user's manual Expo Go check. Expanded: add the missing server entry point (server/src/index.ts), correct both LaunchAgent plists (bun path, C8 = Expo dev server in mobile/), and correct the Tailscale Serve mapping to HTTPS 8443 -> 127.0.0.1:7789 per C10.",
+          "id": "M1-T5a",
+          "scope": "Add server entry point (server/src/index.ts), correct both LaunchAgent plists and install scripts (bun path, C8 bundle host = Expo in mobile/), correct Tailscale Serve script to HTTPS 8443 -> 127.0.0.1:7789 (C10), make curl proof fail rather than skip, add entry-smoke.sh. Code only, no live changes.",
+          "tests": "(cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh) && (cd ops && bun test src/token) && for f in ops/scripts/*.sh server/scripts/*.sh; do bash -n \"$f\" || exit 1; done && plutil -lint ops/scripts/*.plist",
+          "requirements": [
+            "FR9",
+            "FR12",
+            "FR13",
+            "FR14"
+          ],
+          "constraints": [
+            "proven against the live Mac Studio and Ollama, not mocks",
+            "neither source repo (phoneToLocalModel, OpenCodeOpenWeightHarness) is modified"
+          ],
+          "findings": [],
+          "criteria": [
+            "M1-AC2",
+            "M1-AC4"
+          ],
+          "paths": [
+            "server/src/index.ts",
+            "server/package.json",
+            "server/scripts/curl-chat-stream-proof.sh",
+            "server/scripts/entry-smoke.sh",
+            "ops/scripts/com.harness.server.plist",
+            "ops/scripts/com.harness.bundle-host.plist",
+            "ops/scripts/install-server-agent.sh",
+            "ops/scripts/install-bundle-host-agent.sh",
+            "ops/scripts/configure-tailscale-serve.sh",
+            "ops/scripts/verify-ops-install.sh"
+          ],
+          "depends_on": [
+            "M1-T1",
+            "M1-T2",
+            "M1-T3"
+          ],
+          "routing": {
+            "tier": "Top",
+            "model": "opus",
+            "reason_code": "SECURITY",
+            "detail": "wires bearer-token auth into the entry point and defines LaunchAgent/Tailscale Serve exposure config"
+          },
+          "status": "IN_PROGRESS",
+          "attempts": 4,
+          "packet": ".harness/tasks/M1-T5a.md",
+          "attempt_log": [
+            {
+              "attempt": 4,
+              "role": "worker",
+              "tier": "Top",
+              "model": "opus",
+              "verdict": "PENDING"
+            }
+          ]
+        },
+        {
+          "id": "M1-T5b",
+          "scope": "Install the LaunchAgents and 8443 Tailscale Serve mapping live on this Mac, write and run ops/scripts/e2e-tailnet-proof.sh against live server and Ollama over the tailnet, and list what remains for the human phone check.",
           "tests": "bash ops/scripts/e2e-tailnet-proof.sh && (cd server && bun test && bun run typecheck) && (cd ops && bun test src/token && bash scripts/verify-ops-install.sh)",
           "requirements": [
             "FR9",
@@ -639,6 +694,7 @@
             "M1-AC4"
           ],
           "paths": [
+            "ops/scripts/e2e-tailnet-proof.sh",
             "server/src/index.ts",
             "server/package.json",
             "ops/scripts/com.harness.server.plist",
@@ -647,14 +703,10 @@
             "ops/scripts/install-bundle-host-agent.sh",
             "ops/scripts/configure-tailscale-serve.sh",
             "ops/scripts/verify-ops-install.sh",
-            "ops/scripts/e2e-tailnet-proof.sh",
             "server/scripts/curl-chat-stream-proof.sh"
           ],
           "depends_on": [
-            "M1-T1",
-            "M1-T2",
-            "M1-T3",
-            "M1-T4",
+            "M1-T5a",
             "M1-T6"
           ],
           "routing": {
@@ -665,7 +717,7 @@
           },
           "status": "PENDING",
           "attempts": 0,
-          "packet": ".harness/tasks/M1-T5.md"
+          "packet": ".harness/tasks/M1-T5b.md"
         },
         {
           "id": "M1-T6",
@@ -698,7 +750,7 @@
             "detail": "SDK upgrade via expo install --fix plus behavioural unit tests against a stated contract"
           },
           "packet": ".harness/tasks/M1-T6.md",
-          "status": "IN_PROGRESS",
+          "status": "ACCEPTED",
           "attempts": 3,
           "attempt_log": [
             {
@@ -724,9 +776,50 @@
               "handoff": ".harness/tasks/M1-T6-handoff-2.md",
               "verdict": "INTERRUPTED",
               "note": "hit 40-turn limit, no report. Orchestrator-observed disk state afterwards: typecheck exit 0; bun test src/api src/ui 15 pass 0 fail; lint exit 0; expo export ios and expo-doctor NOT yet run by anyone; new files src/api/expoFetchClient.ts, src/api/secureStoreToken.ts, src/ui/streamReducer.ts. Uncommitted, unverified."
+            },
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "finish_packet": ".harness/tasks/M1-T6-finish.md",
+              "verdict": "PASS",
+              "note": "finish-only attempt; no code changes needed; all gates exit 0; expo-doctor 21/21",
+              "artifact": ".harness/evidence/M1-T6-finish-worker.log"
+            },
+            {
+              "attempt": 3,
+              "role": "verifier",
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M1-T6-verifier.log",
+              "validation": {
+                "command": "cd mobile && bun run typecheck && bun test src/api src/ui && bun run lint && npx expo export --platform ios && rm -rf dist",
+                "exit_code": 0,
+                "tests": "15 pass 0 fail (3 files)"
+              },
+              "extra": "npx expo-doctor 21/21 passed; expo ^57; expo/fetch in src/api/expoFetchClient.ts",
+              "tests_weakened": "NO",
+              "changed_files": [
+                "mobile/app.json",
+                "mobile/bun.lock",
+                "mobile/package.json",
+                "mobile/src/api/client.test.ts",
+                "mobile/src/api/client.ts",
+                "mobile/src/api/token.test.ts",
+                "mobile/src/api/token.ts",
+                "mobile/src/app/_layout.tsx",
+                "mobile/src/app/chat.tsx",
+                "mobile/src/app/settings.tsx",
+                "mobile/src/app/setup.tsx",
+                "mobile/src/ui/ui.test.ts",
+                "mobile/tsconfig.json",
+                "mobile/src/api/expoFetchClient.ts",
+                "mobile/src/api/secureStoreToken.ts",
+                "mobile/src/ui/streamReducer.ts"
+              ]
             }
           ],
-          "next_step": "Continuation cap (2) is spent, so this is not a third continuation. Dispatch ONE new bounded worker (Cheap or Mid) with a finish-only packet: run the full T6 gate including `npx expo export --platform ios` and `npx expo-doctor`, fix only what fails, and confirm no placeholder tests remain. Then verifier, then commit. Do not repeat the SDK upgrade."
+          "packet_finish": ".harness/tasks/M1-T6-finish.md"
         }
       ],
       "reviews": [],
@@ -746,7 +839,7 @@
           "foreground_canary": true
         },
         "budgets": {
-          "worker": 16,
+          "worker": 22,
           "verifier": 10,
           "reviewer": 3,
           "advisor": 2,
@@ -876,13 +969,33 @@
             "status": "COMPLETE",
             "permit": "Uj-akDaYH3WNehlJcFhQJQYvnmq7IMPL4ofdrEXUUdg",
             "result": "INTERRUPTED"
+          },
+          {
+            "id": "m1-t6-worker-finish",
+            "kind": "worker",
+            "task": "M1-T6",
+            "status": "COMPLETE",
+            "result": "TERMINAL"
+          },
+          {
+            "id": "m1-t5a-worker-1",
+            "kind": "worker",
+            "task": "M1-T5a",
+            "status": "DISPATCHED"
+          },
+          {
+            "id": "m1-t6-verifier-1",
+            "kind": "verifier",
+            "task": "M1-T6",
+            "status": "COMPLETE",
+            "result": "TERMINAL"
           }
         ],
         "active_dispatch": null
       },
       "plan": {
         "sha256": "bb1e52bffc414a900041b0c2de382fbb19c7d611be86cb9f3ac50eb485b57005",
-        "task_count": 5
+        "task_count": 7
       },
       "decisions": [
         {
@@ -893,9 +1006,14 @@
           },
           "decision": "(a) Human approved topping up the worker dispatch budget from 10 to 16 so a worker can fix the 7 ESLint errors in M1-T4 and M1-T5 can run.",
           "by": "human"
+        },
+        {
+          "date": "2026-09-25",
+          "decision": "Human approved raising the worker dispatch budget from 16 to 22 after the orchestrator's CONTINUE hand-back reported 14/16 used, with the M1-T6 finish and an expanded Top-tier M1-T5 still outstanding.",
+          "by": "human"
         }
       ],
-      "budget_note": "Worker dispatch events used: 14 of 16 (T1 x2, T2 x5, T3 x1, T4 x3, T6 x3). Remaining 2 are needed for T6-finish and T5 (Top, live). There is no spare for a retry; T5 at risk of the same 40-turn interruption \u2014 consider splitting T5 (entry point + plists + serve mapping) from (live install + e2e proof) and/or asking the human for more budget before dispatching it."
+      "budget_note": "Worker dispatch events used: 16 of 22 (T1 x2, T2 x5, T3 x1, T4 x3, T6 x4, T5a x1). T5 split into T5a (code, Top) and T5b (live install + e2e proof, Top) to keep each within a worker's turn limit."
     },
     "M2": {
       "id": "M2",

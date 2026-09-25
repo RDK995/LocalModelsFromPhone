@@ -15,9 +15,13 @@ import {
   SafeAreaView,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { getToken } from "@/api/token";
-import { createAPIClient } from "@/api/client";
+import { getToken } from "@/api/secureStoreToken";
+import { createAPIClient } from "@/api/expoFetchClient";
 import type { StreamEvent } from "@/api/client";
+import {
+  applyStreamEvent,
+  initialStreamAccumulator,
+} from "@/ui/streamReducer";
 
 interface Message {
   id: string;
@@ -99,27 +103,24 @@ export default function ChatScreen() {
           })),
       };
 
-      let currentThinking = "";
-      let currentContent = "";
+      let accumulated = initialStreamAccumulator;
 
       const generationId = await clientRef.current.chat(chatRequest, {
         onEvent: (event: StreamEvent) => {
-          switch (event.type) {
-            case "thinking":
-              currentThinking += event.data.text;
-              setThinking(currentThinking);
-              break;
-            case "content":
-              currentContent += event.data.text;
-              setResponse(currentContent);
-              // Scroll to bottom
-              scrollViewRef.current?.scrollToEnd({ animated: false });
-              break;
-            case "done":
-              console.log("Generation complete:", event.data);
-              break;
-            case "error":
-              throw new Error(`${event.data.code}: ${event.data.message}`);
+          if (event.type === "error") {
+            throw new Error(`${event.data.code}: ${event.data.message}`);
+          }
+          if (event.type === "done") {
+            console.log("Generation complete:", event.data);
+            return;
+          }
+
+          accumulated = applyStreamEvent(accumulated, event);
+          setThinking(accumulated.thinking);
+          setResponse(accumulated.content);
+          if (event.type === "content") {
+            // Scroll to bottom
+            scrollViewRef.current?.scrollToEnd({ animated: false });
           }
         },
         onError: (error: Error) => {
@@ -137,8 +138,8 @@ export default function ChatScreen() {
       const assistantMessage: Message = {
         id: generationId,
         role: "assistant",
-        content: currentContent,
-        thinking: currentThinking,
+        content: accumulated.content,
+        thinking: accumulated.thinking,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);

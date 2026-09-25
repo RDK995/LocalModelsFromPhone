@@ -13,7 +13,7 @@ import {
   Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { saveToken } from "@/api/token";
+import { saveToken } from "@/api/secureStoreToken";
 
 export default function SetupScreen() {
   const [token, setToken] = useState("");

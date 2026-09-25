@@ -14,7 +14,7 @@ import {
   SafeAreaView,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { saveToken, clearToken } from "@/api/token";
+import { saveToken, clearToken } from "@/api/secureStoreToken";
 
 export default function SettingsScreen() {
   const [token, setToken] = useState("");
