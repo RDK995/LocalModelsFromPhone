@@ -260,17 +260,17 @@ check "bundle host on 8081 serves the Expo manifest via the tailnet name" bash -
 check "manifest points the phone at the tailnet name, production bundle (dev=false, minify=true)" \
   bash -c '[[ "$1" == "http://'"$TAILNET_NAME"':8081/"* && "$1" == *dev=false* && "$1" == *minify=true* ]]' _ "$LAUNCH_URL"
 
-PF_INSTALL_CMD="sudo bash ops/scripts/install-pf-anchor.sh"
-LAN_8081="unknown"
+# Verify the pf anchor is working via LaunchDaemon and iface file checks
+check "pf anchor LaunchDaemon is loaded and healthy (last exit code = 0)" \
+  bash -c 'launchctl print system/com.harness.pf-bundle-host 2>/dev/null | grep -q "last exit code = 0"'
+
+IFACE_FILE_CONTENT="$(cat /var/run/com.harness.pf-bundle-host.iface 2>/dev/null)"
+check "pf anchor loaded for the current Tailscale interface ($IFACE_FILE_CONTENT == $TS_IF)" \
+  test "$IFACE_FILE_CONTENT" = "$TS_IF"
+
 if [[ -n "$LAN_IP" ]]; then
-  code="$(curl -s --max-time 5 -o /dev/null -w '%{http_code}' "http://$LAN_IP:8081/")"; e=$?
-  if [[ $e -eq 0 ]]; then LAN_8081="REACHABLE (HTTP $code)"; else LAN_8081="not reachable (curl exit $e)"; fi
-  # pf drops (no reply), so a blocked port shows as a curl timeout (28), not a refusal (7).
-  check "LAN $LAN_IP:8081 (bundle host) is blocked from the LAN: $LAN_8081" test "$e" -ne 0
-  if [[ $e -eq 0 ]]; then
-    info "the pf anchor is not installed or not active. Install it once (asks for the admin password):"
-    info "  $PF_INSTALL_CMD"
-  fi
+  LAN_ROUTE="$(route -n get "$LAN_IP" 2>/dev/null | awk '/interface:/ { print $2 }')"
+  info "Mac-local probe of LAN IP $LAN_IP goes over interface $LAN_ROUTE (lo0 is passed by the pf anchor; cannot test the actual LAN path)"
 fi
 
 # ---------------------------------------------------------------------------
@@ -284,25 +284,16 @@ fi
 cat <<EOF
 
 ==== REMAINING FOR THE HUMAN (cannot be proven from the Mac) ====
-1. pf: bundle host 8081 on the LAN IP is currently: $LAN_8081
-   If it is reachable, block 8081 from the LAN (loopback and the tailnet interface
-   ${TS_IF:-utunN} stay allowed) by running this once in Terminal from the repo root
-   (asks for your admin password; a LaunchDaemon reloads it at every boot):
-
-   $PF_INSTALL_CMD
-
-   Then re-run this script: the LAN 8081 check must pass. To undo:
-   sudo bash ops/scripts/uninstall-pf-anchor.sh
-2. On the iPhone (on the tailnet), open Expo Go and enter: exp://$TAILNET_NAME:8081
+1. On the iPhone (on the tailnet), open Expo Go and enter: exp://$TAILNET_NAME:8081
    - the app loads (production bundle, no dev menu);
    - in Settings, paste the bearer token (on the Mac: pbcopy < ~/.phone-models/token,
      or read it with: cat ~/.phone-models/token) and save;
    - send a prompt: the reply renders token by token, not all at once;
    - send a long prompt and tap Stop: output halts within a moment and does not resume.
-3. On a device on the same Wi-Fi but NOT on the tailnet (or the phone with Tailscale off):
+2. From a device on the same Wi-Fi but NOT on the tailnet (or the phone with Tailscale off):
    - $TAILNET_URL/v1/state does not resolve/connect;
    - http://${LAN_IP:-<mac-lan-ip>}:7789 and :8443 refuse;
-   - http://${LAN_IP:-<mac-lan-ip>}:8081 refuses once step 1 is done.
+   - http://${LAN_IP:-<mac-lan-ip>}:8081 must not load.
 EOF
 
 exit $((FAILURES > 0 ? 1 : 0))

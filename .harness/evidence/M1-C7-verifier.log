@@ -1,0 +1,143 @@
+Task: M1-C7 — e2e script: replace the always-red Mac-local LAN 8081 probe
+Diff range: HEAD (85a6f41) vs working tree (ops/scripts/e2e-tailnet-proof.sh)
+Verification run: 2026-09-25 12:59:21 BST
+
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2 && bash -n ops/scripts/e2e-tailnet-proof.sh && bash ops/scripts/e2e-tailnet-proof.sh
+
+Bash syntax check: PASS
+Script exit status: 0
+
+Key output lines:
+  PASS  pf anchor LaunchDaemon is loaded and healthy (last exit code = 0)
+  PASS  pf anchor loaded for the current Tailscale interface (utun4 == utun4)
+        Mac-local probe of LAN IP 192.168.0.27 goes over interface lo0 (lo0 is passed by the pf anchor; cannot test the actual LAN path)
+  ALL AUTOMATED CHECKS PASSED
+
+REMAINING FOR THE HUMAN section:
+1. On the iPhone (on the tailnet), open Expo Go and enter: exp://ryans-mac-studio.tailc3648a.ts.net:8081
+   - the app loads (production bundle, no dev menu);
+   - in Settings, paste the bearer token (on the Mac: pbcopy < ~/.phone-models/token,
+      or read it with: cat ~/.phone-models/token) and save;
+   - send a prompt: the reply renders token by token, not all at once;
+   - send a long prompt and tap Stop: output halts within a moment and does not resume.
+2. From a device on the same Wi-Fi with Tailscale OFF, http://192.168.0.27:8081 must not load.
+
+VERIFICATION DETAILS
+
+1. VALIDATION COMMAND EXECUTION:
+   bash -n ops/scripts/e2e-tailnet-proof.sh && bash ops/scripts/e2e-tailnet-proof.sh
+   Exit Status: 0
+   Syntax check: PASS
+   Live run: PASS
+
+2. FILES CHANGED:
+   - ops/scripts/e2e-tailnet-proof.sh (ALLOWED)
+
+3. REMAINING-FOR-THE-HUMAN SECTION ANALYSIS:
+
+   ORIGINAL (HEAD):
+   1. pf: bundle host 8081 on the LAN IP is currently: $LAN_8081
+      [installation instructions: sudo bash ops/scripts/install-pf-anchor.sh]
+   2. On the iPhone (on the tailnet), open Expo Go and enter: exp://$TAILNET_NAME:8081
+      [smartphone test instructions]
+   3. On a device on the same Wi-Fi but NOT on the tailnet (or the phone with Tailscale off):
+      - $TAILNET_URL/v1/state does not resolve/connect;
+      - http://${LAN_IP:-<mac-lan-ip>}:7789 and :8443 refuse;
+      - http://${LAN_IP:-<mac-lan-ip>}:8081 refuses once step 1 is done.
+
+   MODIFIED (working tree):
+   1. On the iPhone (on the tailnet), open Expo Go and enter: exp://$TAILNET_NAME:8081
+      [smartphone test instructions - PRESERVED]
+   2. From a device on the same Wi-Fi with Tailscale OFF, http://${LAN_IP:-<mac-lan-ip>}:8081 must not load.
+
+   CONTENT LOSS ANALYSIS:
+   - Original item 1 (pf installation): REMOVED (INTENTIONAL per AC1)
+   - Original item 2 (iPhone test): PRESERVED as new item 1
+   - Original item 3, sub-item 1 ("server URL doesn't connect"): LOST
+   - Original item 3, sub-item 2 ("ports 7789/8443 refuse"): LOST
+   - Original item 3, sub-item 3 ("port 8081 refuses"): PRESERVED as new item 2
+
+4. LAN 7789/8443 AUTOMATED CHECKS:
+   Original code (HEAD):
+   for port in 7789 8443; do
+     curl -s --max-time 5 -o /dev/null "http://$LAN_IP:$port/"; e=$?
+     check "LAN $LAN_IP:$port refuses connections (curl exit $e; 7 = refused)" test "$e" = 7
+   done
+
+   Current code (working tree):
+   [IDENTICAL - UNCHANGED]
+   
+   Status: UNCHANGED ✓
+
+5. NEW CHECKS - FAILURE ANALYSIS:
+
+   Check 1: "pf anchor LaunchDaemon is loaded and healthy (last exit code = 0)"
+   Code: bash -c 'launchctl print system/com.harness.pf-bundle-host 2>/dev/null | grep -q "last exit code = 0"'
+   
+   Failure modes:
+   - If launchctl prints "last exit code = 1" or any non-zero value: grep finds no match, check FAILS
+   - If launchctl command fails (service not loaded): stderr suppressed, grep gets empty input, check FAILS
+   - Output in test: "PASS pf anchor LaunchDaemon is loaded and healthy (last exit code = 0)"
+   
+   Check 2: "pf anchor loaded for the current Tailscale interface ($IFACE_FILE_CONTENT == $TS_IF)"
+   Code: 
+   IFACE_FILE_CONTENT="$(cat /var/run/com.harness.pf-bundle-host.iface 2>/dev/null)"
+   check ... test "$IFACE_FILE_CONTENT" = "$TS_IF"
+   
+   Failure modes:
+   - If file missing: IFACE_FILE_CONTENT is empty, test "" = "$TS_IF" fails, check FAILS
+   - If file exists but content differs (e.g., "utun3" vs "utun4"): test fails, check FAILS
+   - Output in test: "PASS pf anchor loaded for the current Tailscale interface (utun4 == utun4)"
+   
+   Both new checks CAN FAIL ✓
+
+6. ACCEPTANCE CRITERIA VERIFICATION:
+
+   AC1: Remove Mac-local 8081 check and advice
+   - Old code removed:
+     * code="$(curl -s --max-time 5 -o /dev/null -w '%{http_code}' "http://$LAN_IP:8081/")"
+     * check "LAN $LAN_IP:8081 (bundle host) is blocked from the LAN: $LAN_8081" test "$e" -ne 0
+     * info "the pf anchor is not installed or not active. Install it once..."
+   - Status: ✓ VERIFIED
+
+   AC1: Leave LAN 7789/8443 checks unchanged
+   - Automated checks present and identical
+   - Status: ✓ VERIFIED
+
+   AC2a: launchctl print check with last exit code = 0
+   - Check present, test output: PASS
+   - Status: ✓ VERIFIED
+
+   AC2b: iface file matches Tailscale interface
+   - Check present, test output: PASS (utun4 == utun4)
+   - Status: ✓ VERIFIED
+
+   AC2c: route -n get INFO line
+   - Info line present, output: "Mac-local probe of LAN IP 192.168.0.27 goes over interface lo0..."
+   - Status: ✓ VERIFIED
+
+   AC3: Keep item "From a device on the same Wi-Fi with Tailscale OFF, http://<LAN_IP>:8081 must not load."
+   - Item present as new item 2
+   - Status: ✓ VERIFIED
+
+   AC3: Do not remove other human items
+   - iPhone test item: PRESERVED as item 1
+   - Server URL test item: LOST (was in original item 3)
+   - Ports 7789/8443 test item: LOST (was in original item 3)
+   - Status: ✗ PARTIAL - some content was lost
+
+   AC4: bash -n passes
+   - No syntax errors
+   - Status: ✓ VERIFIED
+
+   AC4: live run exits 0
+   - Script exit status: 0
+   - Result: "ALL AUTOMATED CHECKS PASSED"
+   - Status: ✓ VERIFIED
+
+SUMMARY:
+- All automated checks passed
+- Both new checks implemented and can fail
+- LAN 7789/8443 checks unchanged
+- Content loss in REMAINING-FOR-THE-HUMAN: the server URL and ports 7789/8443 test items (original item 3, sub-items 1-2) are no longer present
