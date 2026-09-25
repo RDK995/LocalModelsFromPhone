@@ -19,7 +19,11 @@ import {
 import { useRouter } from "expo-router";
 import { getToken } from "@/api/secureStoreToken";
 import { createAPIClient } from "@/api/expoFetchClient";
-import { sendMessage, stopGeneration } from "@/chat/chatController";
+import {
+  sendMessage,
+  stopGeneration,
+  UNAUTHORIZED_MESSAGE,
+} from "@/chat/chatController";
 import {
   applyStreamEvent,
   initialStreamAccumulator,
@@ -129,6 +133,16 @@ export default function ChatScreen() {
           },
           onError: (error: Error) => {
             Alert.alert("Error", error.message);
+          },
+          onUnauthorized: () => {
+            Alert.alert(
+              UNAUTHORIZED_MESSAGE,
+              "The password on this phone no longer matches the Mac. Paste the current one from the Mac (pbcopy < ~/.phone-models/token)."
+            );
+            router.push({
+              pathname: "/settings",
+              params: { updateToken: "1" },
+            });
           },
           onComplete: () => {
             if (startedGenerationId) {

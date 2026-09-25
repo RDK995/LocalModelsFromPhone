@@ -13,13 +13,18 @@
  * terminal `done {status:"cancelled"}` event closes it, which is what a
  * caller's `onComplete` should treat as the point at which the generation id
  * can finally be cleared.
+ *
+ * A `401` from either `GET /v1/state` or `POST /v1/chat` (however it
+ * arrives -- thrown or delivered to `onError`) is reported via
+ * `onUnauthorized` instead of `onError` (FR13).
  */
 
-import { ModelNotResidentError } from "@/api/client";
+import { ModelNotResidentError, UnauthorizedError } from "@/api/client";
 import type { APIClient, StreamEvent } from "@/api/client";
 import type { ChatRequest } from "@shared/api";
 
 export const NO_MODEL_LOADED_MESSAGE = "No model loaded";
+export const UNAUTHORIZED_MESSAGE = "Password wrong or changed";
 
 export interface SendMessageCallbacks {
   /** The `x-generation-id` header value, as soon as it arrives. */
@@ -28,6 +33,8 @@ export interface SendMessageCallbacks {
   /** Sending was blocked (no resident model); no request was made. */
   onBlocked: (message: string) => void;
   onError: (error: Error) => void;
+  /** The token was rejected with a 401 (FR13); `onError` is not called. */
+  onUnauthorized: () => void;
   onComplete: () => void;
   signal?: AbortSignal;
 }
@@ -50,6 +57,10 @@ export async function sendMessage(
     const state = await client.getState();
     resident = state.resident ? state.resident.name : null;
   } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      callbacks.onUnauthorized();
+      return;
+    }
     callbacks.onError(
       error instanceof Error ? error : new Error(String(error))
     );
@@ -67,7 +78,15 @@ export async function sendMessage(
       {
         onStart: callbacks.onStart,
         onEvent: callbacks.onEvent,
-        onError: callbacks.onError,
+        onError: (error) => {
+          // A 401 delivered via this callback (rather than thrown) is still
+          // routed to onUnauthorized, not onError (FR13).
+          if (error instanceof UnauthorizedError) {
+            callbacks.onUnauthorized();
+            return;
+          }
+          callbacks.onError(error);
+        },
         onComplete: callbacks.onComplete,
         signal: callbacks.signal,
       }
@@ -78,6 +97,10 @@ export async function sendMessage(
     // rather than a generic error.
     if (error instanceof ModelNotResidentError) {
       callbacks.onBlocked(NO_MODEL_LOADED_MESSAGE);
+      return;
+    }
+    if (error instanceof UnauthorizedError) {
+      callbacks.onUnauthorized();
       return;
     }
     callbacks.onError(

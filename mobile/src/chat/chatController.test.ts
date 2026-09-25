@@ -13,6 +13,13 @@ import {
   stopGeneration,
 } from "./chatController";
 
+function unauthorizedResponse(): Response {
+  return new Response(JSON.stringify({ error: "unauthorized" }), {
+    status: 401,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
 const BASE_URL = "https://ryans-mac-studio.tailc3648a.ts.net:8443";
 
 function stateResponse(resident: { name: string } | null): Response {
@@ -66,6 +73,7 @@ function newCallbacks() {
   let blocked: string | null = null;
   let errored: Error | null = null;
   let completed = false;
+  let unauthorizedCount = 0;
 
   return {
     events,
@@ -81,6 +89,9 @@ function newCallbacks() {
     get completed() {
       return completed;
     },
+    get unauthorizedCount() {
+      return unauthorizedCount;
+    },
     callbacks: {
       onStart: (id: string) => {
         started = id;
@@ -94,6 +105,9 @@ function newCallbacks() {
       },
       onComplete: () => {
         completed = true;
+      },
+      onUnauthorized: () => {
+        unauthorizedCount += 1;
       },
     },
   };
@@ -197,6 +211,83 @@ describe("sendMessage (F2: model attribution)", () => {
     expect(result.blocked).toBe(NO_MODEL_LOADED_MESSAGE);
     expect(result.errored).toBeNull();
     expect(result.started).toBeNull();
+  });
+});
+
+describe("sendMessage (FR13: 401 routes to onUnauthorized, not onError)", () => {
+  it("a 401 from GET /v1/state calls onUnauthorized once, not onError, and makes no POST /v1/chat request", async () => {
+    const calls: string[] = [];
+
+    const fetchMock = mock(async (url: string) => {
+      calls.push(url);
+      if (url.endsWith("/v1/state")) {
+        return unauthorizedResponse();
+      }
+      throw new Error(`unexpected request: ${url}`);
+    });
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("wrong-token");
+
+    const result = newCallbacks();
+    await sendMessage(
+      client,
+      [{ role: "user", content: "hi" }],
+      result.callbacks
+    );
+
+    expect(result.unauthorizedCount).toBe(1);
+    expect(result.errored).toBeNull();
+    expect(result.blocked).toBeNull();
+    expect(calls.some((url) => url.endsWith("/v1/chat"))).toBe(false);
+  });
+
+  it("a 401 from POST /v1/chat calls onUnauthorized once and does not call onError", async () => {
+    const fetchMock = mock(async (url: string) => {
+      if (url.endsWith("/v1/state")) {
+        return stateResponse({ name: "llama3" });
+      }
+      if (url.endsWith("/v1/chat")) {
+        return unauthorizedResponse();
+      }
+      throw new Error(`unexpected request: ${url}`);
+    });
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("wrong-token");
+
+    const result = newCallbacks();
+    await sendMessage(
+      client,
+      [{ role: "user", content: "hi" }],
+      result.callbacks
+    );
+
+    expect(result.unauthorizedCount).toBe(1);
+    expect(result.errored).toBeNull();
+    expect(result.blocked).toBeNull();
+  });
+
+  it("a non-401 failure (500 from GET /v1/state) still calls onError and not onUnauthorized", async () => {
+    const fetchMock = mock(async (url: string) => {
+      if (url.endsWith("/v1/state")) {
+        return new Response("Internal Server Error", { status: 500 });
+      }
+      throw new Error(`unexpected request: ${url}`);
+    });
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+
+    const result = newCallbacks();
+    await sendMessage(
+      client,
+      [{ role: "user", content: "hi" }],
+      result.callbacks
+    );
+
+    expect(result.errored).not.toBeNull();
+    expect(result.unauthorizedCount).toBe(0);
   });
 });
 

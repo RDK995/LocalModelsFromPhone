@@ -1463,6 +1463,14 @@
               "M1-C12",
               "M1-C13"
             ]
+          },
+          "override_fix_cycle_5": {
+            "fix_cycle": 5,
+            "authorised_by": "review_override (allow_cycles 5)",
+            "answers": "cycle-5 review finding 1 (IMPORTANT, FR13: 401 must show 'password wrong or changed' and route to Settings); OPTIONAL findings 2 (smoke:runtime in recorded validation) and 3 (e2e empty iface guard)",
+            "report": ".harness/reviews/M1-cycle5.md",
+            "pre_correction": "c9e3560b9c38e138d1d4bbd6d2a91a43f791204a",
+            "status": "IN_PROGRESS"
           }
         }
       ],

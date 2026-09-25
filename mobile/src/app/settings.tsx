@@ -18,14 +18,15 @@ import {
   Keyboard,
   Platform,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { useHeaderHeight } from "expo-router/react-navigation";
 import { saveToken, clearToken } from "@/api/secureStoreToken";
 
 export default function SettingsScreen() {
+  const { updateToken } = useLocalSearchParams<{ updateToken?: string }>();
   const [token, setToken] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(updateToken === "1");
   const router = useRouter();
   const headerHeight = useHeaderHeight();
 
