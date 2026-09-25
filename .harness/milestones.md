@@ -119,16 +119,24 @@ About 12 minutes (model-swap-proof idles 600 s). Needs the live LaunchAgents, Ta
 
 ### Review
 
-Pending.
+Cycle 1: CHANGES REQUIRED (SUBSTANTIVE), tier Top (opus) — .harness/reviews/M2b-cycle1.md (F1 IMPORTANT, F2 OPTIONAL); M2-AC2/AC3/AC5 PASS; reviewer validation exit 0 — .harness/evidence/M2b-review.log
+Pre-correction: b8bcae32221cc3941ccef8702cfd6b066de6db93 (72e781c plus the committed review report and log; no code change)
+Corrections (each verifier-confirmed, committed):
+- M2b-C1 F1 unload() claims the operation synchronously before its ps() await — Mid (NOT_LOW_RISK), attempt 3 PASS; two Promise.allSettled race tests Red on the unfixed code then Green, plus a concurrent HTTP unload 202/409 test; server 76 pass, typecheck 0, entry-smoke 0 — .harness/evidence/M2b-C1-verifier.log; 24f981c
+- F2 (OPTIONAL) not corrected; recorded under Follow-ups.
+Cycle-1 validation: server `bun test && bun run typecheck && bash scripts/entry-smoke.sh` exit 0 (verifier). Live proofs not re-run: no live-proof, mobile or ops file changed; the live Mac was not touched this cycle.
+Correction diff: git diff b8bcae32221cc3941ccef8702cfd6b066de6db93 HEAD
+Files changed by corrections: server/src/models/manager.ts; server/src/models/manager.test.ts; server/src/http/server.test.ts (plus .harness/ records). No file outside finding F1's scope (server.test.ts carries F1's suggested concurrent-request test).
 
 ### Review Cycles
 
-0
+1
 
 ### Follow-ups
 
 - Pickup size/shape check: 3 criteria, shape PASS; signals CONCURRENCY_LIFECYCLE + IMPLEMENTATION_PLUS_LIVE_PROOF present (nominally a required split). Not split further: M2b is already the child of the M2 split made for this exact pair, and all three criteria are live observations of the same load/unload lifecycle, so no criterion-conserving seam separates them. A human may prefer a different call.
 - M2-AC5 was proven live with a runner load failure (bad LoRA adapter), not out-of-memory: on this Mac with Ollama 0.32.14 out-of-memory could not be induced (num_ctx is clamped; oversized num_batch/num_gpu oversubscribe without error). The criterion says "such as out of memory"; the reviewer or human should confirm this reading. The server's "Not enough memory" reason is covered by unit tests only.
+- Reviewer OPTIONAL (cycle 1, F2, .harness/reviews/M2b-cycle1.md): a failed load's reason stays in `operation.error` until the next operation, so the Models screen can show "Loaded: X" beside an old "Load failed: ..." after something else loads X. Not corrected in cycle 1 (outside M2-AC5, which only requires the reason after the failed load); candidate for M2c, which reworks the same operation state for its confirmation rule.
 
 ## M2c — Busy confirmation before a swap or unload
 

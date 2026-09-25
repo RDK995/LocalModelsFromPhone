@@ -2336,7 +2336,7 @@
         "FR5"
       ],
       "status": "REVIEW",
-      "review_cycles": 0,
+      "review_cycles": 1,
       "review_override": null,
       "baseline": {
         "commit": "c9fdd5e42c23ebadf125b6d0cde83ae7d659f647",
@@ -2720,10 +2720,107 @@
           },
           "packet": ".harness/tasks/M2b-T3b.md",
           "routing_note": "entered Mid (NOT_BOUNDED) at attempt 3; escalated to Top at attempt 4"
+        },
+        {
+          "id": "M2b-C1",
+          "scope": "F1: ModelManager.unload() claims the operation synchronously before its ps() await; race tests",
+          "tests": "cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh",
+          "requirements": [
+            "FR3",
+            "FR5"
+          ],
+          "constraints": [
+            "no confirmation rule (M2c)",
+            "no live Ollama in tests"
+          ],
+          "findings": [
+            "M2b-cycle1-F1"
+          ],
+          "criteria": [
+            "M2-AC2"
+          ],
+          "paths": [
+            "server/src/models/",
+            "server/src/http/server.test.ts"
+          ],
+          "depends_on": [],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "NOT_LOW_RISK",
+            "detail": "single-threaded async race in C5's single-flight operation; specified fix with deterministic oracle, but a wrong fix is hard to notice live"
+          },
+          "status": "ACCEPTED",
+          "attempts": 1,
+          "packet": ".harness/tasks/M2b-C1.md",
+          "commit": "24f981c",
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M2b-C1-worker.log",
+              "verdict": "PASS",
+              "base": "b8bcae3",
+              "changed_files": [
+                "server/src/models/manager.ts",
+                "server/src/models/manager.test.ts",
+                "server/src/http/server.test.ts"
+              ],
+              "verifier": {
+                "artifact": ".harness/evidence/M2b-C1-verifier.log",
+                "exit_code": 0,
+                "verdict": "PASS",
+                "tests_weakened": "NO",
+                "discrepancies": "NONE",
+                "note": "new race tests confirmed Red against unfixed manager.ts; server 76 pass"
+              }
+            }
+          ]
         }
       ],
-      "reviews": [],
-      "findings": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "CHANGES_REQUIRED",
+          "scope": "SUBSTANTIVE",
+          "tier": "Top",
+          "reason_code": "MILESTONE_REVIEW",
+          "diff_range": "c9fdd5e42c23ebadf125b6d0cde83ae7d659f647..72e781c",
+          "artifact": ".harness/reviews/M2b-cycle1.md",
+          "validation_log": ".harness/evidence/M2b-review.log",
+          "pre_correction": "b8bcae32221cc3941ccef8702cfd6b066de6db93",
+          "correction_diff": "b8bcae32221cc3941ccef8702cfd6b066de6db93..HEAD",
+          "correction_files": [
+            "server/src/http/server.test.ts",
+            "server/src/models/manager.test.ts",
+            "server/src/models/manager.ts"
+          ],
+          "correction_tiers": [
+            "Mid"
+          ],
+          "files_outside_findings": "none; all three implement or test finding F1"
+        }
+      ],
+      "findings": [
+        {
+          "id": "M2b-cycle1-F1",
+          "severity": "IMPORTANT",
+          "status": "CORRECTED",
+          "correction_task": "M2b-C1",
+          "report": ".harness/reviews/M2b-cycle1.md",
+          "resolved_by": null
+        },
+        {
+          "id": "M2b-cycle1-F2",
+          "severity": "OPTIONAL",
+          "status": "DEFERRED",
+          "correction_task": null,
+          "report": ".harness/reviews/M2b-cycle1.md",
+          "resolved_by": "recorded under Follow-ups; candidate for M2c"
+        }
+      ],
       "validation": [
         {
           "command": "cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/e2e-tailnet-proof.sh && (cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh) && (cd ops && bun test src/token && bash scripts/verify-ops-install.sh) && (cd mobile && bun run typecheck && bun test src/api src/ui src/chat src/app-routing && bun run lint && bun run smoke:runtime && bash scripts/model-list-proof.sh && bash scripts/model-swap-proof.sh && bash scripts/model-failed-load-proof.sh && npx expo export --platform ios && rm -rf dist)",
