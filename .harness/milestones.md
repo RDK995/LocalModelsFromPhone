@@ -232,17 +232,17 @@ Files changed by corrections: mobile/src/chat/chatController.ts; mobile/src/chat
 - Setup (and Settings token update) accepts any token without checking it against the server; a wrong token is only detected on the first chat send, where Chat shows a clear error (human-observed 2026-09-25). Consider validating the token (e.g. GET /v1/state) before leaving Setup.
 - As-built M1 claim mismatches to reconcile with the agreed architecture: C3 appears in M1's diff but is not in M1's Architecture field; C5 was reported as claimed but absent (deferred to M2 per code comments). See .harness/as-built/M1.md.
 
-## M2 — Model list, swap-load, and unload with busy confirmation
+## M2a — Installed models and true resident state on the phone
 
 Status: TODO
 
 ### Outcome
 
-The phone shows every installed Ollama model and the true resident state, can load (swap) or unload with a confirmation gate when busy or when another tool owns the resident model, and a loaded model stays resident indefinitely.
+The phone's model screen lists every model installed in Ollama by its real name and size, and shows the true resident model (including one loaded by another tool on the Mac) or an explicit nothing-loaded state, served by GET /v1/state. Split from M2 at pickup (5 criteria, within size) because of operational-complexity signals CONCURRENCY_LIFECYCLE + IMPLEMENTATION_PLUS_LIVE_PROOF (a required split), plus MULTIPLE_OUTCOMES, SUBSYSTEMS_GT_3 and PRODUCTION_FILES_GT_8; parts: M2a model list and resident state, M2b swap-load/unload that stays resident, M2c busy confirmation.
 
 ### Architecture
 
-C1, C4, C5, C7
+C1, C2, C4, C5, C7
 
 ### As-Built
 
@@ -251,10 +251,96 @@ Pending.
 ### Acceptance Criteria
 
 - [ ] **M2-AC1**: The app's model list matches Ollama GET /api/tags by real name and size, with no hardcoded model names.
+
+### Baseline
+
+Pending.
+
+### Evidence
+
+Pending.
+
+### Validation
+
+Pending.
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+None.
+
+## M2b — Swap-load and unload from the phone, staying resident
+
+Status: TODO
+
+### Outcome
+
+From the phone a user can load a model (a swap: every other resident model is unloaded first) or unload the resident one; the operation runs asynchronously while the app polls GET /v1/state through loading to ready or a specific failure reason, and a model loaded from the phone stays resident indefinitely (keep_alive -1), including across chat replies. The confirmation rule for a reply in flight or a resident model not loaded by this server belongs to M2c.
+
+### Architecture
+
+C1, C2, C4, C5, C7
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
 - [ ] **M2-AC2**: Loading model A then model B leaves only B resident in GET /api/ps; unloading leaves nothing resident.
 - [ ] **M2-AC3**: A model loaded from the phone remains resident in GET /api/ps after 10 minutes idle and after a chat reply completes.
-- [ ] **M2-AC4**: Swapping or unloading while a reply is in flight, or while the resident model was not loaded by this server, requires explicit confirmation, and cancelling the confirmation leaves state unchanged.
 - [ ] **M2-AC5**: A failed load, such as out of memory, leaves nothing resident and the app shows the failure reason.
+
+### Baseline
+
+Pending.
+
+### Evidence
+
+Pending.
+
+### Validation
+
+Pending.
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+None.
+
+## M2c — Busy confirmation before a swap or unload
+
+Status: TODO
+
+### Outcome
+
+Before a swap or unload, the server answers 409 confirmation_required with its reasons when a reply is in flight or the resident model was not loaded by this server; the app shows that warning (the other-tool case labelled as a best approximation), confirming cancels any in-flight reply and proceeds, and cancelling the confirmation leaves state unchanged.
+
+### Architecture
+
+C1, C2, C4, C5, C6
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M2-AC4**: Swapping or unloading while a reply is in flight, or while the resident model was not loaded by this server, requires explicit confirmation, and cancelling the confirmation leaves state unchanged.
 
 ### Baseline
 
