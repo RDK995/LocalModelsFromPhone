@@ -48,7 +48,7 @@ Per criterion (full detail in state.json criteria[].evidence):
 
 ### Validation
 
-cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/e2e-tailnet-proof.sh && (cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh) && (cd ops && bun test src/token && bash scripts/verify-ops-install.sh) && (cd mobile && bun run typecheck && bun test src/api src/ui src/chat src/app-routing && bun run lint && npx expo export --platform ios && rm -rf dist)
+cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/e2e-tailnet-proof.sh && (cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh) && (cd ops && bun test src/token && bash scripts/verify-ops-install.sh) && (cd mobile && bun run typecheck && bun test src/api src/ui src/chat src/app-routing && bun run lint && bun run smoke:runtime && npx expo export --platform ios && rm -rf dist)
 
 Needs the live LaunchAgents, Tailscale and Ollama. Artifacts: .harness/evidence/M1-T5b-verifier.log, .harness/evidence/M1-T7-verifier.log; cycle 2: .harness/evidence/M1-C7-verifier-2.log (e2e exit 0), M1-C6-verifier.log (mobile 0), M1-C8-verifier.log (ops 0)
 
@@ -185,9 +185,24 @@ Record pass/fail on M1-AC1 (steps 1-4, 8), M1-AC2 (steps 6-7), M1-AC3 (step 5).
 Recommended decision:
 Do the re-test. If all pass, record them and set M1 back to REVIEW for the scoped final review of cycle 4's corrections. If any fails, record exactly what the screen showed; both override cycles are spent, so the milestone needs a human decision.
 
+Human on-phone re-test after fix cycle 4: all eight steps PASS (recorded in state.json).
+
+Cycle 5 review (final review of cycle 4's corrections, at 5270074): CHANGES REQUIRED (SUBSTANTIVE) — .harness/reviews/M1-cycle5.md. All four criteria PASS. Finding 1 IMPORTANT (FR13: a 401 must show "password wrong or changed" and route to Settings; the app only showed a generic error on Chat), findings 2-3 OPTIONAL. Human authorised fix cycle 5 (review_override allow_cycles 5) to fix finding 1 in M1.
+Pre-correction: c9e3560b9c38e138d1d4bbd6d2a91a43f791204a
+Corrections (each verifier-confirmed, committed):
+- M1-C14 finding 1: chatController.sendMessage routes any UnauthorizedError (from GET /v1/state, thrown by chat(), or delivered to chat's onError) to a new onUnauthorized callback instead of onError; chat.tsx alerts "Password wrong or changed" and pushes /settings?updateToken=1; settings.tsx opens the token form when updateToken is "1". Three new controller tests (401 on state, 401 on chat, non-401 still onError), RED seen first — Mid attempt 3 PASS; verifier PASS (typecheck, 38 tests, lint); 658f33e
+- M1-C15 finding 1: runtime smoke gains --token=wrong: fakes the expo/fetch native module (every request 401) and the iOS AlertManager, types "hello" and taps Send on Chat, and requires the "Password wrong or changed" alert, no "Error" alert, and Settings with the token form open (Bearer Token + Save, no Update Token). Verifier reproduced RED on the c9e3560 source (exit 1: "Error" alert, no Settings) — Mid attempt 3 PASS; verifier PASS; c4d390e
+- M1-C16 finding 3: e2e pf iface check requires a non-empty tailnet interface — Cheap attempt 1 PASS; verifier PASS (empty/equal/unequal cases; live e2e exit 0); 7bd6846
+- Finding 2 (record only): `bun run smoke:runtime` added to the mobile stage of ### Validation and state.json validation[0].command.
+Bundle host restarted (launchctl kickstart, no sudo). The tailnet-served bundle contains "Password wrong or changed" and passes the runtime check in all three modes (present, absent, wrong): .harness/evidence/M1-cycle5-served-smoke.log, SERVED_SMOKE_EXIT=0. Serve mappings (/ -> 7787, /app -> 7788, :8443 -> 7789) and the pf anchor untouched.
+On-phone check: not required before the final review. The served-bundle drive runs chat.tsx's real send path through the real expo/fetch client to the alert and the Settings form. What it cannot show is native Alert drawing and the Settings keyboard layout (already passed by the human in cycle 4, step 6). Optional human check: Settings > Update Token, paste `wrong`, Save, back to Chat, send "hi": expect "Password wrong or changed" then Settings with the token box open; paste the real token (`pbcopy < ~/.phone-models/token` on the Mac), Save, back, send: expect a reply.
+Validation artifacts: .harness/evidence/M1-C14-verifier.log, M1-C15-verifier.log, M1-C16-verifier.log, M1-cycle5-served-smoke.log
+Correction diff: git diff c9e3560b9c38e138d1d4bbd6d2a91a43f791204a HEAD
+Files changed by corrections: mobile/src/chat/chatController.ts; mobile/src/chat/chatController.test.ts; mobile/src/app/chat.tsx; mobile/src/app/settings.tsx; mobile/scripts/{runtime-smoke.mjs,runtime-smoke.sh}; ops/scripts/e2e-tailnet-proof.sh. No file outside the findings' scope (runtime-smoke answers finding 1; the e2e script answers finding 3).
+
 ### Review Cycles
 
-4
+5
 
 ### Follow-ups
 

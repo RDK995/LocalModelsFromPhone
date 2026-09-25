@@ -33,7 +33,7 @@
         "FR14"
       ],
       "status": "REVIEW",
-      "review_cycles": 4,
+      "review_cycles": 5,
       "review_override": {
         "date": "2026-09-25",
         "by": "human",
@@ -1358,6 +1358,79 @@
           "packet": ".harness/tasks/M1-C13.md",
           "artifact": ".harness/evidence/M1-C13-verifier.log",
           "result": "PASS"
+        },
+        {
+          "id": "M1-C14",
+          "scope": "401 shows 'Password wrong or changed' and routes to Settings with the token form open",
+          "findings": [
+            "cycle5-1"
+          ],
+          "paths": [
+            "mobile/src/chat/chatController.ts",
+            "mobile/src/chat/chatController.test.ts",
+            "mobile/src/app/chat.tsx",
+            "mobile/src/app/settings.tsx"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "small behaviour change across controller, two screens and unit tests"
+          },
+          "attempts": [
+            "Mid attempt 3 PASS; RED seen for new 401 tests; verifier PASS (typecheck, 38 tests, lint)"
+          ],
+          "commit": "658f33e",
+          "packet": ".harness/tasks/M1-C14.md",
+          "artifact": ".harness/evidence/M1-C14-verifier.log",
+          "result": "PASS"
+        },
+        {
+          "id": "M1-C15",
+          "scope": "runtime smoke --token=wrong drives a 401 on Chat to Settings with the form open",
+          "findings": [
+            "cycle5-1"
+          ],
+          "paths": [
+            "mobile/scripts/runtime-smoke.mjs",
+            "mobile/scripts/runtime-smoke.sh"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "extends existing harness following the M1-C12 drive pattern"
+          },
+          "attempts": [
+            "Mid attempt 3 PASS (report delivered, then runtime turn limit); verifier PASS: smoke 3x PASS, RED independently reproduced on c9e3560 source (exit 1, Error alert, no Settings)"
+          ],
+          "commit": "c4d390e",
+          "packet": ".harness/tasks/M1-C15.md",
+          "artifact": ".harness/evidence/M1-C15-verifier.log",
+          "result": "PASS"
+        },
+        {
+          "id": "M1-C16",
+          "scope": "e2e pf iface check requires a non-empty tailnet interface",
+          "findings": [
+            "cycle5-3"
+          ],
+          "paths": [
+            "ops/scripts/e2e-tailnet-proof.sh"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "one-condition change, fully stated"
+          },
+          "attempts": [
+            "Cheap attempt 1 PASS; verifier PASS (bash -n, direct condition cases, live e2e exit 0)"
+          ],
+          "commit": "7bd6846",
+          "packet": ".harness/tasks/M1-C16.md",
+          "artifact": ".harness/evidence/M1-C16-verifier.log",
+          "result": "PASS"
         }
       ],
       "reviews": [
@@ -1470,7 +1543,30 @@
             "answers": "cycle-5 review finding 1 (IMPORTANT, FR13: 401 must show 'password wrong or changed' and route to Settings); OPTIONAL findings 2 (smoke:runtime in recorded validation) and 3 (e2e empty iface guard)",
             "report": ".harness/reviews/M1-cycle5.md",
             "pre_correction": "c9e3560b9c38e138d1d4bbd6d2a91a43f791204a",
-            "status": "IN_PROGRESS"
+            "status": "COMPLETE",
+            "review_verdict": "CHANGES_REQUIRED",
+            "review_scope": "SUBSTANTIVE",
+            "reviewed_head": "5270074",
+            "review_criteria": "M1-AC1..AC4 all PASS",
+            "review_log": ".harness/evidence/M1-review.log (cycle-5 section)",
+            "correction_diff": "c9e3560b9c38e138d1d4bbd6d2a91a43f791204a..HEAD",
+            "correction_files": [
+              "mobile/scripts/runtime-smoke.mjs",
+              "mobile/scripts/runtime-smoke.sh",
+              "mobile/src/app/chat.tsx",
+              "mobile/src/app/settings.tsx",
+              "mobile/src/chat/chatController.test.ts",
+              "mobile/src/chat/chatController.ts",
+              "ops/scripts/e2e-tailnet-proof.sh"
+            ],
+            "files_outside_findings": "none; mobile/src/** and mobile/scripts/runtime-smoke.* answer finding 1 (runtime-smoke gains a --token=wrong drive proving the 401 -> Settings wiring in the real bundle), ops/scripts/e2e-tailnet-proof.sh answers finding 3; finding 2 is a record-only change (.harness)",
+            "tasks": [
+              "M1-C14",
+              "M1-C15",
+              "M1-C16"
+            ],
+            "bundle_host": "restarted (launchctl kickstart -k gui/<uid>/com.harness.bundle-host, no sudo); served launchAsset contains 'Password wrong or changed' and passes runtime smoke present/absent/wrong: .harness/evidence/M1-cycle5-served-smoke.log (SERVED_SMOKE_EXIT=0). Serve mappings and pf anchor untouched.",
+            "human_check": "not required before the final review (orchestrator judgement): the served-bundle runtime drive exercises chat.tsx -> Alert -> Settings form open; an optional on-phone check is listed in milestones.md"
           }
         }
       ],
@@ -1574,11 +1670,32 @@
           "status": "CORRECTED_PENDING_REVIEW",
           "correction_task": "M1-C8",
           "report": ".harness/reviews/M1-cycle2.md"
+        },
+        {
+          "id": "M1-cycle5-1",
+          "severity": "IMPORTANT",
+          "status": "CORRECTED_PENDING_REVIEW",
+          "correction_task": "M1-C14, M1-C15",
+          "report": ".harness/reviews/M1-cycle5.md"
+        },
+        {
+          "id": "M1-cycle5-2",
+          "severity": "OPTIONAL",
+          "status": "CORRECTED_PENDING_REVIEW",
+          "correction_task": "orchestrator record update (validation command gains bun run smoke:runtime)",
+          "report": ".harness/reviews/M1-cycle5.md"
+        },
+        {
+          "id": "M1-cycle5-3",
+          "severity": "OPTIONAL",
+          "status": "CORRECTED_PENDING_REVIEW",
+          "correction_task": "M1-C16",
+          "report": ".harness/reviews/M1-cycle5.md"
         }
       ],
       "validation": [
         {
-          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/e2e-tailnet-proof.sh && (cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh) && (cd ops && bun test src/token && bash scripts/verify-ops-install.sh) && (cd mobile && bun run typecheck && bun test src/api src/ui src/chat src/app-routing && bun run lint && npx expo export --platform ios && rm -rf dist)",
+          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/e2e-tailnet-proof.sh && (cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh) && (cd ops && bun test src/token && bash scripts/verify-ops-install.sh) && (cd mobile && bun run typecheck && bun test src/api src/ui src/chat src/app-routing && bun run lint && bun run smoke:runtime && npx expo export --platform ios && rm -rf dist)",
           "note": "reviewer runs once; the e2e script needs the live LaunchAgents, Tailscale and Ollama",
           "artifacts": [
             ".harness/evidence/M1-T5b-verifier.log",
@@ -1613,6 +1730,17 @@
             ".harness/evidence/M1-C13-verifier.log"
           ],
           "result": "mobile 0 (35 tests), runtime smoke PASS locally and against the tailnet-served bundle; server/ops unchanged this cycle"
+        },
+        {
+          "cycle": 5,
+          "command": "see milestones.md ### Validation (mobile stage now includes bun run smoke:runtime); plus scripts/runtime-smoke.sh <served launchAsset.url>",
+          "artifacts": [
+            ".harness/evidence/M1-C14-verifier.log",
+            ".harness/evidence/M1-C15-verifier.log",
+            ".harness/evidence/M1-C16-verifier.log",
+            ".harness/evidence/M1-cycle5-served-smoke.log"
+          ],
+          "result": "mobile typecheck/38 tests/lint 0; runtime smoke present/absent/wrong PASS locally and on the served bundle; e2e live exit 0; server unchanged this cycle"
         }
       ],
       "follow_ups": [
@@ -1881,11 +2009,7 @@
         }
       ],
       "budget_note": "Worker dispatch events used: 20 of 22 (T1 x2, T2 x5, T3 x1, T4 x3, T6 x4, T5a x1, T7 x2, T5b x1). Remaining 2.",
-      "blocked": {
-        "problem": "Fix cycle 4 corrections (launch crash with a stored token; Chat double top bar and keyboard offset after first-time Setup) are done, verified and served. Finding B can only be closed by the human's on-phone re-test; the override cap (4) is now spent.",
-        "remaining": "Human on-phone re-test (see milestones.md M1 ### Review, cycle 4)",
-        "recommended": "Do the re-test, record results on M1-AC1..AC3, then set M1 back to REVIEW for the final review of cycle 4's corrections."
-      }
+      "blocked": null
     },
     "M2": {
       "id": "M2",
