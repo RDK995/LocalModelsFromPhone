@@ -69,7 +69,7 @@ Cycle 1: PASS — tier Mid (sonnet), reason IMPLEMENTATION_MID_CHEAP_ONLY (tasks
 
 ## M2b — Swap-load and unload from the phone, staying resident
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -100,15 +100,22 @@ Baseline broad validation GREEN: inherited from the M2a cycle-1 review run at e8
 Tasks (structured detail in state.json):
 - M2b-T1 server swap-load/unload in C5 behind /v1/models/load and /unload, OllamaError reasons, chat 409 operation_in_progress — Mid (ORDINARY_IMPLEMENTATION), attempt 3 INTERRUPTED (turn limit) → continuation 1 PASS; verifier PASS (server 73 tests, typecheck, entry-smoke 7/7; tests not weakened); commit 1eb08ed
 - M2b-T2 phone Load/Unload, ServerError, poll-until-idle helper, busy label and failure message — Mid (ORDINARY_IMPLEMENTATION), attempt 3 INTERRUPTED (turn limit) → continuation 1 PASS; verifier PASS (typecheck, 60 tests, lint, smoke:runtime 3/3); commit a3576a7
-- M2b-T3 live proof — Mid (NOT_BOUNDED), attempt 3 INTERRUPTED and continuation 1 INTERRUPTED, nothing persisted either time; split into M2b-T3a (AC2, AC3; Mid ORDINARY_IMPLEMENTATION) and M2b-T3b (AC5; Mid NOT_BOUNDED, bounded failure search). Both PENDING. They both drive the live Mac and must run one after the other, T3a first.
+- M2b-T3 live proof — Mid (NOT_BOUNDED), attempt 3 INTERRUPTED and continuation 1 INTERRUPTED, nothing persisted either time; split into M2b-T3a and M2b-T3b.
+- M2b-T3a live proof of swap, unload, stays resident after a chat reply and 600 s idle (M2-AC2, M2-AC3) — Mid (ORDINARY_IMPLEMENTATION), attempt 3 PASS; verifier PASS (default IDLE_SECONDS=600; A=devstral:24b, B=qwen3.6:27b; tests not weakened) .harness/evidence/M2b-T3a-verifier.log; commit 75d0dc0
+- M2b-T3b live proof of a genuinely failed load (M2-AC5) — Mid (NOT_BOUNDED) attempt 3 FAIL (packet's probe used an empty-prompt keep_alive 0 generate, which is Ollama's unload request, so nothing was loaded) → Top (opus, Escalated: tier, NO_TEST_ORACLE) attempt 4 PASS; verifier PASS (tests not weakened) .harness/evidence/M2b-T3b-verifier.log; commit a8daebb. Failure method: smallest installed model + a mismatched-shape LoRA adapter → Ollama 500 "llama-server process has terminated: exit status 1"; app shows "Load failed: llama-server process has terminated: exit status 1", "Nothing loaded", /api/ps empty.
 
-Remaining: M2b-T3a, then M2b-T3b; then the milestone validation command and REVIEW. Criteria evidence pending the live proofs (unit coverage: .harness/evidence/M2b-T1-verifier.log, .harness/evidence/M2b-T2-verifier.log).
+Criteria evidence:
+- M2-AC2: live swap A→B leaves /api/ps exactly [B]; unload leaves [] and "Nothing loaded" — .harness/evidence/M2b-T3a-verifier.log; unit: M2b-T1/T2 verifier logs.
+- M2-AC3: /api/ps exactly [B] with expires_at 2319 after a completed chat reply, and exactly [B] after 600 s idle — .harness/evidence/M2b-T3a-verifier.log.
+- M2-AC5: genuine runner load failure leaves resident null, /api/ps empty, view shows Ollama's reason — .harness/evidence/M2b-T3b-verifier.log (not out-of-memory; see Follow-ups).
 
-Live-Mac note: the first T3 attempt left a probe model and evicted devstral:24b; the orchestrator ran `ollama rm m2b-failed-load-probe` and reloaded devstral:24b with keep_alive -1 (state at start restored).
+Live-Mac note: the first T3 attempt left a probe model and evicted devstral:24b; the orchestrator ran `ollama rm m2b-failed-load-probe` and reloaded devstral:24b with keep_alive -1 (state at start restored). This phase: both proofs restore the Mac in an EXIT trap; confirmed after T3b: only devstral:24b resident (expires 2319), the original five models in /api/tags, no probe.
 
 ### Validation
 
-Pending.
+cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/e2e-tailnet-proof.sh && (cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh) && (cd ops && bun test src/token && bash scripts/verify-ops-install.sh) && (cd mobile && bun run typecheck && bun test src/api src/ui src/chat src/app-routing && bun run lint && bun run smoke:runtime && bash scripts/model-list-proof.sh && bash scripts/model-swap-proof.sh && bash scripts/model-failed-load-proof.sh && npx expo export --platform ios && rm -rf dist)
+
+About 12 minutes (model-swap-proof idles 600 s). Needs the live LaunchAgents, Tailscale and Ollama; the proofs restart com.harness.server and com.harness.bundle-host and evict then restore the resident model — run nothing else against the Mac at the same time. Artifacts: .harness/evidence/M2b-T1-verifier.log, M2b-T2-verifier.log, M2b-T3a-verifier.log, M2b-T3b-verifier.log.
 
 ### Review
 
@@ -121,6 +128,7 @@ Pending.
 ### Follow-ups
 
 - Pickup size/shape check: 3 criteria, shape PASS; signals CONCURRENCY_LIFECYCLE + IMPLEMENTATION_PLUS_LIVE_PROOF present (nominally a required split). Not split further: M2b is already the child of the M2 split made for this exact pair, and all three criteria are live observations of the same load/unload lifecycle, so no criterion-conserving seam separates them. A human may prefer a different call.
+- M2-AC5 was proven live with a runner load failure (bad LoRA adapter), not out-of-memory: on this Mac with Ollama 0.32.14 out-of-memory could not be induced (num_ctx is clamped; oversized num_batch/num_gpu oversubscribe without error). The criterion says "such as out of memory"; the reviewer or human should confirm this reading. The server's "Not enough memory" reason is covered by unit tests only.
 
 ## M2c — Busy confirmation before a swap or unload
 
