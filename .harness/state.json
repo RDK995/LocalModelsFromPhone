@@ -2401,7 +2401,7 @@
           "status": "ACCEPTED",
           "attempts": 1,
           "packet": ".harness/tasks/M2b-T1.md",
-          "commit": null,
+          "commit": "1eb08ed",
           "attempt_log": [
             {
               "attempt": 3,
@@ -2514,6 +2514,142 @@
               }
             }
           ]
+        },
+        {
+          "requirements": [
+            "FR3",
+            "FR4",
+            "FR5"
+          ],
+          "constraints": [
+            "no production code changes",
+            "leave Ollama as found",
+            "must not run concurrently with the other live-proof task"
+          ],
+          "findings": [],
+          "status": "SPLIT",
+          "attempts": 0,
+          "commit": null,
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "verdict": "INTERRUPTED",
+              "note": "40-turn limit, no report, nothing persisted in repo; left probe model m2b-failed-load-probe (FROM nemotron3:33b blob, num_ctx 131072) and nothing resident — orchestrator removed the probe and restored devstral:24b keep_alive -1"
+            },
+            {
+              "attempt": 3,
+              "continuation": 1,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "handoff": ".harness/tasks/M2b-T3-handoff-1.md",
+              "verdict": "INTERRUPTED",
+              "note": "40-turn limit, no report, nothing persisted in repo; Mac left with devstral:24b resident, no probe. Split per the continuation rule: the unbounded part is the failure-induction search"
+            }
+          ],
+          "id": "M2b-T3",
+          "scope": "Live proof (superseded: split into M2b-T3a and M2b-T3b)",
+          "tests": "n/a",
+          "criteria": [
+            "M2-AC2",
+            "M2-AC3",
+            "M2-AC5"
+          ],
+          "paths": [
+            "mobile/scripts/"
+          ],
+          "depends_on": [
+            "M2b-T1",
+            "M2b-T2"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "NOT_BOUNDED",
+            "detail": "live proof with failure induction not known in advance"
+          },
+          "packet": ".harness/tasks/M2b-T3.md"
+        },
+        {
+          "requirements": [
+            "FR3",
+            "FR4",
+            "FR5"
+          ],
+          "constraints": [
+            "no production code changes",
+            "leave Ollama as found",
+            "must not run concurrently with the other live-proof task"
+          ],
+          "findings": [],
+          "status": "PENDING",
+          "attempts": 0,
+          "commit": null,
+          "attempt_log": [],
+          "id": "M2b-T3a",
+          "scope": "Live proof: swap A->B, chat reply and 600 s idle keep B resident, unload empties ps",
+          "tests": "cd mobile && bash scripts/model-swap-proof.sh && bun run typecheck && bun run lint",
+          "criteria": [
+            "M2-AC2",
+            "M2-AC3"
+          ],
+          "paths": [
+            "mobile/scripts/model-swap-proof.sh",
+            "mobile/scripts/model-swap-proof.ts"
+          ],
+          "depends_on": [
+            "M2b-T1",
+            "M2b-T2"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "live proof script with stated assertions; failure search removed"
+          },
+          "packet": ".harness/tasks/M2b-T3a.md"
+        },
+        {
+          "requirements": [
+            "FR3",
+            "FR4",
+            "FR5"
+          ],
+          "constraints": [
+            "no production code changes",
+            "leave Ollama as found",
+            "must not run concurrently with the other live-proof task"
+          ],
+          "findings": [],
+          "status": "PENDING",
+          "attempts": 0,
+          "commit": null,
+          "attempt_log": [],
+          "id": "M2b-T3b",
+          "scope": "Live proof: genuinely failed load leaves nothing resident and the view shows the reason",
+          "tests": "cd mobile && bash scripts/model-failed-load-proof.sh && bun run typecheck && bun run lint",
+          "criteria": [
+            "M2-AC5"
+          ],
+          "paths": [
+            "mobile/scripts/model-failed-load-proof.sh",
+            "mobile/scripts/model-failed-load-proof.ts"
+          ],
+          "depends_on": [
+            "M2b-T1",
+            "M2b-T2",
+            "M2b-T3a"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "NOT_BOUNDED",
+            "detail": "must induce a genuine Ollama load failure; search bounded to three num_ctx values, FAIL to human if none fails"
+          },
+          "packet": ".harness/tasks/M2b-T3b.md"
         }
       ],
       "reviews": [],

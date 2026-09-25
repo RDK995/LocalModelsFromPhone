@@ -97,7 +97,14 @@ Baseline broad validation GREEN: inherited from the M2a cycle-1 review run at e8
 
 ### Evidence
 
-Pending.
+Tasks (structured detail in state.json):
+- M2b-T1 server swap-load/unload in C5 behind /v1/models/load and /unload, OllamaError reasons, chat 409 operation_in_progress — Mid (ORDINARY_IMPLEMENTATION), attempt 3 INTERRUPTED (turn limit) → continuation 1 PASS; verifier PASS (server 73 tests, typecheck, entry-smoke 7/7; tests not weakened); commit 1eb08ed
+- M2b-T2 phone Load/Unload, ServerError, poll-until-idle helper, busy label and failure message — Mid (ORDINARY_IMPLEMENTATION), attempt 3 INTERRUPTED (turn limit) → continuation 1 PASS; verifier PASS (typecheck, 60 tests, lint, smoke:runtime 3/3); commit a3576a7
+- M2b-T3 live proof — Mid (NOT_BOUNDED), attempt 3 INTERRUPTED and continuation 1 INTERRUPTED, nothing persisted either time; split into M2b-T3a (AC2, AC3; Mid ORDINARY_IMPLEMENTATION) and M2b-T3b (AC5; Mid NOT_BOUNDED, bounded failure search). Both PENDING. They both drive the live Mac and must run one after the other, T3a first.
+
+Remaining: M2b-T3a, then M2b-T3b; then the milestone validation command and REVIEW. Criteria evidence pending the live proofs (unit coverage: .harness/evidence/M2b-T1-verifier.log, .harness/evidence/M2b-T2-verifier.log).
+
+Live-Mac note: the first T3 attempt left a probe model and evicted devstral:24b; the orchestrator ran `ollama rm m2b-failed-load-probe` and reloaded devstral:24b with keep_alive -1 (state at start restored).
 
 ### Validation
 
