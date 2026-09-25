@@ -32,8 +32,8 @@
         "FR13",
         "FR14"
       ],
-      "status": "REVIEW",
-      "review_cycles": 1,
+      "status": "BLOCKED",
+      "review_cycles": 2,
       "review_override": null,
       "baseline": {
         "commit": "04bb92b7be06984856c1dd1c34b52e2533f656e3",
@@ -52,7 +52,8 @@
             "e2e-tailnet-proof.sh (live, tailnet URL :8443): 80 content events over ~6.5s ending done status complete \u2014 .harness/evidence/M1-T5b-verifier.log",
             "server.test.ts chat streams content then complete \u2014 .harness/evidence/M1-T7-verifier.log",
             "On-phone Expo Go rendering: human check, not yet done",
-            "HUMAN CHECK 2026-09-25 (after cycle-2 review, finding B): on the iPhone with Tailscale ON, Expo Go opened exp://ryans-mac-studio.tailc3648a.ts.net:8081, hung on 'Opening project', then showed 'Unmatched Route'. The app did not reach the chat or Settings screens; token paste, streaming and Stop could not be tried. FAIL."
+            "HUMAN CHECK 2026-09-25 (after cycle-2 review, finding B): on the iPhone with Tailscale ON, Expo Go opened exp://ryans-mac-studio.tailc3648a.ts.net:8081, hung on 'Opening project', then showed 'Unmatched Route'. The app did not reach the chat or Settings screens; token paste, streaming and Stop could not be tried. FAIL.",
+            "CYCLE-2 FIX (M1-C6, commit 1a7565e): cause of 'Unmatched Route' was that mobile/src/app had no index.tsx, so the root path Expo Go opens matched no screen. Added index.tsx redirecting to /setup (no token) or /chat (token); bundle host restarted; the tailnet-served bundle registers ./index.tsx. The ~20s 'Opening project' wait matches the first production bundle build (bundle-host.log: 'iOS Bundled 23140ms'). On-phone re-test by the human: pending."
           ]
         },
         {
@@ -63,7 +64,8 @@
             "e2e: 7 routes 401 without and with wrong token via tailnet; token command mode 600, refuses 644/640/604 \u2014 .harness/evidence/M1-T5b-verifier.log",
             "server.test.ts auth on every route; entry-smoke 7/7 \u2014 .harness/evidence/M1-T7-verifier.log",
             "App settings token paste: mobile tests (M1-T6); on-phone paste is a human check, not yet done",
-            "HUMAN CHECK 2026-09-25 (after cycle-2 review, finding B): on the iPhone with Tailscale ON, Expo Go opened exp://ryans-mac-studio.tailc3648a.ts.net:8081, hung on 'Opening project', then showed 'Unmatched Route'. The app did not reach the chat or Settings screens; token paste, streaming and Stop could not be tried. FAIL."
+            "HUMAN CHECK 2026-09-25 (after cycle-2 review, finding B): on the iPhone with Tailscale ON, Expo Go opened exp://ryans-mac-studio.tailc3648a.ts.net:8081, hung on 'Opening project', then showed 'Unmatched Route'. The app did not reach the chat or Settings screens; token paste, streaming and Stop could not be tried. FAIL.",
+            "CYCLE-2 FIX (M1-C6, commit 1a7565e): cause of 'Unmatched Route' was that mobile/src/app had no index.tsx, so the root path Expo Go opens matched no screen. Added index.tsx redirecting to /setup (no token) or /chat (token); bundle host restarted; the tailnet-served bundle registers ./index.tsx. The ~20s 'Opening project' wait matches the first production bundle build (bundle-host.log: 'iOS Bundled 23140ms'). On-phone re-test by the human: pending."
           ]
         },
         {
@@ -74,7 +76,8 @@
             "e2e: cancel over tailnet -> cancelled terminal event, no bytes after 3s, Ollama log stop: cancel task, runner CPU 2.24s -> 0.00s \u2014 .harness/evidence/M1-T5b-verifier.log",
             "server.test.ts cancel aborts Ollama \u2014 .harness/evidence/M1-T7-verifier.log",
             "Phone output halting: human check, not yet done",
-            "HUMAN CHECK 2026-09-25 (after cycle-2 review, finding B): on the iPhone with Tailscale ON, Expo Go opened exp://ryans-mac-studio.tailc3648a.ts.net:8081, hung on 'Opening project', then showed 'Unmatched Route'. The app did not reach the chat or Settings screens; token paste, streaming and Stop could not be tried. FAIL."
+            "HUMAN CHECK 2026-09-25 (after cycle-2 review, finding B): on the iPhone with Tailscale ON, Expo Go opened exp://ryans-mac-studio.tailc3648a.ts.net:8081, hung on 'Opening project', then showed 'Unmatched Route'. The app did not reach the chat or Settings screens; token paste, streaming and Stop could not be tried. FAIL.",
+            "CYCLE-2 FIX (M1-C6, commit 1a7565e): cause of 'Unmatched Route' was that mobile/src/app had no index.tsx, so the root path Expo Go opens matched no screen. Added index.tsx redirecting to /setup (no token) or /chat (token); bundle host restarted; the tailnet-served bundle registers ./index.tsx. The ~20s 'Opening project' wait matches the first production bundle build (bundle-host.log: 'iOS Bundled 23140ms'). On-phone re-test by the human: pending."
           ]
         },
         {
@@ -84,7 +87,8 @@
           "evidence": [
             "e2e: 7789 listens on 127.0.0.1 only; tailnet :8443 200; LAN 192.168.0.27 refuses 7789 and 8443; 8081 manifest via tailnet name 200 \u2014 .harness/evidence/M1-T5b-verifier.log",
             "GAP: LAN 8081 (Expo bundle host, binds *:8081) is currently REACHABLE; closing it needs a human-run sudo pf command; LAN-device check is a human check",
-            "HUMAN CHECK 2026-09-25: after the human ran `sudo bash ops/scripts/install-pf-anchor.sh` (LaunchDaemon com.harness.pf-bundle-host installed, loader last exit 0), the human opened http://192.168.0.27:8081 in Safari on the iPhone with Tailscale OFF on the home Wi-Fi: it FAILED TO LOAD. Note: e2e-tailnet-proof.sh run on the Mac itself still reports LAN 192.168.0.27:8081 REACHABLE (HTTP 200) after install; the Mac-local probe may not exercise the LAN path (unconfirmed)."
+            "HUMAN CHECK 2026-09-25: after the human ran `sudo bash ops/scripts/install-pf-anchor.sh` (LaunchDaemon com.harness.pf-bundle-host installed, loader last exit 0), the human opened http://192.168.0.27:8081 in Safari on the iPhone with Tailscale OFF on the home Wi-Fi: it FAILED TO LOAD. Note: e2e-tailnet-proof.sh run on the Mac itself still reports LAN 192.168.0.27:8081 REACHABLE (HTTP 200) after install; the Mac-local probe may not exercise the LAN path (unconfirmed).",
+            "CYCLE-2 FIX (M1-C7, commit 1a248cf): the Mac-local LAN 8081 probe (routes over lo0, always REACHABLE) was replaced by checks that the pf LaunchDaemon's last exit is 0 and its loaded interface equals the current tailnet utun; live e2e exit 0 \u2014 .harness/evidence/M1-C7-verifier-2.log. The human LAN-device check above remains the LAN evidence."
           ]
         }
       ],
@@ -1122,6 +1126,80 @@
           "packet": ".harness/tasks/M1-C5.md",
           "artifact": ".harness/evidence/M1-cycle1-validation.log",
           "result": "PASS"
+        },
+        {
+          "id": "M1-C6",
+          "scope": "Root index route (Unmatched Route in Expo Go); bundle host restarted onto it",
+          "findings": [
+            "B"
+          ],
+          "paths": [
+            "mobile/src/app-routing/initialRoute.test.ts",
+            "mobile/src/app-routing/initialRoute.ts",
+            "mobile/src/app-routing/rootIndexRoute.test.ts",
+            "mobile/src/app/index.tsx"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "route addition plus live bundle-host proof; on-device oracle is human-only"
+          },
+          "attempts": [
+            "Mid attempt 3 PASS; verifier PASS (typecheck, 27 tests, lint, iOS export; live tailnet manifest 200, bundle 200 3698413 bytes, bundle registers ./index.tsx)"
+          ],
+          "commit": "1a7565e",
+          "packet": ".harness/tasks/M1-C6.md",
+          "artifact": ".harness/evidence/M1-C6-verifier.log",
+          "result": "PASS"
+        },
+        {
+          "id": "M1-C7",
+          "scope": "e2e: replace Mac-local LAN 8081 probe with LaunchDaemon + iface checks",
+          "findings": [
+            "A"
+          ],
+          "paths": [
+            "ops/scripts/e2e-tailnet-proof.sh"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "one script section replaced with specified read-only checks"
+          },
+          "attempts": [
+            "Cheap attempt 1 FAIL (verifier: dropped two LAN-device human instructions, server URL and 7789/8443)",
+            "Cheap attempt 2 PASS; verifier PASS (bash -n, live e2e exit 0, all automated checks)"
+          ],
+          "commit": "1a248cf",
+          "packet": ".harness/tasks/M1-C7.md",
+          "artifact": ".harness/evidence/M1-C7-verifier-2.log",
+          "result": "PASS"
+        },
+        {
+          "id": "M1-C8",
+          "scope": "token main() takes copy function as a parameter",
+          "findings": [
+            "C"
+          ],
+          "paths": [
+            "ops/src/token.ts",
+            "ops/src/token.test.ts"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "signature threaded through one function and its test"
+          },
+          "attempts": [
+            "Cheap attempt 1 PASS; verifier PASS (ops token tests, verify-ops-install)"
+          ],
+          "commit": "85a6f41",
+          "packet": ".harness/tasks/M1-C8.md",
+          "artifact": ".harness/evidence/M1-C8-verifier.log",
+          "result": "PASS"
         }
       ],
       "reviews": [
@@ -1165,6 +1243,28 @@
             "server/src/ollama/client.ts"
           ],
           "files_outside_findings": "none; every file is named by or directly implements a finding (F1-F11)"
+        },
+        {
+          "cycle": 2,
+          "verdict": "CHANGES_REQUIRED",
+          "scope": "SUBSTANTIVE",
+          "diff_range": "7263d6338e07fe9d0a3302154bc685c594d6b6ec..c763b9f",
+          "artifact": ".harness/reviews/M1-cycle2.md",
+          "review_log": ".harness/evidence/M1-review-cycle2.log",
+          "pre_correction": "5ec03b045788188acb8975ae6097190ed27f8dcf",
+          "correction_diff": "5ec03b045788188acb8975ae6097190ed27f8dcf..HEAD",
+          "correction_files": [
+            "mobile/src/app-routing/initialRoute.test.ts",
+            "mobile/src/app-routing/initialRoute.ts",
+            "mobile/src/app-routing/rootIndexRoute.test.ts",
+            "mobile/src/app/index.tsx",
+            "ops/scripts/e2e-tailnet-proof.sh",
+            "ops/src/token.test.ts",
+            "ops/src/token.ts"
+          ],
+          "files_outside_findings": "none; mobile/* answers B (Unmatched Route found in the human's on-phone check), e2e-tailnet-proof.sh answers A, ops/src/token* answers C",
+          "tier": "Top",
+          "reason_code": "MILESTONE_REVIEW"
         }
       ],
       "findings": [
@@ -1245,11 +1345,33 @@
           "status": "CORRECTED_PENDING_REVIEW",
           "correction_task": "M1-C1,M1-C4",
           "report": ".harness/reviews/M1-cycle1.md"
+        },
+        {
+          "id": "M1-cycle2-A",
+          "severity": "IMPORTANT",
+          "status": "CORRECTED_PENDING_REVIEW",
+          "correction_task": "M1-C7",
+          "report": ".harness/reviews/M1-cycle2.md"
+        },
+        {
+          "id": "M1-cycle2-B",
+          "severity": "IMPORTANT",
+          "status": "CORRECTED_PENDING_HUMAN_CHECK",
+          "correction_task": "M1-C6",
+          "report": ".harness/reviews/M1-cycle2.md",
+          "note": "Code defect found by the human's on-phone check (Unmatched Route: no src/app/index.tsx) fixed and served live; the on-phone checks themselves can only be done by the human."
+        },
+        {
+          "id": "M1-cycle2-C",
+          "severity": "OPTIONAL",
+          "status": "CORRECTED_PENDING_REVIEW",
+          "correction_task": "M1-C8",
+          "report": ".harness/reviews/M1-cycle2.md"
         }
       ],
       "validation": [
         {
-          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/e2e-tailnet-proof.sh && (cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh) && (cd ops && bun test src/token && bash scripts/verify-ops-install.sh) && (cd mobile && bun run typecheck && bun test src/api src/ui && bun run lint && npx expo export --platform ios && rm -rf dist)",
+          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/e2e-tailnet-proof.sh && (cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh) && (cd ops && bun test src/token && bash scripts/verify-ops-install.sh) && (cd mobile && bun run typecheck && bun test src/api src/ui src/chat src/app-routing && bun run lint && npx expo export --platform ios && rm -rf dist)",
           "note": "reviewer runs once; the e2e script needs the live LaunchAgents, Tailscale and Ollama",
           "artifacts": [
             ".harness/evidence/M1-T5b-verifier.log",
@@ -1262,6 +1384,16 @@
           "command": "see milestones.md ### Validation",
           "artifact": ".harness/evidence/M1-cycle1-validation.log",
           "result": "server 0, ops 0, mobile 0; e2e exit 1 on exactly one check: LAN 192.168.0.27:8081 REACHABLE (pf anchor awaiting human sudo install)"
+        },
+        {
+          "cycle": 2,
+          "command": "see milestones.md ### Validation",
+          "artifacts": [
+            ".harness/evidence/M1-C7-verifier-2.log",
+            ".harness/evidence/M1-C6-verifier.log",
+            ".harness/evidence/M1-C8-verifier.log"
+          ],
+          "result": "e2e exit 0 (all automated checks), mobile 0 (27 tests), ops 0; server unchanged since cycle-2 review (39 pass there)"
         }
       ],
       "follow_ups": [
@@ -1509,7 +1641,12 @@
           "by": "human"
         }
       ],
-      "budget_note": "Worker dispatch events used: 20 of 22 (T1 x2, T2 x5, T3 x1, T4 x3, T6 x4, T5a x1, T7 x2, T5b x1). Remaining 2."
+      "budget_note": "Worker dispatch events used: 20 of 22 (T1 x2, T2 x5, T3 x1, T4 x3, T6 x4, T5a x1, T7 x2, T5b x1). Remaining 2.",
+      "blocked": {
+        "problem": "Cycle-2 corrections are done and validated. Finding B needs on-phone checks that only the human can perform; the next review is the last one the 2-cycle cap allows, and without that evidence it would fail AC1-AC3 again.",
+        "remaining": "Human on-phone re-test (see milestones.md M1 ### Review, cycle 2)",
+        "recommended": "Do the re-test, record results on M1-AC1..AC3, then set M1 back to REVIEW for the scoped final review."
+      }
     },
     "M2": {
       "id": "M2",

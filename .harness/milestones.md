@@ -2,7 +2,7 @@
 
 ## M1 — Authenticated tailnet chat stream proof
 
-Status: REVIEW
+Status: BLOCKED
 
 ### Outcome
 
@@ -48,9 +48,9 @@ Per criterion (full detail in state.json criteria[].evidence):
 
 ### Validation
 
-cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/e2e-tailnet-proof.sh && (cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh) && (cd ops && bun test src/token && bash scripts/verify-ops-install.sh) && (cd mobile && bun run typecheck && bun test src/api src/ui && bun run lint && npx expo export --platform ios && rm -rf dist)
+cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/e2e-tailnet-proof.sh && (cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh) && (cd ops && bun test src/token && bash scripts/verify-ops-install.sh) && (cd mobile && bun run typecheck && bun test src/api src/ui src/chat src/app-routing && bun run lint && npx expo export --platform ios && rm -rf dist)
 
-Needs the live LaunchAgents, Tailscale and Ollama. Artifacts: .harness/evidence/M1-T5b-verifier.log, .harness/evidence/M1-T7-verifier.log
+Needs the live LaunchAgents, Tailscale and Ollama. Artifacts: .harness/evidence/M1-T5b-verifier.log, .harness/evidence/M1-T7-verifier.log; cycle 2: .harness/evidence/M1-C7-verifier-2.log (e2e exit 0), M1-C6-verifier.log (mobile 0), M1-C8-verifier.log (ops 0)
 
 ### Review
 
@@ -82,9 +82,39 @@ Human runs once: cd /Users/ryankenny/Projects/CodingHarnessv2 && sudo bash ops/s
 Recommended decision:
 Run the install command, re-run bash ops/scripts/e2e-tailnet-proof.sh (expect all PASS), then set M1 back to REVIEW for the scoped cycle-2 re-review.
 
+Cycle 2: CHANGES REQUIRED (SUBSTANTIVE) — .harness/reviews/M1-cycle2.md (A, B IMPORTANT; C OPTIONAL); log .harness/evidence/M1-review-cycle2.log
+Pre-correction: 5ec03b045788188acb8975ae6097190ed27f8dcf (c763b9f plus the committed review report and the human's on-phone result; no code change)
+Corrections (each verifier-confirmed, committed):
+- M1-C6 B: human's on-phone check showed "Unmatched Route"; cause: mobile/src/app had no index.tsx, so "/" matched no screen. Added index.tsx redirecting to /setup or /chat — Mid, attempt 3 PASS; typecheck, 27 tests, lint, iOS export; bundle host restarted (no sudo), tailnet bundle registers ./index.tsx; 1a7565e
+- M1-C7 A: e2e checks pf LaunchDaemon last exit 0 and loaded iface == current tailnet utun; Mac-local LAN 8081 probe replaced by an info line — Cheap attempt 1 FAIL (dropped two human instructions) → Cheap attempt 2 PASS; live e2e exit 0; 1a248cf
+- M1-C8 C: token main(args, copy = defaultCopyCommand), no globalThis — Cheap attempt 1 PASS; 85a6f41
+Correction diff: git diff 5ec03b045788188acb8975ae6097190ed27f8dcf HEAD
+Files changed by corrections: mobile/src/app/index.tsx; mobile/src/app-routing/{initialRoute.ts,initialRoute.test.ts,rootIndexRoute.test.ts}; ops/scripts/e2e-tailnet-proof.sh; ops/src/{token.ts,token.test.ts}. No file outside the findings' scope.
+
+Problem:
+Cycle-2 corrections are done and validated, including the fix for the "Unmatched Route" screen. Finding B (M1-AC1, AC2 app half, AC3 phone half) can only be closed by on-phone checks the human performs. The next review is the last the 2-cycle cap allows; without that evidence it would fail B again.
+
+Requirement/milestone affected:
+M1-AC1, M1-AC2, M1-AC3 (finding B).
+
+Attempts made:
+1. M1-C6 diagnosed the human's "Unmatched Route" (no root route) and added mobile/src/app/index.tsx; verifier confirmed the tailnet-served bundle contains the new route.
+2. The ~20s "Opening project" wait matches the first production bundle build (bundle-host.log "iOS Bundled 23140ms"); a warm bundle now serves in <1s.
+
+Remaining issue:
+Human re-test on the iPhone, Tailscale ON:
+1. Force-close Expo Go, reopen it, open exp://ryans-mac-studio.tailc3648a.ts.net:8081 (the first open may take ~20-30s while the bundle builds). Expect the Setup screen, not "Unmatched Route".
+2. On the Mac run `pbcopy < ~/.phone-models/token`, then paste the token into Setup (it arrives via Universal Clipboard); tap Continue. Expect the Chat screen. Open Settings from Chat to confirm it opens.
+3. Send a short prompt. Expect the reply to appear word by word and finish.
+4. Send a long prompt, tap Stop while it is writing. Expect the text to stop and not resume.
+Record pass/fail for each on M1-AC1 (step 3), M1-AC2 (step 2), M1-AC3 (step 4).
+
+Recommended decision:
+Do the re-test. If all four pass, record them and set M1 back to REVIEW for the scoped final review. If any fails, record exactly what the screen showed; the cap is then spent and the milestone needs a human decision.
+
 ### Review Cycles
 
-1
+2
 
 ### Follow-ups
 
@@ -102,6 +132,8 @@ Run the install command, re-run bash ops/scripts/e2e-tailnet-proof.sh (expect al
 - pf loader loads nothing until Tailscale's utun resolves, so 8081 is unfiltered from boot until Tailscale is up (<=60s after). Stricter option: always load the lo0 pass + block.
 - pf loader uses the tailnet IPv4 recorded at install; re-run install if it changes.
 - I10 `think:true when supported` not sent on /v1/chat; belongs with thinking display (M4).
+- Bundle host serves a production build that takes ~23s to build cold after each restart; Expo Go shows "Opening project" meanwhile (cycle 2, M1-C6 log).
+- mobile/src/app-routing/rootIndexRoute.test.ts checks index.tsx statically (bun cannot import expo-router/react-native sources); a real route-resolution test needs a jest-expo style runner.
 - Cycle-1 server API changes: invalid chat body code is now bad_request; SSE streams begin with ": connected"; client disconnect no longer cancels a reply (Stop POSTs cancel).
 
 ## M2 — Model list, swap-load, and unload with busy confirmation
