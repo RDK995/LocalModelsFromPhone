@@ -266,7 +266,7 @@ check "pf anchor LaunchDaemon is loaded and healthy (last exit code = 0)" \
 
 IFACE_FILE_CONTENT="$(cat /var/run/com.harness.pf-bundle-host.iface 2>/dev/null)"
 check "pf anchor loaded for the current Tailscale interface ($IFACE_FILE_CONTENT == $TS_IF)" \
-  test "$IFACE_FILE_CONTENT" = "$TS_IF"
+  bash -c '[[ -n "$2" && "$1" == "$2" ]]' _ "$IFACE_FILE_CONTENT" "$TS_IF"
 
 if [[ -n "$LAN_IP" ]]; then
   LAN_ROUTE="$(route -n get "$LAN_IP" 2>/dev/null | awk '/interface:/ { print $2 }')"
