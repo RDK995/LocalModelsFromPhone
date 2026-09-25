@@ -69,6 +69,46 @@ export interface OllamaChatResponse {
 
 const OLLAMA_BASE_URL = "http://127.0.0.1:11434";
 
+/**
+ * A non-OK response from Ollama. `message` is Ollama's own `error` field
+ * (from a JSON `{"error": "<text>"}` body) when present, else the response's
+ * status text. Kept distinguishable from a network failure (fetch rejecting),
+ * which throws a plain Error/TypeError instead.
+ */
+export class OllamaError extends Error {
+  readonly status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "OllamaError";
+    this.status = status;
+  }
+}
+
+/**
+ * Read a non-OK response body for Ollama's `error` text, falling back to the
+ * status text (e.g. "Not Found") when the body is absent or not JSON with an
+ * `error` field.
+ */
+async function ollamaErrorMessage(response: Response): Promise<string> {
+  const text = await response.text().catch(() => "");
+  if (text) {
+    try {
+      const parsed: unknown = JSON.parse(text);
+      if (
+        parsed !== null &&
+        typeof parsed === "object" &&
+        typeof (parsed as Record<string, unknown>).error === "string"
+      ) {
+        return (parsed as Record<string, unknown>).error as string;
+      }
+    } catch {
+      // Not JSON; fall through to statusText.
+    }
+  }
+  return response.statusText || `HTTP ${response.status}`;
+}
+
 export class OllamaClient {
   private baseUrl: string;
 
@@ -113,11 +153,25 @@ export class OllamaClient {
     });
 
     if (!response.ok) {
-      throw new Error(`Ollama /api/generate failed: ${response.status}`);
+      throw new OllamaError(response.status, await ollamaErrorMessage(response));
     }
 
     // Consume the response
     await response.text();
+  }
+
+  /**
+   * Load a model: keep it resident indefinitely (I9/I10).
+   */
+  async load(name: string): Promise<void> {
+    await this.generate({ model: name, keep_alive: -1 });
+  }
+
+  /**
+   * Unload a model immediately (I9/I10).
+   */
+  async unload(name: string): Promise<void> {
+    await this.generate({ model: name, keep_alive: 0 });
   }
 
   /**

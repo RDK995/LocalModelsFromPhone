@@ -2366,7 +2366,156 @@
           "evidence": []
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M2b-T1",
+          "scope": "Server swap-load/unload: async operation in C5 behind POST /v1/models/load and /unload; OllamaError reasons; chat 409 operation_in_progress",
+          "tests": "cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh",
+          "requirements": [
+            "FR3",
+            "FR4",
+            "FR5"
+          ],
+          "constraints": [
+            "no confirmation rule (M2c)",
+            "no live Ollama in tests"
+          ],
+          "findings": [],
+          "criteria": [
+            "M2-AC2",
+            "M2-AC3",
+            "M2-AC5"
+          ],
+          "paths": [
+            "server/src/models/",
+            "server/src/ollama/",
+            "server/src/http/"
+          ],
+          "depends_on": [],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "extends C5 behind agreed I4/I6 with one single-flight background operation; not difficult concurrency"
+          },
+          "status": "ACCEPTED",
+          "attempts": 1,
+          "packet": ".harness/tasks/M2b-T1.md",
+          "commit": null,
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": null,
+              "verdict": "INTERRUPTED",
+              "note": "stopped at 40-turn limit with no report; draft persisted in tree",
+              "base": "68d939b"
+            },
+            {
+              "attempt": 3,
+              "continuation": 1,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M2b-T1-worker.log",
+              "handoff": ".harness/tasks/M2b-T1-handoff-1.md",
+              "verdict": "PASS",
+              "base": "a3576a7",
+              "changed_files": [
+                "server/src/ollama/client.ts",
+                "server/src/ollama/client.test.ts",
+                "server/src/models/manager.ts",
+                "server/src/models/manager.test.ts",
+                "server/src/http/server.ts",
+                "server/src/http/server.test.ts"
+              ],
+              "verifier": {
+                "artifact": ".harness/evidence/M2b-T1-verifier.log",
+                "exit_code": 0,
+                "verdict": "PASS",
+                "tests_weakened": "NO",
+                "discrepancies": "NONE",
+                "note": "one manager test renamed from 'always reports operation as idle' to 'reports operation as idle when nothing is running' because operation is now real; assertions kept"
+              }
+            }
+          ]
+        },
+        {
+          "id": "M2b-T2",
+          "scope": "Phone Models screen: Load/Unload buttons, typed ServerError, poll GET /v1/state to idle, busy label and failure reason",
+          "tests": "cd mobile && bun run typecheck && bun test src/api src/ui src/chat src/app-routing && bun run lint && bun run smoke:runtime",
+          "requirements": [
+            "FR3",
+            "FR4",
+            "FR5"
+          ],
+          "constraints": [
+            "no confirmation rule (M2c)"
+          ],
+          "findings": [],
+          "criteria": [
+            "M2-AC2",
+            "M2-AC5"
+          ],
+          "paths": [
+            "mobile/src/api/",
+            "mobile/src/ui/",
+            "mobile/src/app/models.tsx"
+          ],
+          "depends_on": [],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "extends existing screen, typed client and view-model with actions and a polling helper"
+          },
+          "status": "ACCEPTED",
+          "attempts": 1,
+          "packet": ".harness/tasks/M2b-T2.md",
+          "commit": "a3576a7",
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": null,
+              "verdict": "INTERRUPTED",
+              "note": "stopped at 40-turn limit with no report; draft persisted in tree",
+              "base": "68d939b"
+            },
+            {
+              "attempt": 3,
+              "continuation": 1,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M2b-T2-worker.log",
+              "handoff": ".harness/tasks/M2b-T2-handoff-1.md",
+              "verdict": "PASS",
+              "base": "68d939b",
+              "changed_files": [
+                "mobile/src/api/client.ts",
+                "mobile/src/api/client.test.ts",
+                "mobile/src/ui/modelList.ts",
+                "mobile/src/ui/modelList.test.ts",
+                "mobile/src/ui/modelActions.ts",
+                "mobile/src/ui/modelActions.test.ts",
+                "mobile/src/app/models.tsx"
+              ],
+              "verifier": {
+                "artifact": ".harness/evidence/M2b-T2-verifier.log",
+                "exit_code": 0,
+                "verdict": "PASS",
+                "tests_weakened": "NO",
+                "discrepancies": "NONE"
+              }
+            }
+          ]
+        }
+      ],
       "reviews": [],
       "findings": [],
       "validation": [],

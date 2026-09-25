@@ -1,5 +1,10 @@
 import { describe, it, expect } from "bun:test";
-import { OllamaClient } from "./client";
+import { OllamaClient, OllamaError } from "./client";
+
+/** A fake Ollama HTTP server on port 0 driven by `handler`. */
+function fakeOllamaHttp(handler: (req: Request) => Promise<Response> | Response) {
+  return Bun.serve({ hostname: "127.0.0.1", port: 0, fetch: handler });
+}
 
 describe("OllamaClient", () => {
   it("should be instantiable with default URL", () => {
@@ -39,5 +44,81 @@ describe("OllamaClient", () => {
       messages: [{ role: "user", content: "test" }],
     });
     expect(Symbol.asyncIterator in Object(chatGenerator)).toBe(true);
+  });
+});
+
+describe("OllamaClient load/unload", () => {
+  it("load() sends POST /api/generate {model, keep_alive:-1}", async () => {
+    const bodies: unknown[] = [];
+    const server = fakeOllamaHttp(async (req) => {
+      bodies.push(await req.json());
+      return new Response("{}", { headers: { "Content-Type": "application/json" } });
+    });
+    try {
+      const client = new OllamaClient(`http://127.0.0.1:${server.port}`);
+      await client.load("llama3");
+      expect(bodies).toEqual([{ model: "llama3", keep_alive: -1 }]);
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("unload() sends POST /api/generate {model, keep_alive:0}", async () => {
+    const bodies: unknown[] = [];
+    const server = fakeOllamaHttp(async (req) => {
+      bodies.push(await req.json());
+      return new Response("{}", { headers: { "Content-Type": "application/json" } });
+    });
+    try {
+      const client = new OllamaClient(`http://127.0.0.1:${server.port}`);
+      await client.unload("llama3");
+      expect(bodies).toEqual([{ model: "llama3", keep_alive: 0 }]);
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("throws OllamaError carrying the status and Ollama's error text for a JSON error body", async () => {
+    const server = fakeOllamaHttp(
+      () =>
+        new Response(
+          JSON.stringify({
+            error: "model requires more system memory (8.0 GiB) than is available (4.0 GiB)",
+          }),
+          { status: 500 }
+        )
+    );
+    try {
+      const client = new OllamaClient(`http://127.0.0.1:${server.port}`);
+      try {
+        await client.load("llama3");
+        throw new Error("expected load() to reject");
+      } catch (error) {
+        expect(error).toBeInstanceOf(OllamaError);
+        expect((error as OllamaError).status).toBe(500);
+        expect((error as OllamaError).message).toContain("more system memory");
+      }
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("falls back to the response's status text when the error body is not JSON with an error field", async () => {
+    const server = fakeOllamaHttp(
+      () => new Response("not json", { status: 404, statusText: "Not Found" })
+    );
+    try {
+      const client = new OllamaClient(`http://127.0.0.1:${server.port}`);
+      try {
+        await client.unload("llama3");
+        throw new Error("expected unload() to reject");
+      } catch (error) {
+        expect(error).toBeInstanceOf(OllamaError);
+        expect((error as OllamaError).status).toBe(404);
+        expect((error as OllamaError).message.length).toBeGreaterThan(0);
+      }
+    } finally {
+      server.stop(true);
+    }
   });
 });

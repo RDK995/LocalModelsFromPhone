@@ -13,7 +13,12 @@ import type {
   OllamaTagsResponse,
   OllamaPsResponse,
 } from "../ollama/client";
-import { ModelManager, OllamaDownError } from "../models/manager";
+import {
+  ModelManager,
+  OllamaDownError,
+  UnknownModelError,
+  OperationInProgressError,
+} from "../models/manager";
 import type {
   ErrorResponse,
   ChatRequest,
@@ -30,6 +35,8 @@ const DEFAULT_PORT = 7789;
 export interface OllamaStateClient extends OllamaChatClient {
   tags(): Promise<OllamaTagsResponse>;
   ps(): Promise<OllamaPsResponse>;
+  load(name: string): Promise<void>;
+  unload(name: string): Promise<void>;
 }
 
 export interface CreateServerOptions {
@@ -228,6 +235,22 @@ function parseChatRequest(body: unknown): ChatRequest | string {
 }
 
 /**
+ * Validate a /v1/models/load body: `{name, confirm?}`. Only `name` matters
+ * here (the confirmation rule is M2c: `confirm` is accepted and ignored).
+ * Returns `{name}`, or an error message for an invalid body.
+ */
+function parseLoadRequest(body: unknown): { name: string } | string {
+  if (typeof body !== "object" || body === null || Array.isArray(body)) {
+    return "Request body must be a JSON object";
+  }
+  const { name } = body as Record<string, unknown>;
+  if (typeof name !== "string" || name.length === 0) {
+    return "name must be a non-empty string";
+  }
+  return { name };
+}
+
+/**
  * Stream a generation's events (from `fromSeq`, then live) as SSE. The
  * response is one subscriber: if the client goes away, only the subscription
  * is dropped; the generation carries on.
@@ -330,17 +353,49 @@ export function createServer({
     {
       method: "POST",
       path: "/v1/models/load",
-      handler: async () => {
-        // Will be implemented with ModelManager (M2)
-        return jsonResponse({ operation: { kind: "idle" } }, 202);
+      handler: async (req) => {
+        let raw: unknown;
+        try {
+          raw = await req.json();
+        } catch {
+          return errorResponse("bad_request", "Malformed JSON body", 400);
+        }
+        const parsed = parseLoadRequest(raw);
+        if (typeof parsed === "string") {
+          return errorResponse("bad_request", parsed, 400);
+        }
+
+        try {
+          const operation = await modelManager.load(parsed.name);
+          return jsonResponse({ operation }, 202);
+        } catch (error) {
+          if (error instanceof UnknownModelError) {
+            return errorResponse("unknown_model", error.message, 404);
+          }
+          if (error instanceof OperationInProgressError) {
+            return errorResponse("operation_in_progress", error.message, 409);
+          }
+          if (error instanceof OllamaDownError) {
+            return errorResponse("ollama_down", error.message, 503);
+          }
+          throw error;
+        }
       },
     },
     {
       method: "POST",
       path: "/v1/models/unload",
       handler: async () => {
-        // Will be implemented with ModelManager (M2)
-        return jsonResponse({ operation: { kind: "idle" } }, 202);
+        // Body is optional (only `confirm`, accepted and ignored - M2c).
+        try {
+          const operation = await modelManager.unload();
+          return jsonResponse({ operation }, 202);
+        } catch (error) {
+          if (error instanceof OperationInProgressError) {
+            return errorResponse("operation_in_progress", error.message, 409);
+          }
+          throw error;
+        }
       },
     },
     {
@@ -356,6 +411,14 @@ export function createServer({
         const body = parseChatRequest(raw);
         if (typeof body === "string") {
           return errorResponse("bad_request", body, 400);
+        }
+
+        if (modelManager.isBusy()) {
+          return errorResponse(
+            "operation_in_progress",
+            "A model load/unload operation is in progress",
+            409
+          );
         }
 
         const alreadyActive = genManager.getActiveGenId();

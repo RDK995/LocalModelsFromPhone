@@ -1,0 +1,9 @@
+Entry smoke: starting server on 127.0.0.1:49941
+PASS: server started and is listening on http://127.0.0.1:49941
+PASS: listens on 127.0.0.1 only (127.0.0.1:49941)
+PASS: no token -> 401
+PASS: wrong token -> 401
+PASS: correct token -> 200 (not 401)
+PASS: 0644 token file -> exits non-zero (1)
+PASS: missing token file -> exits non-zero (1)
+Entry smoke: all checks passed

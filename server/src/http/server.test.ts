@@ -19,6 +19,10 @@ type ChatImpl = (
  * overridable for /v1/state tests.
  */
 class FakeOllamaClient implements OllamaStateClient {
+  /** Overridable per test to hold or fail a load/unload mid-flight. */
+  loadImpl: (name: string) => Promise<void> = async () => {};
+  unloadImpl: (name: string) => Promise<void> = async () => {};
+
   constructor(
     private chatImpl: ChatImpl,
     private tagsResponse: OllamaTagsResponse = { models: [] },
@@ -31,6 +35,14 @@ class FakeOllamaClient implements OllamaStateClient {
 
   async ps(): Promise<OllamaPsResponse> {
     return this.psResponse;
+  }
+
+  async load(name: string): Promise<void> {
+    await this.loadImpl(name);
+  }
+
+  async unload(name: string): Promise<void> {
+    await this.unloadImpl(name);
   }
 
   chat(
@@ -276,7 +288,11 @@ describe("HTTP Server with Bearer Auth", () => {
   });
 
   it("should support /v1/models/load endpoint", async () => {
-    const client = new FakeOllamaClient(completingChat(0));
+    const client = new FakeOllamaClient(
+      completingChat(0),
+      { models: [{ name: "test-model", modified_at: "", size: 1, digest: "d" }] },
+      { models: [] }
+    );
     const testToken = "test-token";
     setValidToken(testToken);
     const server = createServer({ ollama: client, port: 0 });
@@ -290,7 +306,7 @@ describe("HTTP Server with Bearer Auth", () => {
 
       expect(response.status).toBe(202);
     } finally {
-      server.stop();
+      server.stop(true);
     }
   });
 
@@ -309,7 +325,7 @@ describe("HTTP Server with Bearer Auth", () => {
 
       expect(response.status).toBe(202);
     } finally {
-      server.stop();
+      server.stop(true);
     }
   });
 
@@ -948,6 +964,201 @@ describe("Bearer comparison (F9)", () => {
         headers: authHeaders("valid-token"),
       });
       expect(ok.status).toBe(200);
+    } finally {
+      server.stop(true);
+    }
+  });
+});
+
+describe("Model load/unload operations (M2b)", () => {
+  it("POST /v1/models/load returns 202 {operation:{kind:'loading',model}}", async () => {
+    const client = new FakeOllamaClient(
+      completingChat(0),
+      { models: [{ name: "llama3", modified_at: "", size: 1, digest: "d" }] },
+      { models: [] }
+    );
+    const token = "test-token";
+    setValidToken(token);
+    const server = createServer({ ollama: client, port: 0 });
+
+    try {
+      const res = await fetch(`http://127.0.0.1:${server.port}/v1/models/load`, {
+        method: "POST",
+        headers: authHeaders(token),
+        body: JSON.stringify({ name: "llama3" }),
+      });
+      expect(res.status).toBe(202);
+      const body = (await res.json()) as { operation: { kind: string; model?: string } };
+      expect(body.operation).toEqual({ kind: "loading", model: "llama3" });
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("POST /v1/models/load returns 400 bad_request for malformed JSON or a missing/non-string name", async () => {
+    const client = new FakeOllamaClient(completingChat(0));
+    const token = "test-token";
+    setValidToken(token);
+    const server = createServer({ ollama: client, port: 0 });
+
+    try {
+      const cases: Array<[string, string]> = [
+        ["malformed JSON", "{not json"],
+        ["missing name", "{}"],
+        ["non-string name", JSON.stringify({ name: 5 })],
+        ["non-object body", JSON.stringify(["llama3"])],
+      ];
+      for (const [label, body] of cases) {
+        const res = await fetch(`http://127.0.0.1:${server.port}/v1/models/load`, {
+          method: "POST",
+          headers: authHeaders(token),
+          body,
+        });
+        expect(res.status, label).toBe(400);
+        const json = (await res.json()) as { error: string };
+        expect(json.error, label).toBe("bad_request");
+      }
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("POST /v1/models/load returns 404 unknown_model for a name not installed", async () => {
+    const client = new FakeOllamaClient(completingChat(0), { models: [] });
+    const token = "test-token";
+    setValidToken(token);
+    const server = createServer({ ollama: client, port: 0 });
+
+    try {
+      const res = await fetch(`http://127.0.0.1:${server.port}/v1/models/load`, {
+        method: "POST",
+        headers: authHeaders(token),
+        body: JSON.stringify({ name: "missing-model" }),
+      });
+      expect(res.status).toBe(404);
+      const body = (await res.json()) as { error: string };
+      expect(body.error).toBe("unknown_model");
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("POST /v1/models/load returns 409 operation_in_progress while a load is in flight", async () => {
+    const client = new FakeOllamaClient(
+      completingChat(0),
+      { models: [{ name: "llama3", modified_at: "", size: 1, digest: "d" }] },
+      { models: [] }
+    );
+    let release!: () => void;
+    client.loadImpl = () => new Promise((resolve) => (release = resolve));
+    const token = "test-token";
+    setValidToken(token);
+    const server = createServer({ ollama: client, port: 0 });
+
+    try {
+      const first = await fetch(`http://127.0.0.1:${server.port}/v1/models/load`, {
+        method: "POST",
+        headers: authHeaders(token),
+        body: JSON.stringify({ name: "llama3" }),
+      });
+      expect(first.status).toBe(202);
+
+      const second = await fetch(`http://127.0.0.1:${server.port}/v1/models/load`, {
+        method: "POST",
+        headers: authHeaders(token),
+        body: JSON.stringify({ name: "llama3" }),
+      });
+      expect(second.status).toBe(409);
+      const body = (await second.json()) as { error: string };
+      expect(body.error).toBe("operation_in_progress");
+
+      release();
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("POST /v1/models/unload returns 202 {operation}", async () => {
+    const client = new FakeOllamaClient(completingChat(0));
+    const token = "test-token";
+    setValidToken(token);
+    const server = createServer({ ollama: client, port: 0 });
+
+    try {
+      const res = await fetch(`http://127.0.0.1:${server.port}/v1/models/unload`, {
+        method: "POST",
+        headers: authHeaders(token),
+        body: JSON.stringify({}),
+      });
+      expect(res.status).toBe(202);
+      const body = (await res.json()) as { operation: { kind: string } };
+      expect(body.operation.kind).toBe("unloading");
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("POST /v1/models/unload returns 409 operation_in_progress while an unload is in flight", async () => {
+    const client = new FakeOllamaClient(completingChat(0));
+    let release!: () => void;
+    client.unloadImpl = () => new Promise((resolve) => (release = resolve));
+    const token = "test-token";
+    setValidToken(token);
+    const server = createServer({ ollama: client, port: 0 });
+
+    try {
+      const first = await fetch(`http://127.0.0.1:${server.port}/v1/models/unload`, {
+        method: "POST",
+        headers: authHeaders(token),
+        body: JSON.stringify({}),
+      });
+      expect(first.status).toBe(202);
+
+      const second = await fetch(`http://127.0.0.1:${server.port}/v1/models/unload`, {
+        method: "POST",
+        headers: authHeaders(token),
+        body: JSON.stringify({}),
+      });
+      expect(second.status).toBe(409);
+      const body = (await second.json()) as { error: string };
+      expect(body.error).toBe("operation_in_progress");
+
+      release();
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("POST /v1/chat returns 409 operation_in_progress while a load is in flight", async () => {
+    const client = new FakeOllamaClient(
+      completingChat(0),
+      { models: [{ name: "llama3", modified_at: "", size: 1, digest: "d" }] },
+      { models: [] }
+    );
+    let release!: () => void;
+    client.loadImpl = () => new Promise((resolve) => (release = resolve));
+    const token = "test-token";
+    setValidToken(token);
+    const server = createServer({ ollama: client, port: 0 });
+
+    try {
+      const load = await fetch(`http://127.0.0.1:${server.port}/v1/models/load`, {
+        method: "POST",
+        headers: authHeaders(token),
+        body: JSON.stringify({ name: "llama3" }),
+      });
+      expect(load.status).toBe(202);
+
+      const chat = await fetch(`http://127.0.0.1:${server.port}/v1/chat`, {
+        method: "POST",
+        headers: authHeaders(token),
+        body: CHAT_REQUEST_BODY,
+      });
+      expect(chat.status).toBe(409);
+      const body = (await chat.json()) as { error: string };
+      expect(body.error).toBe("operation_in_progress");
+
+      release();
     } finally {
       server.stop(true);
     }
