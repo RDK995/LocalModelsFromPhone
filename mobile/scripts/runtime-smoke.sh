@@ -9,8 +9,11 @@
 #                                         the bundle host serves (its
 #                                         manifest's launchAsset.url)
 #
-# Runs the app twice: with a stored token (first screen must be Chat) and
-# without one (first screen must be Setup). Exits non-zero if either fails.
+# Runs the app three times: with a stored token (first screen must be Chat),
+# without one (first screen must be Setup), and with a stored token that the
+# server rejects with 401 (first screen is Chat, then Send must route to
+# Settings with the token form open -- FR13, M1-C15). Exits non-zero if any
+# of them fail.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -31,7 +34,7 @@ else
 fi
 
 status=0
-for token in present absent; do
+for token in present absent wrong; do
   echo "=== token $token ==="
   node scripts/runtime-smoke.mjs "$bundle" --token="$token" || status=1
 done

@@ -1,0 +1,148 @@
+VERIFIER RUN LOG FOR M1-C15
+==========================
+
+Task: Runtime smoke drives a 401 on Chat through to Settings with the token form open
+
+Commit: 658f33e (started)
+Current HEAD: HEAD (658f33e + working tree changes)
+
+STEP 1: RUN THE TESTS COMMAND
+=============================
+
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && node --check scripts/runtime-smoke.mjs && bash -n scripts/runtime-smoke.sh && bun run smoke:runtime
+
+Exit Status: 0
+
+Output (Green Run - Current Working Tree):
+=== token present ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.2pVKyU/dist/_expo/static/js/ios/expo-router-af962b8fb6829230607bfdc65fc2ebbf.js
+stored token: present; expected first screen: Chat
+rendered text: ["Chat","Settings","Send"]
+native stack headers: [{"title":"Chat","hidden":true}]
+root commits: 4
+RESULT: PASS (app launched, Chat rendered, no JS exception)
+
+=== token absent ===
+stored token: absent; expected first screen: Setup
+rendered text: ["Enter Bearer Token","Paste the token from your server","Continue"]
+native stack headers: [{"title":"Setup","hidden":false}]
+drive Setup -> Chat: {"ok":true,"chatMounted":true,"backOnSetup":false,"singleTopBar":true,"rendered_text":["Chat","Settings","Send"],"native_stack_headers":[{"title":"Chat","hidden":true}]}
+root commits: 8
+RESULT: PASS (app launched, Setup rendered, no JS exception, Setup -> Chat drive reached Chat with one top bar)
+
+=== token wrong ===
+stored token: wrong; expected first screen: Chat
+rendered text: ["Chat","Settings","Send"]
+native stack headers: [{"title":"Chat","hidden":true}]
+drive Chat 401 -> Settings: {"ok":true,"wrongAlertShown":true,"errorAlertShown":false,"settingsMounted":true,"alerts":[{"title":"Password wrong or changed","message":"The password on this phone no longer matches the Mac. Paste the current one from the Mac (pbcopy < ~/.phone-models/token)."}],"rendered_text":["Chat","Settings","hello","Send","Bearer Token","Cancel","Save","Logout"]}
+root commits: 8
+RESULT: PASS (app launched, Chat rendered, no JS exception, Chat 401 drive reached Settings with the token form open)
+
+STEP 2: REPRODUCE RED RUN AGAINST c9e3560 (Pre-fix Source)
+============================================================
+
+Command (archiving pre-fix source and running tests):
+git -C /Users/ryankenny/Projects/CodingHarnessv2 archive c9e3560 mobile | tar -x -C <scratch dir>
+(symlink node_modules, copy new runtime-smoke.{mjs,sh}, run scripts/runtime-smoke.sh)
+
+Exit Status: 1 (non-zero, as expected for RED)
+
+Output (Red Run - Old Source c9e3560):
+=== token present ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.9IZYVK/dist/_expo/static/js/ios/expo-router-e94f5f5075ae1c508e274996784e8a00.js
+stored token: present; expected first screen: Chat
+rendered text: ["Chat","Settings","Send"]
+native stack headers: [{"title":"Chat","hidden":true}]
+root commits: 4
+RESULT: PASS (app launched, Chat rendered, no JS exception)
+
+=== token absent ===
+stored token: absent; expected first screen: Setup
+rendered text: ["Enter Bearer Token","Paste the token from your server","Continue"]
+native stack headers: [{"title":"Setup","hidden":false}]
+drive Setup -> Chat: {"ok":true,"chatMounted":true,"backOnSetup":false,"singleTopBar":true,"rendered_text":["Chat","Settings","Send"],"native_stack_headers":[{"title":"Chat","hidden":true}]}
+root commits: 8
+RESULT: PASS (app launched, Setup rendered, no JS exception, Setup -> Chat drive reached Chat with one top bar)
+
+=== token wrong ===
+stored token: wrong; expected first screen: Chat
+rendered text: ["Chat","Settings","Send"]
+native stack headers: [{"title":"Chat","hidden":true}]
+drive Chat 401 -> Settings: {"ok":false,"wrongAlertShown":false,"errorAlertShown":true,"settingsMounted":false,"alerts":[{"title":"Error","message":"Unauthorized: invalid or missing bearer token"}],"rendered_text":["Chat","Settings","hello","Send"]}
+root commits: 7
+RESULT: FAIL (exceptions=0, rendered=true, reached Chat=true, driveChat401.ok=false)
+
+KEY DIFFERENCES (RED vs GREEN):
+- "wrong" drive: ok=false (was true in GREEN)
+- wrongAlertShown: false (was true in GREEN) - alert "Password wrong or changed" not shown
+- errorAlertShown: true (was false in GREEN) - generic "Error" alert shown instead
+- settingsMounted: false (was true in GREEN) - Settings screen not reached
+- Overall exit: 1 (was 0 in GREEN)
+
+This confirms the RED run correctly shows the bug that M1-C15 fixes.
+
+STEP 3: VERIFY IMPLEMENTATION DETAILS
+=====================================
+
+Fake ExpoFetchModule location (native-module level):
+✓ Implemented at lines 286-349 in runtime-smoke.mjs as FakeNativeRequest and FakeNativeResponse
+✓ Placed in expoOverrides.ExpoFetchModule (line 399-402)
+✓ Returns 401 with body {"error":"unauthorized"} for every request
+✓ Works at native module level (app's real expo/fetch import uses it)
+✓ App's real code paths exercised:
+  - chat.tsx's handleSendMessage
+  - client.getState()
+  - expoFetchClient.ts (uses real expo/fetch import)
+
+AlertManager fake:
+✓ Implemented at lines 205-216 in runtime-smoke.mjs
+✓ Records all alerts into the `alerts` array
+✓ Allows assertions on alert title and message
+
+Existing assertions (present/absent modes):
+✓ present mode: Still checks exceptions.length === 0 && rendered && reachedFirstScreen
+✓ absent mode: Still includes driveToChat check with all original assertions:
+  - chatMounted, backOnSetup, singleTopBar, rendered_text, native_stack_headers
+✓ No assertions were deleted or weakened
+✓ New driveChat401 check only applies to "wrong" mode (null for others)
+
+STEP 4: ACCEPTANCE CRITERIA VERIFICATION
+=========================================
+
+AC1: ✓ `bun run smoke:runtime` exits 0 and prints three `RESULT: PASS` lines
+     - "RESULT: PASS" for present
+     - "RESULT: PASS" for absent
+     - "RESULT: PASS" for wrong
+     - drive Chat 401 -> Settings line with "ok":true in the wrong run
+
+AC2: ✓ Same scripts run against c9e3560 source exit non-zero
+     - Exit status: 1
+     - wrong run's drive: ok:false
+
+AC3: ✓ Existing present/absent checks unchanged in what they assert
+     - present mode assertions unchanged
+     - absent mode driveToChat assertions unchanged
+     - No test weakening detected
+
+STEP 5: FILES CHANGED VERIFICATION
+===================================
+
+Changed files:
+- mobile/scripts/runtime-smoke.mjs (ALLOWED)
+- mobile/scripts/runtime-smoke.sh (ALLOWED)
+- .harness/evidence/M1-C15-worker.log (ALLOWED - orchestrator's evidence)
+
+All changed files are in the Files Allowed To Change list.
+
+CONCLUSION
+==========
+✓ Tests command ran successfully with exit 0
+✓ GREEN run shows all three modes passing
+✓ RED run (pre-fix source) shows expected failure with exit 1
+✓ Fake is at native-module level (not bypassing app logic)
+✓ Existing assertions unchanged (not weakened)
+✓ All changed files are allowed
+✓ All acceptance criteria demonstrated
+
+READY FOR PASS

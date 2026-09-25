@@ -12,7 +12,7 @@
  * or if the expected first screen does not render.
  *
  * Usage:
- *   node scripts/runtime-smoke.mjs <bundle.js> --token=<present|absent>
+ *   node scripts/runtime-smoke.mjs <bundle.js> --token=<present|absent|wrong>
  *
  * What this proves: the bundled JS (app code + real expo-router, React,
  * react-native JS, react-native-screens JS) starts, RootLayout renders, and
@@ -38,12 +38,31 @@
  * navigation after Setup, not only to a screen reached by the initial
  * launch redirect.
  *
+ * The `--token=wrong` run (M1-C15, FR13) stores a token so Chat is the first
+ * screen, but every request the app makes gets back HTTP 401
+ * `{"error":"unauthorized"}` from a fake `ExpoFetchModule` (the native module
+ * behind `expo/fetch`, which the app's real API client uses -- see
+ * `src/api/expoFetchClient.ts` and `node_modules/expo/src/winter/fetch/`).
+ * Once Chat has rendered, it dispatches `topChange` "hello" on the message
+ * TextInput and `topClick` on "Send" (same mechanism as the Setup -> Chat
+ * drive above), which runs chat.tsx's real `handleSendMessage` ->
+ * `sendMessage` -> `client.getState()` -> the fake 401 -> `onUnauthorized`.
+ * It then asserts (a) the native Alert module (`AlertManager.alertWithArgs`,
+ * see `node_modules/react-native/Libraries/Alert/{Alert,RCTAlertManager.ios}.js`)
+ * was called with title "Password wrong or changed" and not with title
+ * "Error", and (b) Settings is mounted with its token form already open
+ * ("Bearer Token" and "Save" present, "Update Token" absent). This proves
+ * chat.tsx's and settings.tsx's screen wiring for a 401 (FR13) in a real
+ * bundle, not just chatController's unit-tested logic.
+ *
  * What it cannot prove: anything native (layout, keyboard geometry, how the
  * native header draws), Hermes-specific engine behaviour, the Expo Go version
- * on the phone, network/streaming to the server, or that a real finger tap
- * dispatches events identically to calling the handler directly (the gesture
- * responder / hit-testing geometry is not exercised, only the `onPress`
- * callback it would eventually invoke).
+ * on the phone, real network/streaming to the server (the 401 response for
+ * `--token=wrong` is synthesised in-process, not sent over a socket), a
+ * non-401 chat flow, or that a real finger tap dispatches events identically
+ * to calling the handler directly (the gesture responder / hit-testing
+ * geometry is not exercised, only the `onPress` callback it would eventually
+ * invoke).
  */
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
@@ -57,15 +76,23 @@ const bundlePath = process.argv[2];
 const tokenArg = (
   process.argv.find(a => a.startsWith("--token=")) ?? "--token=present"
 ).split("=")[1];
-if (!bundlePath || !["present", "absent"].includes(tokenArg)) {
-  console.error("usage: runtime-smoke.mjs <bundle.js> --token=present|absent");
+if (!bundlePath || !["present", "absent", "wrong"].includes(tokenArg)) {
+  console.error(
+    "usage: runtime-smoke.mjs <bundle.js> --token=present|absent|wrong"
+  );
   process.exit(2);
 }
-const STORED_TOKEN = tokenArg === "present" ? "smoke-test-token" : null;
+const STORED_TOKEN =
+  tokenArg === "present"
+    ? "smoke-test-token"
+    : tokenArg === "wrong"
+      ? "wrong-smoke-token"
+      : null;
 
 const exceptions = [];
 const consoleErrors = [];
 const softErrors = [];
+const alerts = []; // { title, message } from the fake AlertManager, below.
 let commits = 0;
 const roots = new Map();
 
@@ -178,6 +205,17 @@ const moduleOverrides = {
     addListener() {},
     removeListeners() {},
   },
+  // RN's iOS `Alert.alert` calls `RCTAlertManager.alertWithArgs`, which is
+  // this TurboModule's `alertWithArgs` (see
+  // node_modules/react-native/Libraries/Alert/{Alert,RCTAlertManager.ios}.js).
+  // Recorded (not just accepted) so the --token=wrong drive below can assert
+  // which alert title was shown.
+  AlertManager: {
+    alertWithArgs: (args, callback) => {
+      alerts.push({ title: args?.title, message: args?.message });
+      callback?.(0, undefined);
+    },
+  },
   ExceptionsManager: {
     reportException: d =>
       exceptions.push({
@@ -244,6 +282,71 @@ class SharedObject extends EventEmitter {
 }
 class SharedRef extends SharedObject {}
 class NativeModule extends EventEmitter {}
+
+// ---- Fake ExpoFetchModule: backs `expo/fetch`'s NativeRequest/NativeResponse
+// (see node_modules/expo/src/winter/fetch/{fetch,NativeRequest,FetchResponse}.ts).
+// `fetch()` there does `new ExpoFetchModule.NativeRequest(response)` (where
+// `response` is a `FetchResponse extends ExpoFetchModule.NativeResponse`),
+// then `await request.start(url, init, body)`. `FetchResponse`'s
+// status/statusText/url/redirected/_rawHeaders/bodyUsed getters fall back to
+// `super.<prop>` (this class), so they must be prototype getters here, not
+// instance fields, or `super` would not see them. Every request gets back a
+// canned 401 -- only meaningfully exercised by --token=wrong (present/absent
+// never call fetch, so this never fires for them). ----
+const UNAUTHORIZED_BODY = '{"error":"unauthorized"}';
+const unauthorizedBodyBytes = new TextEncoder().encode(UNAUTHORIZED_BODY);
+class FakeNativeResponse extends SharedObject {
+  constructor() {
+    super();
+    this._status = 401;
+    this._statusText = "Unauthorized";
+    this._url = "";
+    this._redirected = false;
+    this._bodyUsed = false;
+  }
+  get status() {
+    return this._status;
+  }
+  get statusText() {
+    return this._statusText;
+  }
+  get url() {
+    return this._url;
+  }
+  get redirected() {
+    return this._redirected;
+  }
+  get _rawHeaders() {
+    return [["content-type", "application/json"]];
+  }
+  get bodyUsed() {
+    return this._bodyUsed;
+  }
+  async startStreaming() {
+    this._bodyUsed = true;
+    return unauthorizedBodyBytes;
+  }
+  cancelStreaming() {}
+  async arrayBuffer() {
+    this._bodyUsed = true;
+    return unauthorizedBodyBytes.buffer;
+  }
+  async text() {
+    this._bodyUsed = true;
+    return UNAUTHORIZED_BODY;
+  }
+}
+class FakeNativeRequest extends SharedObject {
+  constructor(response) {
+    super();
+    this.response = response;
+  }
+  async start(url) {
+    if (this.response) this.response._url = String(url);
+    return this.response;
+  }
+  cancel() {}
+}
 // Same shape Expo Go receives from the bundle host (see the manifest's
 // extra.expoClient): built from this project's app.json.
 const appJson = JSON.parse(
@@ -292,6 +395,10 @@ const expoOverrides = {
     getLinkingURL: () => "exp://127.0.0.1:8081",
     addListener() {},
     removeListeners() {},
+  },
+  ExpoFetchModule: {
+    NativeRequest: FakeNativeRequest,
+    NativeResponse: FakeNativeResponse,
   },
 };
 const expoModules = new Proxy(
@@ -550,6 +657,68 @@ if (tokenArg === "absent" && exceptions.length === 0 && reachedFirstScreen) {
   log(`drive Setup -> Chat: ${JSON.stringify(driveToChat)}`);
 }
 
+// ---- M1-C15 (FR13): token-wrong run drives Chat's Send button while every
+// request 401s, proving chat.tsx's onUnauthorized wiring (not just
+// chatController's unit-tested logic) in a real bundle -- the alert shown,
+// and navigation to Settings with the token form already open. ----
+let driveChat401 = null;
+if (tokenArg === "wrong" && exceptions.length === 0 && reachedFirstScreen) {
+  const messageInput = first.textInputs[0];
+  if (!messageInput) {
+    driveChat401 = {
+      ok: false,
+      reason: "Chat's message TextInput not found in the rendered tree",
+    };
+  } else {
+    // Same mechanism as the Setup -> Chat drive above: dispatch the native
+    // `topChange` a keystroke sends, then find "Send"'s onClick (only
+    // present once typing enables the button) and dispatch the native
+    // `topClick` a tap sends.
+    dispatchFabricEvent?.(messageInput.instanceHandle, "topChange", {
+      text: "hello",
+      eventCount: 1,
+      target: messageInput.tag,
+    });
+    await new HostPromise(r => hostSetTimeout(r, 300));
+    const afterType = collectTree();
+    const sendButton = afterType.pressables.find(p =>
+      p.texts.some(t => t.includes("Send"))
+    );
+    if (!sendButton) {
+      driveChat401 = {
+        ok: false,
+        reason: "Send button's onClick not found after typing a message",
+      };
+    } else {
+      dispatchFabricEvent?.(sendButton.node.instanceHandle, "topClick", {});
+      await new HostPromise(r => hostSetTimeout(r, 1500));
+      const afterPress = collectTree();
+      const texts = afterPress.texts;
+      const wrongAlertShown = alerts.some(
+        a => a.title === "Password wrong or changed"
+      );
+      const errorAlertShown = alerts.some(a => a.title === "Error");
+      const settingsMounted =
+        texts.some(t => t.includes("Bearer Token")) &&
+        texts.some(t => t.includes("Save")) &&
+        !texts.some(t => t.includes("Update Token"));
+      driveChat401 = {
+        ok:
+          exceptions.length === 0 &&
+          wrongAlertShown &&
+          !errorAlertShown &&
+          settingsMounted,
+        wrongAlertShown,
+        errorAlertShown,
+        settingsMounted,
+        alerts,
+        rendered_text: [...new Set(texts)],
+      };
+    }
+  }
+  log(`drive Chat 401 -> Settings: ${JSON.stringify(driveChat401)}`);
+}
+
 for (const e of exceptions) {
   log(`JS EXCEPTION via ${e.via}: ${e.message}`);
   if (e.stack) log(String(e.stack).split("\n").slice(0, 6).join("\n"));
@@ -564,11 +733,16 @@ const pass =
   exceptions.length === 0 &&
   rendered &&
   reachedFirstScreen &&
-  (driveToChat === null || driveToChat.ok === true);
+  (driveToChat === null || driveToChat.ok === true) &&
+  (driveChat401 === null || driveChat401.ok === true);
 if (pass) {
   log(
     `RESULT: PASS (app launched, ${expectedScreen} rendered, no JS exception${
       driveToChat ? ", Setup -> Chat drive reached Chat with one top bar" : ""
+    }${
+      driveChat401
+        ? ", Chat 401 drive reached Settings with the token form open"
+        : ""
     })`
   );
   process.exit(0);
@@ -576,6 +750,6 @@ if (pass) {
 log(
   `RESULT: FAIL (exceptions=${exceptions.length}, rendered=${rendered}, reached ${expectedScreen}=${reachedFirstScreen}${
     driveToChat ? `, driveToChat.ok=${driveToChat.ok}` : ""
-  })`
+  }${driveChat401 ? `, driveChat401.ok=${driveChat401.ok}` : ""})`
 );
 process.exit(1);
