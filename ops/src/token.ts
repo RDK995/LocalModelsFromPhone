@@ -116,7 +116,7 @@ async function defaultCopyCommand(content: string): Promise<void> {
 /**
  * CLI entry point for token generation
  */
-export async function main(args: string[]): Promise<void> {
+export async function main(args: string[], copy = defaultCopyCommand): Promise<void> {
   const filePath = args[0];
   const shouldCopy = args.includes("--copy");
 
@@ -131,8 +131,7 @@ export async function main(args: string[]): Promise<void> {
 
     // If --copy flag is provided, copy token to clipboard
     if (shouldCopy) {
-      const copyCommand = (globalThis as any).tokenCopyCommand || defaultCopyCommand;
-      await copyCommand(token);
+      await copy(token);
     }
 
     process.exit(0);

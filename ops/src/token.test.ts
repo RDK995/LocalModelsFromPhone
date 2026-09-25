@@ -184,19 +184,14 @@ describe("Token Generation", () => {
       let copiedContent = "";
 
       // Mock the copy function
-      const originalCopy = (globalThis as any).tokenCopyCommand;
-      (globalThis as any).tokenCopyCommand = async (content: string) => {
+      const mockCopy = async (content: string) => {
         copyWasCalled = true;
         copiedContent = content;
       };
 
-      try {
-        await main([filePath, "--copy"]);
-        expect(copyWasCalled).toBe(true);
-        expect(copiedContent).toMatch(/^[0-9a-f]{64}$/);
-      } finally {
-        (globalThis as any).tokenCopyCommand = originalCopy;
-      }
+      await main([filePath, "--copy"], mockCopy);
+      expect(copyWasCalled).toBe(true);
+      expect(copiedContent).toMatch(/^[0-9a-f]{64}$/);
     });
 
     it("does not call copy function when --copy flag is not provided", async () => {
@@ -204,17 +199,12 @@ describe("Token Generation", () => {
       let copyWasCalled = false;
 
       // Mock the copy function
-      const originalCopy = (globalThis as any).tokenCopyCommand;
-      (globalThis as any).tokenCopyCommand = async (content: string) => {
+      const mockCopy = async (content: string) => {
         copyWasCalled = true;
       };
 
-      try {
-        await main([filePath]);
-        expect(copyWasCalled).toBe(false);
-      } finally {
-        (globalThis as any).tokenCopyCommand = originalCopy;
-      }
+      await main([filePath], mockCopy);
+      expect(copyWasCalled).toBe(false);
     });
   });
 });
