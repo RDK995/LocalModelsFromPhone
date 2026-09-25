@@ -2,7 +2,7 @@
 
 ## M1 — Authenticated tailnet chat stream proof
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -38,11 +38,19 @@ Tasks (structured detail in state.json):
 - M1-T5 split into T5a (code) and T5b (live) to fit a worker's turn limit
 - M1-T5a server entry point, LaunchAgent plists, 8443 Serve script, entry smoke — Top (SECURITY), attempt 4, PASS; verifier PASS (server 25 tests, entry-smoke 7/7, ops token 14, bash -n, plutil); no live changes; commit 0cce5e1
 - M1-T7 wire HTTP routes to generation manager + Ollama — Mid (ORDINARY_IMPLEMENTATION), attempt 3 INTERRUPTED at turn limit, then continuation 1 PASS; verifier PASS (server 29 tests, typecheck, entry-smoke 7/7; tests not weakened); live-loopback curl proof exit 0 but no model resident, so token streaming left to T5b; commit 69dc85f
-- M1-T5b live install + e2e tailnet proof — Top (SECURITY), attempt 4 dispatched (.harness/tasks/M1-T5b.md)
+- M1-T5b live install + e2e tailnet proof — Top (SECURITY), attempt 4 PASS; verifier PASS (e2e-tailnet-proof.sh live exit 0, server 29 tests, typecheck, ops token 14, verify-ops-install); commit 88ebde6. Live: token file 0600, both LaunchAgents running, Serve 8443 -> 127.0.0.1:7789 added with / and /app unchanged, no Funnel, no sudo
+
+Per criterion (full detail in state.json criteria[].evidence):
+- M1-AC1: 80 content events over the tailnet URL in ~6.5s, ending done/complete (.harness/evidence/M1-T5b-verifier.log); on-phone render is a human check
+- M1-AC2: 7 routes 401 with no and wrong token via tailnet; token command 0600, refuses 644/640/604 (T5b log); route auth tests (.harness/evidence/M1-T7-verifier.log); on-phone token paste is a human check
+- M1-AC3: cancel over tailnet ends cancelled, Ollama log "stop: cancel task", runner CPU to 0 (T5b log); on-phone Stop is a human check
+- M1-AC4: 7789 loopback-only, LAN refuses 7789/8443, 8081 manifest via tailnet (T5b log). GAP: LAN 8081 is reachable until the human runs the sudo pf command
 
 ### Validation
 
-Pending.
+cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/e2e-tailnet-proof.sh && (cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh) && (cd ops && bun test src/token && bash scripts/verify-ops-install.sh) && (cd mobile && bun run typecheck && bun test src/api src/ui && bun run lint && npx expo export --platform ios && rm -rf dist)
+
+Needs the live LaunchAgents, Tailscale and Ollama. Artifacts: .harness/evidence/M1-T5b-verifier.log, .harness/evidence/M1-T7-verifier.log
 
 ### Review
 
@@ -59,7 +67,12 @@ Pending.
 - M1-T4 was accepted with placeholder tests on Expo SDK 51 (latest is 57); corrected under M1-T6.
 - M1-T1/M1-T2 were accepted with HTTP routes never wired to the generation manager (placeholders); found by M1-T5a, corrected under M1-T7.
 - No .gitignore excludes server/node_modules/ (untracked); add one (node_modules/, dist/).
-- Worker budget: 19 of 22 used (human raised it from 16); T5b in flight.
+- Worker budget: 20 of 22 used (human raised it from 16).
+- Bundle host binds *:8081, so LAN 8081 is reachable (M1-AC4 gap). Needs the human's sudo pf command, which e2e-tailnet-proof.sh prints; persistence across reboot and utun naming unsolved.
+- ops/scripts/com.harness.pf.anchor and create-pf-anchor.sh (M1-T3) contain `block all` (only lo0/utun0-4 allowed) and load into an anchor pf.conf never evaluates: unsafe to load; needs correction.
+- server/scripts/curl-chat-stream-proof.sh posts model "test-model", which does not exist in Ollama.
+- Human phone checks pending: Expo Go over the tailnet (render token by token, paste token in settings, Stop halts output); LAN device cannot reach 7789/8443/8081.
+- M1-T5b left devstral:24b loaded in Ollama (default keep-alive).
 
 ## M2 — Model list, swap-load, and unload with busy confirmation
 

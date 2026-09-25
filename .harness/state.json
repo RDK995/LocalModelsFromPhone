@@ -32,7 +32,7 @@
     "FR13",
     "FR14"
    ],
-   "status": "IN_PROGRESS",
+   "status": "REVIEW",
    "review_cycles": 0,
    "review_override": null,
    "baseline": {
@@ -48,25 +48,40 @@
      "id": "M1-AC1",
      "text": "With a model already resident in Ollama, sending a prompt from the Expo Go app over Tailscale Serve renders the reply incrementally, token by token, ending in a terminal complete state.",
      "status": "PENDING",
-     "evidence": []
+     "evidence": [
+      "e2e-tailnet-proof.sh (live, tailnet URL :8443): 80 content events over ~6.5s ending done status complete \u2014 .harness/evidence/M1-T5b-verifier.log",
+      "server.test.ts chat streams content then complete \u2014 .harness/evidence/M1-T7-verifier.log",
+      "On-phone Expo Go rendering: human check, not yet done"
+     ]
     },
     {
      "id": "M1-AC2",
      "text": "A request to any server route without the correct bearer token returns 401; the Mac-side command produces the token, refuses to run if the token file is group- or world-readable, and the app's settings screen accepts a pasted token and uses it on the next request.",
      "status": "PENDING",
-     "evidence": []
+     "evidence": [
+      "e2e: 7 routes 401 without and with wrong token via tailnet; token command mode 600, refuses 644/640/604 \u2014 .harness/evidence/M1-T5b-verifier.log",
+      "server.test.ts auth on every route; entry-smoke 7/7 \u2014 .harness/evidence/M1-T7-verifier.log",
+      "App settings token paste: mobile tests (M1-T6); on-phone paste is a human check, not yet done"
+     ]
     },
     {
      "id": "M1-AC3",
      "text": "Stop cancels generation on the Mac, verified against Ollama, and streaming output halts on the phone.",
      "status": "PENDING",
-     "evidence": []
+     "evidence": [
+      "e2e: cancel over tailnet -> cancelled terminal event, no bytes after 3s, Ollama log stop: cancel task, runner CPU 2.24s -> 0.00s \u2014 .harness/evidence/M1-T5b-verifier.log",
+      "server.test.ts cancel aborts Ollama \u2014 .harness/evidence/M1-T7-verifier.log",
+      "Phone output halting: human check, not yet done"
+     ]
     },
     {
      "id": "M1-AC4",
      "text": "The server and the app bundle are reachable from the phone over the tailnet and are not reachable from a device on the LAN or the public internet.",
      "status": "PENDING",
-     "evidence": []
+     "evidence": [
+      "e2e: 7789 listens on 127.0.0.1 only; tailnet :8443 200; LAN 192.168.0.27 refuses 7789 and 8443; 8081 manifest via tailnet name 200 \u2014 .harness/evidence/M1-T5b-verifier.log",
+      "GAP: LAN 8081 (Expo bundle host, binds *:8081) is currently REACHABLE; closing it needs a human-run sudo pf command; LAN-device check is a human check"
+     ]
     }
    ],
    "tasks": [
@@ -838,9 +853,44 @@
       "reason_code": "SECURITY",
       "detail": "live network exposure changes on the user's Mac (Tailscale Serve, LaunchAgents, bundle host); also cross-cutting server/ops/live env"
      },
-     "status": "IN_PROGRESS",
-     "attempts": 0,
-     "packet": ".harness/tasks/M1-T5b.md"
+     "status": "ACCEPTED",
+     "attempts": 4,
+     "packet": ".harness/tasks/M1-T5b.md",
+     "commit": "88ebde6",
+     "attempt_log": [
+      {
+       "attempt": 4,
+       "role": "worker",
+       "verdict": "PASS",
+       "artifact": ".harness/evidence/M1-T5b-worker.log",
+       "routing": {
+        "tier": "Top",
+        "model": "opus",
+        "reason_code": "SECURITY",
+        "detail": "live network exposure changes on the user's Mac (Tailscale Serve, LaunchAgents, bundle host); also cross-cutting server/ops/live env"
+       },
+       "changed_files": [
+        "ops/scripts/e2e-tailnet-proof.sh"
+       ],
+       "live_changes": [
+        "~/.phone-models/token created mode 600 via ops token command",
+        "LaunchAgents com.harness.server and com.harness.bundle-host installed and running",
+        "tailscale serve --bg --https=8443 http://127.0.0.1:7789 added; / -> 7787 and /app -> 7788 unchanged; no Funnel",
+        "Ollama: devstral:24b loaded (none was resident)"
+       ]
+      },
+      {
+       "attempt": 4,
+       "role": "verifier",
+       "verdict": "PASS",
+       "artifact": ".harness/evidence/M1-T5b-verifier.log",
+       "tests_weakened": "NO",
+       "validation": {
+        "command": "bash ops/scripts/e2e-tailnet-proof.sh && (cd server && bun test && bun run typecheck) && (cd ops && bun test src/token && bash scripts/verify-ops-install.sh)",
+        "exit_code": 0
+       }
+      }
+     ]
     },
     {
      "id": "M1-T6",
@@ -947,13 +997,28 @@
    ],
    "reviews": [],
    "findings": [],
-   "validation": [],
+   "validation": [
+    {
+     "command": "cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/e2e-tailnet-proof.sh && (cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh) && (cd ops && bun test src/token && bash scripts/verify-ops-install.sh) && (cd mobile && bun run typecheck && bun test src/api src/ui && bun run lint && npx expo export --platform ios && rm -rf dist)",
+     "note": "reviewer runs once; the e2e script needs the live LaunchAgents, Tailscale and Ollama",
+     "artifacts": [
+      ".harness/evidence/M1-T5b-verifier.log",
+      ".harness/evidence/M1-T7-verifier.log"
+     ],
+     "status": "PENDING_REVIEWER_RUN"
+    }
+   ],
    "follow_ups": [
     "M1 was undersized at planning: signals IMPLEMENTATION_PLUS_LIVE_PROOF and CONCURRENCY_LIFECYCLE both apply (split rule). Found mid-flight, so recorded here, not split.",
     "M1-T2's server/scripts/curl-chat-stream-proof.sh skips its checks when no server is listening, so the T2 acceptance never exercised a live server; M1-T3's Tailscale Serve script and plists did not match architecture C8/C10. Both corrected under M1-T5.",
     "M1-T4 accepted with placeholder tests and expo SDK 51 (latest 57); corrected under M1-T6.",
     "M1-T1 and M1-T2 were accepted with the HTTP routes never wired to the generation manager (server.ts routes were placeholders); found by M1-T5a, corrected under M1-T7.",
-    "server/node_modules/ is untracked with no .gitignore excluding it; add a repo .gitignore (node_modules/, dist/)."
+    "server/node_modules/ is untracked with no .gitignore excluding it; add a repo .gitignore (node_modules/, dist/).",
+    "LAN exposure of the bundle host: Expo binds *:8081, so LAN 8081 is reachable (M1-AC4 gap). Needs human sudo pf; one-time command printed by ops/scripts/e2e-tailnet-proof.sh; persistence across reboot and utun interface naming unsolved.",
+    "ops/scripts/com.harness.pf.anchor and create-pf-anchor.sh (from M1-T3) contain `block all` allowing only lo0/utun0-4 and load into an anchor pf.conf never evaluates: unsafe to load; needs correction.",
+    "server/scripts/curl-chat-stream-proof.sh posts model \"test-model\" which does not exist in Ollama.",
+    "Human phone checks pending (Expo Go over tailnet: token-by-token render, token paste in settings, Stop halts output; LAN device unreachability).",
+    "M1-T5b left devstral:24b loaded in Ollama (default keep-alive)."
    ],
    "runtime": {
     "schema_version": 1,
@@ -1150,7 +1215,15 @@
       "id": "m1-t5b-worker-1",
       "kind": "worker",
       "task": "M1-T5b",
-      "status": "DISPATCHED"
+      "status": "COMPLETE",
+      "result": "TERMINAL"
+     },
+     {
+      "id": "m1-t5b-verifier-1",
+      "kind": "verifier",
+      "task": "M1-T5b",
+      "status": "COMPLETE",
+      "result": "TERMINAL"
      }
     ],
     "active_dispatch": null
@@ -1175,7 +1248,7 @@
      "by": "human"
     }
    ],
-   "budget_note": "Worker dispatch events used: 19 of 22 (T1 x2, T2 x5, T3 x1, T4 x3, T6 x4, T5a x1, T7 x2, T5b x1). Remaining 3."
+   "budget_note": "Worker dispatch events used: 20 of 22 (T1 x2, T2 x5, T3 x1, T4 x3, T6 x4, T5a x1, T7 x2, T5b x1). Remaining 2."
   },
   "M2": {
    "id": "M2",
