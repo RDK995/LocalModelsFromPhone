@@ -5,24 +5,30 @@
   <key>Label</key>
   <string>com.harness.bundle-host</string>
 
-  <key>Program</key>
-  <string>/usr/local/bin/bun</string>
-
+  <!-- C8: app bundle host = the Expo dev server in mobile/, production mode
+       (no dev, minified), port 8081, advertising the Mac's tailnet name.
+       Inbound 8081 is limited to lo0 and the Tailscale interface by the pf anchor. -->
   <key>ProgramArguments</key>
   <array>
-    <string>/usr/local/bin/bun</string>
-    <string>run</string>
-    <string>--cwd=/Users/ryankenny/Projects/CodingHarnessv2/bundle-host</string>
-    <string>src/index.ts</string>
+    <string>/opt/homebrew/bin/bun</string>
+    <string>x</string>
+    <string>expo</string>
+    <string>start</string>
+    <string>--no-dev</string>
+    <string>--minify</string>
+    <string>--port</string>
+    <string>8081</string>
   </array>
 
   <key>WorkingDirectory</key>
-  <string>/Users/ryankenny/Projects/CodingHarnessv2/bundle-host</string>
+  <string>/Users/ryankenny/Projects/CodingHarnessv2/mobile</string>
 
   <key>EnvironmentVariables</key>
   <dict>
-    <key>TOKEN_FILE</key>
-    <string>~/.harness/bundle-host.token</string>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>REACT_NATIVE_PACKAGER_HOSTNAME</key>
+    <string>ryans-mac-studio.tailc3648a.ts.net</string>
   </dict>
 
   <key>RunAtLoad</key>
@@ -31,14 +37,17 @@
   <key>KeepAlive</key>
   <true/>
 
+  <key>ThrottleInterval</key>
+  <integer>10</integer>
+
   <key>StandardOutPath</key>
-  <string>/var/log/harness-bundle-host.log</string>
+  <string>/Users/ryankenny/Library/Logs/phone-models/bundle-host.log</string>
 
   <key>StandardErrorPath</key>
-  <string>/var/log/harness-bundle-host.log</string>
+  <string>/Users/ryankenny/Library/Logs/phone-models/bundle-host.log</string>
 
   <key>Umask</key>
-  <integer>0077</integer>
+  <integer>63</integer>
 
   <key>ProcessType</key>
   <string>Standard</string>

@@ -659,7 +659,7 @@
             "reason_code": "SECURITY",
             "detail": "wires bearer-token auth into the entry point and defines LaunchAgent/Tailscale Serve exposure config"
           },
-          "status": "IN_PROGRESS",
+          "status": "ACCEPTED",
           "attempts": 4,
           "packet": ".harness/tasks/M1-T5a.md",
           "attempt_log": [
@@ -668,6 +668,93 @@
               "role": "worker",
               "tier": "Top",
               "model": "opus",
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M1-T5a-worker.log",
+              "changed_files": [
+                "ops/scripts/com.harness.bundle-host.plist",
+                "ops/scripts/com.harness.server.plist",
+                "ops/scripts/configure-tailscale-serve.sh",
+                "ops/scripts/install-bundle-host-agent.sh",
+                "ops/scripts/install-server-agent.sh",
+                "ops/scripts/verify-ops-install.sh",
+                "server/scripts/curl-chat-stream-proof.sh",
+                "server/scripts/entry-smoke.sh",
+                "server/src/index.ts"
+              ]
+            },
+            {
+              "attempt": 4,
+              "role": "verifier",
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M1-T5a-verifier.log",
+              "validation": {
+                "command": "(cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh) && (cd ops && bun test src/token) && for f in ops/scripts/*.sh server/scripts/*.sh; do bash -n \"$f\" || exit 1; done && plutil -lint ops/scripts/*.plist",
+                "exit_code": 0,
+                "tests": "server 25 pass; entry-smoke 7/7; ops token 14 pass; bash -n all; plutil OK"
+              },
+              "tests_weakened": "NO",
+              "changed_files": [
+                "ops/scripts/com.harness.bundle-host.plist",
+                "ops/scripts/com.harness.server.plist",
+                "ops/scripts/configure-tailscale-serve.sh",
+                "ops/scripts/install-bundle-host-agent.sh",
+                "ops/scripts/install-server-agent.sh",
+                "ops/scripts/verify-ops-install.sh",
+                "server/scripts/curl-chat-stream-proof.sh",
+                "server/scripts/entry-smoke.sh",
+                "server/src/index.ts"
+              ],
+              "note": "no live changes confirmed (agents not loaded, no 8443 serve mapping); confirmed HTTP routes are placeholders -> M1-T7"
+            }
+          ]
+        },
+        {
+          "id": "M1-T7",
+          "scope": "Wire server HTTP routes (chat, events/resume, cancel, state) to the generation manager and live Ollama client; createServer takes port option; drop index.ts Bun.serve swap; behavioural route tests on port 0; live-loopback curl proof.",
+          "tests": "cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh",
+          "requirements": [
+            "FR9",
+            "FR12",
+            "FR13"
+          ],
+          "constraints": [
+            "shared/api.ts contract unchanged",
+            "bind 127.0.0.1 only",
+            "tests never bind 7789"
+          ],
+          "findings": [],
+          "criteria": [
+            "M1-AC1",
+            "M1-AC2",
+            "M1-AC3"
+          ],
+          "paths": [
+            "server/src/http/server.ts",
+            "server/src/http/server.test.ts",
+            "server/src/index.ts",
+            "server/src/generations/manager.ts",
+            "server/scripts/entry-smoke.sh"
+          ],
+          "depends_on": [
+            "M1-T1",
+            "M1-T2",
+            "M1-T5a"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "connect existing tested components behind existing auth; contract fixed by shared/api.ts; settled by tests and live-loopback proof"
+          },
+          "packet": ".harness/tasks/M1-T7.md",
+          "status": "IN_PROGRESS",
+          "attempts": 3,
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
               "verdict": "PENDING"
             }
           ]
@@ -707,7 +794,8 @@
           ],
           "depends_on": [
             "M1-T5a",
-            "M1-T6"
+            "M1-T6",
+            "M1-T7"
           ],
           "routing": {
             "tier": "Top",
@@ -828,7 +916,9 @@
       "follow_ups": [
         "M1 was undersized at planning: signals IMPLEMENTATION_PLUS_LIVE_PROOF and CONCURRENCY_LIFECYCLE both apply (split rule). Found mid-flight, so recorded here, not split.",
         "M1-T2's server/scripts/curl-chat-stream-proof.sh skips its checks when no server is listening, so the T2 acceptance never exercised a live server; M1-T3's Tailscale Serve script and plists did not match architecture C8/C10. Both corrected under M1-T5.",
-        "M1-T4 accepted with placeholder tests and expo SDK 51 (latest 57); corrected under M1-T6."
+        "M1-T4 accepted with placeholder tests and expo SDK 51 (latest 57); corrected under M1-T6.",
+        "M1-T1 and M1-T2 were accepted with the HTTP routes never wired to the generation manager (server.ts routes were placeholders); found by M1-T5a, corrected under M1-T7.",
+        "server/node_modules/ is untracked with no .gitignore excluding it; add a repo .gitignore (node_modules/, dist/)."
       ],
       "runtime": {
         "schema_version": 1,
@@ -981,7 +1071,8 @@
             "id": "m1-t5a-worker-1",
             "kind": "worker",
             "task": "M1-T5a",
-            "status": "DISPATCHED"
+            "status": "COMPLETE",
+            "result": "TERMINAL"
           },
           {
             "id": "m1-t6-verifier-1",
@@ -989,13 +1080,26 @@
             "task": "M1-T6",
             "status": "COMPLETE",
             "result": "TERMINAL"
+          },
+          {
+            "id": "m1-t5a-verifier-1",
+            "kind": "verifier",
+            "task": "M1-T5a",
+            "status": "COMPLETE",
+            "result": "TERMINAL"
+          },
+          {
+            "id": "m1-t7-worker-1",
+            "kind": "worker",
+            "task": "M1-T7",
+            "status": "DISPATCHED"
           }
         ],
         "active_dispatch": null
       },
       "plan": {
         "sha256": "bb1e52bffc414a900041b0c2de382fbb19c7d611be86cb9f3ac50eb485b57005",
-        "task_count": 7
+        "task_count": 8
       },
       "decisions": [
         {
@@ -1013,7 +1117,7 @@
           "by": "human"
         }
       ],
-      "budget_note": "Worker dispatch events used: 16 of 22 (T1 x2, T2 x5, T3 x1, T4 x3, T6 x4, T5a x1). T5 split into T5a (code, Top) and T5b (live install + e2e proof, Top) to keep each within a worker's turn limit."
+      "budget_note": "Worker dispatch events used: 17 of 22 (T1 x2, T2 x5, T3 x1, T4 x3, T6 x4, T5a x1, T7 x1). Remaining 5: T5b (Top, live) plus retries."
     },
     "M2": {
       "id": "M2",

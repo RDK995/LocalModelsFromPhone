@@ -1,0 +1,107 @@
+=== Verification Run for M1-T5a ===
+Date: 2026-09-25
+Commit: a8ca44edc55243a9c1ccbe0de9ff33b52d0f9d6b
+Task: M1-T5a — Server entry point and corrected ops config
+
+Test Command (from task packet):
+(cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh) && (cd ops && bun test src/token) && for f in ops/scripts/*.sh server/scripts/*.sh; do bash -n "$f" || exit 1; done && plutil -lint ops/scripts/*.plist
+
+=== Test Output ===
+
+bun test v1.4.0 (1381054db)
+
+ 25 pass
+ 0 fail
+ 40 expect() calls
+Ran 25 tests across 3 files. [25.00ms]
+$ tsc --noEmit
+Entry smoke: starting server on 127.0.0.1:56921
+PASS: server started and is listening on http://127.0.0.1:56921
+PASS: listens on 127.0.0.1 only (127.0.0.1:56921)
+PASS: no token -> 401
+PASS: wrong token -> 401
+PASS: correct token -> 200 (not 401)
+PASS: 0644 token file -> exits non-zero (1)
+PASS: missing token file -> exits non-zero (1)
+Entry smoke: all checks passed
+bun test v1.4.0 (1381054db)
+
+ 14 pass
+ 0 fail
+ 20 expect() calls
+Ran 14 tests across 1 file. [37.00ms]
+ops/scripts/com.harness.bundle-host.plist: OK
+ops/scripts/com.harness.server.plist: OK
+
+Exit Status: 0
+
+
+=== Additional Verification ===
+
+Files Changed (via git diff HEAD --name-only and untracked):
+- ops/scripts/com.harness.bundle-host.plist (allowed)
+- ops/scripts/com.harness.server.plist (allowed)
+- ops/scripts/configure-tailscale-serve.sh (allowed)
+- ops/scripts/install-bundle-host-agent.sh (allowed)
+- ops/scripts/install-server-agent.sh (allowed)
+- ops/scripts/verify-ops-install.sh (allowed)
+- server/scripts/curl-chat-stream-proof.sh (allowed)
+- server/scripts/entry-smoke.sh (new, allowed)
+- server/src/index.ts (new, allowed)
+- server/node_modules/ (untracked install artifact)
+- .harness/evidence/M1-T5a-worker.log (orchestrator expected)
+
+Tests Weakened Check:
+- curl-chat-stream-proof.sh: Changed from skipping when no server to FAILing (exit 1) - this is a STRENGTHENING, not weakening
+- verify-ops-install.sh: Extended with additional checks (bun path, plist contents, bundle host requirements, tailscale serve configuration) - all ADDITIONS, no deletions or removals of assertions
+
+No tests or checks were weakened.
+
+Live System Changes Verification:
+- LaunchAgent com.harness.server: NOT loaded (expected)
+- LaunchAgent com.harness.bundle-host: NOT loaded (expected)
+- Tailscale Serve status: Shows only / -> http://127.0.0.1:7787 and /app -> http://127.0.0.1:7788
+  (no 8443 mapping present - no live changes made)
+
+configure-tailscale-serve.sh Constraints Verification:
+- No `reset` command: PASS
+- No `funnel` command: PASS (only mentions it in refusal logic)
+- No `--remove` flag: PASS
+- No `--set-path` flag: PASS
+- Maps 8443 -> 127.0.0.1:7789 with --bg flag: CONFIRMED (line 90)
+- Preserves existing / and /app mappings: CONFIRMED (lines 54-57 filter them out)
+- Idempotent: CONFIRMED (checks if already present, exits early if so)
+
+Server Binding Verification:
+- server/src/index.ts LISTEN_HOST = "127.0.0.1" (line 20)
+- Explicit check at lines 95-100: server.hostname must equal LISTEN_HOST or server stops
+- entry-smoke.sh verifies with lsof: "listens on 127.0.0.1 only" PASS
+
+Routes Implementation Status:
+As requested in the verification instructions, the routes in server/src/http/server.ts are:
+- /v1/state (line 148-158): handler has hardcoded response, comment "This will be implemented when ModelManager is ready"
+- /v1/chat (line 178-188): handler returns hardcoded SSE response, comment "Will be implemented with GenerationManager"
+- /v1/generations/{id}/events (line 192-201): handler returns 404, comment "Will be implemented with GenerationManager"
+- /v1/generations/{id}/cancel (line 205-214): handler returns 404, comment "Will be implemented with GenerationManager"
+
+The ollamaClient parameter passed to createServer (line 144) is NOT used in the function body.
+These routes are placeholders; they are not wired to server/src/generations/manager.ts or the Ollama client.
+
+However, this is NOT a task failure because:
+1. The task acceptance criteria (M1-AC2, M1-AC4) do not require route implementation, only entry point token enforcement and loopback binding
+2. The routes have explicit "Will be implemented" markers showing this is intentional
+3. The tests still pass because entry-smoke.sh only tests authentication and basic connectivity, not route logic
+
+Acceptance Criteria Exercised:
+- M1-AC2 (server entry point enforces token):
+  Demonstrated by entry-smoke.sh checks:
+    "PASS: no token -> 401" (line output)
+    "PASS: wrong token -> 401" (line output)
+    "PASS: correct token -> 200 (not 401)" (line output)
+    
+- M1-AC4 (configuration: loopback bind, 8443 tailnet-only mapping):
+  Demonstrated by:
+    entry-smoke.sh: "PASS: listens on 127.0.0.1 only" (line output)
+    configure-tailscale-serve.sh: Maps 8443 to 127.0.0.1:7789 with --bg (persistent, tailnet-only)
+    verify-ops-install.sh: Extended checks confirm correct plist configuration
+
