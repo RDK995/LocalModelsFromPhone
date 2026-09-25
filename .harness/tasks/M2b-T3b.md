@@ -58,3 +58,34 @@ cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bash scripts/model-failed
 Write complete output (including the Step 1 responses) to /Users/ryankenny/Projects/CodingHarnessv2/.harness/evidence/M2b-T3b-worker.log.
 
 Return: the worker return contract (Summary, Files changed, Tests run, Test result, Unresolved issues).
+
+---
+Previous Attempt (cumulative)
+
+Attempt 3 — Mid (sonnet) — FAIL (STOP rule). Evidence: .harness/evidence/M2b-T3b-worker.log
+- Ran Step 1 exactly as written: probe FROM nemotron3:33b with num_ctx 2097152 / 8388608 / 33554432, then
+  `/api/generate {"model":"m2b-failed-load-probe","keep_alive":0}`. All three returned in ~0.7 s with
+  {"response":"","done":true,"done_reason":"unload"} and no error.
+- Why that proves nothing (orchestrator's diagnosis): in Ollama an empty-prompt /api/generate with keep_alive 0 is
+  the documented UNLOAD request. The probe was never loaded, so no allocation was attempted. The packet's Step 1
+  method was wrong, not the idea.
+
+Escalated: tier Top (opus), attempt 4, reason_code NO_TEST_ORACLE — the failure-induction outcome is not known in
+advance and this is the last rung.
+
+Revised Step 1 for attempt 4 (replaces the Step 1 above; still bounded, still do it FIRST by direct commands):
+- Load the probe the way the server does (read server/src/models/manager.ts / the Ollama client for the exact
+  request — expected: /api/generate with no prompt and keep_alive -1, or a non-zero keep_alive). A genuine load
+  takes seconds, not <1 s; check /api/ps and `ollama ps` afterwards.
+- Methods, in order, stop at the first that yields a genuine Ollama load error:
+  (a) nemotron3:33b probe with num_ctx 2097152, then 8388608 (loaded properly this time).
+  (b) the same probe with an additional very large `PARAMETER num_batch` / `num_gpu` combination if (a) is clamped
+      — at most two more tries.
+  (c) a probe whose weights are a deliberately corrupted/truncated GGUF (e.g. `FROM ./file.gguf` made from the
+      head of an installed model's blob under ~/.ollama/models/blobs, sized so `ollama create` accepts it but the
+      runner fails at load). M2-AC5 says "a failed load, such as out of memory" — a genuine runner load failure
+      of an installed model qualifies; record which failure class you used.
+- Restore the Mac after each try (ollama rm the probe; devstral:24b with keep_alive -1). Remove any scratch GGUF
+  you created (put it in /private/tmp, not the repo).
+- If none of (a)-(c) yields a genuine load error, STOP and return FAIL with the observed responses.
+Step 2 is unchanged. Record the chosen method and its raw Ollama error in the evidence log.
