@@ -1,0 +1,57 @@
+=== Model Swap/Unload Live Proof ===
+IDLE_SECONDS=600
+
+Restarting LaunchAgents...
+Waiting for server to be ready...
+Server is up and enforcing auth
+
+--- Recording original Ollama state (before proof) ---
+Before: {"models":[{"name":"devstral:24b","model":"devstral:24b","size":35816011202,"digest":"9bd74193e93935e9d8564d88607b220a9d341c4a36b748cffcbd9ad4f47a9ca9","details":{"parent_model":"","format":"gguf","family":"llama","families":["llama"],"parameter_size":"23.6B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-05T19:24:09.928435807Z","size_vram":35816011202,"context_length":131072}]}
+Originally resident: devstral:24b
+
+--- Running proof (mobile/scripts/model-swap-proof.ts) ---
+Derived from /api/tags (two smallest by size): A=devstral:24b, B=qwen3.6:27b
+
+--- Step 1: load A (devstral:24b) via app client, wait idle ---
+  residentLabel: "Loaded: devstral:24b"
+  resident.loaded_by_server: true
+  /api/ps: ["devstral:24b"]
+PASS: Step 1 (load A): /api/ps lists exactly ["devstral:24b"]
+PASS: Step 1: residentLabel is "Loaded: devstral:24b"
+PASS: Step 1: resident.loaded_by_server is true
+
+--- Step 2: load B (qwen3.6:27b) via app client, wait idle (swap out A) ---
+  residentLabel: "Loaded: qwen3.6:27b"
+  /api/ps: ["qwen3.6:27b"]
+PASS: Step 2 (load B, swap): /api/ps lists exactly ["qwen3.6:27b"]
+PASS: Step 2: residentLabel is "Loaded: qwen3.6:27b" (M2-AC2 swap)
+
+--- Step 3: chat with B (qwen3.6:27b) via app client, wait for terminal done ---
+  done event: status=complete, model=qwen3.6:27b
+PASS: Step 3: chat completed with a terminal done event
+  /api/ps: ["qwen3.6:27b"]
+PASS: Step 3 (after chat reply): /api/ps lists exactly ["qwen3.6:27b"]
+  expires_at: 2319-01-05T19:25:41.924571807Z (year 2319)
+PASS: Step 3: expires_at is far in the future (year 2319); keep_alive -1 held (M2-AC3, after a chat reply)
+
+--- Step 4: idle 600s, no requests to Ollama in between ---
+  /api/ps: ["qwen3.6:27b"]
+PASS: Step 4 (after 600s idle): /api/ps lists exactly ["qwen3.6:27b"]
+
+--- Step 5: unload via app client, wait idle ---
+  residentLabel: "Nothing loaded"
+  /api/ps: []
+PASS: Step 5 (unload): /api/ps lists exactly []
+PASS: Step 5: residentLabel is "Nothing loaded" (M2-AC2 unload)
+
+All swap/unload proof checks passed.
+
+--- Cleanup: restoring original Ollama state ---
+Before cleanup: {"models":[]}
+Restoring devstral:24b (keep_alive -1)...
+After cleanup: {"models":[{"name":"devstral:24b","model":"devstral:24b","size":35816011202,"digest":"9bd74193e93935e9d8564d88607b220a9d341c4a36b748cffcbd9ad4f47a9ca9","details":{"parent_model":"","format":"gguf","family":"llama","families":["llama"],"parameter_size":"23.6B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-05T19:35:51.210008807Z","size_vram":35816011202,"context_length":131072}]}
+[0;32m=== Proof PASSED, Mac restored to its original state ===[0m
+$ tsc --noEmit
+$ eslint src --max-warnings 0
+
+[exited with code 0]
