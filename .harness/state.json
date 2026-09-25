@@ -1272,7 +1272,14 @@
           ],
           "files_outside_findings": "none; mobile/* answers B (Unmatched Route found in the human's on-phone check), e2e-tailnet-proof.sh answers A, ops/src/token* answers C",
           "tier": "Top",
-          "reason_code": "MILESTONE_REVIEW"
+          "reason_code": "MILESTONE_REVIEW",
+          "override_fix_cycle": {
+            "fix_cycle": 3,
+            "authorised_by": "review_override",
+            "answers": "finding B (on-phone keyboard defect found in the human re-test)",
+            "pre_correction": "811f5bed6d9a1d5eeccbcd842624f77fd8d5a9ba",
+            "status": "IN_PROGRESS"
+          }
         }
       ],
       "findings": [

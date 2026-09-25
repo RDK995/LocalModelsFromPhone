@@ -13,6 +13,8 @@ import {
   ActivityIndicator,
   Alert,
   SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { getToken } from "@/api/secureStoreToken";
@@ -168,96 +170,109 @@ export default function ChatScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Chat</Text>
-        <TouchableOpacity onPress={() => router.push("/settings")}>
-          <Text style={styles.settingsButton}>Settings</Text>
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView
-        ref={scrollViewRef}
-        style={styles.messagesContainer}
-        contentContainerStyle={styles.messagesContent}
+      {/*
+        The Stack header for the "chat" route is hidden (see _layout.tsx):
+        chat renders its own header below, so there is nothing else above
+        this KeyboardAvoidingView and keyboardVerticalOffset can stay at 0.
+      */}
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={0}
       >
-        {messages.map((message) => (
-          <View key={message.id} style={styles.messageGroup}>
-            {message.thinking && (
-              <View style={styles.thinkingContainer}>
-                <Text style={styles.thinkingLabel}>Thinking:</Text>
-                <Text style={styles.thinkingText}>{message.thinking}</Text>
-              </View>
-            )}
-            <View
-              style={[
-                styles.message,
-                message.role === "user"
-                  ? styles.userMessage
-                  : styles.assistantMessage,
-              ]}
-            >
-              <Text style={styles.messageText}>{message.content}</Text>
-            </View>
-          </View>
-        ))}
-
-        {thinking && (
-          <View style={styles.thinkingContainer}>
-            <Text style={styles.thinkingLabel}>Thinking:</Text>
-            <Text style={styles.thinkingText}>{thinking}</Text>
-          </View>
-        )}
-
-        {response && (
-          <View style={styles.message}>
-            <Text style={styles.messageText}>{response}</Text>
-            {isLoading && <ActivityIndicator style={styles.loadingDots} />}
-          </View>
-        )}
-
-        {isLoading && !response && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#007AFF" />
-            <Text style={styles.loadingText}>Loading response...</Text>
-          </View>
-        )}
-      </ScrollView>
-
-      {blockedMessage && (
-        <View style={styles.blockedContainer}>
-          <Text style={styles.blockedText}>{blockedMessage}</Text>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Chat</Text>
+          <TouchableOpacity onPress={() => router.push("/settings")}>
+            <Text style={styles.settingsButton}>Settings</Text>
+          </TouchableOpacity>
         </View>
-      )}
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={[styles.input, isLoading && styles.inputDisabled]}
-          placeholder="Type a message..."
-          value={inputText}
-          onChangeText={setInputText}
-          editable={!isLoading}
-          placeholderTextColor="#999"
-        />
-        {isLoading ? (
-          <TouchableOpacity
-            style={[styles.button, styles.stopButton]}
-            onPress={handleStop}
-          >
-            <Text style={styles.buttonText}>Stop</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={[
-              styles.button,
-              !inputText.trim() && styles.buttonDisabled,
-            ]}
-            onPress={handleSendMessage}
-            disabled={!inputText.trim()}
-          >
-            <Text style={styles.buttonText}>Send</Text>
-          </TouchableOpacity>
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.messagesContainer}
+          contentContainerStyle={styles.messagesContent}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+        >
+          {messages.map((message) => (
+            <View key={message.id} style={styles.messageGroup}>
+              {message.thinking && (
+                <View style={styles.thinkingContainer}>
+                  <Text style={styles.thinkingLabel}>Thinking:</Text>
+                  <Text style={styles.thinkingText}>{message.thinking}</Text>
+                </View>
+              )}
+              <View
+                style={[
+                  styles.message,
+                  message.role === "user"
+                    ? styles.userMessage
+                    : styles.assistantMessage,
+                ]}
+              >
+                <Text style={styles.messageText}>{message.content}</Text>
+              </View>
+            </View>
+          ))}
+
+          {thinking && (
+            <View style={styles.thinkingContainer}>
+              <Text style={styles.thinkingLabel}>Thinking:</Text>
+              <Text style={styles.thinkingText}>{thinking}</Text>
+            </View>
+          )}
+
+          {response && (
+            <View style={styles.message}>
+              <Text style={styles.messageText}>{response}</Text>
+              {isLoading && <ActivityIndicator style={styles.loadingDots} />}
+            </View>
+          )}
+
+          {isLoading && !response && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#007AFF" />
+              <Text style={styles.loadingText}>Loading response...</Text>
+            </View>
+          )}
+        </ScrollView>
+
+        {blockedMessage && (
+          <View style={styles.blockedContainer}>
+            <Text style={styles.blockedText}>{blockedMessage}</Text>
+          </View>
         )}
-      </View>
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={[styles.input, isLoading && styles.inputDisabled]}
+            placeholder="Type a message..."
+            value={inputText}
+            onChangeText={setInputText}
+            editable={!isLoading}
+            placeholderTextColor="#999"
+          />
+          {isLoading ? (
+            <TouchableOpacity
+              style={[styles.button, styles.stopButton]}
+              onPress={handleStop}
+            >
+              <Text style={styles.buttonText}>Stop</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={[
+                styles.button,
+                !inputText.trim() && styles.buttonDisabled,
+              ]}
+              onPress={handleSendMessage}
+              disabled={!inputText.trim()}
+            >
+              <Text style={styles.buttonText}>Send</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -266,6 +281,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+  },
+  flex: {
+    flex: 1,
   },
   header: {
     flexDirection: "row",

@@ -112,6 +112,9 @@ Record pass/fail for each on M1-AC1 (step 3), M1-AC2 (step 2), M1-AC3 (step 4).
 Recommended decision:
 Do the re-test. If all four pass, record them and set M1 back to REVIEW for the scoped final review. If any fails, record exactly what the screen showed; the cap is then spent and the milestone needs a human decision.
 
+Cycle 3 (human-authorised override, one extra fix cycle; answers cycle-2 finding B after the human's re-test: Setup keyboard covers Continue and cannot be dismissed)
+Pre-correction: 811f5bed6d9a1d5eeccbcd842624f77fd8d5a9ba
+
 ### Review Cycles
 
 2

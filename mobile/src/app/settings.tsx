@@ -12,6 +12,11 @@ import {
   ActivityIndicator,
   Alert,
   SafeAreaView,
+  KeyboardAvoidingView,
+  ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { saveToken, clearToken } from "@/api/secureStoreToken";
@@ -63,74 +68,90 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Settings</Text>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.content}>
+              <Text style={styles.title}>Settings</Text>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Bearer Token</Text>
-          {!showForm ? (
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => setShowForm(true)}
-            >
-              <Text style={styles.buttonText}>Update Token</Text>
-            </TouchableOpacity>
-          ) : (
-            <View>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter new token"
-                value={token}
-                onChangeText={setToken}
-                editable={!isLoading}
-                secureTextEntry={true}
-                placeholderTextColor="#999"
-                multiline={true}
-              />
-              <View style={styles.formButtons}>
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Bearer Token</Text>
+                {!showForm ? (
+                  <TouchableOpacity
+                    style={styles.button}
+                    onPress={() => setShowForm(true)}
+                  >
+                    <Text style={styles.buttonText}>Update Token</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <View>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Enter new token"
+                      value={token}
+                      onChangeText={setToken}
+                      editable={!isLoading}
+                      secureTextEntry={true}
+                      placeholderTextColor="#999"
+                      returnKeyType="done"
+                      onSubmitEditing={handleUpdateToken}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                    />
+                    <View style={styles.formButtons}>
+                      <TouchableOpacity
+                        style={[
+                          styles.formButton,
+                          styles.cancelButton,
+                          isLoading && styles.buttonDisabled,
+                        ]}
+                        onPress={() => {
+                          setToken("");
+                          setShowForm(false);
+                        }}
+                        disabled={isLoading}
+                      >
+                        <Text style={styles.cancelButtonText}>Cancel</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[
+                          styles.formButton,
+                          styles.submitButton,
+                          isLoading && styles.buttonDisabled,
+                        ]}
+                        onPress={handleUpdateToken}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <ActivityIndicator color="#fff" />
+                        ) : (
+                          <Text style={styles.buttonText}>Save</Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.section}>
                 <TouchableOpacity
-                  style={[
-                    styles.formButton,
-                    styles.cancelButton,
-                    isLoading && styles.buttonDisabled,
-                  ]}
-                  onPress={() => {
-                    setToken("");
-                    setShowForm(false);
-                  }}
-                  disabled={isLoading}
+                  style={[styles.button, styles.logoutButton]}
+                  onPress={handleLogout}
                 >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.formButton,
-                    styles.submitButton,
-                    isLoading && styles.buttonDisabled,
-                  ]}
-                  onPress={handleUpdateToken}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <Text style={styles.buttonText}>Save</Text>
-                  )}
+                  <Text style={styles.logoutButtonText}>Logout</Text>
                 </TouchableOpacity>
               </View>
             </View>
-          )}
-        </View>
-
-        <View style={styles.section}>
-          <TouchableOpacity
-            style={[styles.button, styles.logoutButton]}
-            onPress={handleLogout}
-          >
-            <Text style={styles.logoutButtonText}>Logout</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+          </TouchableWithoutFeedback>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -139,6 +160,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
+  },
+  flex: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   content: {
     flex: 1,
@@ -168,7 +195,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ddd",
     color: "#000",
-    minHeight: 100,
+    height: 48,
   },
   button: {
     backgroundColor: "#007AFF",

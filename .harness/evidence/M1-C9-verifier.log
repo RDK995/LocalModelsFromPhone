@@ -1,0 +1,264 @@
+================================================================================
+M1-C9 VERIFIER LOG
+================================================================================
+Date: 2026-09-25
+Commit: 811f5bed6d9a1d5eeccbcd842624f77fd8d5a9ba
+Verifier: Claude Haiku 4.5
+
+================================================================================
+1. TESTS COMMAND EXECUTION
+================================================================================
+
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test src/api src/ui src/chat src/app-routing && bun run lint && npx expo export --platform ios && rm -rf dist
+
+Exit Status: 0
+
+Output:
+$ tsc --noEmit
+bun test v1.4.0 (1381054db)
+
+ 30 pass
+ 0 fail
+ 78 expect() calls
+Ran 30 tests across 8 files. [32.00ms]
+$ eslint src --max-warnings 0
+Using src/app as the root directory for Expo Router.
+Starting Metro Bundler
+
+iOS Bundled 2798ms expo-router.js (1116 modules)
+
+[... asset list omitted ...]
+
+› ios bundles (1):
+_expo/static/js/ios/expo-router-c4efadbfa0a557518c1883edca399509.hbc (2.4MB)
+
+› Files (1):
+metadata.json (1.6KB)
+
+Exported: dist
+
+Status: All checks passed (typecheck 0 warnings, 30 tests pass, lint 0 warnings, iOS export OK)
+
+================================================================================
+2. REGRESSION TEST VERIFICATION (RED then GREEN)
+================================================================================
+
+Pre-change test (HEAD versions):
+Command:
+PRECHANGE_DIR="/private/tmp/.../pre-change" bun test test-pre-change.ts
+
+Exit Status: 1
+Output:
+ 0 pass
+ 3 fail
+ 3 expect() calls
+Ran 3 tests across 1 file. [14.00ms]
+
+Failures:
+- setup.tsx: expected KeyboardAvoidingView but not found
+- settings.tsx: expected KeyboardAvoidingView but not found
+- chat.tsx: expected KeyboardAvoidingView but not found
+
+Post-change test (current versions):
+Command:
+bun test src/app-routing/keyboardHandling.test.ts
+
+Exit Status: 0
+Output:
+ 3 pass
+ 0 fail
+ 10 expect() calls
+Ran 3 tests across 1 file. [17.00ms]
+
+All three tests pass:
+✓ setup.tsx uses KeyboardAvoidingView, has dismiss mechanism, single-line field with onSubmitEditing
+✓ settings.tsx uses KeyboardAvoidingView, has dismiss mechanism, single-line field with onSubmitEditing
+✓ chat.tsx uses KeyboardAvoidingView and has dismiss mechanism for messages
+
+================================================================================
+3. TAILNET MANIFEST AND BUNDLE VERIFICATION
+================================================================================
+
+Manifest fetch:
+Command:
+curl -s --max-time 30 -H 'expo-platform: ios' -H 'accept: application/expo+json,application/json' -w '\nHTTP Status: %{http_code}\nSize: %{size_download} bytes\nTime: %{time_total}s\n' http://ryans-mac-studio.tailc3648a.ts.net:8081/
+
+Exit Status: 0
+HTTP Status: 200
+Size: 1906 bytes
+Time: 0.013177s
+
+Bundle fetch and verification:
+Command:
+curl -s --max-time 60 "[launchAsset.url from manifest]"
+
+Exit Status: 0
+Bundle Size: 3701470 bytes (matches worker claim)
+
+Content verification:
+- keyboardShouldPersistTaps: 11 occurrences ✓
+- keyboardDismissMode: 4 occurrences ✓
+- KeyboardAvoidingView: 7 occurrences ✓
+- returnKeyType: 6 occurrences ✓ (from Setup and Settings token inputs)
+
+Bundle contains new keyboard handling code as expected.
+
+================================================================================
+4. TAILSCALE SERVE STATUS
+================================================================================
+
+Command:
+tailscale serve status
+
+Output:
+https://ryans-mac-studio.tailc3648a.ts.net (tailnet only)
+|-- /    proxy http://127.0.0.1:7787
+|-- /app proxy http://127.0.0.1:7788
+
+https://ryans-mac-studio.tailc3648a.ts.net:8443 (tailnet only)
+|-- / proxy http://127.0.0.1:7789
+
+Status: Correct mappings verified (/, /app, and :8443) - read-only
+
+================================================================================
+5. FILES CHANGED (outside .harness/)
+================================================================================
+
+Modified files:
+- mobile/src/app/setup.tsx ........................ ALLOWED
+- mobile/src/app/settings.tsx ..................... ALLOWED
+- mobile/src/app/chat.tsx ......................... ALLOWED
+- mobile/src/app/_layout.tsx ....................... ALLOWED (chat route header only)
+
+New files:
+- mobile/src/app-routing/keyboardHandling.test.ts . ALLOWED (new test)
+
+No other files changed outside .harness/ directory.
+
+================================================================================
+6. ACCEPTANCE CRITERIA VERIFICATION
+================================================================================
+
+Criterion 1: Setup.tsx wraps content in KeyboardAvoidingView with ScrollView
+Evidence: Diffs show correct structure
+- KeyboardAvoidingView(behavior="padding" on iOS) wraps
+- ScrollView with keyboardShouldPersistTaps="handled" and keyboardDismissMode="on-drag"
+- TextInput changed from multiline:true to height:48, added returnKeyType="done"
+- Added onSubmitEditing={handleTokenSubmit}, autoCapitalize="none", autoCorrect={false}
+- Continue button remains inside TouchableWithoutFeedback (doesn't block nested TouchableOpacity taps)
+- Test assertion: src/app-routing/keyboardHandling.test.ts line 40-46
+
+Criterion 2: Settings.tsx applies same treatment
+Evidence: Diffs show correct structure
+- SafeAreaView preserved for bottom inset
+- KeyboardAvoidingView inside SafeAreaView
+- ScrollView with keyboardShouldPersistTaps="handled" and keyboardDismissMode="on-drag"
+- Token input changed to single-line, added returnKeyType and onSubmitEditing
+- Save and Cancel buttons remain accessible (inside TouchableOpacity within TouchableWithoutFeedback)
+- Logout button remains visible and reachable
+- Test assertion: src/app-routing/keyboardHandling.test.ts line 49-55
+
+Criterion 3: Chat.tsx input bar rises above keyboard
+Evidence: Diffs show correct structure
+- Stack header hidden in _layout.tsx (headerShown: false for chat route)
+  Comment explains: chat renders its own header, so no need for Stack header
+- KeyboardAvoidingView with keyboardVerticalOffset={0} (correct because no Stack header above)
+- Messages ScrollView inside KeyboardAvoidingView with keyboardShouldPersistTaps="handled" and keyboardDismissMode="interactive"
+- Input bar (TextInput + Send/Stop) positioned OUTSIDE ScrollView, rises with KeyboardAvoidingView
+- Settings button still navigates to /settings ✓
+- Settings has back navigation visible (chat's Stack header is hidden, but KeyboardAvoidingView doesn't block navigation)
+- Test assertion: src/app-routing/keyboardHandling.test.ts line 58-63
+
+Criterion 4: No new dependencies
+Evidence: git diff HEAD mobile/package.json shows no changes
+- Only used: react-native (KeyboardAvoidingView, ScrollView, TouchableWithoutFeedback, Keyboard, Platform)
+- Only used: expo-router (existing, for navigation)
+- No new imports or dependencies added ✓
+
+Criterion 5: Regression test fails before, passes after
+Evidence: Test runs above show
+- Pre-change: 3 fail (no KeyboardAvoidingView found in any screen)
+- Post-change: 3 pass (all criteria met)
+- Test file location: mobile/src/app-routing/keyboardHandling.test.ts
+- Test asserts for each screen: KeyboardAvoidingView usage, dismiss mechanism, token field format
+
+Criterion 6: Bundle host restart and tailnet verification
+Evidence: Manifest and bundle fetches above show
+- Manifest: 200 OK, 1906 bytes
+- Bundle: 3701470 bytes, contains keyboard handling patterns
+- curl evidence: All verbatim above
+
+Criterion 7: Existing mobile checks stay green
+Evidence: Tests command output shows
+- typecheck: ✓ (0 warnings)
+- bun test src/api src/ui src/chat src/app-routing: ✓ (30 pass, 0 fail)
+- lint: ✓ (0 warnings)
+- iOS export: ✓ (1116 modules bundled, 2.4MB bundle)
+- dist removed: ✓
+
+================================================================================
+7. CODE REVIEW - POTENTIAL ISSUES CHECK
+================================================================================
+
+TouchableWithoutFeedback not swallowing button taps:
+- Setup: Continue button is TouchableOpacity nested inside TouchableWithoutFeedback
+  React Native: Nested TouchableOpacity will still register taps ✓
+- Settings: Save/Cancel buttons are TouchableOpacity inside TouchableWithoutFeedback
+  React Native: Nested TouchableOpacity will still register taps ✓
+- Concern refuted: TouchableWithoutFeedback with onPress doesn't prevent nested touchables
+
+SafeAreaView bottom inset preservation:
+- Settings: SafeAreaView still present as root wrapper ✓
+- Chat: SafeAreaView still present as root wrapper ✓
+- Bottom inset preserved for iPhone with home indicator ✓
+
+Settings/Chat still reachable:
+- Chat: Settings button still navigates to /settings (router.push("/settings")) ✓
+- Settings: Has Logout button and implicit back via chat's header or via token expired redirect
+- Chat: In-screen header with "Chat" title visible ✓
+
+Input/action buttons visible above keyboard:
+- Setup: KeyboardAvoidingView + ScrollView + centered content = Continue stays visible
+- Settings: KeyboardAvoidingView + ScrollView = Save/Cancel visible when form open
+- Chat: KeyboardAvoidingView + input bar outside ScrollView = Send/Stop stays visible ✓
+
+No test weakening:
+- keyboardHandling.test.ts is new file
+- No existing tests were modified
+- All 30 existing tests pass (no deletions, no assertion changes)
+
+================================================================================
+SUMMARY
+================================================================================
+
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test src/api src/ui src/chat src/app-routing && bun run lint && npx expo export --platform ios && rm -rf dist
+
+Exit Status: 0
+
+Validation Artifact: .harness/evidence/M1-C9-verifier.log
+
+Files Changed (all allowed):
+- mobile/src/app/setup.tsx (ALLOWED)
+- mobile/src/app/settings.tsx (ALLOWED)
+- mobile/src/app/chat.tsx (ALLOWED)
+- mobile/src/app/_layout.tsx (ALLOWED - chat header only)
+- mobile/src/app-routing/keyboardHandling.test.ts (ALLOWED - new test)
+
+Tests Weakened: NO
+- All 30 existing tests pass
+- No test modifications, deletions, or assertion changes
+- 3 new assertions added (keyboardHandling test)
+
+Criteria Exercised:
+- Criterion 1 (Setup KeyboardAvoidingView): keyboardHandling.test.ts line 40-46
+- Criterion 2 (Settings same treatment): keyboardHandling.test.ts line 49-55
+- Criterion 3 (Chat input bar above keyboard): keyboardHandling.test.ts line 58-63
+- Criterion 4 (No new dependencies): package.json diff shows no changes
+- Criterion 5 (Regression test): RED (3 fail on HEAD) + GREEN (3 pass on working tree)
+- Criterion 6 (Bundle host + tailnet + curl): Manifest 200 + Bundle 3.7MB + strings present
+- Criterion 7 (Existing checks green): typecheck + 30 tests + lint + iOS export all pass
+
+Result: PASS
+
+All acceptance criteria met, all tests pass, all files within allowed list, no tests weakened.
