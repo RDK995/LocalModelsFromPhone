@@ -234,7 +234,7 @@ Files changed by corrections: mobile/src/chat/chatController.ts; mobile/src/chat
 
 ## M2a — Installed models and true resident state on the phone
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -254,7 +254,9 @@ Pending.
 
 ### Baseline
 
-Pending.
+2632a61df5ba160dd6850f0c31d37e412d23f504 on m2-model-list-swap-unload
+
+Baseline broad validation GREEN: server 0, ops 0, mobile 0, e2e-tailnet-proof 0 — .harness/evidence/M2a-baseline-validation-{A,B,C,D}.log
 
 ### Evidence
 

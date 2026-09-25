@@ -2063,12 +2063,12 @@
         "FR1",
         "FR2"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
-        "commit": "",
-        "branch": ""
+        "commit": "2632a61df5ba160dd6850f0c31d37e412d23f504",
+        "branch": "m2-model-list-swap-unload"
       },
       "as_built": {
         "artifact": null,
@@ -2095,7 +2095,30 @@
         "SUBSYSTEMS_GT_3",
         "PRODUCTION_FILES_GT_8"
       ],
-      "split_reason": "Split from M2 at pickup (5 criteria, within size) because of operational-complexity signals CONCURRENCY_LIFECYCLE + IMPLEMENTATION_PLUS_LIVE_PROOF (a required split), plus MULTIPLE_OUTCOMES, SUBSYSTEMS_GT_3 and PRODUCTION_FILES_GT_8; parts: M2a model list and resident state, M2b swap-load/unload that stays resident, M2c busy confirmation."
+      "split_reason": "Split from M2 at pickup (5 criteria, within size) because of operational-complexity signals CONCURRENCY_LIFECYCLE + IMPLEMENTATION_PLUS_LIVE_PROOF (a required split), plus MULTIPLE_OUTCOMES, SUBSYSTEMS_GT_3 and PRODUCTION_FILES_GT_8; parts: M2a model list and resident state, M2b swap-load/unload that stays resident, M2c busy confirmation.",
+      "baseline_validation": {
+        "result": "GREEN",
+        "artifacts": [
+          ".harness/evidence/M2a-baseline-validation-A.log",
+          ".harness/evidence/M2a-baseline-validation-B.log",
+          ".harness/evidence/M2a-baseline-validation-C.log",
+          ".harness/evidence/M2a-baseline-validation-D.log"
+        ],
+        "exits": {
+          "server": 0,
+          "ops": 0,
+          "mobile": 0,
+          "e2e": 0
+        }
+      },
+      "complexity_check_at_pickup": {
+        "criteria": 1,
+        "shape": "PASS (app/HTTP entry point)",
+        "signals": [
+          "IMPLEMENTATION_PLUS_LIVE_PROOF"
+        ],
+        "decision": "run; seam check found no smaller independently demonstrable outcome"
+      }
     },
     "M2b": {
       "id": "M2b",

@@ -345,6 +345,32 @@ describe("HTTP Server with Bearer Auth", () => {
     }
   });
 
+  it("/v1/state reports resident:null when nothing is loaded", async () => {
+    const client = new FakeOllamaClient(
+      completingChat(0),
+      { models: [{ name: "llama3", modified_at: "", size: 42, digest: "abc" }] },
+      { models: [] }
+    );
+    const testToken = "test-token";
+    setValidToken(testToken);
+    const server = createServer({ ollama: client, port: 0 });
+
+    try {
+      const response = await fetch(`http://127.0.0.1:${server.port}/v1/state`, {
+        method: "GET",
+        headers: authHeaders(testToken),
+      });
+
+      expect(response.status).toBe(200);
+      const body = (await response.json()) as {
+        resident: { name: string; loaded_by_server: boolean } | null;
+      };
+      expect(body.resident).toBeNull();
+    } finally {
+      server.stop();
+    }
+  });
+
   it("POST /v1/chat streams content events then a terminal complete event", async () => {
     const client = new FakeOllamaClient(completingChat(2));
     const testToken = "test-token";

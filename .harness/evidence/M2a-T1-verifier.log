@@ -1,0 +1,20 @@
+Commit: 2632a61df5ba160dd6850f0c31d37e412d23f504
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck && bash scripts/entry-smoke.sh
+---
+bun test v1.4.0 (1381054db)
+
+ 48 pass
+ 0 fail
+ 162 expect() calls
+Ran 48 tests across 4 files. [252.00ms]
+$ tsc --noEmit
+Entry smoke: starting server on 127.0.0.1:63988
+PASS: server started and is listening on http://127.0.0.1:63988
+PASS: listens on 127.0.0.1 only (127.0.0.1:63988)
+PASS: no token -> 401
+PASS: wrong token -> 401
+PASS: correct token -> 200 (not 401)
+PASS: 0644 token file -> exits non-zero (1)
+PASS: missing token file -> exits non-zero (1)
+Entry smoke: all checks passed
+Exit status: 0

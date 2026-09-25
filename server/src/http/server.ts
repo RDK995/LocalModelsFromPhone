@@ -13,12 +13,10 @@ import type {
   OllamaTagsResponse,
   OllamaPsResponse,
 } from "../ollama/client";
+import { ModelManager, OllamaDownError } from "../models/manager";
 import type {
   ErrorResponse,
   ChatRequest,
-  StateResponse,
-  Model,
-  ResidentModel,
 } from "@shared/api";
 
 const LISTEN_HOST = "127.0.0.1";
@@ -37,6 +35,7 @@ export interface OllamaStateClient extends OllamaChatClient {
 export interface CreateServerOptions {
   ollama: OllamaStateClient;
   manager?: GenerationManager;
+  models?: ModelManager;
   port?: number;
 }
 
@@ -306,39 +305,26 @@ function parseResumeSeq(lastEventId: string | null): number {
 export function createServer({
   ollama,
   manager,
+  models,
   port = DEFAULT_PORT,
 }: CreateServerOptions): ReturnType<typeof Bun.serve> {
   const genManager = manager ?? new GenerationManager(ollama);
+  const modelManager = models ?? new ModelManager(ollama, genManager);
 
   const routes: Route[] = [
     {
       method: "GET",
       path: "/v1/state",
       handler: async () => {
-        let models: Model[] = [];
-        let resident: ResidentModel | null = null;
-
         try {
-          const tags = await ollama.tags();
-          models = tags.models.map((m) => ({ name: m.name, size_bytes: m.size }));
-
-          const ps = await ollama.ps();
-          if (ps.models.length > 0) {
-            resident = { name: ps.models[0].name, loaded_by_server: false };
+          const state = await modelManager.state();
+          return jsonResponse(state);
+        } catch (error) {
+          if (error instanceof OllamaDownError) {
+            return errorResponse("ollama_down", error.message, 503);
           }
-        } catch {
-          return errorResponse("ollama_down", "Unable to reach Ollama", 503);
+          throw error;
         }
-
-        const generation = genManager.getActiveGeneration();
-
-        const state: StateResponse = {
-          models,
-          resident,
-          operation: { kind: "idle" },
-          generation,
-        };
-        return jsonResponse(state);
       },
     },
     {

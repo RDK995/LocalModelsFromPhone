@@ -1,0 +1,66 @@
+$ tsc --noEmit
+bun test v1.4.0 (1381054db)
+
+ 38 pass
+ 0 fail
+ 101 expect() calls
+Ran 38 tests across 9 files. [35.00ms]
+$ eslint src --max-warnings 0
+$ scripts/runtime-smoke.sh
+=== token present ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.cbM6me/dist/_expo/static/js/ios/expo-router-af962b8fb6829230607bfdc65fc2ebbf.js
+stored token: present; expected first screen: Chat
+rendered text: ["Chat","Settings","Send"]
+native stack headers: [{"title":"Chat","hidden":true}]
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 4
+RESULT: PASS (app launched, Chat rendered, no JS exception)
+=== token absent ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.cbM6me/dist/_expo/static/js/ios/expo-router-af962b8fb6829230607bfdc65fc2ebbf.js
+stored token: absent; expected first screen: Setup
+rendered text: ["Enter Bearer Token","Paste the token from your server","Continue"]
+native stack headers: [{"title":"Setup","hidden":false}]
+drive Setup -> Chat: {"ok":true,"chatMounted":true,"backOnSetup":false,"singleTopBar":true,"rendered_text":["Chat","Settings","Send"],"native_stack_headers":[{"title":"Chat","hidden":true}]}
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 8
+RESULT: PASS (app launched, Setup rendered, no JS exception, Setup -> Chat drive reached Chat with one top bar)
+=== token wrong ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.cbM6me/dist/_expo/static/js/ios/expo-router-af962b8fb6829230607bfdc65fc2ebbf.js
+stored token: wrong; expected first screen: Chat
+rendered text: ["Chat","Settings","Send"]
+native stack headers: [{"title":"Chat","hidden":true}]
+drive Chat 401 -> Settings: {"ok":true,"wrongAlertShown":true,"errorAlertShown":false,"settingsMounted":true,"alerts":[{"title":"Password wrong or changed","message":"The password on this phone no longer matches the Mac. Paste the current one from the Mac (pbcopy < ~/.phone-models/token)."}],"rendered_text":["Chat","Settings","hello","Send","Bearer Token","Cancel","Save","Logout"]}
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 8
+RESULT: PASS (app launched, Chat rendered, no JS exception, Chat 401 drive reached Settings with the token form open)
+Using src/app as the root directory for Expo Router.
+Starting Metro Bundler
+
+iOS Bundled 7821ms expo-router.js (1118 modules)
+
+› Assets (23):
+node_modules/expo-router/assets/arrow_down.png (9.5KB)
+node_modules/expo-router/assets/error.png (469B)
+node_modules/expo-router/assets/file.png (138B)
+node_modules/expo-router/assets/forward.png (188B)
+node_modules/expo-router/assets/pkg.png (364B)
+node_modules/expo-router/assets/react-navigation/elements/back-icon-mask.png (653B)
+node_modules/expo-router/assets/react-navigation/elements/back-icon.png (4 variations | 566B)
+node_modules/expo-router/assets/react-navigation/elements/clear-icon.png (4 variations | 425B)
+node_modules/expo-router/assets/react-navigation/elements/close-icon.png (4 variations | 235B)
+node_modules/expo-router/assets/react-navigation/elements/search-icon.png (3 variations | 582B)
+node_modules/expo-router/assets/sitemap.png (465B)
+node_modules/expo-router/assets/unmatched.png (4.8KB)
+
+› ios bundles (1):
+_expo/static/js/ios/expo-router-db8d3660047292269417fb2280902f56.hbc (2.4MB)
+
+› Files (1):
+metadata.json (1.6KB)
+
+Exported: /private/tmp/claude-501/m2a-baseline-dist
+
+[exited with code 0]
