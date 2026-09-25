@@ -23,6 +23,7 @@
       "expo-secure-store"
     ],
     "extra": {
+      "serverUrl": "https://ryans-mac-studio.tailc3648a.ts.net:8443",
       "router": {
         "origin": false
       },

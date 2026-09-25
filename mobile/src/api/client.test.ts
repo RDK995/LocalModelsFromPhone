@@ -204,6 +204,45 @@ describe("APIClient SSE streaming", () => {
   });
 });
 
+describe("APIClient SSE comment lines", () => {
+  it("ignores the leading ': connected' comment line the server sends to open the stream", async () => {
+    // Every SSE response begins with a ": connected" comment line before any
+    // real events; the parser must skip it rather than treat it as an event.
+    const chunk1 = ": connected\n\n";
+    const chunk2 = "event: content\ndata: {\"text\":\"hi\"}\n\n";
+    const chunk3 =
+      "event: done\ndata: {\"status\":\"complete\",\"model\":\"m\",\"eval_count\":1,\"tokens_per_second\":1}\n\n";
+
+    const fetchMock = mock(async () =>
+      sseResponse([chunk1, chunk2, chunk3], { generationId: "gen-1" })
+    );
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+
+    const events: StreamEvent[] = [];
+    let completed = false;
+    let errored: Error | null = null;
+
+    await client.chat(
+      { model: "m", messages: [{ role: "user", content: "hi" }] },
+      {
+        onEvent: (event) => events.push(event),
+        onError: (error) => {
+          errored = error;
+        },
+        onComplete: () => {
+          completed = true;
+        },
+      }
+    );
+
+    expect(errored).toBeNull();
+    expect(completed).toBe(true);
+    expect(events.map((e) => e.type)).toEqual(["content", "done"]);
+  });
+});
+
 describe("APIClient cancellation (Stop)", () => {
   it("stops yielding further tokens once the request is aborted, without an error", async () => {
     const abortController = new AbortController();

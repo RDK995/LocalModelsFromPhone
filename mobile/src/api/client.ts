@@ -29,6 +29,13 @@ export type StreamEvent =
   | { type: "error"; data: ErrorEvent };
 
 interface StreamOptions {
+  /**
+   * Called with the `x-generation-id` response header as soon as it
+   * arrives, before the body is read. This lets a caller record the
+   * generation id (so Stop can cancel it) without waiting for the stream to
+   * finish.
+   */
+  onStart?: (generationId: string) => void;
   onEvent: (event: StreamEvent) => void;
   onError: (error: Error) => void;
   onComplete: () => void;
@@ -54,6 +61,19 @@ export class UnauthorizedError extends Error {
   constructor(message = "Unauthorized: invalid or missing bearer token") {
     super(message);
     this.name = "UnauthorizedError";
+  }
+}
+
+/**
+ * Thrown when the server rejects `POST /v1/chat` with 409
+ * `{error:"model_not_resident"}` -- the model that was resident when we
+ * checked `GET /v1/state` was unloaded before the chat request landed.
+ * Callers should treat this the same as no resident model at all (F2).
+ */
+export class ModelNotResidentError extends Error {
+  constructor(message = "No model loaded") {
+    super(message);
+    this.name = "ModelNotResidentError";
   }
 }
 
@@ -139,12 +159,29 @@ export class APIClient {
       signal: options.signal,
     });
 
+    if (response.status === 409) {
+      // The model resident when we checked GET /v1/state may have been
+      // unloaded before this request landed; distinguish that from other
+      // 409s (e.g. a generation already in flight) by the error code.
+      let body: { error?: string; message?: string } = {};
+      try {
+        body = await response.json();
+      } catch {
+        // Not JSON (or empty body); fall through to the generic 409 error.
+      }
+      if (body.error === "model_not_resident") {
+        throw new ModelNotResidentError(body.message);
+      }
+    }
+
     this.assertOk(response, "start chat");
 
     const generationId = response.headers.get("x-generation-id");
     if (!generationId) {
       throw new Error("No generation ID returned from server");
     }
+
+    options.onStart?.(generationId);
 
     // Stream events from server
     const reader = response.body?.getReader();

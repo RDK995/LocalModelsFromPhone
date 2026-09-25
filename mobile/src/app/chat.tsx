@@ -17,7 +17,7 @@ import {
 import { useRouter } from "expo-router";
 import { getToken } from "@/api/secureStoreToken";
 import { createAPIClient } from "@/api/expoFetchClient";
-import type { StreamEvent } from "@/api/client";
+import { sendMessage, stopGeneration } from "@/chat/chatController";
 import {
   applyStreamEvent,
   initialStreamAccumulator,
@@ -37,10 +37,10 @@ export default function ChatScreen() {
   const [thinking, setThinking] = useState("");
   const [response, setResponse] = useState("");
   const [generationId, setGenerationId] = useState<string | null>(null);
+  const [blockedMessage, setBlockedMessage] = useState<string | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
   const router = useRouter();
-  const clientRef = useRef(createAPIClient("http://localhost:7789"));
+  const clientRef = useRef(createAPIClient());
 
   // Initialize client with token on mount
   useEffect(() => {
@@ -78,9 +78,7 @@ export default function ChatScreen() {
     setIsLoading(true);
     setThinking("");
     setResponse("");
-
-    const abortController = new AbortController();
-    abortControllerRef.current = abortController;
+    setBlockedMessage(null);
 
     try {
       // Re-read the token before every request so a token pasted in
@@ -93,72 +91,62 @@ export default function ChatScreen() {
       }
       clientRef.current.setToken(token);
 
-      const chatRequest = {
-        model: "default",
-        messages: messages
-          .concat(userMessage)
-          .map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-      };
-
       let accumulated = initialStreamAccumulator;
+      let startedGenerationId: string | null = null;
 
-      const generationId = await clientRef.current.chat(chatRequest, {
-        onEvent: (event: StreamEvent) => {
-          if (event.type === "error") {
-            throw new Error(`${event.data.code}: ${event.data.message}`);
-          }
-          if (event.type === "done") {
-            console.log("Generation complete:", event.data);
-            return;
-          }
+      await sendMessage(
+        clientRef.current,
+        messages.concat(userMessage).map((m) => ({
+          role: m.role,
+          content: m.content,
+        })),
+        {
+          onStart: (id) => {
+            startedGenerationId = id;
+            setGenerationId(id);
+          },
+          onEvent: (event) => {
+            if (event.type === "error") {
+              throw new Error(`${event.data.code}: ${event.data.message}`);
+            }
+            if (event.type === "done") {
+              console.log("Generation complete:", event.data);
+              return;
+            }
 
-          accumulated = applyStreamEvent(accumulated, event);
-          setThinking(accumulated.thinking);
-          setResponse(accumulated.content);
-          if (event.type === "content") {
-            // Scroll to bottom
-            scrollViewRef.current?.scrollToEnd({ animated: false });
-          }
-        },
-        onError: (error: Error) => {
-          throw error;
-        },
-        onComplete: () => {
-          // Generation complete
-        },
-        signal: abortController.signal,
-      });
-
-      setGenerationId(generationId);
-
-      // Add assistant message to history
-      const assistantMessage: Message = {
-        id: generationId,
-        role: "assistant",
-        content: accumulated.content,
-        thinking: accumulated.thinking,
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
-      setResponse("");
-      setThinking("");
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        error.name !== "AbortError"
-      ) {
-        Alert.alert(
-          "Error",
-          error instanceof Error ? error.message : "Failed to send message"
-        );
-      }
+            accumulated = applyStreamEvent(accumulated, event);
+            setThinking(accumulated.thinking);
+            setResponse(accumulated.content);
+            if (event.type === "content") {
+              // Scroll to bottom
+              scrollViewRef.current?.scrollToEnd({ animated: false });
+            }
+          },
+          onBlocked: (message) => {
+            setBlockedMessage(message);
+          },
+          onError: (error: Error) => {
+            Alert.alert("Error", error.message);
+          },
+          onComplete: () => {
+            if (startedGenerationId) {
+              // Add assistant message to history
+              const assistantMessage: Message = {
+                id: startedGenerationId,
+                role: "assistant",
+                content: accumulated.content,
+                thinking: accumulated.thinking,
+              };
+              setMessages((prev) => [...prev, assistantMessage]);
+            }
+            setResponse("");
+            setThinking("");
+          },
+        }
+      );
     } finally {
       setIsLoading(false);
       setGenerationId(null);
-      abortControllerRef.current = null;
     }
   };
 
@@ -168,14 +156,11 @@ export default function ChatScreen() {
     }
 
     try {
-      // Cancel the fetch request
-      abortControllerRef.current?.abort();
-
-      // Notify server of cancellation
-      await clientRef.current.cancelGeneration(generationId);
-
-      setIsLoading(false);
-      setGenerationId(null);
+      // Notify the server of cancellation. Deliberately does not abort the
+      // fetch: the stream keeps being read until the server's terminal
+      // `done {status:"cancelled"}` event ends it, and only then does the
+      // `finally` in handleSendMessage clear isLoading/generationId.
+      await stopGeneration(clientRef.current, generationId);
     } catch (error) {
       console.error("Failed to cancel:", error);
     }
@@ -237,6 +222,12 @@ export default function ChatScreen() {
           </View>
         )}
       </ScrollView>
+
+      {blockedMessage && (
+        <View style={styles.blockedContainer}>
+          <Text style={styles.blockedText}>{blockedMessage}</Text>
+        </View>
+      )}
 
       <View style={styles.inputContainer}>
         <TextInput
@@ -354,6 +345,19 @@ const styles = StyleSheet.create({
     marginTop: 8,
     color: "#666",
     fontSize: 14,
+  },
+  blockedContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: "#ffe6e6",
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+  },
+  blockedText: {
+    color: "#ff3b30",
+    fontSize: 14,
+    fontWeight: "500",
+    textAlign: "center",
   },
   inputContainer: {
     flexDirection: "row",
