@@ -1,0 +1,20 @@
+$ scripts/runtime-smoke.sh
+=== token present ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.taXznK/dist/_expo/static/js/ios/expo-router-dc3e1f0007f931899c10361699f021ee.js
+stored token: present; expected first screen: Chat
+rendered text: ["Chat","Settings","Send"]
+native stack headers: [{"title":"Chat","hidden":true}]
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 4
+RESULT: PASS (app launched, Chat rendered, no JS exception)
+=== token absent ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.taXznK/dist/_expo/static/js/ios/expo-router-dc3e1f0007f931899c10361699f021ee.js
+stored token: absent; expected first screen: Setup
+rendered text: ["Enter Bearer Token","Paste the token from your server","Continue"]
+native stack headers: [{"title":"Setup","hidden":false}]
+drive Setup -> Chat: {"ok":true,"chatMounted":true,"backOnSetup":false,"singleTopBar":true,"rendered_text":["Chat","Settings","Send"],"native_stack_headers":[{"title":"Chat","hidden":true}]}
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 8
+RESULT: PASS (app launched, Setup rendered, no JS exception, Setup -> Chat drive reached Chat with one top bar)

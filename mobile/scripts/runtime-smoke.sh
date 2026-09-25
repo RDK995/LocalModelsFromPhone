@@ -19,7 +19,8 @@ trap 'rm -rf "$work"' EXIT
 
 src="${1:-}"
 if [[ -z "$src" ]]; then
-  npx expo export --platform ios --no-bytecode --output-dir "$work/dist" >"$work/export.log" 2>&1 ||
+  # Clear Metro cache: a stale transform cache can emit a bundle for older source (see M1-C12-orchestrator-red.log)
+  npx expo export --platform ios --no-bytecode --clear --output-dir "$work/dist" >"$work/export.log" 2>&1 ||
     { cat "$work/export.log"; exit 1; }
   bundle="$(ls "$work"/dist/_expo/static/js/ios/*.js | head -n 1)"
 elif [[ "$src" =~ ^https?:// ]]; then
