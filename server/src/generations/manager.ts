@@ -3,7 +3,7 @@
  * Maintains one active generation at a time, stores seq-numbered event log for resume
  */
 
-import { OllamaClient, OllamaChatResponse } from "../ollama/client";
+import type { OllamaChatRequest, OllamaChatResponse } from "../ollama/client";
 import type { ChatRequest, SSEEvent, ContentEvent, DoneEvent } from "@shared/api";
 
 export interface GenerationEvent {
@@ -13,14 +13,27 @@ export interface GenerationEvent {
   data: string;
 }
 
+/**
+ * The subset of OllamaClient that GenerationManager depends on. Declared as
+ * an interface (rather than importing the concrete class) so tests can inject
+ * a fake without satisfying OllamaClient's private fields.
+ */
+export interface OllamaChatClient {
+  chat(
+    request: OllamaChatRequest,
+    signal?: AbortSignal
+  ): AsyncGenerator<OllamaChatResponse, void, unknown>;
+}
+
 export class GenerationManager {
   private activeGenId: string | null = null;
   private eventLog: Map<string, GenerationEvent[]> = new Map();
   private abortControllers: Map<string, AbortController> = new Map();
-  private ollamaClient: OllamaClient;
+  private ollamaClient: OllamaChatClient;
   private logExpiry: Map<string, NodeJS.Timeout> = new Map();
+  private genModels: Map<string, string> = new Map();
 
-  constructor(ollamaClient: OllamaClient) {
+  constructor(ollamaClient: OllamaChatClient) {
     this.ollamaClient = ollamaClient;
   }
 
@@ -40,6 +53,7 @@ export class GenerationManager {
     const abortController = new AbortController();
     this.abortControllers.set(genId, abortController);
     this.eventLog.set(genId, []);
+    this.genModels.set(genId, request.model);
 
     // Clear any existing expiry timer
     if (this.logExpiry.has(genId)) {
@@ -177,6 +191,7 @@ export class GenerationManager {
       // Mark generation as complete and schedule log cleanup
       this.activeGenId = null;
       this.abortControllers.delete(genId);
+      this.genModels.delete(genId);
 
       // Keep log for 10 minutes after terminal event, then discard
       const timer = setTimeout(() => {
@@ -212,6 +227,20 @@ export class GenerationManager {
    */
   getActiveGenId(): string | null {
     return this.activeGenId;
+  }
+
+  /**
+   * Get the currently active generation's id and model, for /v1/state.
+   */
+  getActiveGeneration(): { id: string; model: string } | null {
+    if (this.activeGenId === null) {
+      return null;
+    }
+    const model = this.genModels.get(this.activeGenId);
+    if (model === undefined) {
+      return null;
+    }
+    return { id: this.activeGenId, model };
   }
 
   /**

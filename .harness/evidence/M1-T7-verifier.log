@@ -1,0 +1,31 @@
+VERIFICATION RUN FOR M1-T7
+==========================
+Date: 2026-09-25
+Commit: 4675abe (HEAD)
+
+COMMAND: cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh
+FROM: /Users/ryankenny/Projects/CodingHarnessv2
+
+RESULTS:
+--------
+bun test v1.4.0 (1381054db)
+
+ 29 pass
+ 0 fail
+ 73 expect() calls
+Ran 29 tests across 3 files. [38.00ms]
+
+$ tsc --noEmit
+(no output = no type errors)
+
+Entry smoke: starting server on 127.0.0.1:57652
+PASS: server started and is listening on http://127.0.0.1:57652
+PASS: listens on 127.0.0.1 only (127.0.0.1:57652)
+PASS: no token -> 401
+PASS: wrong token -> 401
+PASS: correct token -> 200 (not 401)
+PASS: 0644 token file -> exits non-zero (1)
+PASS: missing token file -> exits non-zero (1)
+Entry smoke: all checks passed
+
+EXIT STATUS: 0

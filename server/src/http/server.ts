@@ -1,13 +1,40 @@
 /**
  * HTTP Server with bearer token authentication
- * Serves on 127.0.0.1:7789
+ * Serves on 127.0.0.1:<port> (default 7789)
  */
 
-import { OllamaClient } from "../ollama/client";
-import type { ErrorResponse } from "@shared/api";
+import { GenerationManager, type OllamaChatClient } from "../generations/manager";
+import type {
+  OllamaTagsResponse,
+  OllamaPsResponse,
+} from "../ollama/client";
+import type {
+  ErrorResponse,
+  ChatRequest,
+  StateResponse,
+  Model,
+  ResidentModel,
+  SSEEvent,
+} from "@shared/api";
 
 const LISTEN_HOST = "127.0.0.1";
-const LISTEN_PORT = 7789;
+const DEFAULT_PORT = 7789;
+
+/**
+ * The subset of OllamaClient that the HTTP layer depends on directly (beyond
+ * what GenerationManager needs). Declared as an interface so tests can inject
+ * a fake without satisfying OllamaClient's private fields.
+ */
+export interface OllamaStateClient extends OllamaChatClient {
+  tags(): Promise<OllamaTagsResponse>;
+  ps(): Promise<OllamaPsResponse>;
+}
+
+export interface CreateServerOptions {
+  ollama: OllamaStateClient;
+  manager?: GenerationManager;
+  port?: number;
+}
 
 interface AuthContext {
   token?: string;
@@ -95,10 +122,11 @@ function jsonResponse(data: unknown, status: number = 200): Response {
 /**
  * Create error response
  */
-function errorResponse(code: string, message: string, status: number): Response {
-  const errorBody: ErrorResponse = {
+function errorResponse(code: string, message: string, status: number, extra?: Record<string, unknown>): Response {
+  const errorBody: ErrorResponse & Record<string, unknown> = {
     error: code,
     message,
+    ...extra,
   };
   return new Response(JSON.stringify(errorBody), {
     status,
@@ -139,50 +167,160 @@ function matchPath(
 }
 
 /**
+ * Format a single SSE event: "id: ...\nevent: ...\ndata: ...\n\n"
+ */
+function formatSSE(id: string, event: string, data: string): string {
+  return `id: ${id}\nevent: ${event}\ndata: ${data}\n\n`;
+}
+
+function encodeSSE(id: string, event: string, data: string): Uint8Array {
+  return new TextEncoder().encode(formatSSE(id, event, data));
+}
+
+/**
+ * Does this generation id refer to something the manager knows about (active
+ * or with a not-yet-expired event log)?
+ */
+function knownGeneration(manager: GenerationManager, genId: string): boolean {
+  return manager.isGenerationActive(genId) || manager.hasEventLog(genId);
+}
+
+/**
+ * Parse the resume point from a Last-Event-ID header of the form
+ * "<generationId>-<seq>". Returns the seq to resume *from* (i.e. one past the
+ * last seq the client already has), or 0 if absent/unparseable.
+ */
+function parseResumeSeq(lastEventId: string | null): number {
+  if (!lastEventId) {
+    return 0;
+  }
+  const match = lastEventId.match(/-(\d+)$/);
+  if (!match) {
+    return 0;
+  }
+  return Number(match[1]) + 1;
+}
+
+/**
  * Create the HTTP server
  */
-export function createServer(ollamaClient: OllamaClient): ReturnType<typeof Bun.serve> {
+export function createServer({
+  ollama,
+  manager,
+  port = DEFAULT_PORT,
+}: CreateServerOptions): ReturnType<typeof Bun.serve> {
+  const genManager = manager ?? new GenerationManager(ollama);
+
   const routes: Route[] = [
     {
       method: "GET",
       path: "/v1/state",
-      handler: async (req, params, auth) => {
-        // This will be implemented when ModelManager is ready
-        // For now, return a minimal response to satisfy tests
-        return jsonResponse({
-          models: [],
-          resident: null,
+      handler: async () => {
+        let models: Model[] = [];
+        let resident: ResidentModel | null = null;
+
+        try {
+          const tags = await ollama.tags();
+          models = tags.models.map((m) => ({ name: m.name, size_bytes: m.size }));
+
+          const ps = await ollama.ps();
+          if (ps.models.length > 0) {
+            resident = { name: ps.models[0].name, loaded_by_server: false };
+          }
+        } catch {
+          return errorResponse("ollama_down", "Unable to reach Ollama", 503);
+        }
+
+        const generation = genManager.getActiveGeneration();
+
+        const state: StateResponse = {
+          models,
+          resident,
           operation: { kind: "idle" },
-          generation: null,
-        });
+          generation,
+        };
+        return jsonResponse(state);
       },
     },
     {
       method: "POST",
       path: "/v1/models/load",
-      handler: async (req, params, auth) => {
-        // Will be implemented with ModelManager
+      handler: async () => {
+        // Will be implemented with ModelManager (M2)
         return jsonResponse({ operation: { kind: "idle" } }, 202);
       },
     },
     {
       method: "POST",
       path: "/v1/models/unload",
-      handler: async (req, params, auth) => {
-        // Will be implemented with ModelManager
+      handler: async () => {
+        // Will be implemented with ModelManager (M2)
         return jsonResponse({ operation: { kind: "idle" } }, 202);
       },
     },
     {
       method: "POST",
       path: "/v1/chat",
-      handler: async (req, params, auth) => {
-        // Will be implemented with GenerationManager
-        return new Response("event: error\ndata: {}\n\n", {
+      handler: async (req) => {
+        let body: ChatRequest;
+        try {
+          body = (await req.json()) as ChatRequest;
+        } catch {
+          return errorResponse("invalid_request", "Malformed JSON body", 400);
+        }
+        if (!body || typeof body.model !== "string" || !Array.isArray(body.messages)) {
+          return errorResponse(
+            "invalid_request",
+            "Request body must include model and messages",
+            400
+          );
+        }
+
+        const alreadyActive = genManager.getActiveGenId();
+        if (alreadyActive !== null) {
+          return errorResponse(
+            "generation_in_flight",
+            "A generation is already in progress",
+            409,
+            { generation_id: alreadyActive }
+          );
+        }
+
+        const genId = crypto.randomUUID();
+        let generator: AsyncGenerator<SSEEvent, void, unknown>;
+        try {
+          generator = genManager.startGeneration(genId, body);
+        } catch {
+          // Lost the race between the check above and starting.
+          const stillActive = genManager.getActiveGenId();
+          return errorResponse(
+            "generation_in_flight",
+            "A generation is already in progress",
+            409,
+            { generation_id: stillActive }
+          );
+        }
+
+        const stream = new ReadableStream<Uint8Array>({
+          async pull(controller) {
+            const { value, done } = await generator.next();
+            if (done) {
+              controller.close();
+              return;
+            }
+            controller.enqueue(encodeSSE(value.id, value.event, value.data));
+          },
+          async cancel() {
+            genManager.cancelGeneration(genId);
+          },
+        });
+
+        return new Response(stream, {
           status: 200,
           headers: {
             "Content-Type": "text/event-stream",
-            "x-generation-id": "test-gen-1",
+            "Cache-Control": "no-cache",
+            "x-generation-id": genId,
           },
         });
       },
@@ -190,12 +328,24 @@ export function createServer(ollamaClient: OllamaClient): ReturnType<typeof Bun.
     {
       method: "GET",
       path: "/v1/generations/{id}/events",
-      handler: async (req, params, auth) => {
-        // Will be implemented with GenerationManager
-        return new Response("", {
-          status: 404,
+      handler: async (req, params) => {
+        const genId = params.id;
+        if (!knownGeneration(genManager, genId)) {
+          return errorResponse("unknown_generation", "No such generation", 404);
+        }
+
+        const fromSeq = parseResumeSeq(req.headers.get("Last-Event-ID"));
+        const events = genManager.getEventLog(genId, fromSeq);
+
+        const body = events
+          .map((e) => formatSSE(`${genId}-${e.seq}`, e.type, e.data))
+          .join("");
+
+        return new Response(body, {
+          status: 200,
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
           },
         });
       },
@@ -203,21 +353,24 @@ export function createServer(ollamaClient: OllamaClient): ReturnType<typeof Bun.
     {
       method: "POST",
       path: "/v1/generations/{id}/cancel",
-      handler: async (req, params, auth) => {
-        // Will be implemented with GenerationManager
-        return new Response("", {
-          status: 404,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+      handler: async (req, params) => {
+        const genId = params.id;
+        if (!knownGeneration(genManager, genId)) {
+          return errorResponse("unknown_generation", "No such generation", 404);
+        }
+
+        const cancelled = genManager.cancelGeneration(genId);
+        return jsonResponse(
+          { status: cancelled ? "cancelled" : "already_complete" },
+          200
+        );
       },
     },
   ];
 
   return Bun.serve({
     hostname: LISTEN_HOST,
-    port: LISTEN_PORT,
+    port,
     idleTimeout: 255,
     fetch: async (req: Request) => {
       const url = new URL(req.url);

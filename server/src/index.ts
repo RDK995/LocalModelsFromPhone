@@ -19,6 +19,7 @@ import { OllamaClient } from "./ollama/client";
 
 const LISTEN_HOST = "127.0.0.1";
 const OLLAMA_URL = "http://127.0.0.1:11434";
+const DEFAULT_PORT = 7789;
 export const DEFAULT_TOKEN_FILE = join(homedir(), ".phone-models", "token");
 
 /**
@@ -59,38 +60,13 @@ function parsePortOverride(value: string | undefined): number | undefined {
   return port;
 }
 
-/**
- * createServer() binds 127.0.0.1:7789 itself. For the test-only port override,
- * wrap Bun.serve for that single call and replace only the port; the loopback
- * hostname and every other option are kept as createServer set them.
- */
-function startServer(
-  client: OllamaClient,
-  portOverride: number | undefined
-): ReturnType<typeof createServer> {
-  if (portOverride === undefined) {
-    return createServer(client);
-  }
-  const bun = Bun as unknown as { serve: typeof Bun.serve };
-  const originalServe = bun.serve;
-  bun.serve = ((options: Parameters<typeof Bun.serve>[0]) =>
-    originalServe({ ...options, port: portOverride } as Parameters<
-      typeof Bun.serve
-    >[0])) as typeof Bun.serve;
-  try {
-    return createServer(client);
-  } finally {
-    bun.serve = originalServe;
-  }
-}
-
 export function main(env: Record<string, string | undefined> = process.env): void {
   const tokenFile = env.PHONE_MODELS_TOKEN_FILE || DEFAULT_TOKEN_FILE;
-  const portOverride = parsePortOverride(env.PHONE_MODELS_PORT);
+  const port = parsePortOverride(env.PHONE_MODELS_PORT) ?? DEFAULT_PORT;
 
   setValidToken(readTokenFile(tokenFile));
 
-  const server = startServer(new OllamaClient(OLLAMA_URL), portOverride);
+  const server = createServer({ ollama: new OllamaClient(OLLAMA_URL), port });
 
   if (server.hostname !== LISTEN_HOST) {
     server.stop(true);

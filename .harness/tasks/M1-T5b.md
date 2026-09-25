@@ -115,3 +115,16 @@ Return:
 - Tests run (each command and exit status), with the proof script's per-criterion output
 - Test result
 - Unresolved issues (including what remains for the human's phone check and the pf sudo command)
+
+Orchestrator note (added before attempt 1, after M1-T5a and M1-T7 were accepted):
+- Items 1-5 under "Why" were fixed and committed by M1-T5a (commit 0cce5e1):
+  server/src/index.ts exists, plists use /opt/homebrew/bin/bun, the bundle host is
+  the Expo server in mobile/, configure-tailscale-serve.sh maps 8443, and
+  curl-chat-stream-proof.sh fails rather than skips. Verify, do not redo.
+- M1-T7 wired every HTTP route to the generation manager and the live Ollama
+  client; index.ts no longer has a temporary Bun.serve swap and reads
+  PHONE_MODELS_PORT (default 7789). Change index.ts or server/src only if the live
+  proof exposes a defect, and then say exactly what and why.
+- Your main work is: run the install scripts live, add the 8443 Serve mapping,
+  write ops/scripts/e2e-tailnet-proof.sh, run it, and report.
+- server tests bind port 0, never 7789, so they can run while the live agent is up.
