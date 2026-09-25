@@ -51,7 +51,8 @@
           "evidence": [
             "e2e-tailnet-proof.sh (live, tailnet URL :8443): 80 content events over ~6.5s ending done status complete \u2014 .harness/evidence/M1-T5b-verifier.log",
             "server.test.ts chat streams content then complete \u2014 .harness/evidence/M1-T7-verifier.log",
-            "On-phone Expo Go rendering: human check, not yet done"
+            "On-phone Expo Go rendering: human check, not yet done",
+            "HUMAN CHECK 2026-09-25 (after cycle-2 review, finding B): on the iPhone with Tailscale ON, Expo Go opened exp://ryans-mac-studio.tailc3648a.ts.net:8081, hung on 'Opening project', then showed 'Unmatched Route'. The app did not reach the chat or Settings screens; token paste, streaming and Stop could not be tried. FAIL."
           ]
         },
         {
@@ -61,7 +62,8 @@
           "evidence": [
             "e2e: 7 routes 401 without and with wrong token via tailnet; token command mode 600, refuses 644/640/604 \u2014 .harness/evidence/M1-T5b-verifier.log",
             "server.test.ts auth on every route; entry-smoke 7/7 \u2014 .harness/evidence/M1-T7-verifier.log",
-            "App settings token paste: mobile tests (M1-T6); on-phone paste is a human check, not yet done"
+            "App settings token paste: mobile tests (M1-T6); on-phone paste is a human check, not yet done",
+            "HUMAN CHECK 2026-09-25 (after cycle-2 review, finding B): on the iPhone with Tailscale ON, Expo Go opened exp://ryans-mac-studio.tailc3648a.ts.net:8081, hung on 'Opening project', then showed 'Unmatched Route'. The app did not reach the chat or Settings screens; token paste, streaming and Stop could not be tried. FAIL."
           ]
         },
         {
@@ -71,7 +73,8 @@
           "evidence": [
             "e2e: cancel over tailnet -> cancelled terminal event, no bytes after 3s, Ollama log stop: cancel task, runner CPU 2.24s -> 0.00s \u2014 .harness/evidence/M1-T5b-verifier.log",
             "server.test.ts cancel aborts Ollama \u2014 .harness/evidence/M1-T7-verifier.log",
-            "Phone output halting: human check, not yet done"
+            "Phone output halting: human check, not yet done",
+            "HUMAN CHECK 2026-09-25 (after cycle-2 review, finding B): on the iPhone with Tailscale ON, Expo Go opened exp://ryans-mac-studio.tailc3648a.ts.net:8081, hung on 'Opening project', then showed 'Unmatched Route'. The app did not reach the chat or Settings screens; token paste, streaming and Stop could not be tried. FAIL."
           ]
         },
         {

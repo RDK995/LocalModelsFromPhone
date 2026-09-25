@@ -1,0 +1,261 @@
+Fri 25 Sep 2026 12:45:34 BST
+c763b9f9da5b3b3396991a7de58c04182510af8d
+M1 end-to-end tailnet proof  (2026-09-25 12:45:34 BST)
+repo commit: c763b9f9da5b3b3396991a7de58c04182510af8d
+tailnet server URL: https://ryans-mac-studio.tailc3648a.ts.net:8443
+
+==== Preconditions: token file, LaunchAgents, Tailscale Serve ====
+  PASS  token file mode is 600 (got 600)
+  PASS  LaunchAgent com.harness.server loaded and running (state: running)
+  PASS  LaunchAgent com.harness.bundle-host loaded and running (state: running)
+  tailscale serve status:
+        https://ryans-mac-studio.tailc3648a.ts.net (tailnet only)
+        |-- /    proxy http://127.0.0.1:7787
+        |-- /app proxy http://127.0.0.1:7788
+        
+        https://ryans-mac-studio.tailc3648a.ts.net:8443 (tailnet only)
+        |-- / proxy http://127.0.0.1:7789
+        
+  PASS  existing Serve mapping :443 / -> http://127.0.0.1:7787 unchanged
+  PASS  existing Serve mapping :443 /app -> http://127.0.0.1:7788 unchanged
+  PASS  Serve maps tailnet HTTPS :8443 -> http://127.0.0.1:7789 (only)
+  PASS  Tailscale Funnel is not enabled (tailnet only)
+
+==== M1-AC1: live token streaming through the tailnet URL ====
+        resident model (from Ollama /api/ps): devstral:24b
+        first 6 SSE events (elapsed seconds, as received over the tailnet):
+             0.612 event: content
+             0.612 data: {"text":"1"}
+             0.702 event: content
+             0.702 data: {"text":" "}
+             0.776 event: content
+             0.776 data: {"text":"2"}
+             0.851 event: content
+             0.851 data: {"text":" "}
+             0.933 event: content
+             0.933 data: {"text":"3"}
+             1.017 event: content
+             1.017 data: {"text":" "}
+        ...
+        last SSE events:
+             6.747 event: content
+             6.747 data: {"text":"0"}
+             6.811 event: done
+             6.811 data: {"status":"complete","model":"devstral:24b","eval_count":81,"tokens_per_second":13.003621428298512}
+        content events: 80, first at 0.612s, last at 6.747s, terminal event: done {"status":"complete","model":"devstral:24b","eval_count":81,"tokens_per_second":13.003621428298512}
+  PASS  multiple content (token) events arrived (got 80, need >= 5)
+  PASS  tokens arrived over time, not in one burst (spread 0.612s..6.747s)
+  PASS  stream ended with a terminal done event, status complete
+
+==== M1-AC2: every route rejects missing and wrong tokens (via tailnet) ====
+  PASS  GET /v1/state: no token -> 401, wrong token -> 401 (expect 401/401)
+  PASS  POST /v1/models/load: no token -> 401, wrong token -> 401 (expect 401/401)
+  PASS  POST /v1/models/unload: no token -> 401, wrong token -> 401 (expect 401/401)
+  PASS  POST /v1/chat: no token -> 401, wrong token -> 401 (expect 401/401)
+  PASS  GET /v1/generations/00000000-0000-0000-0000-000000000000/events: no token -> 401, wrong token -> 401 (expect 401/401)
+  PASS  POST /v1/generations/00000000-0000-0000-0000-000000000000/cancel: no token -> 401, wrong token -> 401 (expect 401/401)
+  PASS  GET /v1/no-such-route: no token -> 401, wrong token -> 401 (expect 401/401)
+  PASS  control: GET /v1/state with the real token -> 200 (expect 200)
+        token command (ops/src/token.ts), run in a private temp dir:
+  PASS  token command creates a token (exit 0, mode 600, 64 chars; value not shown)
+        mode 644 -> exit 1: Error: Token file "/var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T/tmp.J0MUXDsElH/unsafe-644" exists with group or world-readable permissions (mode must be 0600)
+  PASS  token command refuses a mode-644 token file and leaves it untouched
+        mode 640 -> exit 1: Error: Token file "/var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T/tmp.J0MUXDsElH/unsafe-640" exists with group or world-readable permissions (mode must be 0600)
+  PASS  token command refuses a mode-640 token file and leaves it untouched
+        mode 604 -> exit 1: Error: Token file "/var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T/tmp.J0MUXDsElH/unsafe-604" exists with group or world-readable permissions (mode must be 0600)
+  PASS  token command refuses a mode-604 token file and leaves it untouched
+
+==== M1-AC3: cancel stops generation in Ollama ====
+        Ollama serve pid 75302, runner pid 67376, Ollama log /private/tmp/ollama.log
+        long generation started: id 72fa474d-b86e-4208-837a-54a8b45d5b24, 25 tokens so far
+        cancel sent at 12:45:47 via tailnet after 54 tokens; response: {"status":"cancelled"}
+        stream: 55 content events total (1 in flight after cancel), terminal: done {"status":"cancelled","model":"devstral:24b","eval_count":55,"tokens_per_second":0}
+        server event log replay, last event: data: {"status":"cancelled","model":"devstral:24b","eval_count":55,"tokens_per_second":0}
+        Ollama runner CPU seconds per 2s window: while generating 2.47, after cancel 0.01
+        Ollama's own log since this test started:
+          [GIN] 2026/09/25 - 12:45:47 | 200 |  4.727314958s |       127.0.0.1 | POST     "/api/chat"
+          srv          stop: cancel task, id_task = 515
+  PASS  cancel endpoint answered {"status":"cancelled"}
+  PASS  the SSE stream ended by itself after cancel
+  PASS  terminal event is done with status cancelled
+  PASS  no further bytes arrived after the terminal event (6747 -> 6747 bytes over 3s)
+  PASS  server reports no active generation afterwards (generation: null)
+  PASS  Ollama logged the /api/chat request as finished after the cancel (connection closed)
+  PASS  Ollama runner went idle: CPU after cancel (0.01 s) < half of CPU while generating (2.47 s)
+
+==== M1-AC4: network exposure ====
+        listeners on port 7789: 127.0.0.1:7789 
+  PASS  server listens on 127.0.0.1:7789 only
+  PASS  server reachable through the tailnet URL (200 via 100.82.139.85)
+        LAN interface en1 address 192.168.0.27; tailnet interface utun4 address 100.82.139.85
+  PASS  LAN 192.168.0.27:7789 refuses connections (curl exit 7; 7 = refused)
+  PASS  LAN 192.168.0.27:8443 refuses connections (curl exit 7; 7 = refused)
+        bundle manifest: 200 application/expo+json; launchAsset: http://ryans-mac-studio.tailc3648a.ts.net:8081/expo-router.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=src%2Fapp&unstable_transformProfile=hermes-stable
+  PASS  bundle host on 8081 serves the Expo manifest via the tailnet name
+  PASS  manifest points the phone at the tailnet name, production bundle (dev=false, minify=true)
+  FAIL  LAN 192.168.0.27:8081 (bundle host) is blocked from the LAN: REACHABLE (HTTP 200)
+        the pf anchor is not installed or not active. Install it once (asks for the admin password):
+          sudo bash ops/scripts/install-pf-anchor.sh
+
+==== Result ====
+  1 AUTOMATED CHECK(S) FAILED
+
+==== REMAINING FOR THE HUMAN (cannot be proven from the Mac) ====
+1. pf: bundle host 8081 on the LAN IP is currently: REACHABLE (HTTP 200)
+   If it is reachable, block 8081 from the LAN (loopback and the tailnet interface
+   utun4 stay allowed) by running this once in Terminal from the repo root
+   (asks for your admin password; a LaunchDaemon reloads it at every boot):
+
+   sudo bash ops/scripts/install-pf-anchor.sh
+
+   Then re-run this script: the LAN 8081 check must pass. To undo:
+   sudo bash ops/scripts/uninstall-pf-anchor.sh
+2. On the iPhone (on the tailnet), open Expo Go and enter: exp://ryans-mac-studio.tailc3648a.ts.net:8081
+   - the app loads (production bundle, no dev menu);
+   - in Settings, paste the bearer token (on the Mac: pbcopy < ~/.phone-models/token,
+     or read it with: cat ~/.phone-models/token) and save;
+   - send a prompt: the reply renders token by token, not all at once;
+   - send a long prompt and tap Stop: output halts within a moment and does not resume.
+3. On a device on the same Wi-Fi but NOT on the tailnet (or the phone with Tailscale off):
+   - https://ryans-mac-studio.tailc3648a.ts.net:8443/v1/state does not resolve/connect;
+   - http://192.168.0.27:7789 and :8443 refuse;
+   - http://192.168.0.27:8081 refuses once step 1 is done.
+E2E_EXIT=1
+bun test v1.4.0 (1381054db)
+
+ 39 pass
+ 0 fail
+ 152 expect() calls
+Ran 39 tests across 3 files. [232.00ms]
+$ tsc --noEmit
+Entry smoke: starting server on 127.0.0.1:50459
+PASS: server started and is listening on http://127.0.0.1:50459
+PASS: listens on 127.0.0.1 only (127.0.0.1:50459)
+PASS: no token -> 401
+PASS: wrong token -> 401
+PASS: correct token -> 200 (not 401)
+PASS: 0644 token file -> exits non-zero (1)
+PASS: missing token file -> exits non-zero (1)
+Entry smoke: all checks passed
+SERVER_EXIT=0
+bun test v1.4.0 (1381054db)
+
+src/token.test.ts:
+95914cd23769446e3a04faf3201da5274f0b8cc7b494a05331daac5e55eb99fa
+Verifying ops installation scripts...
+Verifying LaunchAgent plist files...
+Verifying LaunchAgent plist contents...
+Verifying Tailscale Serve script...
+Verifying token command integration...
+Verifying pf anchor configuration...
+pf anchor safety check (no sudo)
+  ok    anchor name 'com.apple/harness.bundle-host' is under com.apple/ (evaluated by the stock pf.conf 'anchor "com.apple/*"')
+  ok    [utun4] renderer exits 0
+  ok    [utun4] exactly 3 rule lines (got 3)
+  ok    [utun4] rule 0 contains 'port 8081': pass in quick on lo0 proto tcp from any to any port 8081
+  ok    [utun4] rule 0 is an inbound quick rule (no out, no bare pass/block)
+  ok    [utun4] rule 0 has no out/all/table/scrub/nat/rdr/anchor keywords
+  ok    [utun4] rule 1 contains 'port 8081': pass in quick on utun4 proto tcp from any to any port 8081
+  ok    [utun4] rule 1 is an inbound quick rule (no out, no bare pass/block)
+  ok    [utun4] rule 1 has no out/all/table/scrub/nat/rdr/anchor keywords
+  ok    [utun4] rule 2 contains 'port 8081': block drop in quick proto tcp from any to any port 8081
+  ok    [utun4] rule 2 is an inbound quick rule (no out, no bare pass/block)
+  ok    [utun4] rule 2 has no out/all/table/scrub/nat/rdr/anchor keywords
+  ok    [utun4] no 'block all' anywhere in the rendered text
+  ok    [utun4] lo0 pass rule present
+  ok    [utun4] utun4 pass rule present
+  ok    [utun4] 8081 block rule present
+  ok    [utun4] lo0 (0) and utun4 (1) pass rules precede the block (2)
+  ok    [utun4] pfctl -n parses the rendered rules
+  ok    [utun12] renderer exits 0
+  ok    [utun12] exactly 3 rule lines (got 3)
+  ok    [utun12] rule 0 contains 'port 8081': pass in quick on lo0 proto tcp from any to any port 8081
+  ok    [utun12] rule 0 is an inbound quick rule (no out, no bare pass/block)
+  ok    [utun12] rule 0 has no out/all/table/scrub/nat/rdr/anchor keywords
+  ok    [utun12] rule 1 contains 'port 8081': pass in quick on utun12 proto tcp from any to any port 8081
+  ok    [utun12] rule 1 is an inbound quick rule (no out, no bare pass/block)
+  ok    [utun12] rule 1 has no out/all/table/scrub/nat/rdr/anchor keywords
+  ok    [utun12] rule 2 contains 'port 8081': block drop in quick proto tcp from any to any port 8081
+  ok    [utun12] rule 2 is an inbound quick rule (no out, no bare pass/block)
+  ok    [utun12] rule 2 has no out/all/table/scrub/nat/rdr/anchor keywords
+  ok    [utun12] no 'block all' anywhere in the rendered text
+  ok    [utun12] lo0 pass rule present
+  ok    [utun12] utun12 pass rule present
+  ok    [utun12] 8081 block rule present
+  ok    [utun12] lo0 (0) and utun12 (1) pass rules precede the block (2)
+  ok    [utun12] pfctl -n parses the rendered rules
+  ok    renderer refuses interface '''' (exit 1, no output)
+  ok    renderer refuses interface 'en0' (exit 1, no output)
+  ok    renderer refuses interface 'lo0' (exit 1, no output)
+  ok    renderer refuses interface 'utun' (exit 1, no output)
+  ok    renderer refuses interface 'utun4\ ' (exit 1, no output)
+  ok    renderer refuses interface 'utun4\;\ block\ all' (exit 1, no output)
+  ok    renderer refuses interface '$'utun4\nblock all'' (exit 1, no output)
+  ok    renderer refuses interface 'any' (exit 1, no output)
+  ok    resolver finds the utun carrying the tailnet IP (got 'utun7', want utun7)
+  ok    resolver refuses a non-utun interface (the LAN IP on en1)
+  ok    resolver fails when no interface carries the IP
+  ok    resolver fails on an empty IP
+  ok    pf-bundle-host-load.sh refuses to run without root (exit 1)
+  ok    install-pf-anchor.sh refuses to run without root (exit 1)
+  ok    uninstall-pf-anchor.sh refuses to run without root (exit 1)
+  ok    pf-bundle-host-load.sh never disables pf (no 'pfctl -d')
+  ok    pf-bundle-host-load.sh only flushes with an explicit anchor (-F only alongside -a "$ANCHOR")
+  ok    pf-bundle-host-load.sh loads rules only into the anchor (every 'pfctl ... -f' has -a "$ANCHOR" or -n)
+  ok    pf-bundle-host-load.sh never writes the system pf.conf or pf.anchors
+  ok    install-pf-anchor.sh never disables pf (no 'pfctl -d')
+  ok    install-pf-anchor.sh only flushes with an explicit anchor (-F only alongside -a "$ANCHOR")
+  ok    install-pf-anchor.sh loads rules only into the anchor (every 'pfctl ... -f' has -a "$ANCHOR" or -n)
+  ok    install-pf-anchor.sh never writes the system pf.conf or pf.anchors
+  ok    uninstall-pf-anchor.sh never disables pf (no 'pfctl -d')
+  ok    uninstall-pf-anchor.sh only flushes with an explicit anchor (-F only alongside -a "$ANCHOR")
+  ok    uninstall-pf-anchor.sh loads rules only into the anchor (every 'pfctl ... -f' has -a "$ANCHOR" or -n)
+  ok    uninstall-pf-anchor.sh never writes the system pf.conf or pf.anchors
+  ok    no file in ops/scripts carries 'block all' or refers to editing /etc/pf.conf
+  ok    unsafe legacy file com.harness.pf.anchor is gone
+  ok    unsafe legacy file create-pf-anchor.sh is gone
+/Users/ryankenny/Projects/CodingHarnessv2/ops/scripts/com.harness.pf-bundle-host.plist: OK
+  ok    LaunchDaemon plist passes plutil -lint
+  ok    plist Label is com.harness.pf-bundle-host
+  ok    plist RunAtLoad is true
+  ok    plist runs /bin/bash
+  ok    plist runs the root-owned installed loader (/Library/Application Support/com.harness.pf-bundle-host/pf-bundle-host-load.sh), not the repo copy
+  ok    install script installs the loader to the path the plist runs
+pf anchor safety check: all passed
+All verification checks passed!
+OPS_EXIT=0
+$ tsc --noEmit
+bun test v1.4.0 (1381054db)
+
+ 24 pass
+ 0 fail
+ 64 expect() calls
+Ran 24 tests across 5 files. [25.00ms]
+$ eslint src --max-warnings 0
+Using src/app as the root directory for Expo Router.
+Starting Metro Bundler
+
+iOS Bundled 3048ms expo-router.js (1114 modules)
+
+› Assets (23):
+node_modules/expo-router/assets/arrow_down.png (9.5KB)
+node_modules/expo-router/assets/error.png (469B)
+node_modules/expo-router/assets/file.png (138B)
+node_modules/expo-router/assets/forward.png (188B)
+node_modules/expo-router/assets/pkg.png (364B)
+node_modules/expo-router/assets/react-navigation/elements/back-icon-mask.png (653B)
+node_modules/expo-router/assets/react-navigation/elements/back-icon.png (4 variations | 566B)
+node_modules/expo-router/assets/react-navigation/elements/clear-icon.png (4 variations | 425B)
+node_modules/expo-router/assets/react-navigation/elements/close-icon.png (4 variations | 235B)
+node_modules/expo-router/assets/react-navigation/elements/search-icon.png (3 variations | 582B)
+node_modules/expo-router/assets/sitemap.png (465B)
+node_modules/expo-router/assets/unmatched.png (4.8KB)
+
+› ios bundles (1):
+_expo/static/js/ios/expo-router-533659fc1fb063db1d03638689bd729a.hbc (2.4MB)
+
+› Files (1):
+metadata.json (1.6KB)
+
+Exported: dist
+MOBILE_EXIT=0
