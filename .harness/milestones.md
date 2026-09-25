@@ -2,7 +2,7 @@
 
 ## M1 — Authenticated tailnet chat stream proof
 
-Status: BLOCKED
+Status: REVIEW
 
 ### Outcome
 
