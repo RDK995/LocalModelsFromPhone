@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M2a",
+  "current_milestone": "M2b",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -46,7 +46,7 @@
       },
       "as_built": {
         "artifact": ".harness/as-built/M1.md",
-        "result": "RECORDED \u2014 62/62 files attributed; components C1,C2,C3,C4,C6,C7,C8,C9,C10,C11; 12 edges; 2 claim mismatches (C5 claimed but not in diff, deferred to M2 per code comments; C3 present but not claimed)"
+        "result": "RECORDED — 62/62 files attributed; components C1,C2,C3,C4,C6,C7,C8,C9,C10,C11; 12 edges; 2 claim mismatches (C5 claimed but not in diff, deferred to M2 per code comments; C3 present but not claimed)"
       },
       "criteria": [
         {
@@ -54,8 +54,8 @@
           "text": "With a model already resident in Ollama, sending a prompt from the Expo Go app over Tailscale Serve renders the reply incrementally, token by token, ending in a terminal complete state.",
           "status": "PASS",
           "evidence": [
-            "e2e-tailnet-proof.sh (live, tailnet URL :8443): 80 content events over ~6.5s ending done status complete \u2014 .harness/evidence/M1-T5b-verifier.log",
-            "server.test.ts chat streams content then complete \u2014 .harness/evidence/M1-T7-verifier.log",
+            "e2e-tailnet-proof.sh (live, tailnet URL :8443): 80 content events over ~6.5s ending done status complete — .harness/evidence/M1-T5b-verifier.log",
+            "server.test.ts chat streams content then complete — .harness/evidence/M1-T7-verifier.log",
             "On-phone Expo Go rendering: human check, not yet done",
             "HUMAN CHECK 2026-09-25 (after cycle-2 review, finding B): on the iPhone with Tailscale ON, Expo Go opened exp://ryans-mac-studio.tailc3648a.ts.net:8081, hung on 'Opening project', then showed 'Unmatched Route'. The app did not reach the chat or Settings screens; token paste, streaming and Stop could not be tried. FAIL.",
             "CYCLE-2 FIX (M1-C6, commit 1a7565e): cause of 'Unmatched Route' was that mobile/src/app had no index.tsx, so the root path Expo Go opens matched no screen. Added index.tsx redirecting to /setup (no token) or /chat (token); bundle host restarted; the tailnet-served bundle registers ./index.tsx. The ~20s 'Opening project' wait matches the first production bundle build (bundle-host.log: 'iOS Bundled 23140ms'). On-phone re-test by the human: pending.",
@@ -73,8 +73,8 @@
           "text": "A request to any server route without the correct bearer token returns 401; the Mac-side command produces the token, refuses to run if the token file is group- or world-readable, and the app's settings screen accepts a pasted token and uses it on the next request.",
           "status": "PASS",
           "evidence": [
-            "e2e: 7 routes 401 without and with wrong token via tailnet; token command mode 600, refuses 644/640/604 \u2014 .harness/evidence/M1-T5b-verifier.log",
-            "server.test.ts auth on every route; entry-smoke 7/7 \u2014 .harness/evidence/M1-T7-verifier.log",
+            "e2e: 7 routes 401 without and with wrong token via tailnet; token command mode 600, refuses 644/640/604 — .harness/evidence/M1-T5b-verifier.log",
+            "server.test.ts auth on every route; entry-smoke 7/7 — .harness/evidence/M1-T7-verifier.log",
             "App settings token paste: mobile tests (M1-T6); on-phone paste is a human check, not yet done",
             "HUMAN CHECK 2026-09-25 (after cycle-2 review, finding B): on the iPhone with Tailscale ON, Expo Go opened exp://ryans-mac-studio.tailc3648a.ts.net:8081, hung on 'Opening project', then showed 'Unmatched Route'. The app did not reach the chat or Settings screens; token paste, streaming and Stop could not be tried. FAIL.",
             "CYCLE-2 FIX (M1-C6, commit 1a7565e): cause of 'Unmatched Route' was that mobile/src/app had no index.tsx, so the root path Expo Go opens matched no screen. Added index.tsx redirecting to /setup (no token) or /chat (token); bundle host restarted; the tailnet-served bundle registers ./index.tsx. The ~20s 'Opening project' wait matches the first production bundle build (bundle-host.log: 'iOS Bundled 23140ms'). On-phone re-test by the human: pending.",
@@ -94,8 +94,8 @@
           "text": "Stop cancels generation on the Mac, verified against Ollama, and streaming output halts on the phone.",
           "status": "PASS",
           "evidence": [
-            "e2e: cancel over tailnet -> cancelled terminal event, no bytes after 3s, Ollama log stop: cancel task, runner CPU 2.24s -> 0.00s \u2014 .harness/evidence/M1-T5b-verifier.log",
-            "server.test.ts cancel aborts Ollama \u2014 .harness/evidence/M1-T7-verifier.log",
+            "e2e: cancel over tailnet -> cancelled terminal event, no bytes after 3s, Ollama log stop: cancel task, runner CPU 2.24s -> 0.00s — .harness/evidence/M1-T5b-verifier.log",
+            "server.test.ts cancel aborts Ollama — .harness/evidence/M1-T7-verifier.log",
             "Phone output halting: human check, not yet done",
             "HUMAN CHECK 2026-09-25 (after cycle-2 review, finding B): on the iPhone with Tailscale ON, Expo Go opened exp://ryans-mac-studio.tailc3648a.ts.net:8081, hung on 'Opening project', then showed 'Unmatched Route'. The app did not reach the chat or Settings screens; token paste, streaming and Stop could not be tried. FAIL.",
             "CYCLE-2 FIX (M1-C6, commit 1a7565e): cause of 'Unmatched Route' was that mobile/src/app had no index.tsx, so the root path Expo Go opens matched no screen. Added index.tsx redirecting to /setup (no token) or /chat (token); bundle host restarted; the tailnet-served bundle registers ./index.tsx. The ~20s 'Opening project' wait matches the first production bundle build (bundle-host.log: 'iOS Bundled 23140ms'). On-phone re-test by the human: pending.",
@@ -113,10 +113,10 @@
           "text": "The server and the app bundle are reachable from the phone over the tailnet and are not reachable from a device on the LAN or the public internet.",
           "status": "PASS",
           "evidence": [
-            "e2e: 7789 listens on 127.0.0.1 only; tailnet :8443 200; LAN 192.168.0.27 refuses 7789 and 8443; 8081 manifest via tailnet name 200 \u2014 .harness/evidence/M1-T5b-verifier.log",
+            "e2e: 7789 listens on 127.0.0.1 only; tailnet :8443 200; LAN 192.168.0.27 refuses 7789 and 8443; 8081 manifest via tailnet name 200 — .harness/evidence/M1-T5b-verifier.log",
             "GAP: LAN 8081 (Expo bundle host, binds *:8081) is currently REACHABLE; closing it needs a human-run sudo pf command; LAN-device check is a human check",
             "HUMAN CHECK 2026-09-25: after the human ran `sudo bash ops/scripts/install-pf-anchor.sh` (LaunchDaemon com.harness.pf-bundle-host installed, loader last exit 0), the human opened http://192.168.0.27:8081 in Safari on the iPhone with Tailscale OFF on the home Wi-Fi: it FAILED TO LOAD. Note: e2e-tailnet-proof.sh run on the Mac itself still reports LAN 192.168.0.27:8081 REACHABLE (HTTP 200) after install; the Mac-local probe may not exercise the LAN path (unconfirmed).",
-            "CYCLE-2 FIX (M1-C7, commit 1a248cf): the Mac-local LAN 8081 probe (routes over lo0, always REACHABLE) was replaced by checks that the pf LaunchDaemon's last exit is 0 and its loaded interface equals the current tailnet utun; live e2e exit 0 \u2014 .harness/evidence/M1-C7-verifier-2.log. The human LAN-device check above remains the LAN evidence.",
+            "CYCLE-2 FIX (M1-C7, commit 1a248cf): the Mac-local LAN 8081 probe (routes over lo0, always REACHABLE) was replaced by checks that the pf LaunchDaemon's last exit is 0 and its loaded interface equals the current tailnet utun; live e2e exit 0 — .harness/evidence/M1-C7-verifier-2.log. The human LAN-device check above remains the LAN evidence.",
             "Final review cycle 6 (sonnet, 650e350): PASS; independent re-run in .harness/evidence/M1-cycle6-review.log"
           ]
         }
@@ -2072,7 +2072,7 @@
       },
       "as_built": {
         "artifact": ".harness/as-built/M2a.md",
-        "result": "RECORDED \u2014 10/12 files attributed; components C1,C4,C5 (C2,C3,C6,C7 as context); 6 edges; 2 claim mismatches (C2 claimed but no code changes, imported by C1; C7 claimed but no code changes, imported by C5)"
+        "result": "RECORDED — 10/12 files attributed; components C1,C4,C5 (C2,C3,C6,C7 as context); 6 edges; 2 claim mismatches (C2 claimed but no code changes, imported by C1; C7 claimed but no code changes, imported by C5)"
       },
       "criteria": [
         {
@@ -2080,10 +2080,10 @@
           "text": "The app's model list matches Ollama GET /api/tags by real name and size, with no hardcoded model names.",
           "status": "PASS",
           "evidence": [
-            "Live over tailnet :8443 via the app's createAPIClient + toModelListView: names equal Ollama /api/tags in order, count=5; size_bytes equal exactly and size labels match; resident 'Loaded: devstral:24b' equals /api/ps (a model the server did not load); hardcoded-name grep over mobile/src and server/src clean \u2014 .harness/evidence/M2a-T3-verifier.log",
-            "server/src/models/manager.test.ts: models mapped verbatim from made-up names; resident from ps with loaded_by_server false; null when ps empty; 503 ollama_down path \u2014 .harness/evidence/M2a-T1-verifier.log",
-            "mobile/src/ui/modelList.test.ts: rows mirror arbitrary list, resident marking, Nothing loaded; runtime smoke renders Chat with Models link \u2014 .harness/evidence/M2a-T2-verifier.log",
-            "Reviewer cycle 1 re-ran the full milestone validation live: all green \u2014 .harness/evidence/M2a-review.log"
+            "Live over tailnet :8443 via the app's createAPIClient + toModelListView: names equal Ollama /api/tags in order, count=5; size_bytes equal exactly and size labels match; resident 'Loaded: devstral:24b' equals /api/ps (a model the server did not load); hardcoded-name grep over mobile/src and server/src clean — .harness/evidence/M2a-T3-verifier.log",
+            "server/src/models/manager.test.ts: models mapped verbatim from made-up names; resident from ps with loaded_by_server false; null when ps empty; 503 ollama_down path — .harness/evidence/M2a-T1-verifier.log",
+            "mobile/src/ui/modelList.test.ts: rows mirror arbitrary list, resident marking, Nothing loaded; runtime smoke renders Chat with Models link — .harness/evidence/M2a-T2-verifier.log",
+            "Reviewer cycle 1 re-ran the full milestone validation live: all green — .harness/evidence/M2a-review.log"
           ]
         }
       ],
@@ -2335,12 +2335,12 @@
         "FR4",
         "FR5"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
-        "commit": "",
-        "branch": ""
+        "commit": "c9fdd5e42c23ebadf125b6d0cde83ae7d659f647",
+        "branch": "m2b-swap-load-unload"
       },
       "as_built": {
         "artifact": null,
@@ -2371,7 +2371,27 @@
       "findings": [],
       "validation": [],
       "follow_ups": [],
-      "split_from": "M2"
+      "split_from": "M2",
+      "complexity_signals": [
+        "CONCURRENCY_LIFECYCLE",
+        "IMPLEMENTATION_PLUS_LIVE_PROOF"
+      ],
+      "complexity_check_at_pickup": {
+        "criteria": 3,
+        "shape": "PASS (phone app client and HTTP entry point, observed in live GET /api/ps)",
+        "signals": [
+          "CONCURRENCY_LIFECYCLE",
+          "IMPLEMENTATION_PLUS_LIVE_PROOF"
+        ],
+        "decision": "run without a further split: M2b is itself the child of the M2 split made at pickup for exactly this signal pair; every one of its three criteria is a live observation of the same load/unload lifecycle (requirements: all ACs proven against the live Mac), so no criterion-conserving seam separates implementation from live proof, and moving M2-AC3 out would leave the pair intact in the remainder. Estimated 3 worker tasks, ~6 production files, 2 subsystems (server, mobile). Recorded for human visibility under Follow-ups."
+      },
+      "baseline_validation": {
+        "result": "GREEN",
+        "artifacts": [
+          ".harness/evidence/M2a-review.log"
+        ],
+        "note": "M2a cycle-1 reviewer ran the full broad validation live at e826a62, all green; baseline c9fdd5e differs from e826a62 only under .harness/ (git diff --stat e826a62 c9fdd5e: as-built/M2a.md, evidence/M2a-review.log, milestones.md, state.json)"
+      }
     },
     "M2c": {
       "id": "M2c",
