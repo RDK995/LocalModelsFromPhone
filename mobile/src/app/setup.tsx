@@ -18,12 +18,14 @@ import {
   Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useHeaderHeight } from "expo-router/react-navigation";
 import { saveToken } from "@/api/secureStoreToken";
 
 export default function SetupScreen() {
   const [token, setToken] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const headerHeight = useHeaderHeight();
 
   const handleTokenSubmit = async () => {
     if (!token.trim()) {
@@ -50,6 +52,7 @@ export default function SetupScreen() {
     <KeyboardAvoidingView
       style={styles.flex}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={headerHeight}
     >
       <ScrollView
         contentContainerStyle={styles.scrollContent}

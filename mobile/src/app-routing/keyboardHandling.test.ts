@@ -46,6 +46,13 @@ describe("keyboard handling on Setup, Settings and Chat", () => {
     expect(source).toMatch(/onSubmitEditing=/);
   });
 
+  it("setup.tsx uses useHeaderHeight and passes keyboardVerticalOffset={headerHeight} to account for the Stack header", () => {
+    const source = readScreen("setup.tsx");
+
+    expect(source).toMatch(/useHeaderHeight/);
+    expect(source).toMatch(/keyboardVerticalOffset={headerHeight}/);
+  });
+
   it("settings.tsx uses KeyboardAvoidingView, has a dismiss mechanism, and a single-line token field with onSubmitEditing", () => {
     const source = readScreen("settings.tsx");
 
@@ -53,6 +60,13 @@ describe("keyboard handling on Setup, Settings and Chat", () => {
     expect(hasDismissMechanism(source)).toBe(true);
     expect(source).not.toMatch(/multiline={?true}?/);
     expect(source).toMatch(/onSubmitEditing=/);
+  });
+
+  it("settings.tsx uses useHeaderHeight and passes keyboardVerticalOffset={headerHeight} to account for the Stack header", () => {
+    const source = readScreen("settings.tsx");
+
+    expect(source).toMatch(/useHeaderHeight/);
+    expect(source).toMatch(/keyboardVerticalOffset={headerHeight}/);
   });
 
   it("chat.tsx uses KeyboardAvoidingView and has a dismiss mechanism for the message list", () => {
