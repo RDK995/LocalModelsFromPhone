@@ -196,9 +196,14 @@ export default function ChatScreen() {
       >
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Chat</Text>
-          <TouchableOpacity onPress={() => router.push("/settings")}>
-            <Text style={styles.settingsButton}>Settings</Text>
-          </TouchableOpacity>
+          <View style={styles.headerLinks}>
+            <TouchableOpacity onPress={() => router.push("/models")}>
+              <Text style={styles.settingsButton}>Models</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push("/settings")}>
+              <Text style={styles.settingsButton}>Settings</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <ScrollView
@@ -312,6 +317,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: "#000",
+  },
+  headerLinks: {
+    flexDirection: "row",
+    gap: 16,
   },
   settingsButton: {
     color: "#007AFF",
