@@ -4,6 +4,7 @@ import {
   OllamaDownError,
   UnknownModelError,
   OperationInProgressError,
+  ConfirmationRequiredError,
   type ModelManagerOllama,
   type ModelManagerGenerations,
 } from "./manager";
@@ -80,11 +81,36 @@ class FakeOllama implements ModelManagerOllama {
   }
 }
 
+/**
+ * A fake generation manager. `cancelActive()` records the cancel in `events`
+ * (when given) and, unless `releasesOnCancel` is false, releases the active
+ * slot a few milliseconds later - like the real manager, whose slot frees
+ * only once its Ollama loop has noticed the abort.
+ */
 class FakeGenerations implements ModelManagerGenerations {
-  constructor(private active: Generation | null) {}
+  cancelCalls = 0;
+  releasesOnCancel = true;
+
+  constructor(
+    public active: Generation | null,
+    private events?: string[]
+  ) {}
 
   getActiveGeneration(): Generation | null {
     return this.active;
+  }
+
+  cancelActive(): boolean {
+    if (this.active === null) return false;
+    this.cancelCalls++;
+    this.events?.push("cancel");
+    if (this.releasesOnCancel) {
+      setTimeout(() => {
+        this.active = null;
+        this.events?.push("released");
+      }, 5);
+    }
+    return true;
   }
 }
 
@@ -199,7 +225,7 @@ describe("ModelManager", () => {
       );
       const manager = new ModelManager(ollama, new FakeGenerations(null), FAST_TIMING);
 
-      const started = await manager.load("target");
+      const started = await manager.load("target", { confirm: true });
       expect(started).toEqual({ kind: "loading", model: "target" });
       await waitUntilIdle(manager);
 
@@ -218,7 +244,7 @@ describe("ModelManager", () => {
       const ollama = new FakeOllama({ models: [tagModel("target", 4)] }, { models: [psProcess("target")] });
       const manager = new ModelManager(ollama, new FakeGenerations(null), FAST_TIMING);
 
-      await manager.load("target");
+      await manager.load("target", { confirm: true });
       await waitUntilIdle(manager);
 
       expect(ollama.calls).toEqual([{ op: "load", name: "target" }]);
@@ -343,7 +369,7 @@ describe("ModelManager", () => {
       const ollama = new FakeOllama({ models: [] }, { models: [psProcess("model-a"), psProcess("model-b")] });
       const manager = new ModelManager(ollama, new FakeGenerations(null), FAST_TIMING);
 
-      const started = await manager.unload();
+      const started = await manager.unload({ confirm: true });
       expect(started).toEqual({ kind: "unloading", model: "model-a" });
       await waitUntilIdle(manager);
 
@@ -360,7 +386,7 @@ describe("ModelManager", () => {
       };
       const manager = new ModelManager(ollama, new FakeGenerations(null), FAST_TIMING);
 
-      await manager.unload();
+      await manager.unload({ confirm: true });
       const mid = await manager.state();
       expect(mid.operation).toEqual({ kind: "unloading", model: "resident-model" });
 
@@ -379,8 +405,8 @@ describe("ModelManager", () => {
       };
       const manager = new ModelManager(ollama, new FakeGenerations(null), FAST_TIMING);
 
-      await manager.unload();
-      await expect(manager.unload()).rejects.toBeInstanceOf(OperationInProgressError);
+      await manager.unload({ confirm: true });
+      await expect(manager.unload({ confirm: true })).rejects.toBeInstanceOf(OperationInProgressError);
 
       gate.release();
       await waitUntilIdle(manager);
@@ -391,7 +417,10 @@ describe("ModelManager", () => {
       ollama.psDelayMs = 20;
       const manager = new ModelManager(ollama, new FakeGenerations(null), FAST_TIMING);
 
-      const [first, second] = await Promise.allSettled([manager.unload(), manager.unload()]);
+      const [first, second] = await Promise.allSettled([
+        manager.unload({ confirm: true }),
+        manager.unload({ confirm: true }),
+      ]);
 
       const results = [first, second];
       expect(results.filter((r) => r.status === "fulfilled").length).toBe(1);
@@ -412,7 +441,10 @@ describe("ModelManager", () => {
       ollama.psDelayMs = 20;
       const manager = new ModelManager(ollama, new FakeGenerations(null), FAST_TIMING);
 
-      const [loadResult, unloadResult] = await Promise.allSettled([manager.load("x"), manager.unload()]);
+      const [loadResult, unloadResult] = await Promise.allSettled([
+        manager.load("x", { confirm: true }),
+        manager.unload({ confirm: true }),
+      ]);
 
       const results = [loadResult, unloadResult];
       expect(results.filter((r) => r.status === "fulfilled").length).toBe(1);
@@ -431,6 +463,214 @@ describe("ModelManager", () => {
         expect(state.resident).toBeNull();
       }
       expect(state.operation).toEqual({ kind: "idle" });
+    });
+  });
+
+  describe("confirmation rule (M2c)", () => {
+    const ACTIVE: Generation = { id: "gen-1", model: "model-a" };
+
+    /** Runs `request` and returns the ConfirmationRequiredError it rejected with. */
+    async function refusal(request: Promise<unknown>): Promise<ConfirmationRequiredError> {
+      const result = await Promise.allSettled([request]);
+      expect(result[0].status).toBe("rejected");
+      const reason = (result[0] as PromiseRejectedResult).reason;
+      expect(reason).toBeInstanceOf(ConfirmationRequiredError);
+      return reason as ConfirmationRequiredError;
+    }
+
+    /** A manager that has itself loaded `name` (so it is resident and loaded_by_server). */
+    async function managerThatLoaded(
+      name: string,
+      generations: FakeGenerations
+    ): Promise<{ manager: ModelManager; ollama: FakeOllama }> {
+      const ollama = new FakeOllama({ models: [tagModel(name, 1), tagModel("target", 2)] }, { models: [] });
+      const manager = new ModelManager(ollama, generations, FAST_TIMING);
+      await manager.load(name);
+      await waitUntilIdle(manager);
+      ollama.calls = [];
+      return { manager, ollama };
+    }
+
+    const operations: Array<[string, (m: ModelManager, confirm?: boolean) => Promise<unknown>]> = [
+      ["load", (m, confirm) => m.load("target", confirm === undefined ? undefined : { confirm })],
+      ["unload", (m, confirm) => m.unload(confirm === undefined ? undefined : { confirm })],
+    ];
+
+    for (const [label, run] of operations) {
+      it(`${label}: a reply in progress alone -> reasons ["reply_in_progress"], nothing changes`, async () => {
+        const generations = new FakeGenerations(null);
+        const { manager, ollama } = await managerThatLoaded("model-a", generations);
+        generations.active = ACTIVE;
+
+        const error = await refusal(run(manager));
+
+        expect(error.reasons).toEqual(["reply_in_progress"]);
+        expect(ollama.calls).toEqual([]);
+        expect(generations.cancelCalls).toBe(0);
+        expect(manager.isBusy()).toBe(false);
+        const state = await manager.state();
+        expect(state.operation).toEqual({ kind: "idle" });
+        expect(state.resident).toEqual({ name: "model-a", loaded_by_server: true });
+        expect(state.generation).toEqual(ACTIVE);
+      });
+
+      it(`${label}: a resident model not loaded by this server alone -> reasons ["not_loaded_by_server"]`, async () => {
+        const ollama = new FakeOllama({ models: [tagModel("target", 1)] }, { models: [psProcess("someone-elses")] });
+        const generations = new FakeGenerations(null);
+        const manager = new ModelManager(ollama, generations, FAST_TIMING);
+
+        const error = await refusal(run(manager, false));
+
+        expect(error.reasons).toEqual(["not_loaded_by_server"]);
+        expect(ollama.calls).toEqual([]);
+        const state = await manager.state();
+        expect(state.operation).toEqual({ kind: "idle" });
+        expect(state.resident).toEqual({ name: "someone-elses", loaded_by_server: false });
+      });
+
+      it(`${label}: both situations -> both reasons, in contract order; the reply is not cancelled`, async () => {
+        const ollama = new FakeOllama({ models: [tagModel("target", 1)] }, { models: [psProcess("someone-elses")] });
+        const generations = new FakeGenerations(ACTIVE);
+        const manager = new ModelManager(ollama, generations, FAST_TIMING);
+
+        const error = await refusal(run(manager));
+
+        expect(error.reasons).toEqual(["reply_in_progress", "not_loaded_by_server"]);
+        expect(error.message.length).toBeGreaterThan(0);
+        expect(ollama.calls).toEqual([]);
+        expect(generations.cancelCalls).toBe(0);
+        expect((await manager.state()).operation).toEqual({ kind: "idle" });
+      });
+
+      it(`${label}: nothing resident and no reply -> no confirmation needed`, async () => {
+        const ollama = new FakeOllama({ models: [tagModel("target", 1)] }, { models: [] });
+        const manager = new ModelManager(ollama, new FakeGenerations(null), FAST_TIMING);
+
+        await run(manager);
+        await waitUntilIdle(manager);
+        expect((await manager.state()).operation.error).toBeUndefined();
+      });
+
+      it(`${label}: resident loaded by this server and no reply -> no confirmation needed`, async () => {
+        const { manager } = await managerThatLoaded("model-a", new FakeGenerations(null));
+
+        await run(manager);
+        await waitUntilIdle(manager);
+        expect((await manager.state()).operation.error).toBeUndefined();
+      });
+
+      it(`${label}: confirm:true with a reply in flight cancels it and waits for release before any Ollama unload/load`, async () => {
+        const events: string[] = [];
+        const ollama = new FakeOllama({ models: [tagModel("target", 1)] }, { models: [psProcess("someone-elses")] });
+        ollama.loadImpl = async (name) => {
+          events.push(`load:${name}`);
+        };
+        ollama.unloadImpl = async (name) => {
+          events.push(`unload:${name}`);
+        };
+        const generations = new FakeGenerations(ACTIVE, events);
+        const manager = new ModelManager(ollama, generations, FAST_TIMING);
+
+        const started = await run(manager, true);
+        expect((started as { kind: string }).kind).toBe(label === "load" ? "loading" : "unloading");
+        await waitUntilIdle(manager);
+
+        expect(generations.cancelCalls).toBe(1);
+        expect(events.slice(0, 3)).toEqual(["cancel", "released", "unload:someone-elses"]);
+        if (label === "load") {
+          expect(events).toEqual(["cancel", "released", "unload:someone-elses", "load:target"]);
+          expect((await manager.state()).resident).toEqual({ name: "target", loaded_by_server: true });
+        } else {
+          expect(events).toEqual(["cancel", "released", "unload:someone-elses"]);
+          expect((await manager.state()).resident).toBeNull();
+        }
+        expect((await manager.state()).operation).toEqual({ kind: "idle" });
+      });
+
+      it(`${label}: while cancelling a confirmed reply the operation stays claimed`, async () => {
+        const ollama = new FakeOllama({ models: [tagModel("target", 1)] }, { models: [] });
+        const generations = new FakeGenerations(ACTIVE);
+        generations.releasesOnCancel = false;
+        const manager = new ModelManager(ollama, generations, { pollIntervalMs: 1, maxWaitMs: 60 });
+
+        await run(manager, true);
+        expect(manager.isBusy()).toBe(true);
+        await expect(manager.load("target", { confirm: true })).rejects.toBeInstanceOf(OperationInProgressError);
+        await expect(manager.unload({ confirm: true })).rejects.toBeInstanceOf(OperationInProgressError);
+
+        // The slot never releases: bounded wait, then idle with a reason and no Ollama calls.
+        await waitUntilIdle(manager);
+        const state = await manager.state();
+        expect(state.operation.kind).toBe("idle");
+        expect(state.operation.error).toMatch(/reply/i);
+        expect(ollama.calls).toEqual([]);
+        expect(manager.isBusy()).toBe(false);
+      });
+    }
+
+    it("a non-true confirm (false) is unconfirmed", async () => {
+      const ollama = new FakeOllama({ models: [tagModel("target", 1)] }, { models: [psProcess("someone-elses")] });
+      const manager = new ModelManager(ollama, new FakeGenerations(null), FAST_TIMING);
+
+      await refusal(manager.load("target", { confirm: false }));
+      await refusal(manager.unload({ confirm: false }));
+    });
+
+    it("precedence: operation_in_progress beats confirmation_required", async () => {
+      const ollama = new FakeOllama({ models: [tagModel("target", 1)] }, { models: [psProcess("someone-elses")] });
+      const gate = makeGate();
+      ollama.unloadImpl = async () => {
+        await gate.wait;
+      };
+      const generations = new FakeGenerations(null);
+      const manager = new ModelManager(ollama, generations, FAST_TIMING);
+
+      await manager.unload({ confirm: true });
+      generations.active = ACTIVE;
+      await expect(manager.load("target")).rejects.toBeInstanceOf(OperationInProgressError);
+      await expect(manager.unload()).rejects.toBeInstanceOf(OperationInProgressError);
+
+      gate.release();
+      await waitUntilIdle(manager);
+    });
+
+    it("precedence: ollama_down beats confirmation_required", async () => {
+      const ollama = new FakeOllama({ models: [tagModel("target", 1)] }, new Error("ps down"));
+      const manager = new ModelManager(ollama, new FakeGenerations(ACTIVE), FAST_TIMING);
+
+      await expect(manager.load("target")).rejects.toBeInstanceOf(OllamaDownError);
+      await expect(manager.unload()).rejects.toBeInstanceOf(OllamaDownError);
+      expect(manager.isBusy()).toBe(false);
+    });
+
+    it("overlapping loads around the /api/ps await are never both accepted", async () => {
+      const ollama = new FakeOllama({ models: [tagModel("a", 1), tagModel("b", 2)] }, { models: [] });
+      ollama.psDelayMs = 20;
+      const manager = new ModelManager(ollama, new FakeGenerations(null), FAST_TIMING);
+
+      const results = await Promise.allSettled([manager.load("a"), manager.load("b")]);
+
+      expect(results.filter((r) => r.status === "fulfilled").length).toBe(1);
+      for (const r of results.filter((r) => r.status === "rejected")) {
+        expect((r as PromiseRejectedResult).reason).toBeInstanceOf(OperationInProgressError);
+      }
+      await waitUntilIdle(manager);
+      expect(ollama.calls.filter((c) => c.op === "load").length).toBe(1);
+    });
+
+    it("a request arriving during a refused request's /api/ps check is refused too, and the refusal leaves idle", async () => {
+      const ollama = new FakeOllama({ models: [tagModel("target", 1)] }, { models: [psProcess("someone-elses")] });
+      ollama.psDelayMs = 20;
+      const manager = new ModelManager(ollama, new FakeGenerations(null), FAST_TIMING);
+
+      const first = manager.load("target");
+      await Bun.sleep(5);
+      await expect(manager.unload({ confirm: true })).rejects.toBeInstanceOf(OperationInProgressError);
+      await refusal(first);
+
+      expect(ollama.calls).toEqual([]);
+      expect(manager.isBusy()).toBe(false);
+      expect((await manager.state()).operation).toEqual({ kind: "idle" });
     });
   });
 

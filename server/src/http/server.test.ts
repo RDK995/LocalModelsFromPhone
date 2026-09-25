@@ -320,7 +320,7 @@ describe("HTTP Server with Bearer Auth", () => {
       const response = await fetch(`http://127.0.0.1:${server.port}/v1/models/unload`, {
         method: "POST",
         headers: authHeaders(testToken),
-        body: JSON.stringify({}),
+        body: JSON.stringify({ confirm: true }),
       });
 
       expect(response.status).toBe(202);
@@ -1088,7 +1088,7 @@ describe("Model load/unload operations (M2b)", () => {
       const res = await fetch(`http://127.0.0.1:${server.port}/v1/models/unload`, {
         method: "POST",
         headers: authHeaders(token),
-        body: JSON.stringify({}),
+        body: JSON.stringify({ confirm: true }),
       });
       expect(res.status).toBe(202);
       const body = (await res.json()) as { operation: { kind: string } };
@@ -1110,14 +1110,14 @@ describe("Model load/unload operations (M2b)", () => {
       const first = await fetch(`http://127.0.0.1:${server.port}/v1/models/unload`, {
         method: "POST",
         headers: authHeaders(token),
-        body: JSON.stringify({}),
+        body: JSON.stringify({ confirm: true }),
       });
       expect(first.status).toBe(202);
 
       const second = await fetch(`http://127.0.0.1:${server.port}/v1/models/unload`, {
         method: "POST",
         headers: authHeaders(token),
-        body: JSON.stringify({}),
+        body: JSON.stringify({ confirm: true }),
       });
       expect(second.status).toBe(409);
       const body = (await second.json()) as { error: string };
@@ -1140,12 +1140,12 @@ describe("Model load/unload operations (M2b)", () => {
         fetch(`http://127.0.0.1:${server.port}/v1/models/unload`, {
           method: "POST",
           headers: authHeaders(token),
-          body: JSON.stringify({}),
+          body: JSON.stringify({ confirm: true }),
         }),
         fetch(`http://127.0.0.1:${server.port}/v1/models/unload`, {
           method: "POST",
           headers: authHeaders(token),
-          body: JSON.stringify({}),
+          body: JSON.stringify({ confirm: true }),
         }),
       ]);
 
@@ -1190,6 +1190,260 @@ describe("Model load/unload operations (M2b)", () => {
       expect(body.error).toBe("operation_in_progress");
 
       release();
+    } finally {
+      server.stop(true);
+    }
+  });
+});
+
+describe("Busy confirmation before a swap or unload (M2c)", () => {
+  const TAGS: OllamaTagsResponse = {
+    models: [
+      { name: "fake-model", modified_at: "", size: 1, digest: "d" },
+      { name: "other-model", modified_at: "", size: 1, digest: "d" },
+    ],
+  };
+
+  interface StateBody {
+    resident: { name: string; loaded_by_server: boolean } | null;
+    operation: { kind: string; model?: string; error?: string };
+    generation: { id: string; model: string } | null;
+  }
+
+  async function state(port: number | undefined, token: string): Promise<StateBody> {
+    const res = await fetch(`http://127.0.0.1:${port}/v1/state`, { headers: authHeaders(token) });
+    expect(res.status).toBe(200);
+    return (await res.json()) as StateBody;
+  }
+
+  function post(port: number | undefined, token: string, path: string, body?: string): Promise<Response> {
+    return fetch(`http://127.0.0.1:${port}${path}`, {
+      method: "POST",
+      headers: authHeaders(token),
+      body,
+    });
+  }
+
+  /**
+   * A fake whose load/unload calls are recorded in `calls` and change what
+   * ps() reports (starting with "fake-model" resident, loaded by someone else).
+   */
+  function recordingClient(chat: ChatImpl): { client: FakeOllamaClient; calls: string[] } {
+    const client = new FakeOllamaClient(chat, TAGS);
+    const calls: string[] = [];
+    let resident: string[] = ["fake-model"];
+    client.ps = async () => ({ models: resident.flatMap((name) => residentPs(name).models) });
+    client.loadImpl = async (name) => {
+      calls.push(`load:${name}`);
+      if (!resident.includes(name)) resident.push(name);
+    };
+    client.unloadImpl = async (name) => {
+      calls.push(`unload:${name}`);
+      resident = resident.filter((n) => n !== name);
+    };
+    return { client, calls };
+  }
+
+  async function expectConfirmationRequired(res: Response, reasons: string[]): Promise<void> {
+    expect(res.status).toBe(409);
+    const body = (await res.json()) as { error: string; message: unknown; reasons: unknown };
+    expect(body.error).toBe("confirmation_required");
+    expect(typeof body.message).toBe("string");
+    expect((body.message as string).length).toBeGreaterThan(0);
+    expect(body.reasons).toEqual(reasons);
+  }
+
+  async function waitIdle(port: number | undefined, token: string): Promise<void> {
+    expect(await waitUntil(async () => (await state(port, token)).operation.kind === "idle")).toBe(true);
+  }
+
+  it("load and unload answer 409 confirmation_required when the resident model was not loaded by this server; nothing changes", async () => {
+    const { client, calls } = recordingClient(completingChat(0));
+    const token = "test-token";
+    setValidToken(token);
+    const server = createServer({ ollama: client, port: 0 });
+
+    try {
+      await expectConfirmationRequired(
+        await post(server.port, token, "/v1/models/load", JSON.stringify({ name: "fake-model" })),
+        ["not_loaded_by_server"]
+      );
+      await expectConfirmationRequired(
+        await post(server.port, token, "/v1/models/unload", JSON.stringify({ confirm: false })),
+        ["not_loaded_by_server"]
+      );
+
+      const after = await state(server.port, token);
+      expect(after.operation).toEqual({ kind: "idle" });
+      expect(after.resident).toEqual({ name: "fake-model", loaded_by_server: false });
+      expect(calls).toEqual([]);
+
+      const confirmedUnload = await post(server.port, token, "/v1/models/unload", JSON.stringify({ confirm: true }));
+      expect(confirmedUnload.status).toBe(202);
+      await waitIdle(server.port, token);
+      const confirmedLoad = await post(
+        server.port,
+        token,
+        "/v1/models/load",
+        JSON.stringify({ name: "fake-model", confirm: true })
+      );
+      expect(confirmedLoad.status).toBe(202);
+      await waitIdle(server.port, token);
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("load and unload (empty body) answer 409 confirmation_required while a reply is in progress; the reply keeps streaming", async () => {
+    const { client, calls } = recordingClient(abortAwareChat());
+    const token = "test-token";
+    setValidToken(token);
+    const server = createServer({ ollama: client, port: 0 });
+
+    try {
+      // Make the resident model one this server loaded, so only the reply applies.
+      const load = await post(server.port, token, "/v1/models/load", JSON.stringify({ name: "fake-model", confirm: true }));
+      expect(load.status).toBe(202);
+      await waitIdle(server.port, token);
+      calls.length = 0;
+
+      const chat = await post(server.port, token, "/v1/chat", CHAT_REQUEST_BODY);
+      expect(chat.status).toBe(200);
+      const genId = chat.headers.get("x-generation-id")!;
+      const textPromise = chat.text();
+
+      await expectConfirmationRequired(
+        await post(server.port, token, "/v1/models/load", JSON.stringify({ name: "fake-model" })),
+        ["reply_in_progress"]
+      );
+      await expectConfirmationRequired(await post(server.port, token, "/v1/models/unload"), ["reply_in_progress"]);
+
+      const after = await state(server.port, token);
+      expect(after.operation).toEqual({ kind: "idle" });
+      expect(after.resident).toEqual({ name: "fake-model", loaded_by_server: true });
+      expect(after.generation?.id).toBe(genId);
+      expect(calls).toEqual([]);
+
+      await post(server.port, token, `/v1/generations/${genId}/cancel`);
+      await textPromise;
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("both situations list both reasons in contract order", async () => {
+    const { client } = recordingClient(abortAwareChat());
+    const token = "test-token";
+    setValidToken(token);
+    const server = createServer({ ollama: client, port: 0 });
+
+    try {
+      const chat = await post(server.port, token, "/v1/chat", CHAT_REQUEST_BODY);
+      expect(chat.status).toBe(200);
+      const genId = chat.headers.get("x-generation-id")!;
+      const textPromise = chat.text();
+
+      await expectConfirmationRequired(
+        await post(server.port, token, "/v1/models/load", JSON.stringify({ name: "fake-model" })),
+        ["reply_in_progress", "not_loaded_by_server"]
+      );
+      await expectConfirmationRequired(await post(server.port, token, "/v1/models/unload", "{}"), [
+        "reply_in_progress",
+        "not_loaded_by_server",
+      ]);
+
+      await post(server.port, token, `/v1/generations/${genId}/cancel`);
+      await textPromise;
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  for (const [label, path, body] of [
+    ["load", "/v1/models/load", JSON.stringify({ name: "other-model", confirm: true })],
+    ["unload", "/v1/models/unload", JSON.stringify({ confirm: true })],
+  ] as const) {
+    it(`a confirmed ${label} returns 202, ends the in-flight reply with done cancelled, then runs`, async () => {
+      const { client, calls } = recordingClient(abortAwareChat());
+      const token = "test-token";
+      setValidToken(token);
+      const server = createServer({ ollama: client, port: 0 });
+
+      try {
+        const chat = await post(server.port, token, "/v1/chat", CHAT_REQUEST_BODY);
+        expect(chat.status).toBe(200);
+        const textPromise = chat.text();
+
+        const res = await post(server.port, token, path, body);
+        expect(res.status).toBe(202);
+
+        const events = parseSSE(await textPromise);
+        const last = events[events.length - 1];
+        expect(last.event).toBe("done");
+        expect(JSON.parse(last.data).status).toBe("cancelled");
+
+        await waitIdle(server.port, token);
+        const after = await state(server.port, token);
+        expect(after.generation).toBeNull();
+        expect(after.operation.error).toBeUndefined();
+        expect(calls[0]).toBe("unload:fake-model");
+      } finally {
+        server.stop(true);
+      }
+    });
+  }
+
+  it("a chat that passed the busy check before a load was claimed is refused when it would start", async () => {
+    const { client, calls } = recordingClient(abortAwareChat());
+    const slowPs = client.ps.bind(client);
+    client.ps = async () => {
+      await Bun.sleep(40);
+      return slowPs();
+    };
+    const token = "test-token";
+    setValidToken(token);
+    const server = createServer({ ollama: client, port: 0 });
+
+    try {
+      // The chat passes isBusy() and waits on ps(); the load claims meanwhile.
+      const chatPromise = post(server.port, token, "/v1/chat", CHAT_REQUEST_BODY);
+      await Bun.sleep(10);
+      const load = await post(server.port, token, "/v1/models/load", JSON.stringify({ name: "fake-model", confirm: true }));
+      expect(load.status).toBe(202);
+
+      const chat = await chatPromise;
+      expect(chat.status).toBe(409);
+      expect(((await chat.json()) as { error: string }).error).toBe("operation_in_progress");
+
+      await waitIdle(server.port, token);
+      expect(calls).toEqual(["load:fake-model"]);
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("a non-boolean confirm is 400 bad_request for load and unload", async () => {
+    const { client, calls } = recordingClient(completingChat(0));
+    const token = "test-token";
+    setValidToken(token);
+    const server = createServer({ ollama: client, port: 0 });
+
+    try {
+      const cases: Array<[string, string]> = [
+        ["/v1/models/load", JSON.stringify({ name: "fake-model", confirm: "yes" })],
+        ["/v1/models/load", JSON.stringify({ name: "fake-model", confirm: 1 })],
+        ["/v1/models/unload", JSON.stringify({ confirm: "true" })],
+        ["/v1/models/unload", JSON.stringify({ confirm: null })],
+        ["/v1/models/unload", "{not json"],
+        ["/v1/models/unload", JSON.stringify([true])],
+      ];
+      for (const [path, body] of cases) {
+        const res = await post(server.port, token, path, body);
+        expect(res.status, `${path} ${body}`).toBe(400);
+        expect(((await res.json()) as { error: string }).error).toBe("bad_request");
+      }
+      expect(calls).toEqual([]);
+      expect((await state(server.port, token)).operation).toEqual({ kind: "idle" });
     } finally {
       server.stop(true);
     }

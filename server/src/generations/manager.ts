@@ -251,6 +251,15 @@ export class GenerationManager {
   }
 
   /**
+   * Cancel whichever generation is active (I8, used by a confirmed model
+   * load/unload). Returns false when none is. The slot is released once the
+   * generation's loop notices the abort; poll `getActiveGeneration()` for it.
+   */
+  cancelActive(): boolean {
+    return this.activeGenId !== null && this.cancelGeneration(this.activeGenId);
+  }
+
+  /**
    * Get the currently active generation ID
    */
   getActiveGenId(): string | null {

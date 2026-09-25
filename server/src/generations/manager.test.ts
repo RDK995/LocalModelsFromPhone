@@ -138,4 +138,26 @@ describe("GenerationManager", () => {
     expect(JSON.parse(events[1].data).status).toBe("cancelled");
     expect(manager.getActiveGenId()).toBeNull();
   });
+
+  it("cancelActive cancels the active generation, and returns false when none is active", async () => {
+    const client: OllamaChatClient = {
+      async *chat() {
+        yield doneChunk("a", false);
+        await new Promise(() => {});
+      },
+    };
+    const manager = new GenerationManager(client);
+    expect(manager.cancelActive()).toBe(false);
+
+    manager.startGeneration("gen-1", { model: "test", messages: [] });
+    const events = [];
+    for await (const e of manager.subscribe("gen-1")) {
+      events.push(e);
+      if (e.type === "content") expect(manager.cancelActive()).toBe(true);
+    }
+
+    expect(JSON.parse(events[events.length - 1].data).status).toBe("cancelled");
+    expect(manager.getActiveGeneration()).toBeNull();
+    expect(manager.cancelActive()).toBe(false);
+  });
 });

@@ -141,7 +141,7 @@ Cycle 2: PASS, tier Mid (sonnet), correction-diff scope b8bcae3..13f48ba; M2-AC2
 
 ## M2c — Busy confirmation before a swap or unload
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -161,7 +161,7 @@ Pending.
 
 ### Baseline
 
-Pending.
+ef16c787b68ef54254df5557f114a6ad9abb0227 on m2c-busy-confirmation
 
 ### Evidence
 
@@ -181,7 +181,8 @@ Pending.
 
 ### Follow-ups
 
-None.
+- Size/shape check at pickup: 1 criterion; entry point is HTTP (`POST /v1/models/load|unload` -> `409 confirmation_required`). Operational-complexity signal `CONCURRENCY_LIFECYCLE` present (a confirmed load/unload cancels C6's in-flight reply via I8 before C5 proceeds); `SUBSYSTEMS_GT_3` judged absent (two subsystems: server, mobile app); no live-environment proof planned; ~5 production files; 2 worker tasks. One signal -> seam check: the only seam (server rule vs app dialog) cannot conserve the single criterion M2-AC4 in both parts, so M2c runs unsplit.
+- Carried from M2b (reviewer OPTIONAL F2, .harness/reviews/M2b-cycle1.md): a failed load's reason stays in `operation.error` until the next operation, so the Models screen can show "Loaded: X" beside an old "Load failed: ...". Outside M2-AC4; not implemented in M2c.
 
 ## M3 — Persisted multi-turn conversations with model attribution
 

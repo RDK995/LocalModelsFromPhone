@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M2b",
+  "current_milestone": "M2c",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -2888,12 +2888,12 @@
       "requirements": [
         "FR6"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
-        "commit": "",
-        "branch": ""
+        "commit": "ef16c787b68ef54254df5557f114a6ad9abb0227",
+        "branch": "m2c-busy-confirmation"
       },
       "as_built": {
         "artifact": null,
@@ -2911,7 +2911,10 @@
       "reviews": [],
       "findings": [],
       "validation": [],
-      "follow_ups": [],
+      "follow_ups": [
+        "Size/shape check at pickup: 1 criterion; entry point is HTTP (POST /v1/models/load|unload -> 409 confirmation_required). Operational-complexity signal CONCURRENCY_LIFECYCLE present (a confirmed load/unload cancels C6's in-flight reply via I8 before C5 proceeds); SUBSYSTEMS_GT_3 judged absent (two subsystems: server, mobile app); no live-environment proof planned; ~5 production files; 2 worker tasks. One signal -> seam check: the only seam (server rule vs app dialog) cannot conserve the single criterion M2-AC4 in both parts, so M2c runs unsplit.",
+        "Carried from M2b (reviewer OPTIONAL F2, .harness/reviews/M2b-cycle1.md): a failed load's reason stays in operation.error until the next operation, so the Models screen can show 'Loaded: X' beside an old 'Load failed: ...'. Outside M2-AC4; not implemented in M2c."
+      ],
       "split_from": "M2"
     },
     "M3": {

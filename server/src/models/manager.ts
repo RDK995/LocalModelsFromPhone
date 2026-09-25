@@ -1,12 +1,19 @@
 /**
  * Model manager (C5, I6) - reports installed and resident Ollama models, and
  * performs swap-load and unload (FR3-FR6) as asynchronous background
- * operations tracked in `state().operation`.
+ * operations tracked in `state().operation`. Enforces the busy-confirmation
+ * rule (FR6): a load/unload is refused unless confirmed while a reply is in
+ * progress or the resident model was not loaded by this server.
  */
 
 import { OllamaError } from "../ollama/client";
 import type { OllamaTagsResponse, OllamaPsResponse } from "../ollama/client";
-import type { StateResponse, Generation, Operation } from "@shared/api";
+import type {
+  StateResponse,
+  Generation,
+  Operation,
+  ConfirmationRequiredError as ConfirmationRequiredBody,
+} from "@shared/api";
 
 /**
  * The subset of OllamaClient that ModelManager depends on. Declared as an
@@ -21,12 +28,22 @@ export interface ModelManagerOllama {
 }
 
 /**
- * The subset of GenerationManager that ModelManager depends on, for the
- * `generation` field of the state response.
+ * The subset of GenerationManager that ModelManager depends on (I8): the
+ * active generation, for the state response and the confirmation rule, and
+ * cancelling it for a confirmed load/unload.
  */
 export interface ModelManagerGenerations {
   getActiveGeneration(): Generation | null;
+  /** Cancel the active generation, if any. Its slot releases asynchronously. */
+  cancelActive(): boolean;
 }
+
+/** `confirm` must be exactly `true` to confirm; anything else is unconfirmed. */
+export interface ModelOperationOptions {
+  confirm?: boolean;
+}
+
+export type ConfirmationReason = ConfirmationRequiredBody["reasons"][number];
 
 /** How ModelManager waits for a background operation without sleeping in tests. */
 export interface ModelManagerTiming {
@@ -65,6 +82,23 @@ export class OperationInProgressError extends Error {
   }
 }
 
+const REASON_SENTENCES: Record<ConfirmationReason, string> = {
+  reply_in_progress: "A reply is still being written, and continuing will stop it.",
+  not_loaded_by_server:
+    "The loaded model was not loaded by this app, so another tool on this Mac may be using it.",
+};
+
+/**
+ * A load/unload needs explicit confirmation (FR6). `reasons` lists every
+ * reason that applies, in the order reply_in_progress, not_loaded_by_server.
+ */
+export class ConfirmationRequiredError extends Error {
+  constructor(readonly reasons: ConfirmationReason[]) {
+    super(`Please confirm: ${reasons.map((r) => REASON_SENTENCES[r]).join(" ")}`);
+    this.name = "ConfirmationRequiredError";
+  }
+}
+
 /** Waiting for /api/ps to report resident models cleared timed out. */
 class WaitTimeoutError extends Error {}
 
@@ -94,6 +128,13 @@ function reasonForError(error: unknown, name: string, elseVerb: "Load" | "Unload
 
 export class ModelManager {
   private operation: Operation = { kind: "idle" };
+  /**
+   * True from the moment a load/unload passes the busy check until it is
+   * refused or its background run ends. Kept separate from `operation` so a
+   * request that is still being checked (and may yet be refused) never shows
+   * in `state().operation`, yet already blocks a second load/unload and chat.
+   */
+  private claimed = false;
   private loadedByServer: string | null = null;
   private readonly timing: ModelManagerTiming;
 
@@ -105,9 +146,9 @@ export class ModelManager {
     this.timing = { ...DEFAULT_TIMING, ...timing };
   }
 
-  /** Whether a load or unload is currently running. */
+  /** Whether a load or unload is currently running (or being checked). */
   isBusy(): boolean {
-    return this.operation.kind !== "idle";
+    return this.claimed || this.operation.kind !== "idle";
   }
 
   /**
@@ -142,13 +183,16 @@ export class ModelManager {
   }
 
   /**
-   * Start a swap-load of `name`: validate it, then (synchronously) mark the
-   * operation as loading and return it. In the background: unload every
+   * Start a swap-load of `name`: validate it, apply the confirmation rule,
+   * then mark the operation as loading and return it. In the background:
+   * cancel any in-flight reply and wait for its slot to release, unload every
    * resident model other than `name`, wait for them to clear /api/ps, then
    * load `name` with keep_alive:-1. Never rejects after it returns; failures
-   * land in `operation.error`.
+   * land in `operation.error`. Refusals, in precedence order:
+   * UnknownModelError, OperationInProgressError, OllamaDownError,
+   * ConfirmationRequiredError.
    */
-  async load(name: string): Promise<Operation> {
+  async load(name: string, options: ModelOperationOptions = {}): Promise<Operation> {
     let tags: OllamaTagsResponse;
     try {
       tags = await this.ollama.tags();
@@ -158,9 +202,8 @@ export class ModelManager {
     if (!tags.models.some((m) => m.name === name)) {
       throw new UnknownModelError(name);
     }
-    if (this.isBusy()) {
-      throw new OperationInProgressError();
-    }
+    this.claim();
+    await this.checkConfirmation(options);
 
     this.operation = { kind: "loading", model: name };
     const started = this.operation;
@@ -169,6 +212,14 @@ export class ModelManager {
   }
 
   private async runLoad(name: string): Promise<void> {
+    try {
+      await this.stopActiveReply();
+    } catch (error) {
+      // Nothing was touched yet: report the reason, leave the models as they are.
+      this.finish({ kind: "idle", model: name, error: reasonForError(error, name, "Load") });
+      return;
+    }
+
     try {
       let ps: OllamaPsResponse;
       try {
@@ -187,37 +238,26 @@ export class ModelManager {
 
       await this.ollama.load(name);
       this.loadedByServer = name;
-      this.operation = { kind: "idle" };
+      this.finish({ kind: "idle" });
     } catch (error) {
       this.loadedByServer = null;
       await this.bestEffortUnload(name);
-      this.operation = { kind: "idle", model: name, error: reasonForError(error, name, "Load") };
+      this.finish({ kind: "idle", model: name, error: reasonForError(error, name, "Load") });
     }
   }
 
   /**
-   * Start an unload of every resident model. Synchronously marks the
-   * operation as unloading (with the current resident's name, if any known)
-   * and returns it; the background sweep never rejects after that.
+   * Start an unload of every resident model: apply the confirmation rule,
+   * then mark the operation as unloading (with the current resident's name,
+   * if any) and return it. In the background: cancel any in-flight reply and
+   * wait for its slot to release, then sweep; never rejects after it returns.
+   * Refusals, in precedence order: OperationInProgressError, OllamaDownError,
+   * ConfirmationRequiredError.
    */
-  async unload(): Promise<Operation> {
-    if (this.isBusy()) {
-      throw new OperationInProgressError();
-    }
-
-    // Claim the operation synchronously, in the same tick as the isBusy()
-    // check above, before any await. Otherwise a second call arriving
-    // during the ps() lookup below would also pass isBusy() and be
-    // accepted (review finding F1).
-    this.operation = { kind: "unloading" };
-
-    let residentName: string | undefined;
-    try {
-      const ps = await this.ollama.ps();
-      residentName = ps.models[0]?.name;
-    } catch {
-      residentName = undefined;
-    }
+  async unload(options: ModelOperationOptions = {}): Promise<Operation> {
+    this.claim();
+    const ps = await this.checkConfirmation(options);
+    const residentName = ps.models[0]?.name;
 
     this.operation =
       residentName !== undefined ? { kind: "unloading", model: residentName } : { kind: "unloading" };
@@ -229,6 +269,8 @@ export class ModelManager {
   private async runUnload(): Promise<void> {
     let currentName: string | undefined;
     try {
+      await this.stopActiveReply();
+
       let ps: OllamaPsResponse;
       try {
         ps = await this.ollama.ps();
@@ -246,9 +288,87 @@ export class ModelManager {
       }
 
       this.loadedByServer = null;
-      this.operation = { kind: "idle" };
+      this.finish({ kind: "idle" });
     } catch (error) {
-      this.operation = { kind: "idle", error: reasonForError(error, currentName ?? "model", "Unload") };
+      this.finish({ kind: "idle", error: reasonForError(error, currentName ?? "model", "Unload") });
+    }
+  }
+
+  /**
+   * Refuse with OperationInProgressError if a load/unload is running or being
+   * checked; otherwise claim. The check and the claim happen in the same tick
+   * with no await between them, and every caller claims before its first
+   * await on /api/ps. Otherwise a second request arriving during that await
+   * would also pass the check and both would be accepted (review finding F1).
+   */
+  private claim(): void {
+    if (this.isBusy()) {
+      throw new OperationInProgressError();
+    }
+    this.claimed = true;
+  }
+
+  /**
+   * With the claim held: read /api/ps and apply the confirmation rule. On a
+   * refusal (OllamaDownError or ConfirmationRequiredError) the claim is
+   * dropped, so `operation` and everything else stay exactly as they were.
+   * Returns the /api/ps listing it read.
+   *
+   * Reading the active generation here, after the await, is sound: once
+   * claimed, /v1/chat refuses to start a new reply (it re-checks isBusy()
+   * in the same tick as starting one), so no reply can begin unseen.
+   */
+  private async checkConfirmation(options: ModelOperationOptions): Promise<OllamaPsResponse> {
+    try {
+      let ps: OllamaPsResponse;
+      try {
+        ps = await this.ollama.ps();
+      } catch {
+        throw new OllamaDownError();
+      }
+
+      const reasons: ConfirmationReason[] = [];
+      if (this.generations.getActiveGeneration() !== null) {
+        reasons.push("reply_in_progress");
+      }
+      if (ps.models.some((m) => m.name !== this.loadedByServer)) {
+        reasons.push("not_loaded_by_server");
+      }
+      if (reasons.length > 0 && options.confirm !== true) {
+        throw new ConfirmationRequiredError(reasons);
+      }
+      return ps;
+    } catch (error) {
+      this.claimed = false;
+      throw error;
+    }
+  }
+
+  /** End a background operation: record how it ended and drop the claim. */
+  private finish(operation: Operation): void {
+    this.operation = operation;
+    this.claimed = false;
+  }
+
+  /**
+   * Cancel the in-flight reply, if any (only a confirmed request can get here
+   * with one), and poll until its generation slot is released, bounded by
+   * maxWaitMs. Runs before any Ollama unload/load is issued.
+   */
+  private async stopActiveReply(): Promise<void> {
+    if (this.generations.getActiveGeneration() === null) {
+      return;
+    }
+    this.generations.cancelActive();
+    const deadline = Date.now() + this.timing.maxWaitMs;
+    for (;;) {
+      if (this.generations.getActiveGeneration() === null) {
+        return;
+      }
+      if (Date.now() >= deadline) {
+        throw new WaitTimeoutError("Timed out waiting for the reply in progress to stop");
+      }
+      await this.sleep(this.timing.pollIntervalMs);
     }
   }
 

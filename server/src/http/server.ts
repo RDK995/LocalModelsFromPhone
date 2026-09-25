@@ -18,6 +18,7 @@ import {
   OllamaDownError,
   UnknownModelError,
   OperationInProgressError,
+  ConfirmationRequiredError,
 } from "../models/manager";
 import type {
   ErrorResponse,
@@ -235,11 +236,26 @@ function parseChatRequest(body: unknown): ChatRequest | string {
 }
 
 /**
- * Validate a /v1/models/load body: `{name, confirm?}`. Only `name` matters
- * here (the confirmation rule is M2c: `confirm` is accepted and ignored).
- * Returns `{name}`, or an error message for an invalid body.
+ * Read `confirm` from a load/unload body: absent -> false; otherwise it must
+ * be a boolean. Returns an error message for a non-boolean.
  */
-function parseLoadRequest(body: unknown): { name: string } | string {
+function parseConfirm(body: Record<string, unknown>): boolean | string {
+  const { confirm } = body;
+  if (confirm === undefined) {
+    return false;
+  }
+  if (typeof confirm !== "boolean") {
+    return "confirm must be a boolean";
+  }
+  return confirm;
+}
+
+/**
+ * Validate a /v1/models/load body: `{name, confirm?}`. `confirm: true`
+ * confirms past the busy-confirmation rule (FR6). Returns `{name, confirm}`,
+ * or an error message for an invalid body.
+ */
+function parseLoadRequest(body: unknown): { name: string; confirm: boolean } | string {
   if (typeof body !== "object" || body === null || Array.isArray(body)) {
     return "Request body must be a JSON object";
   }
@@ -247,7 +263,40 @@ function parseLoadRequest(body: unknown): { name: string } | string {
   if (typeof name !== "string" || name.length === 0) {
     return "name must be a non-empty string";
   }
-  return { name };
+  const confirm = parseConfirm(body as Record<string, unknown>);
+  if (typeof confirm === "string") {
+    return confirm;
+  }
+  return { name, confirm };
+}
+
+/**
+ * Validate a /v1/models/unload body: optional (empty = `{}`), otherwise
+ * `{confirm?}`. Returns `{confirm}`, or an error message for an invalid body.
+ */
+function parseUnloadRequest(text: string): { confirm: boolean } | string {
+  if (text.trim().length === 0) {
+    return { confirm: false };
+  }
+  let body: unknown;
+  try {
+    body = JSON.parse(text);
+  } catch {
+    return "Malformed JSON body";
+  }
+  if (typeof body !== "object" || body === null || Array.isArray(body)) {
+    return "Request body must be a JSON object";
+  }
+  const confirm = parseConfirm(body as Record<string, unknown>);
+  if (typeof confirm === "string") {
+    return confirm;
+  }
+  return { confirm };
+}
+
+/** 409 confirmation_required with the reasons that apply (FR6). */
+function confirmationRequired(error: ConfirmationRequiredError): Response {
+  return errorResponse("confirmation_required", error.message, 409, { reasons: error.reasons });
 }
 
 /**
@@ -366,7 +415,7 @@ export function createServer({
         }
 
         try {
-          const operation = await modelManager.load(parsed.name);
+          const operation = await modelManager.load(parsed.name, { confirm: parsed.confirm });
           return jsonResponse({ operation }, 202);
         } catch (error) {
           if (error instanceof UnknownModelError) {
@@ -378,6 +427,9 @@ export function createServer({
           if (error instanceof OllamaDownError) {
             return errorResponse("ollama_down", error.message, 503);
           }
+          if (error instanceof ConfirmationRequiredError) {
+            return confirmationRequired(error);
+          }
           throw error;
         }
       },
@@ -385,14 +437,26 @@ export function createServer({
     {
       method: "POST",
       path: "/v1/models/unload",
-      handler: async () => {
-        // Body is optional (only `confirm`, accepted and ignored - M2c).
+      handler: async (req) => {
+        // Body is optional: empty means `{}`; `confirm: true` confirms past
+        // the busy-confirmation rule (FR6).
+        const parsed = parseUnloadRequest(await req.text());
+        if (typeof parsed === "string") {
+          return errorResponse("bad_request", parsed, 400);
+        }
+
         try {
-          const operation = await modelManager.unload();
+          const operation = await modelManager.unload({ confirm: parsed.confirm });
           return jsonResponse({ operation }, 202);
         } catch (error) {
           if (error instanceof OperationInProgressError) {
             return errorResponse("operation_in_progress", error.message, 409);
+          }
+          if (error instanceof OllamaDownError) {
+            return errorResponse("ollama_down", error.message, 503);
+          }
+          if (error instanceof ConfirmationRequiredError) {
+            return confirmationRequired(error);
           }
           throw error;
         }
@@ -441,6 +505,17 @@ export function createServer({
           return errorResponse(
             "model_not_resident",
             `Model "${body.model}" is not loaded; load it first`,
+            409
+          );
+        }
+
+        // Re-check in the same tick as starting: a load/unload may have been
+        // claimed during the ps() await above. The model manager relies on
+        // this - once it has claimed, no reply can start behind its back.
+        if (modelManager.isBusy()) {
+          return errorResponse(
+            "operation_in_progress",
+            "A model load/unload operation is in progress",
             409
           );
         }
