@@ -40,6 +40,17 @@ fi
 
 echo "Server is running"
 
+# Chat with the model that is actually resident (a non-resident model is
+# refused with 409 model_not_resident).
+BUN="${BUN:-$(command -v bun || echo /opt/homebrew/bin/bun)}"
+STATE_JSON=$(curl -s --max-time "$TIMEOUT" "$SERVER_URL/v1/state" -H "@$AUTH_HEADER_FILE")
+MODEL=$(printf '%s' "$STATE_JSON" | "$BUN" -e 'const s = JSON.parse(await Bun.stdin.text()); if (s.resident && s.resident.name) console.log(s.resident.name);' 2>/dev/null || true)
+if [ -z "$MODEL" ]; then
+  echo -e "${RED}Failed: no resident model reported by GET /v1/state; load one first${NC}"
+  exit 1
+fi
+echo "Resident model: $MODEL"
+
 # Test 1: POST to /v1/chat should return SSE stream with x-generation-id header
 echo "Test 1: Chat endpoint returns SSE stream"
 
@@ -47,7 +58,7 @@ RESPONSE=$(curl -s --max-time "$TIMEOUT" -w "\n%{http_code}" -X POST "$SERVER_UR
   -H "@$AUTH_HEADER_FILE" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "test-model",
+    "model": "'"$MODEL"'",
     "messages": [
       {
         "role": "user",
@@ -70,7 +81,7 @@ echo "✓ Chat endpoint returns 200"
 CONTENT_TYPE=$(curl -s --max-time "$TIMEOUT" -D - -o /dev/null -X POST "$SERVER_URL/v1/chat" \
   -H "@$AUTH_HEADER_FILE" \
   -H "Content-Type: application/json" \
-  -d '{"model": "test-model", "messages": [{"role": "user", "content": "test"}]}' | \
+  -d '{"model": "'"$MODEL"'", "messages": [{"role": "user", "content": "test"}]}' | \
   grep -i "content-type" | cut -d: -f2 | tr -d '\r' | xargs)
 
 if [[ "$CONTENT_TYPE" == "text/event-stream" ]]; then
@@ -84,7 +95,7 @@ fi
 GEN_ID=$(curl -s --max-time "$TIMEOUT" -D - -o /dev/null -X POST "$SERVER_URL/v1/chat" \
   -H "@$AUTH_HEADER_FILE" \
   -H "Content-Type: application/json" \
-  -d '{"model": "test-model", "messages": [{"role": "user", "content": "test"}]}' | \
+  -d '{"model": "'"$MODEL"'", "messages": [{"role": "user", "content": "test"}]}' | \
   grep -i "x-generation-id" | cut -d: -f2 | tr -d '\r' | xargs)
 
 if [ -n "$GEN_ID" ]; then
@@ -129,7 +140,7 @@ echo "Test 4: Authentication enforcement"
 
 NO_AUTH_RESPONSE=$(curl -s --max-time "$TIMEOUT" -w "\n%{http_code}" -X POST "$SERVER_URL/v1/chat" \
   -H "Content-Type: application/json" \
-  -d '{"model": "test-model", "messages": [{"role": "user", "content": "test"}]}')
+  -d '{"model": "'"$MODEL"'", "messages": [{"role": "user", "content": "test"}]}')
 
 NO_AUTH_CODE=$(echo "$NO_AUTH_RESPONSE" | tail -1)
 

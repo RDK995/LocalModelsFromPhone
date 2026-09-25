@@ -6,6 +6,7 @@ import type {
   OllamaTagsResponse,
   OllamaPsResponse,
 } from "../ollama/client";
+import { OllamaClient } from "../ollama/client";
 
 type ChatImpl = (
   request: OllamaChatRequest,
@@ -21,7 +22,7 @@ class FakeOllamaClient implements OllamaStateClient {
   constructor(
     private chatImpl: ChatImpl,
     private tagsResponse: OllamaTagsResponse = { models: [] },
-    private psResponse: OllamaPsResponse = { models: [] }
+    private psResponse: OllamaPsResponse = residentPs("fake-model")
   ) {}
 
   async tags(): Promise<OllamaTagsResponse> {
@@ -38,6 +39,23 @@ class FakeOllamaClient implements OllamaStateClient {
   ): AsyncGenerator<OllamaChatResponse, void, unknown> {
     return this.chatImpl(request, signal);
   }
+}
+
+/** An Ollama ps() response reporting `name` as the single resident model. */
+function residentPs(name: string): OllamaPsResponse {
+  return {
+    models: [
+      {
+        name,
+        model: name,
+        size: 1,
+        digest: "d",
+        details: { family: "", parameter_size: "", quantization_level: "" },
+        expires_at: "",
+        size_vram: 0,
+      },
+    ],
+  };
 }
 
 function chunk(content: string, done: boolean): OllamaChatResponse {
@@ -97,10 +115,19 @@ function authHeaders(token: string): Record<string, string> {
   };
 }
 
-/** Parse concatenated SSE wire text into { id, event, data } records. */
+/**
+ * Parse concatenated SSE wire text into { id, event, data } records. Comment
+ * lines (starting with ":") are ignored, as the SSE spec requires.
+ */
 function parseSSE(text: string): Array<{ id: string; event: string; data: string }> {
   return text
     .split("\n\n")
+    .map((block) =>
+      block
+        .split("\n")
+        .filter((line) => !line.startsWith(":"))
+        .join("\n")
+    )
     .filter((block) => block.trim().length > 0)
     .map((block) => {
       const lines = block.split("\n");
@@ -504,6 +531,399 @@ describe("HTTP Server with Bearer Auth", () => {
       expect(response.status).toBe(404);
     } finally {
       server.stop();
+    }
+  });
+});
+
+/**
+ * A chat implementation that yields one content chunk, then waits for
+ * `release()` (or rejects if the AbortSignal fires first), then yields a second
+ * content chunk and a done chunk. Once released, later calls do not wait.
+ */
+function gatedChat(): { impl: ChatImpl; release: () => void } {
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const impl: ChatImpl = async function* (_request, signal) {
+    yield chunk("token-0", false);
+    await new Promise<void>((resolve, reject) => {
+      if (signal?.aborted) {
+        reject(new DOMException("Aborted", "AbortError"));
+        return;
+      }
+      signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")));
+      gate.then(resolve);
+    });
+    yield chunk("token-1", false);
+    yield chunk("", true);
+  };
+  return { impl, release };
+}
+
+async function getState(port: number | undefined, token: string): Promise<{ generation: unknown }> {
+  const res = await fetch(`http://127.0.0.1:${port}/v1/state`, { headers: authHeaders(token) });
+  expect(res.status).toBe(200);
+  return (await res.json()) as { generation: unknown };
+}
+
+/** Poll `predicate` every 20ms until it is true or `timeoutMs` elapses. */
+async function waitUntil(predicate: () => Promise<boolean>, timeoutMs = 3000): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    if (await predicate()) return true;
+    if (Date.now() >= deadline) return false;
+    await Bun.sleep(20);
+  }
+}
+
+/** Start a chat, read until its first content event, then abort the client fetch. */
+async function chatThenDisconnect(port: number | undefined, token: string): Promise<string> {
+  const controller = new AbortController();
+  const res = await fetch(`http://127.0.0.1:${port}/v1/chat`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: CHAT_REQUEST_BODY,
+    signal: controller.signal,
+  });
+  expect(res.status).toBe(200);
+  const genId = res.headers.get("x-generation-id")!;
+  const reader = res.body!.getReader();
+  const decoder = new TextDecoder();
+  let received = "";
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    received += decoder.decode(value, { stream: true });
+    if (received.includes("token-0")) break;
+  }
+  expect(received).toContain("token-0");
+  controller.abort();
+  await reader.cancel().catch(() => {});
+  return genId;
+}
+
+describe("Generation lifecycle survives client disconnect (F4)", () => {
+  it("a client abort mid-stream does not cancel the reply; it completes and the server accepts a new chat", async () => {
+    const gated = gatedChat();
+    const client = new FakeOllamaClient(gated.impl);
+    const token = "test-token";
+    setValidToken(token);
+    const server = createServer({ ollama: client, port: 0 });
+
+    try {
+      const genId = await chatThenDisconnect(server.port, token);
+
+      // A dropped connection must not cancel the generation (FR11).
+      await Bun.sleep(100);
+      const during = await getState(server.port, token);
+      expect(during.generation).toEqual({ id: genId, model: "fake-model" });
+
+      gated.release();
+      const cleared = await waitUntil(
+        async () => (await getState(server.port, token)).generation === null
+      );
+      expect(cleared).toBe(true);
+
+      // The full reply is still in the log for resume.
+      const replay = await fetch(`http://127.0.0.1:${server.port}/v1/generations/${genId}/events`, {
+        headers: authHeaders(token),
+      });
+      const replayed = parseSSE(await replay.text());
+      expect(replayed.map((e) => e.event)).toEqual(["content", "content", "done"]);
+      expect(JSON.parse(replayed[2].data).status).toBe("complete");
+
+      const next = await fetch(`http://127.0.0.1:${server.port}/v1/chat`, {
+        method: "POST",
+        headers: authHeaders(token),
+        body: CHAT_REQUEST_BODY,
+      });
+      expect(next.status).toBe(200);
+      const events = parseSSE(await next.text());
+      expect(events[events.length - 1].event).toBe("done");
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("after a client abort, cancel stops the Ollama request and frees the server", async () => {
+    let aborted = false;
+    const impl: ChatImpl = async function* (request, signal) {
+      signal?.addEventListener("abort", () => {
+        aborted = true;
+      });
+      yield* abortAwareChat()(request, signal);
+    };
+    const client = new FakeOllamaClient(impl);
+    const token = "test-token";
+    setValidToken(token);
+    const server = createServer({ ollama: client, port: 0 });
+
+    try {
+      const genId = await chatThenDisconnect(server.port, token);
+
+      const cancel = await fetch(`http://127.0.0.1:${server.port}/v1/generations/${genId}/cancel`, {
+        method: "POST",
+        headers: authHeaders(token),
+      });
+      expect(cancel.status).toBe(200);
+      expect(((await cancel.json()) as { status: string }).status).toBe("cancelled");
+
+      const cleared = await waitUntil(
+        async () => (await getState(server.port, token)).generation === null
+      );
+      expect(cleared).toBe(true);
+      expect(aborted).toBe(true);
+
+      const next = await fetch(`http://127.0.0.1:${server.port}/v1/chat`, {
+        method: "POST",
+        headers: authHeaders(token),
+        body: CHAT_REQUEST_BODY,
+      });
+      expect(next.status).toBe(200);
+      const nextId = next.headers.get("x-generation-id")!;
+      await fetch(`http://127.0.0.1:${server.port}/v1/generations/${nextId}/cancel`, {
+        method: "POST",
+        headers: authHeaders(token),
+      });
+      await next.text();
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("cancel while a subscriber keeps reading ends with done cancelled and clears the generation", async () => {
+    const client = new FakeOllamaClient(abortAwareChat());
+    const token = "test-token";
+    setValidToken(token);
+    const server = createServer({ ollama: client, port: 0 });
+
+    try {
+      const res = await fetch(`http://127.0.0.1:${server.port}/v1/chat`, {
+        method: "POST",
+        headers: authHeaders(token),
+        body: CHAT_REQUEST_BODY,
+      });
+      const genId = res.headers.get("x-generation-id")!;
+      const textPromise = res.text();
+
+      const cancel = await fetch(`http://127.0.0.1:${server.port}/v1/generations/${genId}/cancel`, {
+        method: "POST",
+        headers: authHeaders(token),
+      });
+      expect(cancel.status).toBe(200);
+
+      const events = parseSSE(await textPromise);
+      const last = events[events.length - 1];
+      expect(last.event).toBe("done");
+      expect(JSON.parse(last.data).status).toBe("cancelled");
+      expect((await getState(server.port, token)).generation).toBeNull();
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("events endpoint replays after Last-Event-ID then goes live until the terminal event", async () => {
+    const gated = gatedChat();
+    const client = new FakeOllamaClient(gated.impl);
+    const token = "test-token";
+    setValidToken(token);
+    const server = createServer({ ollama: client, port: 0 });
+
+    try {
+      const genId = await chatThenDisconnect(server.port, token);
+
+      const resume = await fetch(`http://127.0.0.1:${server.port}/v1/generations/${genId}/events`, {
+        headers: { ...authHeaders(token), "Last-Event-ID": `${genId}-0` },
+      });
+      expect(resume.status).toBe(200);
+      const textPromise = resume.text();
+      await Bun.sleep(50);
+      gated.release();
+
+      const events = parseSSE(await textPromise);
+      expect(events.map((e) => e.id)).toEqual([`${genId}-1`, `${genId}-2`]);
+      expect(events.map((e) => e.event)).toEqual(["content", "done"]);
+      expect(JSON.parse(events[0].data)).toEqual({ text: "token-1" });
+    } finally {
+      server.stop(true);
+    }
+  });
+});
+
+describe("Explicit Ollama chat request (F7) and stats (F11)", () => {
+  /** A fake Ollama HTTP server on port 0 that records /api/chat bodies. */
+  function fakeOllamaHttp(resident: string[]) {
+    const chatBodies: unknown[] = [];
+    const server = Bun.serve({
+      hostname: "127.0.0.1",
+      port: 0,
+      fetch: async (req) => {
+        const path = new URL(req.url).pathname;
+        if (path === "/api/tags") {
+          return Response.json({ models: [] });
+        }
+        if (path === "/api/ps") {
+          return Response.json({ models: resident.flatMap((name) => residentPs(name).models) });
+        }
+        if (path === "/api/chat") {
+          chatBodies.push(await req.json());
+          const lines = [
+            { model: "m", created_at: "", message: { role: "assistant", content: "hi" }, done: false },
+            {
+              model: "m",
+              created_at: "",
+              message: { role: "assistant", content: "" },
+              done: true,
+              eval_count: 10,
+              eval_duration: 2_000_000_000,
+            },
+          ];
+          return new Response(lines.map((l) => JSON.stringify(l)).join("\n") + "\n", {
+            headers: { "Content-Type": "application/x-ndjson" },
+          });
+        }
+        return new Response("not found", { status: 404 });
+      },
+    });
+    return { server, chatBodies };
+  }
+
+  it("sends Ollama exactly {model, messages, keep_alive:-1, stream:true} and reports Ollama's eval stats", async () => {
+    const fake = fakeOllamaHttp(["llama3"]);
+    const token = "test-token";
+    setValidToken(token);
+    const server = createServer({
+      ollama: new OllamaClient(`http://127.0.0.1:${fake.server.port}`),
+      port: 0,
+    });
+
+    try {
+      const res = await fetch(`http://127.0.0.1:${server.port}/v1/chat`, {
+        method: "POST",
+        headers: authHeaders(token),
+        body: JSON.stringify({
+          model: "llama3",
+          messages: [
+            { role: "user", content: "hello", images: ["x"] },
+            { role: "assistant", content: "hi" },
+          ],
+          keep_alive: 5,
+          options: { num_ctx: 99 },
+          format: "json",
+          stream: false,
+        }),
+      });
+      expect(res.status).toBe(200);
+      const events = parseSSE(await res.text());
+
+      expect(fake.chatBodies).toEqual([
+        {
+          model: "llama3",
+          messages: [
+            { role: "user", content: "hello" },
+            { role: "assistant", content: "hi" },
+          ],
+          keep_alive: -1,
+          stream: true,
+        },
+      ]);
+
+      const done = JSON.parse(events[events.length - 1].data);
+      expect(done).toEqual({
+        status: "complete",
+        model: "llama3",
+        eval_count: 10,
+        tokens_per_second: 5,
+      });
+    } finally {
+      server.stop(true);
+      fake.server.stop(true);
+    }
+  });
+
+  it("returns 409 model_not_resident when the model is not in ps(), without calling Ollama chat", async () => {
+    const fake = fakeOllamaHttp(["other-model"]);
+    const token = "test-token";
+    setValidToken(token);
+    const server = createServer({
+      ollama: new OllamaClient(`http://127.0.0.1:${fake.server.port}`),
+      port: 0,
+    });
+
+    try {
+      const res = await fetch(`http://127.0.0.1:${server.port}/v1/chat`, {
+        method: "POST",
+        headers: authHeaders(token),
+        body: JSON.stringify({ model: "llama3", messages: [{ role: "user", content: "hello" }] }),
+      });
+      expect(res.status).toBe(409);
+      const body = (await res.json()) as { error: string; message: string };
+      expect(body.error).toBe("model_not_resident");
+      expect(typeof body.message).toBe("string");
+      expect(fake.chatBodies).toEqual([]);
+      expect((await getState(server.port, token)).generation).toBeNull();
+    } finally {
+      server.stop(true);
+      fake.server.stop(true);
+    }
+  });
+
+  it("rejects invalid chat bodies with 400 bad_request", async () => {
+    const client = new FakeOllamaClient(completingChat(1));
+    const token = "test-token";
+    setValidToken(token);
+    const server = createServer({ ollama: client, port: 0 });
+
+    const invalid: Array<[string, string]> = [
+      ["malformed JSON", "{not json"],
+      ["missing model", JSON.stringify({ messages: [{ role: "user", content: "x" }] })],
+      ["non-string model", JSON.stringify({ model: 3, messages: [{ role: "user", content: "x" }] })],
+      ["non-array messages", JSON.stringify({ model: "fake-model", messages: "hello" })],
+      ["bad role", JSON.stringify({ model: "fake-model", messages: [{ role: "system", content: "x" }] })],
+      ["non-string content", JSON.stringify({ model: "fake-model", messages: [{ role: "user", content: 5 }] })],
+      ["non-object message", JSON.stringify({ model: "fake-model", messages: ["hello"] })],
+      ["non-object body", JSON.stringify(["fake-model"])],
+    ];
+
+    try {
+      for (const [label, body] of invalid) {
+        const res = await fetch(`http://127.0.0.1:${server.port}/v1/chat`, {
+          method: "POST",
+          headers: authHeaders(token),
+          body,
+        });
+        expect(res.status, label).toBe(400);
+        const json = (await res.json()) as { error: string; message: string };
+        expect(json.error, label).toBe("bad_request");
+        expect(typeof json.message, label).toBe("string");
+      }
+      expect((await getState(server.port, token)).generation).toBeNull();
+    } finally {
+      server.stop(true);
+    }
+  });
+});
+
+describe("Bearer comparison (F9)", () => {
+  it("rejects a token that is a prefix, extension or case variant of the valid token", async () => {
+    const client = new FakeOllamaClient(completingChat(0));
+    setValidToken("valid-token");
+    const server = createServer({ ollama: client, port: 0 });
+
+    try {
+      for (const candidate of ["valid-toke", "valid-token-extra", "valid-tokeN", ""]) {
+        const res = await fetch(`http://127.0.0.1:${server.port}/v1/state`, {
+          headers: { Authorization: `Bearer ${candidate}` },
+        });
+        expect(res.status, candidate).toBe(401);
+      }
+      const ok = await fetch(`http://127.0.0.1:${server.port}/v1/state`, {
+        headers: authHeaders("valid-token"),
+      });
+      expect(ok.status).toBe(200);
+    } finally {
+      server.stop(true);
     }
   });
 });

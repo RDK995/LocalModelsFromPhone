@@ -3,7 +3,12 @@
  * Serves on 127.0.0.1:<port> (default 7789)
  */
 
-import { GenerationManager, type OllamaChatClient } from "../generations/manager";
+import { timingSafeEqual } from "node:crypto";
+import {
+  GenerationManager,
+  type GenerationEvent,
+  type OllamaChatClient,
+} from "../generations/manager";
 import type {
   OllamaTagsResponse,
   OllamaPsResponse,
@@ -14,7 +19,6 @@ import type {
   StateResponse,
   Model,
   ResidentModel,
-  SSEEvent,
 } from "@shared/api";
 
 const LISTEN_HOST = "127.0.0.1";
@@ -78,13 +82,26 @@ export function getValidToken(): string {
 }
 
 /**
+ * Constant-time token comparison: a length check, then timingSafeEqual on
+ * equal-length buffers.
+ */
+function tokensMatch(candidate: string, expected: string): boolean {
+  const a = Buffer.from(candidate, "utf8");
+  const b = Buffer.from(expected, "utf8");
+  if (a.length !== b.length) {
+    return false;
+  }
+  return timingSafeEqual(a, b);
+}
+
+/**
  * Verify bearer token
  */
 function verifyAuth(req: Request): AuthContext | null {
   const authHeader = req.headers.get("Authorization");
   const token = extractBearerToken(authHeader);
 
-  if (!token || token !== validToken) {
+  if (!token || !validToken || !tokensMatch(token, validToken)) {
     return null;
   }
 
@@ -178,6 +195,88 @@ function encodeSSE(id: string, event: string, data: string): Uint8Array {
 }
 
 /**
+ * Validate a /v1/chat body and copy out only the contract fields
+ * `{model, messages:[{role:"user"|"assistant", content:string}]}`.
+ * Returns an error message for an invalid body.
+ */
+function parseChatRequest(body: unknown): ChatRequest | string {
+  if (typeof body !== "object" || body === null || Array.isArray(body)) {
+    return "Request body must be a JSON object";
+  }
+  const { model, messages } = body as Record<string, unknown>;
+  if (typeof model !== "string" || model.length === 0) {
+    return "model must be a non-empty string";
+  }
+  if (!Array.isArray(messages)) {
+    return "messages must be an array";
+  }
+  const parsed: ChatRequest["messages"] = [];
+  for (let i = 0; i < messages.length; i++) {
+    const message = messages[i];
+    if (typeof message !== "object" || message === null || Array.isArray(message)) {
+      return `messages[${i}] must be an object`;
+    }
+    const { role, content } = message as Record<string, unknown>;
+    if (role !== "user" && role !== "assistant") {
+      return `messages[${i}].role must be "user" or "assistant"`;
+    }
+    if (typeof content !== "string") {
+      return `messages[${i}].content must be a string`;
+    }
+    parsed.push({ role, content });
+  }
+  return { model, messages: parsed };
+}
+
+/**
+ * Stream a generation's events (from `fromSeq`, then live) as SSE. The
+ * response is one subscriber: if the client goes away, only the subscription
+ * is dropped; the generation carries on.
+ */
+function sseResponse(
+  manager: GenerationManager,
+  genId: string,
+  fromSeq: number,
+  extraHeaders: Record<string, string> = {}
+): Response {
+  const events: AsyncGenerator<GenerationEvent, void, unknown> = manager.subscribe(genId, fromSeq);
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      // Bun holds the response headers until the first body chunk. An SSE
+      // comment (ignored by SSE parsers) sends them now, so the client gets
+      // x-generation-id before the first token or the next live event.
+      controller.enqueue(new TextEncoder().encode(": connected\n\n"));
+    },
+    async pull(controller) {
+      const { value, done } = await events.next();
+      try {
+        if (done) {
+          controller.close();
+          return;
+        }
+        controller.enqueue(encodeSSE(`${genId}-${value.seq}`, value.type, value.data));
+      } catch {
+        // The client went away while we waited; nothing to deliver to.
+      }
+    },
+    cancel() {
+      // Drop this subscription only. Not awaited: the subscriber may be
+      // waiting for the next event and finishes on its own when it arrives.
+      events.return(undefined).catch(() => {});
+    },
+  });
+
+  return new Response(stream, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      ...extraHeaders,
+    },
+  });
+}
+
+/**
  * Does this generation id refer to something the manager knows about (active
  * or with a not-yet-expired event log)?
  */
@@ -262,18 +361,15 @@ export function createServer({
       method: "POST",
       path: "/v1/chat",
       handler: async (req) => {
-        let body: ChatRequest;
+        let raw: unknown;
         try {
-          body = (await req.json()) as ChatRequest;
+          raw = await req.json();
         } catch {
-          return errorResponse("invalid_request", "Malformed JSON body", 400);
+          return errorResponse("bad_request", "Malformed JSON body", 400);
         }
-        if (!body || typeof body.model !== "string" || !Array.isArray(body.messages)) {
-          return errorResponse(
-            "invalid_request",
-            "Request body must include model and messages",
-            400
-          );
+        const body = parseChatRequest(raw);
+        if (typeof body === "string") {
+          return errorResponse("bad_request", body, 400);
         }
 
         const alreadyActive = genManager.getActiveGenId();
@@ -286,10 +382,23 @@ export function createServer({
           );
         }
 
-        const genId = crypto.randomUUID();
-        let generator: AsyncGenerator<SSEEvent, void, unknown>;
+        let residentNames: string[];
         try {
-          generator = genManager.startGeneration(genId, body);
+          residentNames = (await ollama.ps()).models.map((m) => m.name);
+        } catch {
+          return errorResponse("ollama_down", "Unable to reach Ollama", 503);
+        }
+        if (!residentNames.includes(body.model)) {
+          return errorResponse(
+            "model_not_resident",
+            `Model "${body.model}" is not loaded; load it first`,
+            409
+          );
+        }
+
+        const genId = crypto.randomUUID();
+        try {
+          genManager.startGeneration(genId, body);
         } catch {
           // Lost the race between the check above and starting.
           const stillActive = genManager.getActiveGenId();
@@ -301,28 +410,7 @@ export function createServer({
           );
         }
 
-        const stream = new ReadableStream<Uint8Array>({
-          async pull(controller) {
-            const { value, done } = await generator.next();
-            if (done) {
-              controller.close();
-              return;
-            }
-            controller.enqueue(encodeSSE(value.id, value.event, value.data));
-          },
-          async cancel() {
-            genManager.cancelGeneration(genId);
-          },
-        });
-
-        return new Response(stream, {
-          status: 200,
-          headers: {
-            "Content-Type": "text/event-stream",
-            "Cache-Control": "no-cache",
-            "x-generation-id": genId,
-          },
-        });
+        return sseResponse(genManager, genId, 0, { "x-generation-id": genId });
       },
     },
     {
@@ -335,19 +423,7 @@ export function createServer({
         }
 
         const fromSeq = parseResumeSeq(req.headers.get("Last-Event-ID"));
-        const events = genManager.getEventLog(genId, fromSeq);
-
-        const body = events
-          .map((e) => formatSSE(`${genId}-${e.seq}`, e.type, e.data))
-          .join("");
-
-        return new Response(body, {
-          status: 200,
-          headers: {
-            "Content-Type": "text/event-stream",
-            "Cache-Control": "no-cache",
-          },
-        });
+        return sseResponse(genManager, genId, fromSeq);
       },
     },
     {

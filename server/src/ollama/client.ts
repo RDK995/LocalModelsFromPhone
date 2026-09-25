@@ -39,17 +39,16 @@ export interface OllamaGenerateRequest {
   stream?: boolean;
 }
 
+/**
+ * What callers may choose for a chat. keep_alive and stream are fixed by
+ * `chat()` (I10), so they are not part of the request.
+ */
 export interface OllamaChatRequest {
   model: string;
   messages: Array<{
     role: "user" | "assistant";
     content: string;
   }>;
-  keep_alive?: number;
-  stream?: boolean;
-  options?: {
-    num_ctx?: number;
-  };
 }
 
 export interface OllamaChatResponse {
@@ -122,7 +121,10 @@ export class OllamaClient {
   }
 
   /**
-   * Stream a chat completion - returns a ReadableStream
+   * Stream a chat completion. The /api/chat body is built explicitly as
+   * {model, messages:[{role, content}], keep_alive:-1, stream:true}: nothing
+   * else from the caller reaches Ollama, and keep_alive:-1 keeps the resident
+   * model loaded indefinitely (FR4).
    */
   async *chat(
     request: OllamaChatRequest,
@@ -134,7 +136,9 @@ export class OllamaClient {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        ...request,
+        model: request.model,
+        messages: request.messages.map((m) => ({ role: m.role, content: m.content })),
+        keep_alive: -1,
         stream: true,
       }),
       signal,
