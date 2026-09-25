@@ -141,7 +141,7 @@ Cycle 2: PASS, tier Mid (sonnet), correction-diff scope b8bcae3..13f48ba; M2-AC2
 
 ## M2c — Busy confirmation before a swap or unload
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -153,11 +153,11 @@ C1, C2, C4, C5, C6
 
 ### As-Built
 
-Pending.
+.harness/as-built/M2c.md — RECORDED — 15/15 files attributed; components C1,C2,C4,C5,C6; 4 edges; no claim mismatches
 
 ### Acceptance Criteria
 
-- [ ] **M2-AC4**: Swapping or unloading while a reply is in flight, or while the resident model was not loaded by this server, requires explicit confirmation, and cancelling the confirmation leaves state unchanged.
+- [x] **M2-AC4**: Swapping or unloading while a reply is in flight, or while the resident model was not loaded by this server, requires explicit confirmation, and cancelling the confirmation leaves state unchanged.
 
 ### Baseline
 
@@ -176,11 +176,11 @@ Criteria evidence:
 
 cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/e2e-tailnet-proof.sh && (cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh) && (cd ops && bun test src/token && bash scripts/verify-ops-install.sh) && (cd mobile && bun run typecheck && bun test src/api src/ui src/chat src/app-routing && bun run lint && bun run smoke:runtime && bash scripts/model-list-proof.sh && bash scripts/model-swap-proof.sh && bash scripts/model-failed-load-proof.sh && npx expo export --platform ios && rm -rf dist)
 
-Same chain as M2b, about 12 minutes (model-swap-proof idles 600 s). The live proofs now pass confirm: true and must still pass against the redeployed server; they restart com.harness.server and com.harness.bundle-host and evict then restore the resident model — run nothing else against the Mac at the same time. Artifacts: .harness/evidence/M2c-T1-verifier.log, .harness/evidence/M2c-T2-verifier.log.
+Same chain as M2b, about 12 minutes (model-swap-proof idles 600 s). The live proofs now pass confirm: true and must still pass against the redeployed server; they restart com.harness.server and com.harness.bundle-host and evict then restore the resident model — run nothing else against the Mac at the same time. Artifacts: .harness/evidence/M2c-T1-verifier.log, .harness/evidence/M2c-T2-verifier.log, .harness/evidence/M2c-review.log (reviewer run, exit 0).
 
 ### Review
 
-Pending.
+Cycle 1: PASS, tier Top (opus, DIFFICULT_CONCURRENCY), full-milestone scope ef16c787b68ef54254df5557f114a6ad9abb0227..6a747e2; M2-AC4 PASS; 0 BLOCKER, 0 IMPORTANT, 1 OPTIONAL; no report file (PASS). Reviewer re-ran the full validation chain including live proofs (model-list, model-swap incl. 600 s idle, model-failed-load): EXIT=0 — .harness/evidence/M2c-review.log
 
 ### Review Cycles
 
@@ -192,6 +192,7 @@ Pending.
 - Carried from M2b (reviewer OPTIONAL F2, .harness/reviews/M2b-cycle1.md): a failed load's reason stays in `operation.error` until the next operation, so the Models screen can show "Loaded: X" beside an old "Load failed: ...". Outside M2-AC4; not implemented in M2c.
 - Behaviour change outside M2-AC4 (M2c-T1): `POST /v1/models/unload` now answers 503 ollama_down when /api/ps fails (was 202 then a background "Ollama unreachable"); swap-load likewise reads /api/ps before accepting.
 - Side effect (M2c-T1): a chat arriving during the few ms an unconfirmed load/unload is being checked gets 409 operation_in_progress even if that request is then refused.
+- Reviewer OPTIONAL (M2c cycle 1): `.harness/architecture.md:160` failure list for `POST /v1/models/unload` omits 503 ollama_down, and the load/unload rows omit 400 bad_request; add them next time architecture.md is edited.
 
 ## M3 — Persisted multi-turn conversations with model attribution
 

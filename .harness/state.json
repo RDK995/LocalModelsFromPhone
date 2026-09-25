@@ -2888,7 +2888,7 @@
       "requirements": [
         "FR6"
       ],
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -2896,14 +2896,14 @@
         "branch": "m2c-busy-confirmation"
       },
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M2c.md",
+        "result": "RECORDED \u2014 15/15 files attributed; components C1,C2,C4,C5,C6; 4 edges; no claim mismatches"
       },
       "criteria": [
         {
           "id": "M2-AC4",
           "text": "Swapping or unloading while a reply is in flight, or while the resident model was not loaded by this server, requires explicit confirmation, and cancelling the confirmation leaves state unchanged.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "HTTP (real routes, bearer auth) server/src/http/server.test.ts: POST /v1/models/load and /unload return 409 {error:confirmation_required, message, reasons} for reply_in_progress and not_loaded_by_server; follow-up GET /v1/state shows operation idle and the same resident (cancel leaves state unchanged); confirm:true -> 202 and an in-flight /v1/chat reply ends done {status:cancelled}; non-boolean confirm -> 400 \u2014 .harness/evidence/M2c-T1-verifier.log",
             "Unit server/src/models/manager.test.ts: each reason alone and both, refusal issues no Ollama call, leaves operation idle and does not cancel the reply; confirmed ordering cancel -> released -> unload -> load; overlapping requests not both accepted \u2014 .harness/evidence/M2c-T1-verifier.log",
@@ -3045,7 +3045,27 @@
           ]
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "PASS",
+          "tier": "Top",
+          "model": "opus",
+          "reason_code": "DIFFICULT_CONCURRENCY",
+          "diff_range": "ef16c787b68ef54254df5557f114a6ad9abb0227..6a747e2",
+          "artifact": null,
+          "review_log": ".harness/evidence/M2c-review.log",
+          "per_criterion": {
+            "M2-AC4": "PASS"
+          },
+          "findings": {
+            "BLOCKER": 0,
+            "IMPORTANT": 0,
+            "OPTIONAL": 1
+          },
+          "notes": "Reviewer re-ran the full validation chain including live proofs (model-list, model-swap incl. 600 s idle, model-failed-load): EXIT=0. OPTIONAL: architecture.md:160 unload failure list omits 503 ollama_down (and load/unload rows omit 400 bad_request); recorded under Follow-ups."
+        }
+      ],
       "findings": [],
       "validation": [
         {
@@ -3053,16 +3073,18 @@
           "note": "same broad chain as M2b (about 12 minutes: model-swap-proof idles 600 s); the live proofs now pass confirm: true and must still pass against the redeployed server \u2014 they restart com.harness.server and com.harness.bundle-host and evict then restore the resident model; run nothing else against the Mac concurrently",
           "artifacts": [
             ".harness/evidence/M2c-T1-verifier.log",
-            ".harness/evidence/M2c-T2-verifier.log"
+            ".harness/evidence/M2c-T2-verifier.log",
+            ".harness/evidence/M2c-review.log"
           ],
-          "status": "PENDING"
+          "status": "PASS"
         }
       ],
       "follow_ups": [
         "Size/shape check at pickup: 1 criterion; entry point is HTTP (POST /v1/models/load|unload -> 409 confirmation_required). Operational-complexity signal CONCURRENCY_LIFECYCLE present (a confirmed load/unload cancels C6's in-flight reply via I8 before C5 proceeds); SUBSYSTEMS_GT_3 judged absent (two subsystems: server, mobile app); no live-environment proof planned; ~5 production files; 2 worker tasks. One signal -> seam check: the only seam (server rule vs app dialog) cannot conserve the single criterion M2-AC4 in both parts, so M2c runs unsplit.",
         "Carried from M2b (reviewer OPTIONAL F2, .harness/reviews/M2b-cycle1.md): a failed load's reason stays in operation.error until the next operation, so the Models screen can show 'Loaded: X' beside an old 'Load failed: ...'. Outside M2-AC4; not implemented in M2c.",
         "Behaviour change outside M2-AC4 (M2c-T1): POST /v1/models/unload now answers 503 ollama_down when /api/ps fails (was 202 then a background 'Ollama unreachable'); swap-load likewise reads /api/ps before accepting. Consistent with the I4 precedence; C2 already maps ollama_down.",
-        "Side effect (M2c-T1): a chat arriving during the few ms an unconfirmed load/unload is being checked gets 409 operation_in_progress even if that request is then refused."
+        "Side effect (M2c-T1): a chat arriving during the few ms an unconfirmed load/unload is being checked gets 409 operation_in_progress even if that request is then refused.",
+        "Reviewer OPTIONAL (M2c cycle 1): .harness/architecture.md:160 failure list for POST /v1/models/unload omits 503 ollama_down, and the load/unload rows omit 400 bad_request; add them next time architecture.md is edited."
       ],
       "split_from": "M2"
     },
