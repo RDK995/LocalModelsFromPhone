@@ -32,9 +32,14 @@
         "FR13",
         "FR14"
       ],
-      "status": "BLOCKED",
+      "status": "REVIEW",
       "review_cycles": 2,
-      "review_override": null,
+      "review_override": {
+        "date": "2026-09-25",
+        "by": "human",
+        "allow_cycles": 3,
+        "reason": "Human authorised one fix cycle beyond the 2-cycle cap after the on-phone re-test found the Setup screen keyboard covers Continue and cannot be dismissed, blocking AC1-AC3 human checks."
+      },
       "baseline": {
         "commit": "04bb92b7be06984856c1dd1c34b52e2533f656e3",
         "branch": "m1-authenticated-tailnet-chat-stream"
@@ -1641,6 +1646,11 @@
         {
           "date": "2026-09-25",
           "decision": "Human ran the pf anchor install and performed the LAN-device 8081 check (failed to load = blocked). Milestone returned to REVIEW for the cycle-2 review.",
+          "by": "human"
+        },
+        {
+          "date": "2026-09-25",
+          "decision": "Human authorised one extra fix cycle (cycle 3) beyond the 2-cycle cap to fix the Setup-screen keyboard blocker, followed by a human on-phone re-test and a final review.",
           "by": "human"
         }
       ],
