@@ -234,7 +234,7 @@ Files changed by corrections: mobile/src/chat/chatController.ts; mobile/src/chat
 
 ## M2a — Installed models and true resident state on the phone
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -260,11 +260,18 @@ Baseline broad validation GREEN: server 0, ops 0, mobile 0, e2e-tailnet-proof 0 
 
 ### Evidence
 
-Pending.
+Tasks (structured detail in state.json):
+- M2a-T1 model manager (C5) behind GET /v1/state — Mid (ORDINARY_IMPLEMENTATION), attempt 3, PASS; verifier PASS (server 48 tests, typecheck, entry-smoke; tests not weakened); commit 431723e
+- M2a-T2 phone Models screen + view-model + Chat link — Mid (ORDINARY_IMPLEMENTATION), attempt 3, PASS; verifier PASS (typecheck, 46 tests, lint, smoke:runtime 3/3); commit 70dc67b
+- M2a-T3 live proof over tailnet — Cheap (BOUNDED_LOW_RISK), attempt 1, PASS; verifier PASS (model-list-proof exit 0, typecheck, lint); commit 4cf3342
+
+M2-AC1: live via the app's own client + view-model at https://ryans-mac-studio.tailc3648a.ts.net:8443 — row names equal Ollama /api/tags in order (5 models), size_bytes exact and size labels match, resident "Loaded: devstral:24b" equals /api/ps (a model this server did not load), hardcoded-name grep clean — .harness/evidence/M2a-T3-verifier.log. Unit: .harness/evidence/M2a-T1-verifier.log, .harness/evidence/M2a-T2-verifier.log.
 
 ### Validation
 
-Pending.
+cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/e2e-tailnet-proof.sh && (cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh) && (cd ops && bun test src/token && bash scripts/verify-ops-install.sh) && (cd mobile && bun run typecheck && bun test src/api src/ui src/chat src/app-routing && bun run lint && bun run smoke:runtime && bash scripts/model-list-proof.sh && npx expo export --platform ios && rm -rf dist)
+
+Needs the live LaunchAgents, Tailscale and Ollama; model-list-proof restarts com.harness.server and com.harness.bundle-host. Artifacts: .harness/evidence/M2a-T1-verifier.log, M2a-T2-verifier.log, M2a-T3-verifier.log.
 
 ### Review
 
@@ -276,7 +283,10 @@ Pending.
 
 ### Follow-ups
 
-None.
+- Live 'Nothing loaded' path not exercised on the Mac: devstral:24b was resident with keep_alive -1 (not loaded by this run) so model-list-proof skipped its load/unload branch rather than evict it; covered by unit tests (manager.test.ts, modelList.test.ts). Re-run scripts/model-list-proof.sh with nothing resident, or check on the phone after M2b's unload lands.
+- On-phone visual check of the Models screen in Expo Go (human): Chat > Models shows the five installed models with sizes and the resident marker.
+- If /api/ps lists more than one model (another tool), /v1/state reports only the first; FR3 caps phone actions at one resident, but a truthful multi-resident display may be wanted.
+- .harness/milestones.md is ~510 lines (> 400) but M1 is the only settled milestone and the most recently settled, so it cannot be archived yet; archive M1 once M2a settles.
 
 ## M2b — Swap-load and unload from the phone, staying resident
 
