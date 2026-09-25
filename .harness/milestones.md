@@ -234,7 +234,7 @@ Files changed by corrections: mobile/src/chat/chatController.ts; mobile/src/chat
 
 ## M2a — Installed models and true resident state on the phone
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -246,11 +246,11 @@ C1, C2, C4, C5, C7
 
 ### As-Built
 
-Pending.
+.harness/as-built/M2a.md — RECORDED — 10/12 files attributed; components C1,C4,C5 (C2,C3,C6,C7 as context); 6 edges; 2 claim mismatches (C2 claimed but no code changes, imported by C1; C7 claimed but no code changes, imported by C5).
 
 ### Acceptance Criteria
 
-- [ ] **M2-AC1**: The app's model list matches Ollama GET /api/tags by real name and size, with no hardcoded model names.
+- [x] **M2-AC1**: The app's model list matches Ollama GET /api/tags by real name and size, with no hardcoded model names.
 
 ### Baseline
 
@@ -275,7 +275,7 @@ Needs the live LaunchAgents, Tailscale and Ollama; model-list-proof restarts com
 
 ### Review
 
-Pending.
+Cycle 1: PASS — tier Mid (sonnet), reason IMPLEMENTATION_MID_CHEAP_ONLY (tasks Mid/Mid/Cheap); diff 2632a61..e826a62; M2-AC1=PASS; findings 0 BLOCKER, 0 IMPORTANT, 1 OPTIONAL (recorded under Follow-ups). Reviewer re-ran the full validation live, all green — .harness/evidence/M2a-review.log
 
 ### Review Cycles
 
@@ -287,6 +287,7 @@ Pending.
 - On-phone visual check of the Models screen in Expo Go (human): Chat > Models shows the five installed models with sizes and the resident marker.
 - If /api/ps lists more than one model (another tool), /v1/state reports only the first; FR3 caps phone actions at one resident, but a truthful multi-resident display may be wanted.
 - .harness/milestones.md is ~510 lines (> 400) but M1 is the only settled milestone and the most recently settled, so it cannot be archived yet; archive M1 once M2a settles.
+- Reviewer OPTIONAL (cycle 1): mobile/scripts/model-list-proof.ts:142 types a callback as (m: any) instead of the typed StateResponse model shape; the script is outside the lint target so it is not caught.
 
 ## M2b — Swap-load and unload from the phone, staying resident
 

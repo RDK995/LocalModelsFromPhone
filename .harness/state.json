@@ -2063,7 +2063,7 @@
         "FR1",
         "FR2"
       ],
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -2071,18 +2071,19 @@
         "branch": "m2-model-list-swap-unload"
       },
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M2a.md",
+        "result": "RECORDED \u2014 10/12 files attributed; components C1,C4,C5 (C2,C3,C6,C7 as context); 6 edges; 2 claim mismatches (C2 claimed but no code changes, imported by C1; C7 claimed but no code changes, imported by C5)"
       },
       "criteria": [
         {
           "id": "M2-AC1",
           "text": "The app's model list matches Ollama GET /api/tags by real name and size, with no hardcoded model names.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "Live over tailnet :8443 via the app's createAPIClient + toModelListView: names equal Ollama /api/tags in order, count=5; size_bytes equal exactly and size labels match; resident 'Loaded: devstral:24b' equals /api/ps (a model the server did not load); hardcoded-name grep over mobile/src and server/src clean \u2014 .harness/evidence/M2a-T3-verifier.log",
             "server/src/models/manager.test.ts: models mapped verbatim from made-up names; resident from ps with loaded_by_server false; null when ps empty; 503 ollama_down path \u2014 .harness/evidence/M2a-T1-verifier.log",
-            "mobile/src/ui/modelList.test.ts: rows mirror arbitrary list, resident marking, Nothing loaded; runtime smoke renders Chat with Models link \u2014 .harness/evidence/M2a-T2-verifier.log"
+            "mobile/src/ui/modelList.test.ts: rows mirror arbitrary list, resident marking, Nothing loaded; runtime smoke renders Chat with Models link \u2014 .harness/evidence/M2a-T2-verifier.log",
+            "Reviewer cycle 1 re-ran the full milestone validation live: all green \u2014 .harness/evidence/M2a-review.log"
           ]
         }
       ],
@@ -2250,7 +2251,26 @@
           ]
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "PASS",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "IMPLEMENTATION_MID_CHEAP_ONLY",
+          "diff_range": "2632a61df5ba160dd6850f0c31d37e412d23f504..e826a62",
+          "artifact": null,
+          "review_log": ".harness/evidence/M2a-review.log",
+          "per_criterion": {
+            "M2-AC1": "PASS"
+          },
+          "findings": {
+            "BLOCKER": 0,
+            "IMPORTANT": 0,
+            "OPTIONAL": 1
+          }
+        }
+      ],
       "findings": [],
       "validation": [
         {
@@ -2259,16 +2279,18 @@
           "artifacts": [
             ".harness/evidence/M2a-T1-verifier.log",
             ".harness/evidence/M2a-T2-verifier.log",
-            ".harness/evidence/M2a-T3-verifier.log"
+            ".harness/evidence/M2a-T3-verifier.log",
+            ".harness/evidence/M2a-review.log"
           ],
-          "status": "PENDING_REVIEWER_RUN"
+          "status": "PASS"
         }
       ],
       "follow_ups": [
         "Live 'Nothing loaded' path not exercised on the Mac: devstral:24b was resident with keep_alive -1 (not loaded by this run) so model-list-proof skipped its load/unload branch rather than evict it; covered by unit tests (manager.test.ts, modelList.test.ts). Re-run scripts/model-list-proof.sh with nothing resident, or check on the phone after M2b's unload lands.",
         "On-phone visual check of the Models screen in Expo Go (human): Chat > Models shows the five installed models with sizes and the resident marker.",
         "If /api/ps lists more than one model (another tool), /v1/state reports only the first; FR3 caps phone actions at one resident, but a truthful multi-resident display may be wanted.",
-        ".harness/milestones.md is ~510 lines (> 400) but M1 is the only settled milestone and the most recently settled, so it cannot be archived yet; archive M1 once M2a settles."
+        ".harness/milestones.md is ~510 lines (> 400) but M1 is the only settled milestone and the most recently settled, so it cannot be archived yet; archive M1 once M2a settles.",
+        "Reviewer OPTIONAL (cycle 1): mobile/scripts/model-list-proof.ts:142 types a callback as (m: any) instead of the typed StateResponse model shape; the script is outside the lint target so it is not caught."
       ],
       "split_from": "M2",
       "complexity_signals": [
