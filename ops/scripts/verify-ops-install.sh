@@ -14,7 +14,10 @@ required_scripts=(
   "install-server-agent.sh"
   "install-bundle-host-agent.sh"
   "configure-tailscale-serve.sh"
-  "create-pf-anchor.sh"
+  "install-pf-anchor.sh"
+  "uninstall-pf-anchor.sh"
+  "pf-bundle-host-load.sh"
+  "check-pf-rules.sh"
 )
 
 for script in "${required_scripts[@]}"; do
@@ -148,9 +151,22 @@ done
 
 echo "Verifying pf anchor configuration..."
 
-# Check that pf anchor files exist
-if [[ ! -f "$SCRIPT_DIR/com.harness.pf.anchor" ]]; then
-  echo "FAIL: Missing pf anchor file: com.harness.pf.anchor"
+# LaunchDaemon (root, /Library/LaunchDaemons when installed) that loads the anchor at boot.
+PF_DAEMON_PLIST="$SCRIPT_DIR/com.harness.pf-bundle-host.plist"
+if [[ ! -f "$PF_DAEMON_PLIST" ]]; then
+  echo "FAIL: Missing LaunchDaemon plist: com.harness.pf-bundle-host.plist"
+  exit 1
+fi
+if ! plutil -lint "$PF_DAEMON_PLIST" > /dev/null; then
+  echo "FAIL: Invalid plist format: com.harness.pf-bundle-host.plist"
+  exit 1
+fi
+
+# No-sudo safety check: the rendered rules are port-scoped to inbound TCP 8081,
+# the anchor is under com.apple/, and the scripts never disable pf, flush the main
+# ruleset or edit the system pf.conf.
+if ! bash "$SCRIPT_DIR/check-pf-rules.sh"; then
+  echo "FAIL: pf anchor safety check failed"
   exit 1
 fi
 

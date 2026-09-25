@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.harness.pf-bundle-host</string>
+
+  <!-- C9 / FR14: LaunchDaemon (root) that loads the port-scoped pf anchor
+       com.apple/harness.bundle-host, so inbound TCP 8081 (the bundle host) is
+       accepted only on lo0 and the Tailscale utun. Installed to
+       /Library/LaunchDaemons by install-pf-anchor.sh, which also copies the
+       loader to the root-owned path below. The loader re-resolves the utun from
+       the recorded tailnet IP each run: at boot, and every 60 s so it picks up
+       Tailscale starting after login or a renumbered utun. When nothing changed
+       it exits silently. -->
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Library/Application Support/com.harness.pf-bundle-host/pf-bundle-host-load.sh</string>
+  </array>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>StartInterval</key>
+  <integer>60</integer>
+
+  <key>StandardOutPath</key>
+  <string>/var/log/com.harness.pf-bundle-host.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/var/log/com.harness.pf-bundle-host.log</string>
+
+  <key>ProcessType</key>
+  <string>Background</string>
+</dict>
+</plist>
