@@ -5,7 +5,7 @@
  */
 
 import { randomBytes } from "crypto";
-import { readFileSync, writeFileSync, statSync } from "fs";
+import { readFileSync, writeFileSync, statSync, mkdirSync } from "fs";
 import { chmod } from "fs/promises";
 import { dirname } from "path";
 
@@ -43,6 +43,10 @@ export async function writeTokenToFile(filePath: string, token: string): Promise
       `Token file "${filePath}" exists with group or world-readable permissions (mode must be 0600)`
     );
   }
+
+  // Create parent directories if they don't exist
+  const parentDir = dirname(filePath);
+  mkdirSync(parentDir, { recursive: true, mode: 0o700 });
 
   // Write the token file
   writeFileSync(filePath, token, { mode: 0o600 });
@@ -90,19 +94,47 @@ export async function ensureTokenFile(filePath: string): Promise<string> {
 }
 
 /**
+ * Default copy function that pipes to pbcopy
+ */
+async function defaultCopyCommand(content: string): Promise<void> {
+  const { spawn } = await import("child_process");
+  return new Promise((resolve, reject) => {
+    const proc = spawn("pbcopy");
+    proc.stdin.write(content);
+    proc.stdin.end();
+    proc.on("close", (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`pbcopy exited with code ${code}`));
+      }
+    });
+    proc.on("error", reject);
+  });
+}
+
+/**
  * CLI entry point for token generation
  */
 export async function main(args: string[]): Promise<void> {
   const filePath = args[0];
+  const shouldCopy = args.includes("--copy");
 
   if (!filePath) {
-    console.error("Usage: bun src/token.ts <token-file-path>");
+    console.error("Usage: bun src/token.ts <token-file-path> [--copy]");
     process.exit(1);
   }
 
   try {
     const token = await ensureTokenFile(filePath);
     console.log(token);
+
+    // If --copy flag is provided, copy token to clipboard
+    if (shouldCopy) {
+      const copyCommand = (globalThis as any).tokenCopyCommand || defaultCopyCommand;
+      await copyCommand(token);
+    }
+
     process.exit(0);
   } catch (error) {
     console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);

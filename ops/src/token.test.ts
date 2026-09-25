@@ -11,6 +11,7 @@ import {
   isFileWorldOrGroupReadable,
   writeTokenToFile,
   ensureTokenFile,
+  main,
 } from "./token";
 
 const TEST_DIR = "/tmp/ops-token-test";
@@ -154,6 +155,66 @@ describe("Token Generation", () => {
       expect(ensureTokenFile(filePath)).rejects.toThrow(
         /group or world-readable permissions/
       );
+    });
+
+    it("creates parent directories if they do not exist", async () => {
+      const filePath = join(TEST_DIR, "nonexistent", "nested", "dir", "token.txt");
+      const token = await ensureTokenFile(filePath);
+
+      expect(existsSync(filePath)).toBe(true);
+      expect(token).toMatch(/^[0-9a-f]{64}$/);
+      expect(readFileSync(filePath, "utf-8")).toBe(token);
+    });
+
+    it("creates parent directories with mode 0o700", async () => {
+      const filePath = join(TEST_DIR, "parenttest", "token.txt");
+      await ensureTokenFile(filePath);
+
+      const parentDir = join(TEST_DIR, "parenttest");
+      const stats = statSync(parentDir);
+      const mode = stats.mode & 0o777;
+      expect(mode).toBe(0o700);
+    });
+  });
+
+  describe("CLI with copy command", () => {
+    it("calls copy function when --copy flag is provided", async () => {
+      const filePath = join(TEST_DIR, "token.txt");
+      let copyWasCalled = false;
+      let copiedContent = "";
+
+      // Mock the copy function
+      const originalCopy = (globalThis as any).tokenCopyCommand;
+      (globalThis as any).tokenCopyCommand = async (content: string) => {
+        copyWasCalled = true;
+        copiedContent = content;
+      };
+
+      try {
+        await main([filePath, "--copy"]);
+        expect(copyWasCalled).toBe(true);
+        expect(copiedContent).toMatch(/^[0-9a-f]{64}$/);
+      } finally {
+        (globalThis as any).tokenCopyCommand = originalCopy;
+      }
+    });
+
+    it("does not call copy function when --copy flag is not provided", async () => {
+      const filePath = join(TEST_DIR, "token.txt");
+      let copyWasCalled = false;
+
+      // Mock the copy function
+      const originalCopy = (globalThis as any).tokenCopyCommand;
+      (globalThis as any).tokenCopyCommand = async (content: string) => {
+        copyWasCalled = true;
+      };
+
+      try {
+        await main([filePath]);
+        expect(copyWasCalled).toBe(false);
+      } finally {
+        (globalThis as any).tokenCopyCommand = originalCopy;
+      }
     });
   });
 });

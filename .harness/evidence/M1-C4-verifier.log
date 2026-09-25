@@ -1,0 +1,9 @@
+Running: cd /Users/ryankenny/Projects/CodingHarnessv2/ops && bun test src/token
+Current commit: 7263d6338e07fe9d0a3302154bc685c594d6b6ec
+---
+bun test v1.4.0 (1381054db)
+
+src/token.test.ts:
+c2d6986d2436e4166d568a18fe5990ba5c74f885378a2872cafadc43b7a8703b
+---
+Exit status: 0
