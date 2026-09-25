@@ -755,9 +755,11 @@
               "role": "worker",
               "tier": "Mid",
               "model": "sonnet",
-              "verdict": "PENDING"
+              "verdict": "INTERRUPTED",
+              "note": "hit 40-turn limit, no report; left uncommitted changes in server/src/http/server.ts, server.test.ts, index.ts, generations/manager.ts (unverified)"
             }
-          ]
+          ],
+          "next_step": "Dispatch ONE continuation worker (Mid, sonnet) with packet .harness/tasks/M1-T7.md and handoff .harness/tasks/M1-T7-handoff-1.md (continuation 1 of 2). Then verifier, then commit. Then M1-T5b (Top, opus, packet .harness/tasks/M1-T5b.md); T5b's live proof now depends on T7's wired routes. Note: server.test.ts must not bind 7789 once the live agent runs."
         },
         {
           "id": "M1-T5b",
@@ -1092,7 +1094,8 @@
             "id": "m1-t7-worker-1",
             "kind": "worker",
             "task": "M1-T7",
-            "status": "DISPATCHED"
+            "status": "COMPLETE",
+            "result": "INTERRUPTED"
           }
         ],
         "active_dispatch": null

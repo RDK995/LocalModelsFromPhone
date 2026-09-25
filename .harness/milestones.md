@@ -34,8 +34,11 @@ Tasks (structured detail in state.json):
 - M1-T2 generation manager (SSE, resume, cancel) — Mid, attempt 3, PASS; verified; commit c7fd15b (its curl proof skipped: no live server)
 - M1-T3 Mac ops tooling — Mid, attempt 3, PASS; verified; commit 01f4b1d
 - M1-T4 Expo Go app (SDK 51) — Mid, 2 runtime interruptions then attempt 3 PASS; verifier PASS (typecheck, tests, lint, ios export exit 0); commit d87a597
-- M1-T6 current Expo SDK + expo/fetch + real tests — Mid, attempt 3 interrupted three times (continuation cap spent); partial work uncommitted and unverified; next: one finish-only worker
-- M1-T5 live tailnet integration + e2e proof — Top (SECURITY), not started; packet expanded for integration gaps (.harness/tasks/M1-T5.md)
+- M1-T6 current Expo SDK 57 + expo/fetch + real tests — Mid, attempt 3 (three turn-limit interruptions, then finish-only worker PASS); verifier PASS (typecheck, 15 tests, lint, ios export exit 0; expo-doctor 21/21); commit a8ca44e
+- M1-T5 split into T5a (code) and T5b (live) to fit a worker's turn limit
+- M1-T5a server entry point, LaunchAgent plists, 8443 Serve script, entry smoke — Top (SECURITY), attempt 4, PASS; verifier PASS (server 25 tests, entry-smoke 7/7, ops token 14, bash -n, plutil); no live changes; commit 0cce5e1
+- M1-T7 wire HTTP routes to generation manager + Ollama — Mid (ORDINARY_IMPLEMENTATION), attempt 3 INTERRUPTED at turn limit; partial work uncommitted; next: continuation 1 with .harness/tasks/M1-T7-handoff-1.md
+- M1-T5b live install + e2e tailnet proof — Top (SECURITY), not started; depends on T7 (.harness/tasks/M1-T5b.md)
 
 ### Validation
 
@@ -52,9 +55,11 @@ Pending.
 ### Follow-ups
 
 - M1 was undersized at planning: IMPLEMENTATION_PLUS_LIVE_PROOF and CONCURRENCY_LIFECYCLE both apply. Found mid-flight, so noted, not split.
-- M1-T2's curl proof skips when no server is listening; M1-T3's Serve script and plists did not match architecture C8/C10; no server entry point exists. Corrected under M1-T5.
+- M1-T2's curl proof skips when no server is listening; M1-T3's Serve script and plists did not match architecture C8/C10; no server entry point exists. Corrected under M1-T5a.
 - M1-T4 was accepted with placeholder tests on Expo SDK 51 (latest is 57); corrected under M1-T6.
-- Worker budget: 14 of 16 used, 2 left for T6-finish and T5, with no spare for a retry.
+- M1-T1/M1-T2 were accepted with HTTP routes never wired to the generation manager (placeholders); found by M1-T5a, corrected under M1-T7.
+- No .gitignore excludes server/node_modules/ (untracked); add one (node_modules/, dist/).
+- Worker budget: 17 of 22 used (human raised it from 16); remaining T7 continuation and T5b.
 
 ## M2 — Model list, swap-load, and unload with busy confirmation
 
