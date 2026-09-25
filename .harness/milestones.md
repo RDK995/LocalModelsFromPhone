@@ -2,7 +2,7 @@
 
 ## M1 — Authenticated tailnet chat stream proof
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -14,14 +14,14 @@ C1, C2, C4, C6, C7, C8, C9, C10, C11
 
 ### As-Built
 
-Pending.
+.harness/as-built/M1.md — RECORDED — 62/62 files attributed; components C1,C2,C3,C4,C6,C7,C8,C9,C10,C11; 12 edges; 2 claim mismatches (C5 claimed but not in diff, deferred to M2 per code comments; C3 present but not claimed).
 
 ### Acceptance Criteria
 
-- [ ] **M1-AC1**: With a model already resident in Ollama, sending a prompt from the Expo Go app over Tailscale Serve renders the reply incrementally, token by token, ending in a terminal complete state.
-- [ ] **M1-AC2**: A request to any server route without the correct bearer token returns 401; the Mac-side command produces the token, refuses to run if the token file is group- or world-readable, and the app's settings screen accepts a pasted token and uses it on the next request.
-- [ ] **M1-AC3**: Stop cancels generation on the Mac, verified against Ollama, and streaming output halts on the phone.
-- [ ] **M1-AC4**: The server and the app bundle are reachable from the phone over the tailnet and are not reachable from a device on the LAN or the public internet.
+- [x] **M1-AC1**: With a model already resident in Ollama, sending a prompt from the Expo Go app over Tailscale Serve renders the reply incrementally, token by token, ending in a terminal complete state.
+- [x] **M1-AC2**: A request to any server route without the correct bearer token returns 401; the Mac-side command produces the token, refuses to run if the token file is group- or world-readable, and the app's settings screen accepts a pasted token and uses it on the next request.
+- [x] **M1-AC3**: Stop cancels generation on the Mac, verified against Ollama, and streaming output halts on the phone.
+- [x] **M1-AC4**: The server and the app bundle are reachable from the phone over the tailnet and are not reachable from a device on the LAN or the public internet.
 
 ### Baseline
 
@@ -200,6 +200,8 @@ Validation artifacts: .harness/evidence/M1-C14-verifier.log, M1-C15-verifier.log
 Correction diff: git diff c9e3560b9c38e138d1d4bbd6d2a91a43f791204a HEAD
 Files changed by corrections: mobile/src/chat/chatController.ts; mobile/src/chat/chatController.test.ts; mobile/src/app/chat.tsx; mobile/src/app/settings.tsx; mobile/scripts/{runtime-smoke.mjs,runtime-smoke.sh}; ops/scripts/e2e-tailnet-proof.sh. No file outside the findings' scope (runtime-smoke answers finding 1; the e2e script answers finding 3).
 
+**Final review (cycle 6): PASS** — tier Mid (sonnet), reason CORRECTION_DIFF_MID_CHEAP_ONLY, diff c9e3560..650e350. Per-criterion: M1-AC1 PASS, M1-AC2 PASS, M1-AC3 PASS, M1-AC4 PASS. Findings: 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL. Validation log: .harness/evidence/M1-cycle6-review.log.
+
 ### Review Cycles
 
 5
@@ -228,6 +230,7 @@ Files changed by corrections: mobile/src/chat/chatController.ts; mobile/src/chat
 - Served bundle is not minified despite minify=true in its URL; not investigated.
 - Cycle 4: workers and verifiers hit turn limits repeatedly on mobile tasks (C11, C12 needed continuations).
 - Setup (and Settings token update) accepts any token without checking it against the server; a wrong token is only detected on the first chat send, where Chat shows a clear error (human-observed 2026-09-25). Consider validating the token (e.g. GET /v1/state) before leaving Setup.
+- As-built M1 claim mismatches to reconcile with the agreed architecture: C3 appears in M1's diff but is not in M1's Architecture field; C5 was reported as claimed but absent (deferred to M2 per code comments). See .harness/as-built/M1.md.
 
 ## M2 — Model list, swap-load, and unload with busy confirmation
 
