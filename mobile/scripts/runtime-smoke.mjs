@@ -18,9 +18,32 @@
  * react-native JS, react-native-screens JS) starts, RootLayout renders, and
  * the first screen (Chat when a token is stored, Setup otherwise) is
  * committed to the (fake) native view tree without a JS exception.
+ *
+ * The `--token=absent` run additionally drives the real first-time path
+ * (M1-C12): once Setup has rendered, it dispatches the same native Fabric
+ * events the real TextInput/Touchable native views send in response to a
+ * finger (`topChange` on the token TextInput's instance, then `topClick` on
+ * the "Continue" button's instance, found by walking the committed tree),
+ * via the fake UI manager's `registerEventHandler` callback (the same
+ * mechanism already used below for `topInsetsChange`). Event props like
+ * `onChange`/`onClick` are not functions on a Fabric host node's committed
+ * props (native only sees a boolean "is a listener registered" flag); the
+ * JS handler lives on the React fiber and is only reachable by dispatching
+ * the matching native event through `dispatchFabricEvent`, not by calling
+ * `node.props.onChange` directly. This runs setup.tsx's actual
+ * `handleTokenSubmit` -> `saveToken` -> `router.replace("/chat")`. It then
+ * asserts Chat mounted (its own in-app header text is present) with the
+ * native Stack header hidden (one top bar), not two. This proves
+ * RootLayout's screen options apply to a screen reached by client-side
+ * navigation after Setup, not only to a screen reached by the initial
+ * launch redirect.
+ *
  * What it cannot prove: anything native (layout, keyboard geometry, how the
  * native header draws), Hermes-specific engine behaviour, the Expo Go version
- * on the phone, network/streaming to the server.
+ * on the phone, network/streaming to the server, or that a real finger tap
+ * dispatches events identically to calling the handler directly (the gesture
+ * responder / hit-testing geometry is not exercised, only the `onPress`
+ * callback it would eventually invoke).
  */
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
@@ -66,7 +89,7 @@ const fabric = {
         0
       );
     }
-    return { tag, viewName, props: props ?? {}, children: [] };
+    return { tag, viewName, props: props ?? {}, children: [], instanceHandle };
   },
   cloneNode: n => ({ ...n, children: [...n.children] }),
   cloneNodeWithNewChildren: n => ({ ...n, children: [] }),
@@ -231,12 +254,21 @@ const manifest = {
   ...expoClient,
   extra: { expoClient, ...(appJson.expo.extra ?? {}) },
 };
+// Mutable so the --token=absent run can observe setup.tsx's real
+// `saveToken()` call (via expo-secure-store's `setValueWithKeyAsync`) when it
+// drives the app from Setup to Chat (see the module doc comment).
+let secureStoreValue = STORED_TOKEN;
 const expoOverrides = {
   ExpoSecureStore: {
-    getValueWithKeyAsync: async () => STORED_TOKEN,
-    getValueWithKeySync: () => STORED_TOKEN,
-    setValueWithKeyAsync: async () => {},
-    deleteValueWithKeyAsync: async () => {},
+    getValueWithKeyAsync: async () => secureStoreValue,
+    getValueWithKeySync: () => secureStoreValue,
+    // expo-secure-store calls this as (value, key, options).
+    setValueWithKeyAsync: async value => {
+      secureStoreValue = value;
+    },
+    deleteValueWithKeyAsync: async () => {
+      secureStoreValue = null;
+    },
   },
   ExponentConstants: {
     manifest,
@@ -407,22 +439,117 @@ try {
 await new HostPromise(r => hostSetTimeout(r, 1500));
 
 // ---- Report. ----
-const texts = [];
-const headers = [];
-const walk = n => {
-  if (!n) return;
-  if (n.viewName === "RCTRawText" && n.props?.text) texts.push(n.props.text);
-  if (n.viewName === "RNSScreenStackHeaderConfig")
-    headers.push({ title: n.props.title, hidden: n.props.hidden ?? false });
-  n.children?.forEach(walk);
-};
-(roots.get(1) ?? []).forEach(walk);
+// Walks the committed (fake) native tree, collecting rendered text, native
+// Stack header configs, and (keyed by the nearest enclosing handler) which
+// on-screen text a real `onClick` (from react-native's Pressability, wired
+// up by Touchables) belongs to, plus any text-input-like host nodes (their
+// `onChange` is TextInput's real handler, which calls the component's
+// `onChangeText`). Called more than once by the --token=absent flow below,
+// since typing and pressing "Continue" each cause a fresh commit.
+function collectTree() {
+  const texts = [];
+  const headers = [];
+  const pressables = []; // [{ node, texts: [...] }] - node.instanceHandle to dispatch a tap
+  const textInputs = [];
+  const walk = (n, ancestorPressable) => {
+    if (!n) return;
+    // A Fabric host node's committed props never carry the JS handler
+    // function for a native event, only `true` (native is just told a
+    // listener exists); see the module doc comment. `onClick` here comes
+    // from Pressability's responderEventHandlers (TouchableOpacity etc).
+    const pressable = n.props?.onClick === true ? n : ancestorPressable;
+    if (n.viewName === "RCTRawText" && n.props?.text) {
+      texts.push(n.props.text);
+      if (pressable) {
+        let entry = pressables.find(p => p.node === pressable);
+        if (!entry) {
+          entry = { node: pressable, texts: [] };
+          pressables.push(entry);
+        }
+        entry.texts.push(n.props.text);
+      }
+    }
+    if (n.viewName === "RNSScreenStackHeaderConfig")
+      headers.push({ title: n.props.title, hidden: n.props.hidden ?? false });
+    if (n.props?.onChange === true && /TextInput/i.test(n.viewName ?? ""))
+      textInputs.push(n);
+    n.children?.forEach(c => walk(c, pressable));
+  };
+  (roots.get(1) ?? []).forEach(n => walk(n, null));
+  return { texts, headers, pressables, textInputs };
+}
 
 const expectedScreen = STORED_TOKEN ? "Chat" : "Setup";
+const first = collectTree();
 log(`bundle: ${bundlePath}`);
 log(`stored token: ${tokenArg}; expected first screen: ${expectedScreen}`);
-log(`rendered text: ${JSON.stringify([...new Set(texts)])}`);
-log(`native stack headers: ${JSON.stringify(headers)}`);
+log(`rendered text: ${JSON.stringify([...new Set(first.texts)])}`);
+log(`native stack headers: ${JSON.stringify(first.headers)}`);
+
+const rendered = first.texts.length > 0;
+const reachedFirstScreen =
+  first.texts.some(t => t.includes(expectedScreen)) ||
+  first.headers.some(h => h.title === expectedScreen);
+
+// ---- M1-C12: token-absent run also drives Setup -> Chat, the way a
+// first-time user does, and checks RootLayout's screen options (headerShown
+// etc.) apply on that path too, not only on the initial-launch redirect. ----
+let driveToChat = null;
+if (tokenArg === "absent" && exceptions.length === 0 && reachedFirstScreen) {
+  const tokenInput = first.textInputs[0];
+  if (!tokenInput) {
+    driveToChat = { ok: false, reason: "Setup's token TextInput not found in the rendered tree" };
+  } else {
+    // Dispatch the native `topChange` event TextInput's underlying view
+    // sends on every keystroke (RCTTextInputViewConfig's bubblingEventTypes;
+    // TextInput's `_onChange` reads `nativeEvent.text`/`.eventCount`).
+    dispatchFabricEvent?.(tokenInput.instanceHandle, "topChange", {
+      text: "smoke-test-token",
+      eventCount: 1,
+      target: tokenInput.tag,
+    });
+    await new HostPromise(r => hostSetTimeout(r, 300));
+    const afterType = collectTree();
+    const continueButton = afterType.pressables.find(p =>
+      p.texts.some(t => t.includes("Continue"))
+    );
+    if (!continueButton) {
+      driveToChat = {
+        ok: false,
+        reason: "Continue button's onClick not found after typing a token",
+      };
+    } else {
+      // Dispatch the native `topClick` event a real tap sends (View's base
+      // config; Pressability's onClick handler calls onPress from it). No
+      // `pointerType` on the payload, so Pressability doesn't ignore it as a
+      // duplicate PointerEvent-based tap, and dispatching straight at this
+      // node's own instance (not a nested pressable's) keeps
+      // `currentTarget === target`.
+      dispatchFabricEvent?.(continueButton.node.instanceHandle, "topClick", {});
+      await new HostPromise(r => hostSetTimeout(r, 1500));
+      const afterPress = collectTree();
+      const chatMounted = afterPress.texts.includes("Chat");
+      const backOnSetup = afterPress.texts.some(t =>
+        t.includes("Enter Bearer Token")
+      );
+      const singleTopBar = afterPress.headers.some(h => h.hidden === true);
+      driveToChat = {
+        ok:
+          exceptions.length === 0 &&
+          chatMounted &&
+          !backOnSetup &&
+          singleTopBar,
+        chatMounted,
+        backOnSetup,
+        singleTopBar,
+        rendered_text: [...new Set(afterPress.texts)],
+        native_stack_headers: afterPress.headers,
+      };
+    }
+  }
+  log(`drive Setup -> Chat: ${JSON.stringify(driveToChat)}`);
+}
+
 for (const e of exceptions) {
   log(`JS EXCEPTION via ${e.via}: ${e.message}`);
   if (e.stack) log(String(e.stack).split("\n").slice(0, 6).join("\n"));
@@ -433,17 +560,22 @@ for (const e of consoleErrors)
   log(`console.error: ${e.split("\n")[0].slice(0, 160)}`);
 log(`root commits: ${commits}`);
 
-const rendered = texts.length > 0;
-const reachedScreen =
-  texts.some(t => t.includes(expectedScreen)) ||
-  headers.some(h => h.title === expectedScreen);
-if (exceptions.length === 0 && rendered && reachedScreen) {
+const pass =
+  exceptions.length === 0 &&
+  rendered &&
+  reachedFirstScreen &&
+  (driveToChat === null || driveToChat.ok === true);
+if (pass) {
   log(
-    `RESULT: PASS (app launched, ${expectedScreen} rendered, no JS exception)`
+    `RESULT: PASS (app launched, ${expectedScreen} rendered, no JS exception${
+      driveToChat ? ", Setup -> Chat drive reached Chat with one top bar" : ""
+    })`
   );
   process.exit(0);
 }
 log(
-  `RESULT: FAIL (exceptions=${exceptions.length}, rendered=${rendered}, reached ${expectedScreen}=${reachedScreen})`
+  `RESULT: FAIL (exceptions=${exceptions.length}, rendered=${rendered}, reached ${expectedScreen}=${reachedFirstScreen}${
+    driveToChat ? `, driveToChat.ok=${driveToChat.ok}` : ""
+  })`
 );
 process.exit(1);
