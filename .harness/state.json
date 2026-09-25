@@ -2335,7 +2335,7 @@
         "FR4",
         "FR5"
       ],
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 1,
       "review_override": null,
       "baseline": {
@@ -2343,14 +2343,14 @@
         "branch": "m2b-swap-load-unload"
       },
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M2b.md",
+        "result": "RECORDED \u2014 13/17 files attributed; components C1,C2,C4,C5,C7; 4 edges; no claim mismatches"
       },
       "criteria": [
         {
           "id": "M2-AC2",
           "text": "Loading model A then model B leaves only B resident in GET /api/ps; unloading leaves nothing resident.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "Live over tailnet :8443 via the app's createAPIClient + runModelAction + toModelListView: load A (devstral:24b) -> /api/ps exactly [A], 'Loaded: A', loaded_by_server true; load B (qwen3.6:27b) -> /api/ps exactly [B]; unload -> /api/ps [] and 'Nothing loaded' \u2014 .harness/evidence/M2b-T3a-verifier.log",
             "server/src/models/manager.test.ts + server.test.ts: swap unloads every other resident model first, unload, async 202 \u2014 .harness/evidence/M2b-T1-verifier.log",
@@ -2360,7 +2360,7 @@
         {
           "id": "M2-AC3",
           "text": "A model loaded from the phone remains resident in GET /api/ps after 10 minutes idle and after a chat reply completes.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "Live: after a chat reply to B completed (terminal done event) /api/ps still exactly [B] with expires_at year 2319 (keep_alive -1 held); after 600 s idle with no Ollama requests /api/ps still exactly [B] \u2014 .harness/evidence/M2b-T3a-verifier.log",
             "server tests: load issues keep_alive -1 \u2014 .harness/evidence/M2b-T1-verifier.log"
@@ -2369,7 +2369,7 @@
         {
           "id": "M2-AC5",
           "text": "A failed load, such as out of memory, leaves nothing resident and the app shows the failure reason.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "Live: installed probe (smallest model + mismatched-shape LoRA adapter) loaded through the app client -> Ollama HTTP 500 'llama-server process has terminated: exit status 1'; /v1/state operation idle with error, resident null; /api/ps empty; view 'Nothing loaded' and failureMessage 'Load failed: llama-server process has terminated: exit status 1' \u2014 .harness/evidence/M2b-T3b-verifier.log. Failure class is a runner load failure, not out-of-memory (OOM could not be induced on Ollama 0.32.14: .harness/evidence/M2b-T3b-worker.log)",
             "server tests: out-of-memory, not-found, unreachable and generic failure reasons mapped and resident cleared \u2014 .harness/evidence/M2b-T1-verifier.log",
@@ -2801,16 +2801,37 @@
             "Mid"
           ],
           "files_outside_findings": "none; all three implement or test finding F1"
+        },
+        {
+          "cycle": 2,
+          "verdict": "PASS",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "CORRECTION_MID_ONLY",
+          "diff_range": "b8bcae32221cc3941ccef8702cfd6b066de6db93..13f48ba",
+          "artifact": null,
+          "review_log": ".harness/evidence/M2b-review.log",
+          "per_criterion": {
+            "M2-AC2": "PASS",
+            "M2-AC3": "PASS",
+            "M2-AC5": "PASS"
+          },
+          "findings": {
+            "BLOCKER": 0,
+            "IMPORTANT": 0,
+            "OPTIONAL": 0
+          },
+          "notes": "Reviewer's full validation run exited 1 at model-swap-proof Step 4 (600 s idle): /api/ps showed nemotron3:33b, loaded by an external client issuing POST /api/chat and /api/generate directly to Ollama during the idle window (contamination; see review log). Steps 1-3 passed live; model-failed-load-proof re-run alone PASS. Human chose to finalise without a re-run (2026-09-25)."
         }
       ],
       "findings": [
         {
           "id": "M2b-cycle1-F1",
           "severity": "IMPORTANT",
-          "status": "CORRECTED",
+          "status": "RESOLVED",
           "correction_task": "M2b-C1",
           "report": ".harness/reviews/M2b-cycle1.md",
-          "resolved_by": null
+          "resolved_by": "M2b-C1 (24f981c); confirmed by cycle-2 review PASS (sonnet), red->green reproduced by reviewer"
         },
         {
           "id": "M2b-cycle1-F2",

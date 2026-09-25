@@ -69,7 +69,7 @@ Cycle 1: PASS — tier Mid (sonnet), reason IMPLEMENTATION_MID_CHEAP_ONLY (tasks
 
 ## M2b — Swap-load and unload from the phone, staying resident
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -81,13 +81,13 @@ C1, C2, C4, C5, C7
 
 ### As-Built
 
-Pending.
+.harness/as-built/M2b.md — RECORDED — 13/17 files attributed; components C1,C2,C4,C5,C7; 4 edges; no claim mismatches
 
 ### Acceptance Criteria
 
-- [ ] **M2-AC2**: Loading model A then model B leaves only B resident in GET /api/ps; unloading leaves nothing resident.
-- [ ] **M2-AC3**: A model loaded from the phone remains resident in GET /api/ps after 10 minutes idle and after a chat reply completes.
-- [ ] **M2-AC5**: A failed load, such as out of memory, leaves nothing resident and the app shows the failure reason.
+- [x] **M2-AC2**: Loading model A then model B leaves only B resident in GET /api/ps; unloading leaves nothing resident.
+- [x] **M2-AC3**: A model loaded from the phone remains resident in GET /api/ps after 10 minutes idle and after a chat reply completes.
+- [x] **M2-AC5**: A failed load, such as out of memory, leaves nothing resident and the app shows the failure reason.
 
 ### Baseline
 
@@ -127,6 +127,7 @@ Corrections (each verifier-confirmed, committed):
 Cycle-1 validation: server `bun test && bun run typecheck && bash scripts/entry-smoke.sh` exit 0 (verifier). Live proofs not re-run: no live-proof, mobile or ops file changed; the live Mac was not touched this cycle.
 Correction diff: git diff b8bcae32221cc3941ccef8702cfd6b066de6db93 HEAD
 Files changed by corrections: server/src/models/manager.ts; server/src/models/manager.test.ts; server/src/http/server.test.ts (plus .harness/ records). No file outside finding F1's scope (server.test.ts carries F1's suggested concurrent-request test).
+Cycle 2: PASS, tier Mid (sonnet), correction-diff scope b8bcae3..13f48ba; M2-AC2/AC3/AC5 PASS; 0 findings — .harness/evidence/M2b-review.log. Reviewer validation exit 1 at model-swap-proof Step 4 (600 s idle) because an external client loaded nemotron3:33b directly via Ollama during the idle window; Steps 1-3 passed live and model-failed-load-proof re-run alone PASS. Human chose to finalise without re-running the 600 s proof.
 
 ### Review Cycles
 
