@@ -6,7 +6,12 @@
  */
 
 import { describe, it, expect, mock } from "bun:test";
-import { APIClient, ServerError, UnauthorizedError } from "./client";
+import {
+  APIClient,
+  ConfirmationRequiredError,
+  ServerError,
+  UnauthorizedError,
+} from "./client";
 import type { StreamEvent } from "./client";
 
 const BASE_URL = "http://localhost:7789";
@@ -216,6 +221,81 @@ describe("APIClient load/unload error mapping", () => {
     await expect(client.unloadModel({})).rejects.toBeInstanceOf(
       UnauthorizedError
     );
+  });
+
+  it("throws a ConfirmationRequiredError with the body's message and reasons for a 409 confirmation_required from loadModel", async () => {
+    const fetchMock = mock(async () =>
+      jsonResponse(
+        {
+          error: "confirmation_required",
+          message: "A reply is still being generated.",
+          reasons: ["reply_in_progress"],
+        },
+        409
+      )
+    );
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+
+    const error = await client.loadModel({ name: "m" }).catch((e) => e);
+    expect(error).toBeInstanceOf(ConfirmationRequiredError);
+    expect(error).toBeInstanceOf(ServerError);
+    expect((error as ConfirmationRequiredError).code).toBe(
+      "confirmation_required"
+    );
+    expect((error as ConfirmationRequiredError).message).toBe(
+      "A reply is still being generated."
+    );
+    expect((error as ConfirmationRequiredError).reasons).toEqual([
+      "reply_in_progress",
+    ]);
+  });
+
+  it("throws a ConfirmationRequiredError with both reasons for a 409 confirmation_required from unloadModel", async () => {
+    const fetchMock = mock(async () =>
+      jsonResponse(
+        {
+          error: "confirmation_required",
+          message: "This model may be in use elsewhere.",
+          reasons: ["reply_in_progress", "not_loaded_by_server"],
+        },
+        409
+      )
+    );
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+
+    const error = await client.unloadModel({}).catch((e) => e);
+    expect(error).toBeInstanceOf(ConfirmationRequiredError);
+    expect((error as ConfirmationRequiredError).reasons).toEqual([
+      "reply_in_progress",
+      "not_loaded_by_server",
+    ]);
+  });
+
+  it("sends confirm in the body only when the caller passes it, for both loadModel and unloadModel", async () => {
+    const bodies: unknown[] = [];
+    const fetchMock = mock(async (_url: string, init?: RequestInit) => {
+      bodies.push(JSON.parse(init?.body as string));
+      return jsonResponse({ operation: { kind: "loading", model: "m" } }, 202);
+    });
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+
+    await client.loadModel({ name: "m" });
+    await client.loadModel({ name: "m", confirm: true });
+    await client.unloadModel({});
+    await client.unloadModel({ confirm: true });
+
+    expect(bodies).toEqual([
+      { name: "m" },
+      { name: "m", confirm: true },
+      {},
+      { confirm: true },
+    ]);
   });
 });
 

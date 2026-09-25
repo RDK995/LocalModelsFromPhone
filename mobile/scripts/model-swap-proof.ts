@@ -133,9 +133,15 @@ async function main() {
   console.log(`--- Step 1: load A (${modelA}) via app client, wait idle ---`);
   const stateAfterLoadA = await runModelAction({
     getState: () => client.getState(),
-    start: () => client.loadModel({ name: modelA }),
+    // confirm: true -- this is a deliberate swap/unload proof, not a UI
+    // confirmation-flow test, so it always bypasses the busy-warning gate
+    // (FR6) to actually perform each step.
+    start: () => client.loadModel({ name: modelA, confirm: true }),
     maxWaitMs: LOAD_UNLOAD_MAX_WAIT_MS,
   });
+  if ("cancelled" in stateAfterLoadA) {
+    fail("Step 1: load A was unexpectedly cancelled (confirm: true should bypass FR6)");
+  }
   const viewAfterLoadA = toModelListView(stateAfterLoadA);
   console.log(`  residentLabel: "${viewAfterLoadA.residentLabel}"`);
   console.log(`  resident.loaded_by_server: ${stateAfterLoadA.resident?.loaded_by_server}`);
@@ -157,9 +163,12 @@ async function main() {
   console.log(`--- Step 2: load B (${modelB}) via app client, wait idle (swap out A) ---`);
   const stateAfterLoadB = await runModelAction({
     getState: () => client.getState(),
-    start: () => client.loadModel({ name: modelB }),
+    start: () => client.loadModel({ name: modelB, confirm: true }),
     maxWaitMs: LOAD_UNLOAD_MAX_WAIT_MS,
   });
+  if ("cancelled" in stateAfterLoadB) {
+    fail("Step 2: load B was unexpectedly cancelled (confirm: true should bypass FR6)");
+  }
   const viewAfterLoadB = toModelListView(stateAfterLoadB);
   console.log(`  residentLabel: "${viewAfterLoadB.residentLabel}"`);
   const psAfterLoadB = await getOllamaPs();
@@ -226,9 +235,12 @@ async function main() {
   console.log("--- Step 5: unload via app client, wait idle ---");
   const stateAfterUnload = await runModelAction({
     getState: () => client.getState(),
-    start: () => client.unloadModel({}),
+    start: () => client.unloadModel({ confirm: true }),
     maxWaitMs: LOAD_UNLOAD_MAX_WAIT_MS,
   });
+  if ("cancelled" in stateAfterUnload) {
+    fail("Step 5: unload was unexpectedly cancelled (confirm: true should bypass FR6)");
+  }
   const viewAfterUnload = toModelListView(stateAfterUnload);
   console.log(`  residentLabel: "${viewAfterUnload.residentLabel}"`);
   const psAfterUnload = await getOllamaPs();

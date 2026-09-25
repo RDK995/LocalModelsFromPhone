@@ -6,6 +6,12 @@
  * operation on the server, then poll `GET /v1/state` until it finishes,
  * showing a busy label meanwhile and, on a failed load, the server's failure
  * reason (FR3, FR4, FR5).
+ *
+ * If the server answers `confirmation_required` (a reply is still being
+ * generated, or the resident model wasn't loaded by this app), an
+ * `Alert.alert` warns the user and asks them to confirm before retrying with
+ * `confirm: true` (FR6). Cancelling leaves the screen exactly as it was: no
+ * busy label, no error, nothing sent to the server.
  */
 
 import React, { useCallback, useRef, useState } from "react";
@@ -28,6 +34,7 @@ import { ServerError, UnauthorizedError } from "@/api/client";
 import { UNAUTHORIZED_MESSAGE } from "@/chat/chatController";
 import { toModelListView, type ModelRow } from "@/ui/modelList";
 import { runModelAction } from "@/ui/modelActions";
+import { buildConfirmationWarning } from "@/ui/confirmation";
 
 export default function ModelsScreen() {
   const [rows, setRows] = useState<ModelRow[]>([]);
@@ -103,11 +110,17 @@ export default function ModelsScreen() {
     [router, applyState, routeToUnauthorized]
   );
 
+  // The busy label, resident label, rows and failure/error messages must not
+  // change while the confirmation dialog is up or after a Cancel (FR6), so
+  // they are only touched once polling actually starts -- either because no
+  // confirmation was needed, or because the user confirmed.
   const runAction = useCallback(
-    async (start: () => Promise<unknown>, startingBusyLabel: string) => {
-      setErrorMessage(null);
+    async (
+      start: (confirm: boolean) => Promise<unknown>,
+      confirmButtonLabel: string,
+      residentModelName: string | null
+    ) => {
       setIsActionPending(true);
-      setBusyLabel(startingBusyLabel);
 
       try {
         const token = await getToken();
@@ -120,7 +133,21 @@ export default function ModelsScreen() {
         await runModelAction({
           start,
           getState: () => clientRef.current.getState(),
-          onPoll: applyState,
+          onPoll: (state) => {
+            setErrorMessage(null);
+            applyState(state);
+          },
+          confirm: (reasons) =>
+            new Promise<boolean>((resolve) => {
+              const warning = buildConfirmationWarning(
+                reasons,
+                residentModelName
+              );
+              Alert.alert(warning.title, warning.message, [
+                { text: "Cancel", style: "cancel", onPress: () => resolve(false) },
+                { text: confirmButtonLabel, onPress: () => resolve(true) },
+              ]);
+            }),
         });
       } catch (error) {
         if (error instanceof UnauthorizedError) {
@@ -143,16 +170,22 @@ export default function ModelsScreen() {
 
   const handleLoad = useCallback(
     (name: string) => {
-      runAction(() => clientRef.current.loadModel({ name }), `Loading ${name}…`);
+      const residentRow = rows.find((row) => row.isResident);
+      runAction(
+        (confirm) => clientRef.current.loadModel({ name, confirm }),
+        "Load anyway",
+        residentRow ? residentRow.name : null
+      );
     },
-    [runAction]
+    [runAction, rows]
   );
 
   const handleUnload = useCallback(() => {
     const residentRow = rows.find((row) => row.isResident);
     runAction(
-      () => clientRef.current.unloadModel({}),
-      residentRow ? `Unloading ${residentRow.name}…` : "Unloading…"
+      (confirm) => clientRef.current.unloadModel({ confirm }),
+      "Unload anyway",
+      residentRow ? residentRow.name : null
     );
   }, [runAction, rows]);
 

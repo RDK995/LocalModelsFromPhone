@@ -89,12 +89,20 @@ async function main(): Promise<void> {
   let polls = 0;
   const final = await runModelAction({
     getState: () => client.getState(),
-    start: () => client.loadModel({ name: probe.name }),
+    // confirm: true -- this is a deliberate failed-load proof, not a UI
+    // confirmation-flow test, so it bypasses the busy-warning gate (FR6) to
+    // actually attempt the load (e.g. a model resident since before a
+    // server restart would otherwise be refused unconfirmed).
+    start: () => client.loadModel({ name: probe.name, confirm: true }),
     onPoll: () => {
       polls++;
     },
     maxWaitMs: LOAD_MAX_WAIT_MS,
   });
+  if ("cancelled" in final) {
+    console.log("FAIL: load was unexpectedly cancelled (confirm: true should bypass FR6)");
+    process.exit(1);
+  }
   console.log(`Load finished after ${Date.now() - started} ms (${polls} polls)`);
   console.log(`Final operation: ${JSON.stringify(final.operation)}`);
   console.log(`Final resident: ${JSON.stringify(final.resident)}`);

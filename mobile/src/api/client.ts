@@ -20,6 +20,7 @@ import type {
   ContentEvent,
   DoneEvent,
   ErrorEvent,
+  ConfirmationRequiredError as ConfirmationRequiredBody,
 } from "@shared/api";
 
 export type StreamEvent =
@@ -94,6 +95,31 @@ export class ServerError extends Error {
   }
 }
 
+/**
+ * The set of reasons the server can give for `confirmation_required` (FR6):
+ * a reply from this app is still being generated, or the resident model was
+ * not loaded by this server so another tool on the Mac may be using it.
+ */
+export type ConfirmationReason = ConfirmationRequiredBody["reasons"][number];
+
+/**
+ * Thrown by `loadModel`/`unloadModel` for a 409 `{error:
+ * "confirmation_required", message, reasons}` response: the server needs the
+ * caller to warn the user and retry with `confirm: true` before it proceeds
+ * (FR6). Extends `ServerError` (code `"confirmation_required"`) so existing
+ * `instanceof ServerError` handling still applies.
+ */
+export class ConfirmationRequiredError extends ServerError {
+  /** Why confirmation is required; non-empty, may hold more than one reason. */
+  reasons: ConfirmationReason[];
+
+  constructor(message: string | undefined, reasons: ConfirmationReason[]) {
+    super("confirmation_required", message);
+    this.name = "ConfirmationRequiredError";
+    this.reasons = reasons;
+  }
+}
+
 export class APIClient {
   private baseUrl: string;
   private token: string = "";
@@ -135,9 +161,10 @@ export class APIClient {
 
   /**
    * Throw a typed error for a non-OK response from load/unload:
-   * `UnauthorizedError` for 401, otherwise `ServerError` built from the
-   * response body's `{error, message}` (falling back to a generic `Error` if
-   * the body isn't that shape).
+   * `UnauthorizedError` for 401, `ConfirmationRequiredError` for a 409
+   * `{error:"confirmation_required"}` body, otherwise `ServerError` built
+   * from the response body's `{error, message}` (falling back to a generic
+   * `Error` if the body isn't that shape).
    */
   private async assertLoadUnloadOk(
     response: Response,
@@ -147,11 +174,18 @@ export class APIClient {
       throw new UnauthorizedError();
     }
     if (!response.ok) {
-      let body: { error?: string; message?: string } = {};
+      let body: {
+        error?: string;
+        message?: string;
+        reasons?: ConfirmationReason[];
+      } = {};
       try {
         body = await response.json();
       } catch {
         // Not JSON (or empty body); fall through to a generic error below.
+      }
+      if (body.error === "confirmation_required") {
+        throw new ConfirmationRequiredError(body.message, body.reasons ?? []);
       }
       if (body.error) {
         throw new ServerError(body.error, body.message);
