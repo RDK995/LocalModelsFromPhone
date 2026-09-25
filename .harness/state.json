@@ -37,8 +37,8 @@
       "review_override": {
         "date": "2026-09-25",
         "by": "human",
-        "allow_cycles": 4,
-        "reason": "Human authorised a second fix cycle beyond the 2-cycle cap (cycle 4) after the fresh cycle-3 bundle crashed at launch in RootLayout ('Cannot convert Symbol to string') and the Chat keyboard still covered the message box."
+        "allow_cycles": 5,
+        "reason": "Human authorised a third fix cycle beyond the 2-cycle cap (cycle 5) to fix the cycle-5 review's IMPORTANT finding: FR13 401 handling must show 'password wrong or changed' and route to Settings."
       },
       "baseline": {
         "commit": "04bb92b7be06984856c1dd1c34b52e2533f656e3",
@@ -82,7 +82,9 @@
             "HUMAN CHECK 2026-09-25 15:51 (re-test after fix cycle 3; screenshots in ~/.claude/uploads/a2032993-e031-4e36-92d7-4ddfdde26a07/): Setup PASSED - the token was pasted and Continue reached Chat. Chat: the human sent 'Test' and received the reply 'Hello! How can I assist you today?' (the end-to-end send and reply work on the phone). FAIL: on Chat, the keyboard covers the message input box. Chat still shows two top bars (a Stack header 'chat' above the screen's own 'Chat / Settings' bar), although M1-C9 claimed to hide the Stack header. Settings opens (Stack header '< chat' / 'settings', with Cancel, Save and Logout); keyboard behaviour on Settings was not reported. Token-by-token rendering and Stop not yet reported.",
             "HUMAN CHECK 2026-09-25 15:53 (after a full force-close and reopen of Expo Go; screenshot ~/.claude/uploads/a2032993-e031-4e36-92d7-4ddfdde26a07/1eae7b80-image.png): the app now fails at launch with the Expo Go error screen: 'There was a problem running \"Phone Models\". Unhandled JS Exception: TypeError: Cannot convert Symbol to string', stack: anonymous (expo-router.bundle ... :60047:56) < RootLayout (:58345:55) < WrappedScreenComponent (:76671:49) < Suspense < ZoomTransitionTargetContextProvider. This suggests the 15:51 run was a cached pre-cycle-3 bundle (two top bars on Chat), and the current cycle-3 bundle crashes in RootLayout. FAIL.",
             "CYCLE-4 FIX (M1-C11 6fec6a1, M1-C12 49bb53f, M1-C13 0376cf3): launch crash on every launch with a stored token fixed (Fragment inside RootLayout's <Stack>; present since d87a597); Chat/Settings now always get their declared options, so after first-time Setup Chat has one top bar and its keyboard offset premise (no Stack header) holds. New runtime check `cd mobile && bun run smoke:runtime` executes the production iOS bundle in Node with fake native modules: proves launch + first screen render without a JS exception for token present (Chat) and absent (Setup), and the Setup -> Chat path with one top bar; cannot prove Hermes-only behaviour, native layout/keyboard geometry, or anything past first screens. Bundle host restarted; served bundle passes the runtime check. On-phone re-test by the human: pending.",
-            "HUMAN CHECK 2026-09-25 (re-test after fix cycle 4, iPhone with Tailscale ON, all eight recorded cycle-4 steps): the human reported 'All working'. AC2 steps: Settings > Update Token kept Save/Cancel above the keyboard; Logout led to Setup, Continue stayed visible, tapping outside dismissed the keyboard, pasted token + Continue reached Chat. PASS."
+            "HUMAN CHECK 2026-09-25 (re-test after fix cycle 4, iPhone with Tailscale ON, all eight recorded cycle-4 steps): the human reported 'All working'. AC2 steps: Settings > Update Token kept Save/Cancel above the keyboard; Logout led to Setup, Continue stayed visible, tapping outside dismissed the keyboard, pasted token + Continue reached Chat. PASS.",
+            "HUMAN OBSERVATION 2026-09-25 (after the cycle-4 re-test): with an INCORRECT token, Setup still accepts it and navigates to Chat; the failure only appears when a chat message is sent. How the failure is shown on Chat (a clear error or not) was not yet reported.",
+            "HUMAN OBSERVATION 2026-09-25 (follow-up): with the incorrect token, sending a chat message shows a clear error message on Chat. The human considers this acceptable for M1."
           ]
         },
         {
@@ -1623,7 +1625,8 @@
         "Runtime smoke check runs on V8 with faked native modules; a Hermes-only or native-layout defect would pass it. A simulator/device-level check (Expo Go in the iOS Simulator) would close more of that gap.",
         "Runtime smoke check logs a non-fatal RNCMaskedView new-architecture console.error from a library; harmless today.",
         "Served bundle is not minified despite minify=true in its URL (bundle host behaviour); not investigated.",
-        "Workers and verifiers repeatedly hit their turn limits on mobile tasks this cycle (C11, C12 each needed continuations); the runtime-smoke harness is large for a single packet."
+        "Workers and verifiers repeatedly hit their turn limits on mobile tasks this cycle (C11, C12 each needed continuations); the runtime-smoke harness is large for a single packet.",
+        "Setup (and Settings token update) accepts any token without checking it against the server; a wrong token is only detected on the first chat send, where Chat shows a clear error (human-observed 2026-09-25). Consider validating the token (e.g. GET /v1/state) before leaving Setup."
       ],
       "runtime": {
         "schema_version": 1,
@@ -1861,6 +1864,11 @@
         {
           "date": "2026-09-25",
           "decision": "Human authorised one more fix cycle (cycle 4) to fix the launch crash and the Chat-screen keyboard, followed by a human on-phone re-test and the final review.",
+          "by": "human"
+        },
+        {
+          "date": "2026-09-25",
+          "decision": "After the cycle-5 review (all criteria PASS, 1 IMPORTANT finding on FR13 401 routing), human chose to fix it now in M1 (fix cycle 5) rather than defer it to M5.",
           "by": "human"
         }
       ],

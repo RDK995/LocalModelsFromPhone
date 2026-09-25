@@ -212,6 +212,7 @@ Do the re-test. If all pass, record them and set M1 back to REVIEW for the scope
 - Runtime smoke logs a harmless RNCMaskedView new-architecture console.error from a library.
 - Served bundle is not minified despite minify=true in its URL; not investigated.
 - Cycle 4: workers and verifiers hit turn limits repeatedly on mobile tasks (C11, C12 needed continuations).
+- Setup (and Settings token update) accepts any token without checking it against the server; a wrong token is only detected on the first chat send, where Chat shows a clear error (human-observed 2026-09-25). Consider validating the token (e.g. GET /v1/state) before leaving Setup.
 
 ## M2 — Model list, swap-load, and unload with busy confirmation
 
