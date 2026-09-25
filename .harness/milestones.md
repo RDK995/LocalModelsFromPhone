@@ -2,7 +2,7 @@
 
 ## M1 — Authenticated tailnet chat stream proof
 
-Status: REVIEW
+Status: BLOCKED
 
 ### Outcome
 
@@ -54,11 +54,37 @@ Needs the live LaunchAgents, Tailscale and Ollama. Artifacts: .harness/evidence/
 
 ### Review
 
-Pending.
+Cycle 1: CHANGES REQUIRED (SUBSTANTIVE) — .harness/reviews/M1-cycle1.md (F1-F6 BLOCKER, F7-F8 IMPORTANT, F9-F11 OPTIONAL)
+Pre-correction: 7263d6338e07fe9d0a3302154bc685c594d6b6ec
+Corrections (each verifier-confirmed, committed):
+- M1-C1 server F4/F7/F9/F11-stats — Top (DIFFICULT_CONCURRENCY), attempt 4 PASS; server 39 tests, typecheck, entry-smoke; e876590
+- M1-C2 app F1/F2/F3/F8 — Mid, attempt 3 INTERRUPTED (turn limit, handoff .harness/tasks/M1-C2-handoff-1.md) → continuation 1 PASS; typecheck, 24 tests, lint, iOS export; c3210f3
+- M1-C3 pf anchor F5/F6/F8-e2e — Top (SECURITY), attempt 4 PASS; verify-ops-install incl. check-pf-rules.sh, pfctl -n parse; 9a2eeb8
+- M1-C4 token F10 + .gitignore F11 — Cheap, attempt 1 PASS; ops token tests; cf31dd3
+- M1-C5 live LaunchAgents reloaded onto c3210f3 — Cheap, attempt 1 PASS; live SSE begins ": connected" (new code confirmed)
+Cycle-1 validation: .harness/evidence/M1-cycle1-validation.log — server 0, ops 0, mobile 0; e2e exit 1 on one check only: LAN 192.168.0.27:8081 REACHABLE (pf anchor not yet installed)
+Correction diff: git diff 7263d6338e07fe9d0a3302154bc685c594d6b6ec HEAD
+Files changed by corrections: .gitignore; mobile/app.json; mobile/src/api/{client.ts,client.test.ts,config.ts,config.test.ts,expoFetchClient.ts}; mobile/src/app/chat.tsx; mobile/src/chat/{chatController.ts,chatController.test.ts}; ops/scripts/{check-pf-rules.sh,com.harness.pf-bundle-host.plist,e2e-tailnet-proof.sh,install-pf-anchor.sh,pf-bundle-host-load.sh,uninstall-pf-anchor.sh,verify-ops-install.sh} (deleted: com.harness.pf.anchor, create-pf-anchor.sh); ops/src/{token.ts,token.test.ts}; server/scripts/curl-chat-stream-proof.sh; server/src/generations/{manager.ts,manager.test.ts}; server/src/http/{server.ts,server.test.ts}; server/src/ollama/client.ts. No file outside the findings' scope.
+
+Problem:
+Cycle-1 corrections are done and validated, but M1-AC4 (bundle host unreachable from the LAN) can only pass once the human installs the pf anchor with the admin password. The second and final review would otherwise fail AC4 and spend the last cycle.
+
+Requirement/milestone affected:
+M1-AC4, FR14 (finding F5).
+
+Attempts made:
+1. M1-C3 (Top) built install-pf-anchor.sh, uninstall-pf-anchor.sh and a boot LaunchDaemon; the no-sudo safety check (port-8081-only inbound rules, anchor com.apple/harness.bundle-host, no pfctl -d, no main-ruleset flush/load, no pf.conf edit) and a pfctl -n parse check pass.
+2. M1-C5 live validation: every check passes except "LAN 192.168.0.27:8081 REACHABLE".
+
+Remaining issue:
+Human runs once: cd /Users/ryankenny/Projects/CodingHarnessv2 && sudo bash ops/scripts/install-pf-anchor.sh (undo: sudo bash ops/scripts/uninstall-pf-anchor.sh). Phone checks in Expo Go remain human checks.
+
+Recommended decision:
+Run the install command, re-run bash ops/scripts/e2e-tailnet-proof.sh (expect all PASS), then set M1 back to REVIEW for the scoped cycle-2 re-review.
 
 ### Review Cycles
 
-0
+1
 
 ### Follow-ups
 
@@ -73,6 +99,10 @@ Pending.
 - server/scripts/curl-chat-stream-proof.sh posts model "test-model", which does not exist in Ollama.
 - Human phone checks pending: Expo Go over the tailnet (render token by token, paste token in settings, Stop halts output); LAN device cannot reach 7789/8443/8081.
 - M1-T5b left devstral:24b loaded in Ollama (default keep-alive).
+- pf loader loads nothing until Tailscale's utun resolves, so 8081 is unfiltered from boot until Tailscale is up (<=60s after). Stricter option: always load the lo0 pass + block.
+- pf loader uses the tailnet IPv4 recorded at install; re-run install if it changes.
+- I10 `think:true when supported` not sent on /v1/chat; belongs with thinking display (M4).
+- Cycle-1 server API changes: invalid chat body code is now bad_request; SSE streams begin with ": connected"; client disconnect no longer cancels a reply (Stop POSTs cancel).
 
 ## M2 — Model list, swap-load, and unload with busy confirmation
 
