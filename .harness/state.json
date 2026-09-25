@@ -53,7 +53,8 @@
             "server.test.ts chat streams content then complete \u2014 .harness/evidence/M1-T7-verifier.log",
             "On-phone Expo Go rendering: human check, not yet done",
             "HUMAN CHECK 2026-09-25 (after cycle-2 review, finding B): on the iPhone with Tailscale ON, Expo Go opened exp://ryans-mac-studio.tailc3648a.ts.net:8081, hung on 'Opening project', then showed 'Unmatched Route'. The app did not reach the chat or Settings screens; token paste, streaming and Stop could not be tried. FAIL.",
-            "CYCLE-2 FIX (M1-C6, commit 1a7565e): cause of 'Unmatched Route' was that mobile/src/app had no index.tsx, so the root path Expo Go opens matched no screen. Added index.tsx redirecting to /setup (no token) or /chat (token); bundle host restarted; the tailnet-served bundle registers ./index.tsx. The ~20s 'Opening project' wait matches the first production bundle build (bundle-host.log: 'iOS Bundled 23140ms'). On-phone re-test by the human: pending."
+            "CYCLE-2 FIX (M1-C6, commit 1a7565e): cause of 'Unmatched Route' was that mobile/src/app had no index.tsx, so the root path Expo Go opens matched no screen. Added index.tsx redirecting to /setup (no token) or /chat (token); bundle host restarted; the tailnet-served bundle registers ./index.tsx. The ~20s 'Opening project' wait matches the first production bundle build (bundle-host.log: 'iOS Bundled 23140ms'). On-phone re-test by the human: pending.",
+            "HUMAN CHECK 2026-09-25 (re-test after fix cycle 2): on the iPhone with Tailscale ON, Expo Go opened the app and reached the Setup screen (Unmatched Route is fixed). On Setup, the on-screen keyboard covers the submit (Continue) button and does not dismiss when tapping outside the input; the human could not get past Setup. Chat, Settings, streaming and Stop could not be tried. FAIL."
           ]
         },
         {
@@ -65,7 +66,8 @@
             "server.test.ts auth on every route; entry-smoke 7/7 \u2014 .harness/evidence/M1-T7-verifier.log",
             "App settings token paste: mobile tests (M1-T6); on-phone paste is a human check, not yet done",
             "HUMAN CHECK 2026-09-25 (after cycle-2 review, finding B): on the iPhone with Tailscale ON, Expo Go opened exp://ryans-mac-studio.tailc3648a.ts.net:8081, hung on 'Opening project', then showed 'Unmatched Route'. The app did not reach the chat or Settings screens; token paste, streaming and Stop could not be tried. FAIL.",
-            "CYCLE-2 FIX (M1-C6, commit 1a7565e): cause of 'Unmatched Route' was that mobile/src/app had no index.tsx, so the root path Expo Go opens matched no screen. Added index.tsx redirecting to /setup (no token) or /chat (token); bundle host restarted; the tailnet-served bundle registers ./index.tsx. The ~20s 'Opening project' wait matches the first production bundle build (bundle-host.log: 'iOS Bundled 23140ms'). On-phone re-test by the human: pending."
+            "CYCLE-2 FIX (M1-C6, commit 1a7565e): cause of 'Unmatched Route' was that mobile/src/app had no index.tsx, so the root path Expo Go opens matched no screen. Added index.tsx redirecting to /setup (no token) or /chat (token); bundle host restarted; the tailnet-served bundle registers ./index.tsx. The ~20s 'Opening project' wait matches the first production bundle build (bundle-host.log: 'iOS Bundled 23140ms'). On-phone re-test by the human: pending.",
+            "HUMAN CHECK 2026-09-25 (re-test after fix cycle 2): on the iPhone with Tailscale ON, Expo Go opened the app and reached the Setup screen (Unmatched Route is fixed). On Setup, the on-screen keyboard covers the submit (Continue) button and does not dismiss when tapping outside the input; the human could not get past Setup. Chat, Settings, streaming and Stop could not be tried. FAIL."
           ]
         },
         {
@@ -77,7 +79,8 @@
             "server.test.ts cancel aborts Ollama \u2014 .harness/evidence/M1-T7-verifier.log",
             "Phone output halting: human check, not yet done",
             "HUMAN CHECK 2026-09-25 (after cycle-2 review, finding B): on the iPhone with Tailscale ON, Expo Go opened exp://ryans-mac-studio.tailc3648a.ts.net:8081, hung on 'Opening project', then showed 'Unmatched Route'. The app did not reach the chat or Settings screens; token paste, streaming and Stop could not be tried. FAIL.",
-            "CYCLE-2 FIX (M1-C6, commit 1a7565e): cause of 'Unmatched Route' was that mobile/src/app had no index.tsx, so the root path Expo Go opens matched no screen. Added index.tsx redirecting to /setup (no token) or /chat (token); bundle host restarted; the tailnet-served bundle registers ./index.tsx. The ~20s 'Opening project' wait matches the first production bundle build (bundle-host.log: 'iOS Bundled 23140ms'). On-phone re-test by the human: pending."
+            "CYCLE-2 FIX (M1-C6, commit 1a7565e): cause of 'Unmatched Route' was that mobile/src/app had no index.tsx, so the root path Expo Go opens matched no screen. Added index.tsx redirecting to /setup (no token) or /chat (token); bundle host restarted; the tailnet-served bundle registers ./index.tsx. The ~20s 'Opening project' wait matches the first production bundle build (bundle-host.log: 'iOS Bundled 23140ms'). On-phone re-test by the human: pending.",
+            "HUMAN CHECK 2026-09-25 (re-test after fix cycle 2): on the iPhone with Tailscale ON, Expo Go opened the app and reached the Setup screen (Unmatched Route is fixed). On Setup, the on-screen keyboard covers the submit (Continue) button and does not dismiss when tapping outside the input; the human could not get past Setup. Chat, Settings, streaming and Stop could not be tried. FAIL."
           ]
         },
         {
