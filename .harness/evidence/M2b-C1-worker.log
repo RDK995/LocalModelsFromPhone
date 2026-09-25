@@ -1,0 +1,62 @@
+=== git rev-parse HEAD ===
+b8bcae32221cc3941ccef8702cfd6b066de6db93
+
+=== RED run: new race tests against unfixed manager.ts (pre-fix, captured separately, see note) ===
+bun test v1.4.0 (1381054db)
+
+src/models/manager.test.ts:
+392 |       const manager = new ModelManager(ollama, new FakeGenerations(null), FAST_TIMING);
+393 | 
+394 |       const [first, second] = await Promise.allSettled([manager.unload(), manager.unload()]);
+395 | 
+396 |       const results = [first, second];
+397 |       expect(results.filter((r) => r.status === "fulfilled").length).toBe(1);
+                                                                           ^
+error: expect(received).toBe(expected)
+
+Expected: 1
+Received: 2
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/models/manager.test.ts:397:70)
+(fail) ModelManager > unload() > two overlapping unload() calls (no await between) accept exactly one and run exactly one sweep [24.55ms]
+413 |       const manager = new ModelManager(ollama, new FakeGenerations(null), FAST_TIMING);
+414 | 
+415 |       const [loadResult, unloadResult] = await Promise.allSettled([manager.load("x"), manager.unload()]);
+416 | 
+417 |       const results = [loadResult, unloadResult];
+418 |       expect(results.filter((r) => r.status === "fulfilled").length).toBe(1);
+                                                                           ^
+error: expect(received).toBe(expected)
+
+Expected: 1
+Received: 2
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/models/manager.test.ts:418:70)
+(fail) ModelManager > unload() > overlapping load(x) and unload() (no await between) accept exactly one and leave consistent state [20.76ms]
+
+ 22 pass
+ 2 fail
+ 36 expect() calls
+Ran 24 tests across 1 file. [127.00ms]
+
+=== bun test (post-fix) ===
+bun test v1.4.0 (1381054db)
+
+ 76 pass
+ 0 fail
+ 232 expect() calls
+Ran 76 tests across 4 files. [569.00ms]
+
+=== bun run typecheck ===
+$ tsc --noEmit
+
+=== bash scripts/entry-smoke.sh ===
+Entry smoke: starting server on 127.0.0.1:55717
+PASS: server started and is listening on http://127.0.0.1:55717
+PASS: listens on 127.0.0.1 only (127.0.0.1:55717)
+PASS: no token -> 401
+PASS: wrong token -> 401
+PASS: correct token -> 200 (not 401)
+PASS: 0644 token file -> exits non-zero (1)
+PASS: missing token file -> exits non-zero (1)
+Entry smoke: all checks passed

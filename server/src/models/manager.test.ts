@@ -40,6 +40,9 @@ class FakeOllama implements ModelManagerOllama {
   calls: Array<{ op: "load" | "unload"; name: string }> = [];
   loadImpl: (name: string) => Promise<void> = async () => {};
   unloadImpl: (name: string) => Promise<void> = async () => {};
+  /** Injected latency so `tags()`/`ps()` really await, letting overlapping calls interleave. */
+  tagsDelayMs = 0;
+  psDelayMs = 0;
 
   constructor(
     private tagsResult: OllamaTagsResponse | Error,
@@ -51,11 +54,13 @@ class FakeOllama implements ModelManagerOllama {
   }
 
   async tags(): Promise<OllamaTagsResponse> {
+    if (this.tagsDelayMs > 0) await Bun.sleep(this.tagsDelayMs);
     if (this.tagsResult instanceof Error) throw this.tagsResult;
     return this.tagsResult;
   }
 
   async ps(): Promise<OllamaPsResponse> {
+    if (this.psDelayMs > 0) await Bun.sleep(this.psDelayMs);
     if (this.psResult instanceof Error) throw this.psResult;
     return { models: [...this.psModels] };
   }
@@ -379,6 +384,53 @@ describe("ModelManager", () => {
 
       gate.release();
       await waitUntilIdle(manager);
+    });
+
+    it("two overlapping unload() calls (no await between) accept exactly one and run exactly one sweep", async () => {
+      const ollama = new FakeOllama({ models: [] }, { models: [psProcess("resident-model")] });
+      ollama.psDelayMs = 20;
+      const manager = new ModelManager(ollama, new FakeGenerations(null), FAST_TIMING);
+
+      const [first, second] = await Promise.allSettled([manager.unload(), manager.unload()]);
+
+      const results = [first, second];
+      expect(results.filter((r) => r.status === "fulfilled").length).toBe(1);
+      const rejected = results.filter((r) => r.status === "rejected");
+      expect(rejected.length).toBe(1);
+      expect((rejected[0] as PromiseRejectedResult).reason).toBeInstanceOf(OperationInProgressError);
+
+      await waitUntilIdle(manager);
+
+      expect(ollama.calls.filter((c) => c.op === "unload").length).toBe(1);
+      const state = await manager.state();
+      expect(state.resident).toBeNull();
+    });
+
+    it("overlapping load(x) and unload() (no await between) accept exactly one and leave consistent state", async () => {
+      const ollama = new FakeOllama({ models: [tagModel("x", 1)] }, { models: [psProcess("other-model")] });
+      ollama.tagsDelayMs = 20;
+      ollama.psDelayMs = 20;
+      const manager = new ModelManager(ollama, new FakeGenerations(null), FAST_TIMING);
+
+      const [loadResult, unloadResult] = await Promise.allSettled([manager.load("x"), manager.unload()]);
+
+      const results = [loadResult, unloadResult];
+      expect(results.filter((r) => r.status === "fulfilled").length).toBe(1);
+      const rejected = results.filter((r) => r.status === "rejected");
+      expect(rejected.length).toBe(1);
+      expect((rejected[0] as PromiseRejectedResult).reason).toBeInstanceOf(OperationInProgressError);
+
+      await waitUntilIdle(manager);
+      const state = await manager.state();
+
+      if (loadResult.status === "fulfilled") {
+        expect(unloadResult.status).toBe("rejected");
+        expect(state.resident).toEqual({ name: "x", loaded_by_server: true });
+      } else {
+        expect(unloadResult.status).toBe("fulfilled");
+        expect(state.resident).toBeNull();
+      }
+      expect(state.operation).toEqual({ kind: "idle" });
     });
   });
 

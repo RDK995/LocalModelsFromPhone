@@ -205,6 +205,12 @@ export class ModelManager {
       throw new OperationInProgressError();
     }
 
+    // Claim the operation synchronously, in the same tick as the isBusy()
+    // check above, before any await. Otherwise a second call arriving
+    // during the ps() lookup below would also pass isBusy() and be
+    // accepted (review finding F1).
+    this.operation = { kind: "unloading" };
+
     let residentName: string | undefined;
     try {
       const ps = await this.ollama.ps();

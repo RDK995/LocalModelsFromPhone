@@ -1129,6 +1129,37 @@ describe("Model load/unload operations (M2b)", () => {
     }
   });
 
+  it("POST /v1/models/unload fired twice with no await between returns one 202 and one 409", async () => {
+    const client = new FakeOllamaClient(completingChat(0));
+    const token = "test-token";
+    setValidToken(token);
+    const server = createServer({ ollama: client, port: 0 });
+
+    try {
+      const [first, second] = await Promise.all([
+        fetch(`http://127.0.0.1:${server.port}/v1/models/unload`, {
+          method: "POST",
+          headers: authHeaders(token),
+          body: JSON.stringify({}),
+        }),
+        fetch(`http://127.0.0.1:${server.port}/v1/models/unload`, {
+          method: "POST",
+          headers: authHeaders(token),
+          body: JSON.stringify({}),
+        }),
+      ]);
+
+      const statuses = [first.status, second.status].sort((a, b) => a - b);
+      expect(statuses).toEqual([202, 409]);
+
+      const conflictResponse = first.status === 409 ? first : second;
+      const body = (await conflictResponse.json()) as { error: string };
+      expect(body.error).toBe("operation_in_progress");
+    } finally {
+      server.stop(true);
+    }
+  });
+
   it("POST /v1/chat returns 409 operation_in_progress while a load is in flight", async () => {
     const client = new FakeOllamaClient(
       completingChat(0),
