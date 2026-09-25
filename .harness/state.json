@@ -2888,7 +2888,7 @@
       "requirements": [
         "FR6"
       ],
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -2904,16 +2904,165 @@
           "id": "M2-AC4",
           "text": "Swapping or unloading while a reply is in flight, or while the resident model was not loaded by this server, requires explicit confirmation, and cancelling the confirmation leaves state unchanged.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "HTTP (real routes, bearer auth) server/src/http/server.test.ts: POST /v1/models/load and /unload return 409 {error:confirmation_required, message, reasons} for reply_in_progress and not_loaded_by_server; follow-up GET /v1/state shows operation idle and the same resident (cancel leaves state unchanged); confirm:true -> 202 and an in-flight /v1/chat reply ends done {status:cancelled}; non-boolean confirm -> 400 \u2014 .harness/evidence/M2c-T1-verifier.log",
+            "Unit server/src/models/manager.test.ts: each reason alone and both, refusal issues no Ollama call, leaves operation idle and does not cancel the reply; confirmed ordering cancel -> released -> unload -> load; overlapping requests not both accepted \u2014 .harness/evidence/M2c-T1-verifier.log",
+            "Phone mobile/src/api/client.test.ts, mobile/src/ui/modelActions.test.ts, mobile/src/ui/confirmation.test.ts: typed ConfirmationRequiredError with reasons; decline makes exactly one start call, no poll, resolves cancelled; confirm retries with confirm:true then polls; warning text per reason with best-guess label \u2014 .harness/evidence/M2c-T2-verifier.log. Alert wiring in mobile/src/app/models.tsx is read, not unit-testable (.tsx)."
+          ]
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M2c-T1",
+          "scope": "Server confirmation rule: load/unload 409 confirmation_required {reasons}; confirmed request cancels in-flight reply (GenerationManager.cancelActive) and waits for release before swapping; claim before /api/ps await; chat re-checks isBusy before admission",
+          "tests": "cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh",
+          "requirements": [
+            "FR6"
+          ],
+          "constraints": [
+            "no live Ollama in tests",
+            "do not change shared/"
+          ],
+          "findings": [],
+          "criteria": [
+            "M2-AC4"
+          ],
+          "paths": [
+            "server/src/models/",
+            "server/src/http/",
+            "server/src/generations/"
+          ],
+          "depends_on": [],
+          "routing": {
+            "tier": "Top",
+            "model": "opus",
+            "reason_code": "DIFFICULT_CONCURRENCY",
+            "detail": "confirmation check awaits /api/ps between busy check and claim (the window behind M2b F1) and a confirmed request must cancel C6's reply and wait for slot release while chat and a second operation stay refused"
+          },
+          "status": "ACCEPTED",
+          "attempts": 1,
+          "packet": ".harness/tasks/M2c-T1.md",
+          "commit": "9af9213",
+          "attempt_log": [
+            {
+              "attempt": 4,
+              "role": "worker",
+              "tier": "Top",
+              "model": "opus",
+              "artifact": ".harness/evidence/M2c-T1-worker.log",
+              "verdict": "PASS",
+              "base": "ef16c78",
+              "changed_files": [
+                "server/src/models/manager.ts",
+                "server/src/models/manager.test.ts",
+                "server/src/http/server.ts",
+                "server/src/http/server.test.ts",
+                "server/src/generations/manager.ts",
+                "server/src/generations/manager.test.ts"
+              ],
+              "verifier": {
+                "artifact": ".harness/evidence/M2c-T1-verifier.log",
+                "exit_code": 0,
+                "verdict": "PASS",
+                "tests_weakened": "NO",
+                "discrepancies": "NONE"
+              },
+              "note": "pre-existing tests that swap/unload a model this server did not load now pass confirm: true (required by the new rule); verifier confirmed only call inputs changed, no assertion removed or loosened. Unload now answers 503 ollama_down when /api/ps fails (was 202 + background error)."
+            }
+          ]
+        },
+        {
+          "id": "M2c-T2",
+          "scope": "Phone busy warning: typed ConfirmationRequiredError with reasons; runModelAction confirm gate (retry with confirm true, or resolve cancelled without polling); warning text with best-guess label; Alert with Cancel / Load anyway / Unload anyway; live proof scripts pass confirm",
+          "tests": "cd mobile && bun run typecheck && bun test src/api src/ui src/chat src/app-routing && bun run lint && bun run smoke:runtime",
+          "requirements": [
+            "FR6"
+          ],
+          "constraints": [
+            "do not change shared/",
+            "do not run live proofs"
+          ],
+          "findings": [],
+          "criteria": [
+            "M2-AC4"
+          ],
+          "paths": [
+            "mobile/src/api/",
+            "mobile/src/ui/",
+            "mobile/src/app/models.tsx",
+            "mobile/scripts/"
+          ],
+          "depends_on": [],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "one confirmation round-trip in existing client, helper and screen against a fixed server contract"
+          },
+          "status": "ACCEPTED",
+          "attempts": 1,
+          "packet": ".harness/tasks/M2c-T2.md",
+          "commit": "32a1204",
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": null,
+              "verdict": "INTERRUPTED",
+              "note": "stopped at 40-turn limit with no report; resumed same invocation to deliver its return",
+              "base": "ef16c78"
+            },
+            {
+              "attempt": 3,
+              "continuation": 1,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M2c-T2-worker.log",
+              "verdict": "PASS",
+              "base": "ef16c78",
+              "changed_files": [
+                "mobile/src/api/client.ts",
+                "mobile/src/api/client.test.ts",
+                "mobile/src/ui/modelActions.ts",
+                "mobile/src/ui/modelActions.test.ts",
+                "mobile/src/ui/confirmation.ts",
+                "mobile/src/ui/confirmation.test.ts",
+                "mobile/src/app/models.tsx",
+                "mobile/scripts/model-swap-proof.ts",
+                "mobile/scripts/model-failed-load-proof.ts"
+              ],
+              "verifier": {
+                "artifact": ".harness/evidence/M2c-T2-verifier.log",
+                "exit_code": 0,
+                "verdict": "PASS",
+                "tests_weakened": "NO",
+                "discrepancies": "NONE"
+              }
+            }
+          ]
+        }
+      ],
       "reviews": [],
       "findings": [],
-      "validation": [],
+      "validation": [
+        {
+          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/e2e-tailnet-proof.sh && (cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh) && (cd ops && bun test src/token && bash scripts/verify-ops-install.sh) && (cd mobile && bun run typecheck && bun test src/api src/ui src/chat src/app-routing && bun run lint && bun run smoke:runtime && bash scripts/model-list-proof.sh && bash scripts/model-swap-proof.sh && bash scripts/model-failed-load-proof.sh && npx expo export --platform ios && rm -rf dist)",
+          "note": "same broad chain as M2b (about 12 minutes: model-swap-proof idles 600 s); the live proofs now pass confirm: true and must still pass against the redeployed server \u2014 they restart com.harness.server and com.harness.bundle-host and evict then restore the resident model; run nothing else against the Mac concurrently",
+          "artifacts": [
+            ".harness/evidence/M2c-T1-verifier.log",
+            ".harness/evidence/M2c-T2-verifier.log"
+          ],
+          "status": "PENDING"
+        }
+      ],
       "follow_ups": [
         "Size/shape check at pickup: 1 criterion; entry point is HTTP (POST /v1/models/load|unload -> 409 confirmation_required). Operational-complexity signal CONCURRENCY_LIFECYCLE present (a confirmed load/unload cancels C6's in-flight reply via I8 before C5 proceeds); SUBSYSTEMS_GT_3 judged absent (two subsystems: server, mobile app); no live-environment proof planned; ~5 production files; 2 worker tasks. One signal -> seam check: the only seam (server rule vs app dialog) cannot conserve the single criterion M2-AC4 in both parts, so M2c runs unsplit.",
-        "Carried from M2b (reviewer OPTIONAL F2, .harness/reviews/M2b-cycle1.md): a failed load's reason stays in operation.error until the next operation, so the Models screen can show 'Loaded: X' beside an old 'Load failed: ...'. Outside M2-AC4; not implemented in M2c."
+        "Carried from M2b (reviewer OPTIONAL F2, .harness/reviews/M2b-cycle1.md): a failed load's reason stays in operation.error until the next operation, so the Models screen can show 'Loaded: X' beside an old 'Load failed: ...'. Outside M2-AC4; not implemented in M2c.",
+        "Behaviour change outside M2-AC4 (M2c-T1): POST /v1/models/unload now answers 503 ollama_down when /api/ps fails (was 202 then a background 'Ollama unreachable'); swap-load likewise reads /api/ps before accepting. Consistent with the I4 precedence; C2 already maps ollama_down.",
+        "Side effect (M2c-T1): a chat arriving during the few ms an unconfirmed load/unload is being checked gets 409 operation_in_progress even if that request is then refused."
       ],
       "split_from": "M2"
     },
