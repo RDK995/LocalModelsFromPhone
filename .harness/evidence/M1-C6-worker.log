@@ -1,0 +1,96 @@
+=== M1-C6 worker evidence ===
+Commit: 85a6f41c566caf9cb75610ae15ef02217436462c
+Date: Fri 25 Sep 2026 12:59:55 BST
+
+=== AC2 RED confirmation (before src/app/index.tsx existed) ===
+Command: bun test src/app-routing (run before index.tsx was created)
+error: expect(received).toContain(expected)
+Expected to contain: "index.tsx"
+Received: [ "settings.tsx", "setup.tsx", "_layout.tsx", "chat.tsx" ]
+(fail) root index route > has an index.tsx under src/app with a function default export
+
+=== Full validation command ===
+cd mobile && bun run typecheck && bun test src/api src/ui src/chat src/app-routing && bun run lint && npx expo export --platform ios && rm -rf dist
+
+$ tsc --noEmit
+bun test v1.4.0 (1381054db)
+
+ 27 pass
+ 0 fail
+ 68 expect() calls
+Ran 27 tests across 7 files. [45.00ms]
+$ eslint src --max-warnings 0
+Using src/app as the root directory for Expo Router.
+Starting Metro Bundler
+
+iOS Bundled 3185ms expo-router.js (1116 modules)
+
+› Assets (23):
+node_modules/expo-router/assets/arrow_down.png (9.5KB)
+node_modules/expo-router/assets/error.png (469B)
+node_modules/expo-router/assets/file.png (138B)
+node_modules/expo-router/assets/forward.png (188B)
+node_modules/expo-router/assets/pkg.png (364B)
+node_modules/expo-router/assets/react-navigation/elements/back-icon-mask.png (653B)
+node_modules/expo-router/assets/react-navigation/elements/back-icon.png (4 variations | 566B)
+node_modules/expo-router/assets/react-navigation/elements/clear-icon.png (4 variations | 425B)
+node_modules/expo-router/assets/react-navigation/elements/close-icon.png (4 variations | 235B)
+node_modules/expo-router/assets/react-navigation/elements/search-icon.png (3 variations | 582B)
+node_modules/expo-router/assets/sitemap.png (465B)
+node_modules/expo-router/assets/unmatched.png (4.8KB)
+
+› ios bundles (1):
+_expo/static/js/ios/expo-router-d491934bdc6c4fb46fe3ccf9af0ab813.hbc (2.4MB)
+
+› Files (1):
+metadata.json (1.6KB)
+
+Exported: dist
+
+=== AC3: bundle-host.log tail (last ~300 lines; file only has 16 lines total) ===
+Path: /Users/ryankenny/Library/Logs/phone-models/bundle-host.log
+
+Starting project at /Users/ryankenny/Projects/CodingHarnessv2/mobile
+Using src/app as the root directory for Expo Router.
+Starting Metro Bundler
+
+Waiting on http://localhost:8081
+
+Logs for your project will appear below.
+Starting project at /Users/ryankenny/Projects/CodingHarnessv2/mobile
+Using src/app as the root directory for Expo Router.
+Starting Metro Bundler
+
+Waiting on http://localhost:8081
+
+Logs for your project will appear below.
+iOS Bundled 23140ms expo-router.js (1114 modules)
+iOS Bundled 23082ms expo-router.js (1 module)
+Starting project at /Users/ryankenny/Projects/CodingHarnessv2/mobile
+Using src/app as the root directory for Expo Router.
+Starting Metro Bundler
+
+Waiting on http://localhost:8081
+
+Logs for your project will appear below.
+iOS Bundled 1787ms expo-router.js (1107 modules)
+iOS Bundled 283ms expo-router.js (1 module)
+
+=== AC4(a): manifest request over tailnet ===
+Command: curl -s -H 'expo-platform: ios' -H 'accept: application/expo+json,application/json' http://ryans-mac-studio.tailc3648a.ts.net:8081/
+HTTP status: 200
+launchAsset.url:
+http://ryans-mac-studio.tailc3648a.ts.net:8081/expo-router.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=src%2Fapp&unstable_transformProfile=hermes-stable
+
+=== AC4(b): bundle fetch timing, cold then warm ===
+curl -w '%{http_code} %{size_download} %{time_total}'
+cold: 200 3698413 1.925809
+warm: 200 3698413 0.373046
+
+=== AC4(c): grep downloaded bundle for route registration ===
+grep -a -o "\"\./[A-Za-z_.]*tsx\": {" bundle | sort -u
+"./_layout.tsx": {
+"./chat.tsx": {
+"./index.tsx": {
+"./settings.tsx": {
+"./setup.tsx": {
