@@ -2,8 +2,10 @@
  * Models screen: lists every model installed on the Mac and marks the one
  * that is actually resident right now, including a model another tool on
  * the Mac loaded that the phone never asked for (F2 / edge case at
- * .harness/requirements.md lines 128-129). Load/Unload controls are not part
- * of this screen (milestone M2b) -- this is read-only.
+ * .harness/requirements.md lines 128-129). Load and Unload each start the
+ * operation on the server, then poll `GET /v1/state` until it finishes,
+ * showing a busy label meanwhile and, on a failed load, the server's failure
+ * reason (FR3, FR4, FR5).
  */
 
 import React, { useCallback, useRef, useState } from "react";
@@ -16,22 +18,51 @@ import {
   Text,
   View,
   Alert,
+  TouchableOpacity,
 } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
+import type { StateResponse } from "@shared/api";
 import { getToken } from "@/api/secureStoreToken";
 import { createAPIClient } from "@/api/expoFetchClient";
-import { UnauthorizedError } from "@/api/client";
+import { ServerError, UnauthorizedError } from "@/api/client";
 import { UNAUTHORIZED_MESSAGE } from "@/chat/chatController";
 import { toModelListView, type ModelRow } from "@/ui/modelList";
+import { runModelAction } from "@/ui/modelActions";
 
 export default function ModelsScreen() {
   const [rows, setRows] = useState<ModelRow[]>([]);
   const [residentLabel, setResidentLabel] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [busyLabel, setBusyLabel] = useState<string | null>(null);
+  const [failureMessage, setFailureMessage] = useState<string | null>(null);
+  const [canUnload, setCanUnload] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isActionPending, setIsActionPending] = useState(false);
   const router = useRouter();
   const clientRef = useRef(createAPIClient());
+
+  const applyState = useCallback((state: StateResponse) => {
+    const view = toModelListView(state);
+    setRows(view.rows);
+    setResidentLabel(view.residentLabel);
+    setBusyLabel(view.busyLabel);
+    setFailureMessage(view.failureMessage);
+    setCanUnload(view.canUnload);
+  }, []);
+
+  // Sent to Settings with the token form open, the same 401 pattern as
+  // chat.tsx (FR13).
+  const routeToUnauthorized = useCallback(() => {
+    Alert.alert(
+      UNAUTHORIZED_MESSAGE,
+      "The password on this phone no longer matches the Mac. Paste the current one from the Mac (pbcopy < ~/.phone-models/token)."
+    );
+    router.push({
+      pathname: "/settings",
+      params: { updateToken: "1" },
+    });
+  }, [router]);
 
   const load = useCallback(
     async (isPullToRefresh: boolean) => {
@@ -49,27 +80,18 @@ export default function ModelsScreen() {
         clientRef.current.setToken(token);
 
         const state = await clientRef.current.getState();
-        const view = toModelListView(state);
-        setRows(view.rows);
-        setResidentLabel(view.residentLabel);
+        applyState(state);
       } catch (error) {
         if (error instanceof UnauthorizedError) {
-          // Same 401 pattern as chat.tsx: the token on the phone no longer
-          // matches the Mac, so send the user to Settings with the token
-          // form already open (FR13).
-          Alert.alert(
-            UNAUTHORIZED_MESSAGE,
-            "The password on this phone no longer matches the Mac. Paste the current one from the Mac (pbcopy < ~/.phone-models/token)."
-          );
-          router.push({
-            pathname: "/settings",
-            params: { updateToken: "1" },
-          });
+          routeToUnauthorized();
           return;
         }
 
         setRows([]);
         setResidentLabel("");
+        setBusyLabel(null);
+        setFailureMessage(null);
+        setCanUnload(false);
         setErrorMessage(
           error instanceof Error ? error.message : "Can't reach the Mac"
         );
@@ -78,8 +100,61 @@ export default function ModelsScreen() {
         setIsRefreshing(false);
       }
     },
-    [router]
+    [router, applyState, routeToUnauthorized]
   );
+
+  const runAction = useCallback(
+    async (start: () => Promise<unknown>, startingBusyLabel: string) => {
+      setErrorMessage(null);
+      setIsActionPending(true);
+      setBusyLabel(startingBusyLabel);
+
+      try {
+        const token = await getToken();
+        if (!token) {
+          router.replace("/setup");
+          return;
+        }
+        clientRef.current.setToken(token);
+
+        await runModelAction({
+          start,
+          getState: () => clientRef.current.getState(),
+          onPoll: applyState,
+        });
+      } catch (error) {
+        if (error instanceof UnauthorizedError) {
+          routeToUnauthorized();
+          return;
+        }
+
+        setBusyLabel(null);
+        setErrorMessage(
+          error instanceof ServerError || error instanceof Error
+            ? error.message
+            : "Can't reach the Mac"
+        );
+      } finally {
+        setIsActionPending(false);
+      }
+    },
+    [router, applyState, routeToUnauthorized]
+  );
+
+  const handleLoad = useCallback(
+    (name: string) => {
+      runAction(() => clientRef.current.loadModel({ name }), `Loading ${name}…`);
+    },
+    [runAction]
+  );
+
+  const handleUnload = useCallback(() => {
+    const residentRow = rows.find((row) => row.isResident);
+    runAction(
+      () => clientRef.current.unloadModel({}),
+      residentRow ? `Unloading ${residentRow.name}…` : "Unloading…"
+    );
+  }, [runAction, rows]);
 
   // Refresh every time this screen gains focus, so a model loaded or
   // unloaded elsewhere (another tool on the Mac, or the phone itself on a
@@ -109,8 +184,29 @@ export default function ModelsScreen() {
       {residentLabel !== "" && (
         <Text style={styles.residentLabel}>{residentLabel}</Text>
       )}
+      {busyLabel !== null && (
+        <View style={styles.busyRow}>
+          <ActivityIndicator size="small" color="#007AFF" />
+          <Text style={styles.busyLabel}>{busyLabel}</Text>
+        </View>
+      )}
+      {failureMessage !== null && (
+        <Text style={styles.errorText}>{failureMessage}</Text>
+      )}
       {errorMessage !== null && (
         <Text style={styles.errorText}>{errorMessage}</Text>
+      )}
+      {canUnload && (
+        <TouchableOpacity
+          style={[
+            styles.unloadButton,
+            isActionPending && styles.buttonDisabled,
+          ]}
+          onPress={handleUnload}
+          disabled={isActionPending}
+        >
+          <Text style={styles.buttonText}>Unload</Text>
+        </TouchableOpacity>
       )}
       <FlatList
         data={rows}
@@ -128,6 +224,18 @@ export default function ModelsScreen() {
               <Text style={styles.rowSize}>{item.sizeLabel}</Text>
               {item.isResident && (
                 <Text style={styles.residentMarker}>Loaded</Text>
+              )}
+              {item.canLoad && (
+                <TouchableOpacity
+                  style={[
+                    styles.loadButton,
+                    isActionPending && styles.buttonDisabled,
+                  ]}
+                  onPress={() => handleLoad(item.name)}
+                  disabled={isActionPending}
+                >
+                  <Text style={styles.loadButtonText}>Load</Text>
+                </TouchableOpacity>
               )}
             </View>
           </View>
@@ -160,6 +268,44 @@ const styles = StyleSheet.create({
     color: "#ff3b30",
     paddingHorizontal: 20,
     paddingBottom: 8,
+  },
+  busyRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 20,
+    paddingBottom: 8,
+  },
+  busyLabel: {
+    fontSize: 14,
+    color: "#666",
+  },
+  unloadButton: {
+    backgroundColor: "#ff3b30",
+    borderRadius: 8,
+    marginHorizontal: 20,
+    marginBottom: 8,
+    paddingVertical: 10,
+    alignItems: "center",
+  },
+  loadButton: {
+    backgroundColor: "#007AFF",
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  loadButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 13,
+  },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  buttonDisabled: {
+    opacity: 0.5,
   },
   emptyListContent: {
     flexGrow: 1,

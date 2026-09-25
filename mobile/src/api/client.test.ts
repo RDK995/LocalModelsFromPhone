@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, mock } from "bun:test";
-import { APIClient, UnauthorizedError } from "./client";
+import { APIClient, ServerError, UnauthorizedError } from "./client";
 import type { StreamEvent } from "./client";
 
 const BASE_URL = "http://localhost:7789";
@@ -154,6 +154,68 @@ describe("APIClient authorization", () => {
     client.setToken("bad-token");
 
     await expect(client.getState()).rejects.toBeInstanceOf(UnauthorizedError);
+  });
+});
+
+describe("APIClient load/unload error mapping", () => {
+  it("throws a ServerError with the body's code and message for a 404 from loadModel", async () => {
+    const fetchMock = mock(async () =>
+      jsonResponse(
+        { error: "unknown_model", message: "No such model: bogus" },
+        404
+      )
+    );
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+
+    const error = await client.loadModel({ name: "bogus" }).catch((e) => e);
+    expect(error).toBeInstanceOf(ServerError);
+    expect((error as ServerError).code).toBe("unknown_model");
+    expect((error as ServerError).message).toBe("No such model: bogus");
+  });
+
+  it("throws a ServerError with the body's code and message for a 409 from unloadModel", async () => {
+    const fetchMock = mock(async () =>
+      jsonResponse(
+        { error: "operation_in_progress", message: "Already unloading" },
+        409
+      )
+    );
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+
+    const error = await client.unloadModel({}).catch((e) => e);
+    expect(error).toBeInstanceOf(ServerError);
+    expect((error as ServerError).code).toBe("operation_in_progress");
+    expect((error as ServerError).message).toBe("Already unloading");
+  });
+
+  it("still maps a 401 from loadModel to UnauthorizedError, not ServerError", async () => {
+    const fetchMock = mock(async () =>
+      jsonResponse({ error: "unauthorized", message: "Invalid or missing bearer token" }, 401)
+    );
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("bad-token");
+
+    await expect(client.loadModel({ name: "m" })).rejects.toBeInstanceOf(
+      UnauthorizedError
+    );
+  });
+
+  it("still maps a 401 from unloadModel to UnauthorizedError, not ServerError", async () => {
+    const fetchMock = mock(async () =>
+      jsonResponse({ error: "unauthorized", message: "Invalid or missing bearer token" }, 401)
+    );
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("bad-token");
+
+    await expect(client.unloadModel({})).rejects.toBeInstanceOf(
+      UnauthorizedError
+    );
   });
 });
 

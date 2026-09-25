@@ -77,6 +77,23 @@ export class ModelNotResidentError extends Error {
   }
 }
 
+/**
+ * Thrown by `loadModel`/`unloadModel` for a non-OK, non-401 response, built
+ * from the server's `{error, message}` body (e.g. 404 `unknown_model`, 409
+ * `operation_in_progress`, 503 `ollama_down`) so callers can show the
+ * server's own failure reason instead of a generic message.
+ */
+export class ServerError extends Error {
+  /** The response body's `error` code, e.g. "unknown_model". */
+  code: string;
+
+  constructor(code: string, message?: string) {
+    super(message ?? code);
+    this.name = "ServerError";
+    this.code = code;
+  }
+}
+
 export class APIClient {
   private baseUrl: string;
   private token: string = "";
@@ -116,6 +133,33 @@ export class APIClient {
     }
   }
 
+  /**
+   * Throw a typed error for a non-OK response from load/unload:
+   * `UnauthorizedError` for 401, otherwise `ServerError` built from the
+   * response body's `{error, message}` (falling back to a generic `Error` if
+   * the body isn't that shape).
+   */
+  private async assertLoadUnloadOk(
+    response: Response,
+    action: string
+  ): Promise<void> {
+    if (response.status === 401) {
+      throw new UnauthorizedError();
+    }
+    if (!response.ok) {
+      let body: { error?: string; message?: string } = {};
+      try {
+        body = await response.json();
+      } catch {
+        // Not JSON (or empty body); fall through to a generic error below.
+      }
+      if (body.error) {
+        throw new ServerError(body.error, body.message);
+      }
+      throw new Error(`Failed to ${action}: ${response.statusText}`);
+    }
+  }
+
   async getState(): Promise<StateResponse> {
     const response = await this.fetchImpl(`${this.baseUrl}/v1/state`, {
       method: "GET",
@@ -134,7 +178,7 @@ export class APIClient {
       body: JSON.stringify(request),
     });
 
-    this.assertOk(response, "load model");
+    await this.assertLoadUnloadOk(response, "load model");
 
     return response.json();
   }
@@ -146,7 +190,7 @@ export class APIClient {
       body: JSON.stringify(request),
     });
 
-    this.assertOk(response, "unload model");
+    await this.assertLoadUnloadOk(response, "unload model");
 
     return response.json();
   }

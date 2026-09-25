@@ -42,8 +42,18 @@ describe("toModelListView", () => {
     const view = toModelListView(state);
 
     expect(view.rows).toEqual([
-      { name: "llama3:70b", sizeLabel: "39.0 GB", isResident: false },
-      { name: "phi3:mini", sizeLabel: "2.3 GB", isResident: false },
+      {
+        name: "llama3:70b",
+        sizeLabel: "39.0 GB",
+        isResident: false,
+        canLoad: true,
+      },
+      {
+        name: "phi3:mini",
+        sizeLabel: "2.3 GB",
+        isResident: false,
+        canLoad: true,
+      },
     ]);
   });
 
@@ -94,5 +104,91 @@ describe("toModelListView", () => {
 
     expect(view.rows).toEqual([]);
     expect(view.residentLabel).toBe("Nothing loaded");
+  });
+
+  it("reports no busy label, no failure message, and no Unload availability when idle with nothing resident", () => {
+    const view = toModelListView(baseState);
+
+    expect(view.busyLabel).toBeNull();
+    expect(view.failureMessage).toBeNull();
+    expect(view.canUnload).toBe(false);
+  });
+
+  it("marks Load unavailable for the resident row, and Unload available, when idle with a resident model", () => {
+    const state: StateResponse = {
+      ...baseState,
+      models: [
+        { name: "llama3:70b", size_bytes: 39_000_000_000 },
+        { name: "phi3:mini", size_bytes: 2_300_000_000 },
+      ],
+      resident: { name: "phi3:mini", loaded_by_server: true },
+    };
+
+    const view = toModelListView(state);
+
+    expect(view.rows.map((r) => r.canLoad)).toEqual([true, false]);
+    expect(view.canUnload).toBe(true);
+    expect(view.busyLabel).toBeNull();
+    expect(view.failureMessage).toBeNull();
+  });
+
+  it("shows a 'Loading <model>…' busy label and makes no row loadable or unloadable while loading", () => {
+    const state: StateResponse = {
+      ...baseState,
+      models: [{ name: "llama3:70b", size_bytes: 39_000_000_000 }],
+      operation: { kind: "loading", model: "llama3:70b" },
+    };
+
+    const view = toModelListView(state);
+
+    expect(view.busyLabel).toBe("Loading llama3:70b…");
+    expect(view.rows.every((r) => !r.canLoad)).toBe(true);
+    expect(view.canUnload).toBe(false);
+    expect(view.failureMessage).toBeNull();
+  });
+
+  it("shows an 'Unloading <model>…' busy label while unloading a named model", () => {
+    const state: StateResponse = {
+      ...baseState,
+      resident: { name: "llama3:70b", loaded_by_server: true },
+      operation: { kind: "unloading", model: "llama3:70b" },
+    };
+
+    const view = toModelListView(state);
+
+    expect(view.busyLabel).toBe("Unloading llama3:70b…");
+    expect(view.canUnload).toBe(false);
+  });
+
+  it("falls back to a nameless 'Unloading…' busy label when the operation carries no model", () => {
+    const state: StateResponse = {
+      ...baseState,
+      resident: { name: "llama3:70b", loaded_by_server: true },
+      operation: { kind: "unloading" },
+    };
+
+    const view = toModelListView(state);
+
+    expect(view.busyLabel).toBe("Unloading…");
+  });
+
+  it("reports the failure reason from a load that ended idle with an error, and nothing resident", () => {
+    const state: StateResponse = {
+      ...baseState,
+      models: [{ name: "llama3:70b", size_bytes: 39_000_000_000 }],
+      resident: null,
+      operation: {
+        kind: "idle",
+        model: "llama3:70b",
+        error: "Insufficient memory to load llama3:70b",
+      },
+    };
+
+    const view = toModelListView(state);
+
+    expect(view.failureMessage).toBe("Insufficient memory to load llama3:70b");
+    expect(view.residentLabel).toBe("Nothing loaded");
+    expect(view.busyLabel).toBeNull();
+    expect(view.rows[0].canLoad).toBe(true);
   });
 });
