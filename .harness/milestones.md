@@ -2,7 +2,7 @@
 
 ## M1 — Authenticated tailnet chat stream proof
 
-Status: REVIEW
+Status: BLOCKED
 
 ### Outcome
 
@@ -114,10 +114,42 @@ Do the re-test. If all four pass, record them and set M1 back to REVIEW for the 
 
 Cycle 3 (human-authorised override, one extra fix cycle; answers cycle-2 finding B after the human's re-test: Setup keyboard covers Continue and cannot be dismissed)
 Pre-correction: 811f5bed6d9a1d5eeccbcd842624f77fd8d5a9ba
+Corrections (each verifier-confirmed, committed):
+- M1-C9 B: Setup/Settings/Chat wrapped in KeyboardAvoidingView with ScrollView keyboardShouldPersistTaps + keyboardDismissMode and tap-outside Keyboard.dismiss; token fields single-line, returnKeyType done, onSubmitEditing; chat's Stack header hidden (chat renders its own) — Mid attempt 3 INTERRUPTED (turn limit, handoff .harness/tasks/M1-C9-handoff-1.md) → continuation 1 PASS; verifier: typecheck, 30 tests, lint, iOS export, new test RED on HEAD/GREEN now, tailnet bundle carries new Setup code, Serve mappings intact; 81d49c6
+- M1-C10 B: Setup/Settings keyboardVerticalOffset = useHeaderHeight() (RN KeyboardAvoidingView measures its frame parent-relative, so offset 0 under a Stack header left ~header height of the view under the keyboard; found by the orchestrator reading RN source) — Cheap attempt 1 PASS; verifier: typecheck, 32 tests, lint, iOS export, served bundle carries the offset; 61421a3
+Bundle host restarted (no sudo) after each; pf anchor and Tailscale Serve mappings untouched.
+Validation artifacts: .harness/evidence/M1-C9-verifier.log, .harness/evidence/M1-C10-verifier.log
+Correction diff: git diff 811f5bed6d9a1d5eeccbcd842624f77fd8d5a9ba HEAD
+Files changed by corrections: mobile/src/app/{setup.tsx,settings.tsx,chat.tsx,_layout.tsx}; mobile/src/app-routing/keyboardHandling.test.ts. No file outside the finding's scope (_layout.tsx: chat route headerShown false only).
+
+Problem:
+Cycle-3 corrections are done, verified and served to the phone. Finding B (M1-AC1, AC2 app half, AC3 phone half) can only be closed by the human's on-phone checks. The review cap, including the one-cycle override, is now spent, so the final review needs that evidence first.
+
+Requirement/milestone affected:
+M1-AC1, M1-AC2, M1-AC3 (finding B).
+
+Attempts made:
+1. M1-C9 made all three screens move above the keyboard and let a tap or drag outside the input close it; the token field now has a Done key that submits.
+2. M1-C10 corrected Setup/Settings so the lift includes the height of the top title bar.
+3. Keyboard behaviour cannot be exercised by automated tests here (bun cannot render React Native; the simulator cannot be tapped without extra tooling); regression tests check the screen source statically.
+
+Remaining issue:
+Human re-test on the iPhone, Tailscale ON:
+1. Force-close Expo Go, reopen it, open exp://ryans-mac-studio.tailc3648a.ts.net:8081 (the first open may take ~20-30s while the bundle builds). Expect the Setup screen.
+2. Tap the token box: the keyboard opens and the Continue button stays visible above it. Tap an empty area of the screen: the keyboard closes. Tap the box again.
+3. On the Mac run `pbcopy < ~/.phone-models/token`, paste into the box (Universal Clipboard), then tap Continue (or the keyboard's Done key). Expect the Chat screen, with a single top bar that has a Settings link.
+4. On Chat, tap the message box: the message box and Send stay visible above the keyboard; dragging the message list down closes the keyboard.
+5. Send a short prompt. Expect the reply word by word, finishing.
+6. Send a long prompt, tap Stop while it is writing. Expect the text to stop and not resume.
+7. Tap Settings, tap Update Token: the Save and Cancel buttons stay visible above the keyboard; tap Cancel; use the back arrow to return to Chat.
+Record pass/fail on M1-AC1 (steps 1, 4, 5), M1-AC2 (steps 2, 3, 7), M1-AC3 (step 6).
+
+Recommended decision:
+Do the re-test. If all pass, record them and set M1 back to REVIEW for the scoped final review of cycle 3's corrections. If any fails, record exactly what the screen showed; the cap is spent, so the milestone needs a human decision.
 
 ### Review Cycles
 
-2
+3
 
 ### Follow-ups
 
