@@ -37,8 +37,8 @@ Tasks (structured detail in state.json):
 - M1-T6 current Expo SDK 57 + expo/fetch + real tests — Mid, attempt 3 (three turn-limit interruptions, then finish-only worker PASS); verifier PASS (typecheck, 15 tests, lint, ios export exit 0; expo-doctor 21/21); commit a8ca44e
 - M1-T5 split into T5a (code) and T5b (live) to fit a worker's turn limit
 - M1-T5a server entry point, LaunchAgent plists, 8443 Serve script, entry smoke — Top (SECURITY), attempt 4, PASS; verifier PASS (server 25 tests, entry-smoke 7/7, ops token 14, bash -n, plutil); no live changes; commit 0cce5e1
-- M1-T7 wire HTTP routes to generation manager + Ollama — Mid (ORDINARY_IMPLEMENTATION), attempt 3 INTERRUPTED at turn limit; partial work uncommitted; next: continuation 1 with .harness/tasks/M1-T7-handoff-1.md
-- M1-T5b live install + e2e tailnet proof — Top (SECURITY), not started; depends on T7 (.harness/tasks/M1-T5b.md)
+- M1-T7 wire HTTP routes to generation manager + Ollama — Mid (ORDINARY_IMPLEMENTATION), attempt 3 INTERRUPTED at turn limit, then continuation 1 PASS; verifier PASS (server 29 tests, typecheck, entry-smoke 7/7; tests not weakened); live-loopback curl proof exit 0 but no model resident, so token streaming left to T5b; commit 69dc85f
+- M1-T5b live install + e2e tailnet proof — Top (SECURITY), attempt 4 dispatched (.harness/tasks/M1-T5b.md)
 
 ### Validation
 
@@ -59,7 +59,7 @@ Pending.
 - M1-T4 was accepted with placeholder tests on Expo SDK 51 (latest is 57); corrected under M1-T6.
 - M1-T1/M1-T2 were accepted with HTTP routes never wired to the generation manager (placeholders); found by M1-T5a, corrected under M1-T7.
 - No .gitignore excludes server/node_modules/ (untracked); add one (node_modules/, dist/).
-- Worker budget: 17 of 22 used (human raised it from 16); remaining T7 continuation and T5b.
+- Worker budget: 19 of 22 used (human raised it from 16); T5b in flight.
 
 ## M2 — Model list, swap-load, and unload with busy confirmation
 

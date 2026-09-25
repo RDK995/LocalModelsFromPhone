@@ -747,7 +747,7 @@
       "detail": "connect existing tested components behind existing auth; contract fixed by shared/api.ts; settled by tests and live-loopback proof"
      },
      "packet": ".harness/tasks/M1-T7.md",
-     "status": "IN_PROGRESS",
+     "status": "ACCEPTED",
      "attempts": 3,
      "attempt_log": [
       {
@@ -757,9 +757,42 @@
        "model": "sonnet",
        "verdict": "INTERRUPTED",
        "note": "hit 40-turn limit, no report; left uncommitted changes in server/src/http/server.ts, server.test.ts, index.ts, generations/manager.ts (unverified)"
+      },
+      {
+       "attempt": 3,
+       "role": "worker",
+       "continuation": 1,
+       "verdict": "PASS",
+       "artifact": ".harness/evidence/M1-T7-worker.log",
+       "routing": {
+        "tier": "Mid",
+        "model": "sonnet",
+        "reason_code": "ORDINARY_IMPLEMENTATION",
+        "detail": "connect existing tested components behind existing auth; contract fixed by shared/api.ts; settled by tests and live-loopback proof"
+       },
+       "changed_files": [
+        "server/src/http/server.ts",
+        "server/src/http/server.test.ts",
+        "server/src/index.ts",
+        "server/src/generations/manager.ts"
+       ],
+       "note": "continuation 1 validated the interrupted attempt's on-disk work; no further code edits. Live-loopback curl proof exit 0; no model resident in Ollama so no token stream observed (deferred to M1-T5b)."
+      },
+      {
+       "attempt": 3,
+       "role": "verifier",
+       "verdict": "PASS",
+       "artifact": ".harness/evidence/M1-T7-verifier.log",
+       "validation": {
+        "command": "cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh",
+        "exit_code": 0,
+        "detail": "29 pass, tsc clean, entry smoke 7/7"
+       },
+       "tests_weakened": "NO"
       }
      ],
-     "next_step": "Dispatch ONE continuation worker (Mid, sonnet) with packet .harness/tasks/M1-T7.md and handoff .harness/tasks/M1-T7-handoff-1.md (continuation 1 of 2). Then verifier, then commit. Then M1-T5b (Top, opus, packet .harness/tasks/M1-T5b.md); T5b's live proof now depends on T7's wired routes. Note: server.test.ts must not bind 7789 once the live agent runs."
+     "next_step": null,
+     "commit": "69dc85f"
     },
     {
      "id": "M1-T5b",
@@ -805,7 +838,7 @@
       "reason_code": "SECURITY",
       "detail": "live network exposure changes on the user's Mac (Tailscale Serve, LaunchAgents, bundle host); also cross-cutting server/ops/live env"
      },
-     "status": "PENDING",
+     "status": "IN_PROGRESS",
      "attempts": 0,
      "packet": ".harness/tasks/M1-T5b.md"
     },
@@ -1101,9 +1134,23 @@
       "id": "m1-t7-worker-2",
       "kind": "worker",
       "task": "M1-T7",
-      "status": "DISPATCHED",
+      "status": "COMPLETE",
       "continuation_of": "m1-t7-worker-1",
-      "handoff": ".harness/tasks/M1-T7-handoff-1.md"
+      "handoff": ".harness/tasks/M1-T7-handoff-1.md",
+      "result": "TERMINAL"
+     },
+     {
+      "id": "m1-t7-verifier-1",
+      "kind": "verifier",
+      "task": "M1-T7",
+      "status": "COMPLETE",
+      "result": "TERMINAL"
+     },
+     {
+      "id": "m1-t5b-worker-1",
+      "kind": "worker",
+      "task": "M1-T5b",
+      "status": "DISPATCHED"
      }
     ],
     "active_dispatch": null
@@ -1128,7 +1175,7 @@
      "by": "human"
     }
    ],
-   "budget_note": "Worker dispatch events used: 18 of 22 (T1 x2, T2 x5, T3 x1, T4 x3, T6 x4, T5a x1, T7 x2). Remaining 4: T5b (Top, live) plus retries."
+   "budget_note": "Worker dispatch events used: 19 of 22 (T1 x2, T2 x5, T3 x1, T4 x3, T6 x4, T5a x1, T7 x2, T5b x1). Remaining 3."
   },
   "M2": {
    "id": "M2",
