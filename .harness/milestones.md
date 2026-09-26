@@ -284,6 +284,8 @@ Pending.
 - [ ] **M4-AC1**: For a model that emits reasoning output, the app shows it in a collapsed, expandable section separate from the answer.
 - [ ] **M4-AC2**: Killing the connection mid-reply and reconnecting yields the complete reply with no gaps and no duplicated text.
 - [ ] **M4-AC3**: Backgrounding the app mid-reply and returning to foreground resumes the same reply and receives its terminal state, with only an explicit Stop cancelling generation.
+- [ ] **M4-AC4**: After Send, the user's prompt appears in the conversation immediately, before any reply token arrives.
+- [ ] **M4-AC5**: A streaming reply renders incrementally in its final place in the conversation; on completion it stays where it is, with no separate streaming area whose text then moves into the conversation.
 
 ### Baseline
 
@@ -307,7 +309,7 @@ Pending.
 
 ### Follow-ups
 
-None.
+- Added 2026-09-26 by the human after M3 DONE (on-device observation): in M3's chat screen the user's prompt is not shown until the reply arrives, and a long reply streams in a separate area then jumps into the conversation on completion. Folded into M4 as M4-AC4/M4-AC5 (trace: FR7, FR9) because M4 reworks the same streaming display.
 
 ## M5 — Always-on Mac tooling, plain-language errors, and PWA retirement
 
