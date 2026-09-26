@@ -4122,7 +4122,7 @@
       "requirements": [
         "FR11"
       ],
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -4138,7 +4138,10 @@
           "id": "M4-AC3",
           "text": "Backgrounding the app mid-reply and returning to foreground resumes the same reply and receives its terminal state, with only an explicit Stop cancelling generation.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "Client unit tests: APIClient.chat resumes at once on an injected lifecycle's foreground event (internal per-transport abort treated as a drop, backoff wait ended early, budget not spent while backgrounded); backgrounding never cancels; Stop still aborts -- mobile/src/api/client.test.ts cases (a)-(i); AppState adapter in expoFetchClient.ts (.harness/evidence/M4c-T1-verifier.log)",
+            "Live tailnet: the app's own sendInConversation over an APIClient with a simulated lifecycle; /v1/chat body stalled after 5 content events (background) for 8 s; foreground -> resume GET with Last-Event-ID 2 ms later, no /cancel, one done complete, 309 content events equal an independent full replay, stored message complete; scenario B: foreground then the app's Stop -> exactly one cancel POST (200 cancelled), one done cancelled, stored stopped, replay done cancelled -- mobile/scripts/background-proof.sh (.harness/evidence/M4c-T3-verifier.log)"
+          ]
         }
       ],
       "tasks": [
@@ -4240,7 +4243,7 @@
             "reason_code": "BOUNDED_LOW_RISK",
             "detail": "proof script copied from resume-proof pattern; assertions against an independent full replay are the oracle"
           },
-          "status": "IN_PROGRESS",
+          "status": "SPLIT",
           "attempts": 2,
           "packet": ".harness/tasks/M4c-T2.md",
           "commit": null,
@@ -4288,16 +4291,98 @@
                 "mobile/scripts/background-proof.ts"
               ],
               "note": "40-turn limit, no report. Timed log: foreground at 3988 ms, first resumed content at 147842 ms (144 s gap), cancel -> already_complete. Foreground did not produce an immediate resume; likely the stalling wrapper does not reject on the internal abort signal (script bug) or a client defect. Continuation via .harness/tasks/M4c-T2-handoff-2.md"
+            },
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M4c-T2-worker.log",
+              "verdict": "INTERRUPTED",
+              "base": "609240a",
+              "continuation": 1,
+              "changed_files": [
+                "mobile/scripts/background-proof.sh",
+                "mobile/scripts/background-proof.ts"
+              ],
+              "note": "40-turn limit again, no report; second worker continuation for the task, cap reached. Task split: a navigator diagnosis run (.harness/evidence/M4c-T2-diag.log) showed 'notifying 0 listener(s)' -- the script built clients with client.ts createAPIClient(baseUrl, fetchImpl), which drops the {lifecycle} argument (script bug, not a product defect). Remaining work moved to M4c-T3."
+            }
+          ]
+        },
+        {
+          "id": "M4c-T3",
+          "scope": "finish live background/foreground proof: construct clients with new APIClient(..., {lifecycle}) so the fake lifecycle is observed; Stop at 5th post-foreground content event; run to completion",
+          "tests": "cd mobile && bun run typecheck && bun run lint && bash scripts/background-proof.sh",
+          "requirements": [
+            "FR11"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M4-AC3"
+          ],
+          "paths": [
+            "mobile/scripts/background-proof.sh",
+            "mobile/scripts/background-proof.ts"
+          ],
+          "depends_on": [
+            "M4c-T1",
+            "M4c-T2"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "split from M4c-T2 after its continuation cap; bounded fix plus a live run whose scenario B outcome still needed judgement"
+          },
+          "status": "ACCEPTED",
+          "attempts": 1,
+          "packet": ".harness/tasks/M4c-T3.md",
+          "commit": "2cd6cc1",
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M4c-T3-worker.log",
+              "verdict": "PASS",
+              "base": "609240a",
+              "changed_files": [
+                "mobile/scripts/background-proof.sh",
+                "mobile/scripts/background-proof.ts"
+              ],
+              "verifier": {
+                "artifact": ".harness/evidence/M4c-T3-verifier.log",
+                "exit_code": 0,
+                "verdict": "PASS",
+                "tests_weakened": "NO",
+                "discrepancies": "resume GET 2 ms after foreground, not 0 ms as the worker said; negligible"
+              },
+              "note": "typecheck 0, lint 0, live proof 16 PASS / 0 FAIL, Mac restored. A: resume GET 2 ms after foreground, no /cancel, one done complete, 309 events equal independent replay, stored complete contains 80. B: one cancel POST -> 200 {status:cancelled}, one done cancelled, stored stopped, replay done cancelled."
             }
           ]
         }
       ],
       "reviews": [],
       "findings": [],
-      "validation": [],
+      "validation": [
+        {
+          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/e2e-tailnet-proof.sh && (cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh) && (cd ops && bun test src/token && bash scripts/verify-ops-install.sh) && (cd mobile && bun run typecheck && bun test src/store src/api src/ui src/chat src/app-routing && bun run lint && bun run smoke:runtime && bash scripts/model-list-proof.sh && bash scripts/model-swap-proof.sh && bash scripts/model-failed-load-proof.sh && bash scripts/conversation-proof.sh && bash scripts/thinking-proof.sh && bash scripts/resume-proof.sh && bash scripts/background-proof.sh && npx expo export --platform ios && rm -rf dist)",
+          "note": "M4b chain plus background-proof.sh. About 17 minutes; live proofs restart com.harness.server and com.harness.bundle-host and swap/evict then restore the resident model; run nothing else against the Mac concurrently.",
+          "artifacts": [
+            ".harness/evidence/M4c-T1-verifier.log",
+            ".harness/evidence/M4c-T3-verifier.log"
+          ],
+          "status": "PENDING"
+        }
+      ],
       "follow_ups": [
         "Recon at split (2026-09-26): server already supports resume -- GET /v1/generations/:id/events reads Last-Event-ID (server/src/http/server.ts parseResumeSeq lines 363-372, id format <gen>-<seq>, replays from seq+1), a client abort of /v1/chat does not cancel the generation (sseResponse cancel() lines 333-336; server.test.ts lines 649, 691), logs kept 10 min (manager.ts line 35). Phone has no resume: mobile/src/api/client.ts chat() ignores SSE id: lines and treats a body that ends without a terminal event as complete (onComplete); no Last-Event-ID, backoff or AppState code anywhere in mobile/src.",
-        "Pickup size/shape check (2026-09-26): 1 criterion; entry point = the app's APIClient/sendInConversation driven live over the tailnet; operational signal IMPLEMENTATION_PLUS_LIVE_PROOF only (CONCURRENCY_LIFECYCLE judged absent: a foreground listener is added but no component's ownership of generation lifecycle or cancellation changes -- server owns the generation, Stop alone cancels). Seam check: the only seam is implementation vs proof, which is not independently reviewable and would split a single criterion; run as one milestone. Live proof simulates AppState with an injected lifecycle; an on-device Expo Go background/foreground check is a human spot-check."
+        "Pickup size/shape check (2026-09-26): 1 criterion; entry point = the app's APIClient/sendInConversation driven live over the tailnet; operational signal IMPLEMENTATION_PLUS_LIVE_PROOF only (CONCURRENCY_LIFECYCLE judged absent: a foreground listener is added but no component's ownership of generation lifecycle or cancellation changes -- server owns the generation, Stop alone cancels). Seam check: the only seam is implementation vs proof, which is not independently reviewable and would split a single criterion; run as one milestone. Live proof simulates AppState with an injected lifecycle; an on-device Expo Go background/foreground check is a human spot-check.",
+        "background-proof.ts assertion A-a checks 'at least K' content events before the stall (the wrapper forwards exactly K by construction); packet wording was 'exactly K'. Scenario B-a asserts exactly one cancel POST, and Stop is the script's only cancel path, but it does not separately assert no cancel preceded the Stop call. Reviewer may judge.",
+        "mobile/src/api/client.ts createAPIClient(baseUrl, fetchImpl) cannot take a lifecycle/clock, which silently cost M4c-T2 two attempts; production uses expoFetchClient.createAPIClient, which does pass it. Consider removing or extending the client.ts factory (out of scope here).",
+        "M4c-T2 exceeded two worker continuations (turn limits during a live-run diagnosis); split into M4c-T3 once diagnosed."
       ]
     },
     "M5": {
