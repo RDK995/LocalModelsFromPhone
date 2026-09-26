@@ -304,8 +304,10 @@ Pending.
 ### Evidence
 
 Tasks (structured detail in state.json; packets under .harness/tasks/):
-- M4c-T1 foreground resume in the app client + AppState wiring — Mid (ORDINARY_IMPLEMENTATION) — pending
-- M4c-T2 live tailnet background/foreground proof mobile/scripts/background-proof.{sh,ts} — Cheap (BOUNDED_LOW_RISK) — pending
+- M4c-T1 foreground resume in the app client + AppState wiring (mobile/src/api/client.ts, client.test.ts, expoFetchClient.ts) — Mid (ORDINARY_IMPLEMENTATION), attempt 3 INTERRUPTED (turn limit) -> continuation 1 PASS; verifier PASS (typecheck, 147 tests, lint, smoke:runtime 4/4; tests not weakened) — .harness/evidence/M4c-T1-verifier.log; commit cd3f36f
+- M4c-T2 live tailnet background/foreground proof mobile/scripts/background-proof.{sh,ts} — IN PROGRESS, not accepted. Cheap attempt 1 INTERRUPTED -> continuation FAIL (scenario B done complete, not cancelled) -> Mid attempt 3 (escalated: unexplained failure) INTERRUPTED. Timed log shows the foreground produced no resume for 144 s (foreground 3988 ms, first resumed event 147842 ms). Next: continuation of attempt 3 with .harness/tasks/M4c-T2-handoff-2.md (decide script bug vs client defect). Scripts are untracked in the tree.
+
+Remaining: M4c-T2, then Validation and REVIEW.
 
 ### Validation
 

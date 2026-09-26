@@ -4170,11 +4170,50 @@
             "reason_code": "ORDINARY_IMPLEMENTATION",
             "detail": "extends the M4b resume loop with a foreground trigger and internal abort; foreground-vs-Stop race is the risky part; fake-fetch/fake-lifecycle unit tests are the oracle"
           },
-          "status": "PENDING",
-          "attempts": 0,
+          "status": "ACCEPTED",
+          "attempts": 1,
           "packet": ".harness/tasks/M4c-T1.md",
-          "commit": null,
-          "attempt_log": []
+          "commit": "cd3f36f",
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": null,
+              "verdict": "INTERRUPTED",
+              "base": "8b7478e",
+              "changed_files": [
+                "mobile/src/api/client.ts",
+                "mobile/src/api/client.test.ts",
+                "mobile/src/api/expoFetchClient.ts"
+              ],
+              "note": "hit 40-turn limit with no report; continuation 1 dispatched with .harness/tasks/M4c-T1-handoff-1.md (no ladder rung spent)"
+            },
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M4c-T1-worker.log",
+              "verdict": "PASS",
+              "base": "8b7478e",
+              "continuation": 1,
+              "changed_files": [
+                "mobile/src/api/client.ts",
+                "mobile/src/api/client.test.ts",
+                "mobile/src/api/expoFetchClient.ts"
+              ],
+              "verifier": {
+                "artifact": ".harness/evidence/M4c-T1-verifier.log",
+                "exit_code": 0,
+                "verdict": "PASS",
+                "tests_weakened": "NO",
+                "discrepancies": "NONE"
+              },
+              "note": "typecheck, 147 tests, lint 0 warnings, smoke:runtime 4/4; packet criteria 1-8 mapped to code and cases (a)-(i) at client.test.ts ~1248-1800; only removed test line is a widened type import; client.ts has no react-native import; AppState adapter in expoFetchClient.ts"
+            }
+          ]
         },
         {
           "id": "M4c-T2",
@@ -4201,11 +4240,56 @@
             "reason_code": "BOUNDED_LOW_RISK",
             "detail": "proof script copied from resume-proof pattern; assertions against an independent full replay are the oracle"
           },
-          "status": "PENDING",
-          "attempts": 0,
+          "status": "IN_PROGRESS",
+          "attempts": 2,
           "packet": ".harness/tasks/M4c-T2.md",
           "commit": null,
-          "attempt_log": []
+          "attempt_log": [
+            {
+              "attempt": 1,
+              "role": "worker",
+              "tier": "Cheap",
+              "model": "haiku",
+              "artifact": null,
+              "verdict": "INTERRUPTED",
+              "base": "cd3f36f",
+              "changed_files": [
+                "mobile/scripts/background-proof.sh",
+                "mobile/scripts/background-proof.ts"
+              ],
+              "note": "40-turn limit, no report; log showed ordering bug (foreground before stall) and .sh false PASS after the .ts was killed; continuation via .harness/tasks/M4c-T2-handoff-1.md"
+            },
+            {
+              "attempt": 1,
+              "role": "worker",
+              "tier": "Cheap",
+              "model": "haiku",
+              "artifact": ".harness/evidence/M4c-T2-worker.log",
+              "verdict": "FAIL",
+              "base": "cd3f36f",
+              "continuation": 1,
+              "changed_files": [
+                "mobile/scripts/background-proof.sh",
+                "mobile/scripts/background-proof.ts"
+              ],
+              "note": "ordering and false-PASS fixed; scenario A PASS; scenario B done status complete not cancelled; worker attribution (model too fast) implausible and unproven"
+            },
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M4c-T2-worker.log",
+              "verdict": "INTERRUPTED",
+              "base": "cd3f36f",
+              "escalated": "Cheap attempt 1 FAIL for an unexplained cause (script bug or product defect), not a mechanical slip; second Cheap attempt skipped",
+              "changed_files": [
+                "mobile/scripts/background-proof.sh",
+                "mobile/scripts/background-proof.ts"
+              ],
+              "note": "40-turn limit, no report. Timed log: foreground at 3988 ms, first resumed content at 147842 ms (144 s gap), cancel -> already_complete. Foreground did not produce an immediate resume; likely the stalling wrapper does not reject on the internal abort signal (script bug) or a client defect. Continuation via .harness/tasks/M4c-T2-handoff-2.md"
+            }
+          ]
         }
       ],
       "reviews": [],

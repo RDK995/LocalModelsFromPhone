@@ -1,0 +1,82 @@
+=== Background Live Proof ===
+
+Restarting LaunchAgents...
+Waiting for server to be ready...
+Server is up and enforcing auth
+
+--- Recording original Ollama state (before proof) ---
+Before: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":25617498110,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-06T11:02:41.271436807Z","size_vram":25617498110,"context_length":131072}]}
+Originally resident: nemotron3:33b
+
+--- Running proof (mobile/scripts/background-proof.ts) ---
+--- Check 1: Picking non-thinking model from Ollama ---
+N (non-thinking): devstral:24b
+
+--- Check 2: Loading and verifying model (devstral:24b) ---
+Loading devstral:24b...
+PASS: Check 2: devstral:24b is resident
+
+--- Scenario A: Background then foreground ---
+Scenario A: Waiting for stream to stall...
+Scenario A: Started generation 04fdb3d9-1752-4a8a-8bc4-2b34c456abf3
+Scenario A: Received 5 content events, backgrounding...
+Scenario A: Stream has stalled
+Scenario A: Waiting 8 seconds while backgrounded...
+Scenario A: Restoring to foreground...
+Scenario A: onComplete called
+Scenario A: Send completed
+--- Scenario A Assertions ---
+PASS: Assertion A-a: received at least 5 content events before stall
+PASS: Assertion A-b: 1 resume request(s) made
+PASS: Assertion A-c: no cancel requests in scenario A
+PASS: Assertion A-d: exactly 1 done event
+PASS: Assertion A-d: done event status is complete
+PASS: Assertion A-e: recorded content matches oracle
+PASS: Assertion A-e: content event count matches (309)
+PASS: Assertion A-f: assistant message status is complete
+PASS: Assertion A-f: stored message content matches recorded content
+PASS: Assertion A-f: response contains 80
+
+Scenario A response (first 200 chars): 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 5
+Scenario A content event count: 309
+
+--- Scenario B: Background, foreground, then Stop ---
+Scenario B: Waiting for stream to stall...
+Scenario B: Started generation 6206d8aa-b4cf-4d45-af31-444b07139737
+[TIMING] chat start: t=2026-09-26T11:23:17.935Z elapsedSinceChatStart=0ms
+Scenario B: Received 5 content events, backgrounding...
+[TIMING] 5th content event (background trigger): t=2026-09-26T11:23:18.828Z elapsedSinceChatStart=893ms
+Scenario B: Stream has stalled
+[TIMING] stream stalled (confirmed): t=2026-09-26T11:23:18.907Z elapsedSinceChatStart=972ms
+Scenario B: Waiting 3 seconds while backgrounded...
+Scenario B: Restoring to foreground...
+[TIMING] foreground call: t=2026-09-26T11:23:21.923Z elapsedSinceChatStart=3988ms
+[TIMING] first content event after foreground: t=2026-09-26T11:25:45.777Z elapsedSinceChatStart=147842ms
+Scenario B: Received 5 content events after resume, calling stopGeneration...
+[TIMING] stop trigger: t=2026-09-26T11:25:45.777Z elapsedSinceChatStart=147842ms
+[TIMING] done event received (status=complete): t=2026-09-26T11:25:45.808Z elapsedSinceChatStart=147873ms
+Scenario B: onComplete called
+[TIMING] onComplete: t=2026-09-26T11:25:45.809Z elapsedSinceChatStart=147874ms
+Scenario B: Send completed
+[TIMING] send completed (promiseB resolved): t=2026-09-26T11:25:45.809Z elapsedSinceChatStart=147874ms
+Scenario B: stopGeneration completed
+[TIMING] stopGeneration() call returned: t=2026-09-26T11:25:45.809Z elapsedSinceChatStart=147874ms
+[TIMING] cancel POST sent: t=2026-09-26T11:25:45.778Z elapsedSinceChatStart=147843ms
+[TIMING] cancel POST response: t=2026-09-26T11:25:45.809Z elapsedSinceChatStart=147874ms roundTrip=31ms status=200 body={"status":"already_complete"}
+[TIMING] summary (ms since chat start): 5th-content=893ms first-resumed-event=147842ms stop-trigger=147842ms cancel-sent=147843ms cancel-responded=147874ms done=147873ms
+--- Scenario B Assertions ---
+PASS: Assertion B-a: exactly 1 cancel request
+Debug: Resume requests in B: 1
+PASS: Assertion B-b: exactly 1 done event
+Debug: Oracle done events in B: 1
+Debug: Oracle done status: complete
+Debug: Oracle content events in B: 1889
+Debug: Stream done status: complete
+Debug: Stream content events: 1889
+FAIL: Assertion B-b: done event status is "complete", expected "cancelled"
+
+--- Cleanup: restoring original Ollama state ---
+Before cleanup: {"models":[{"name":"devstral:24b","model":"devstral:24b","size":35816011202,"digest":"9bd74193e93935e9d8564d88607b220a9d341c4a36b748cffcbd9ad4f47a9ca9","details":{"parent_model":"","format":"gguf","family":"llama","families":["llama"],"parameter_size":"23.6B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-06T11:13:02.121124807Z","size_vram":35816011202,"context_length":131072}]}
+Restoring nemotron3:33b (keep_alive -1)...
+After cleanup: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":25617498110,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-06T11:13:11.876299807Z","size_vram":25617498110,"context_length":131072}]}
+[0;31m=== Proof FAILED (exit 1) ===[0m

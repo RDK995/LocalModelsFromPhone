@@ -84,3 +84,28 @@ Return:
 - Tests run
 - Test result
 - Unresolved issues
+
+Previous Attempt (cumulative):
+- Attempt 1 (Cheap, haiku) + continuation 1 — FAIL. Scripts exist untracked in the tree
+  (mobile/scripts/background-proof.{sh,ts}); ordering bug and .sh false-PASS were fixed in
+  continuation 1. Scenario A: all assertions PASS. Scenario B FAILS: after background 3 s and
+  foreground, stopGeneration was called at the 50th content event after resume (the packet says
+  "at least 5"), exactly one POST /cancel was made, but the stream's done and the oracle replay's
+  done both had status "complete". Log order: "calling stopGeneration" -> "onComplete called" ->
+  "Send completed" -> "stopGeneration completed". The worker attributed this to the model producing
+  all 1889 content events within ~3 s; that is NOT plausible for a 24B model (~tens of tokens/s)
+  and is unproven. The cancel response body was never logged.
+
+Escalated: tier Mid (attempt 3). Reason: the failure is unexplained behaviour (either a proof-script
+bug or a real product defect in Stop after a foreground resume), not a mechanical slip.
+What this attempt must do first: DIAGNOSE with evidence before changing the proof. Log wall-clock
+timestamps for: chat start, 5th content event, stall, foreground, first resumed event, the stop
+trigger, the cancel POST send and its response status+body ({status:"cancelled"} vs
+"already_complete"), and the done event; and the generation's total content event count. If the
+cancel response is "already_complete" while the generation demonstrably could not have finished
+(timestamps), or the server ignores a cancel of an in-flight generation, that is a PRODUCT DEFECT:
+do not change mobile/src or the server; do not bend the assertion; return FAIL with the evidence
+under Unresolved Issues. If it is a script bug (e.g. Stop fired after the reply had already
+finished, the wrong generation id, counting replayed events wrongly), fix the script. Trigger Stop
+at the 5th content event after the foreground, per the packet. You may lengthen the prompt's count
+(e.g. 1 to 1000) only if timestamps show the reply genuinely finishes before Stop can land.
