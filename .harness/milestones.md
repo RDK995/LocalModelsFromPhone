@@ -279,7 +279,7 @@ Cycle 1: PASS, tier Mid (sonnet, MID_TIER_DIFF), full-milestone scope d46d8fd175
 
 ## M4c — Backgrounding resume, only Stop cancels
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -291,11 +291,11 @@ C1, C2, C3, C6
 
 ### As-Built
 
-Pending.
+.harness/as-built/M4c.md — RECORDED — 5/5 files attributed; components C2,NEW-background-proof; 4 edges; 3 claim mismatches (C1, C3 and C6 claimed but not modified in diff)
 
 ### Acceptance Criteria
 
-- [ ] **M4-AC3**: Backgrounding the app mid-reply and returning to foreground resumes the same reply and receives its terminal state, with only an explicit Stop cancelling generation.
+- [x] **M4-AC3**: Backgrounding the app mid-reply and returning to foreground resumes the same reply and receives its terminal state, with only an explicit Stop cancelling generation.
 
 ### Baseline
 
@@ -321,7 +321,7 @@ Status: PENDING (reviewer runs it). Task artifacts: .harness/evidence/M4c-T1-ver
 
 ### Review
 
-Pending.
+Cycle 1: PASS, tier Mid (sonnet, MID_TIER_DIFF), full-milestone scope 1d74498fc5099d7fa3a049c39a1a036bb33d1137..43ec857; M4-AC3 PASS; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL; no report file (PASS). Reviewer re-ran the full recorded validation chain against the real Mac (e2e-tailnet-proof; server tests + typecheck + entry-smoke; ops token tests + verify-ops-install; mobile typecheck, 147 unit tests, lint, smoke:runtime, all live proofs incl. resume-proof and background-proof, expo export); exit 0, resident model restored. Confirmed the three recorded follow-ups are non-blocking. — .harness/evidence/M4c-review.log
 
 ### Review Cycles
 

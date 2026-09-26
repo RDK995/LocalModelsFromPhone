@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M4c",
+  "current_milestone": "M5",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -4122,7 +4122,7 @@
       "requirements": [
         "FR11"
       ],
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -4130,14 +4130,14 @@
         "branch": "m4c-backgrounding-resume"
       },
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M4c.md",
+        "result": "RECORDED \u2014 5/5 files attributed; components C2,NEW-background-proof; 4 edges; 3 claim mismatches (C1, C3 and C6 claimed but not modified in diff)"
       },
       "criteria": [
         {
           "id": "M4-AC3",
           "text": "Backgrounding the app mid-reply and returning to foreground resumes the same reply and receives its terminal state, with only an explicit Stop cancelling generation.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "Client unit tests: APIClient.chat resumes at once on an injected lifecycle's foreground event (internal per-transport abort treated as a drop, backoff wait ended early, budget not spent while backgrounded); backgrounding never cancels; Stop still aborts -- mobile/src/api/client.test.ts cases (a)-(i); AppState adapter in expoFetchClient.ts (.harness/evidence/M4c-T1-verifier.log)",
             "Live tailnet: the app's own sendInConversation over an APIClient with a simulated lifecycle; /v1/chat body stalled after 5 content events (background) for 8 s; foreground -> resume GET with Last-Event-ID 2 ms later, no /cancel, one done complete, 309 content events equal an independent full replay, stored message complete; scenario B: foreground then the app's Stop -> exactly one cancel POST (200 cancelled), one done cancelled, stored stopped, replay done cancelled -- mobile/scripts/background-proof.sh (.harness/evidence/M4c-T3-verifier.log)"
@@ -4364,7 +4364,27 @@
           ]
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "PASS",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "MID_TIER_DIFF",
+          "diff_range": "1d74498fc5099d7fa3a049c39a1a036bb33d1137..43ec857",
+          "artifact": null,
+          "review_log": ".harness/evidence/M4c-review.log",
+          "per_criterion": {
+            "M4-AC3": "PASS"
+          },
+          "findings": {
+            "BLOCKER": 0,
+            "IMPORTANT": 0,
+            "OPTIONAL": 0
+          },
+          "notes": "Full-milestone scope. Reviewer re-ran the full recorded validation chain against the real Mac (incl. background-proof); exit 0, resident model restored. Confirmed the three recorded follow-ups are non-blocking."
+        }
+      ],
       "findings": [],
       "validation": [
         {
