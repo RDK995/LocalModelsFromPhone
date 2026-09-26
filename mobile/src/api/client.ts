@@ -306,11 +306,24 @@ export class APIClient {
   }
 
   /**
+   * True for the three statuses a proxy in front of the server (e.g.
+   * Tailscale's TLS-terminating gateway) uses to report that the server it
+   * forwards to is unreachable, rather than a failure the server itself
+   * generated.
+   */
+  private isGatewayStatus(status: number): boolean {
+    return status === 502 || status === 503 || status === 504;
+  }
+
+  /**
    * Throw a typed error for a non-OK response from load/unload:
    * `UnauthorizedError` for 401, `ConfirmationRequiredError` for a 409
-   * `{error:"confirmation_required"}` body, otherwise `ServerError` built
-   * from the response body's `{error, message}` (falling back to a generic
-   * `Error` if the body isn't that shape).
+   * `{error:"confirmation_required"}` body, `ServerError` built from the
+   * response body's `{error, message}` when the body carries one, otherwise
+   * `UnreachableError` for a gateway status (502/503/504) with no body --
+   * this is what a proxy in front of the server (e.g. Tailscale) answers
+   * when the server behind it is down -- falling back to a generic `Error`
+   * for any other bodiless non-OK response.
    */
   private async assertLoadUnloadOk(
     response: Response,
@@ -320,21 +333,19 @@ export class APIClient {
       throw new UnauthorizedError();
     }
     if (!response.ok) {
-      let body: {
+      const body = await this.parseErrorBody<{
         error?: string;
         message?: string;
         reasons?: ConfirmationReason[];
-      } = {};
-      try {
-        body = await response.json();
-      } catch {
-        // Not JSON (or empty body); fall through to a generic error below.
-      }
+      }>(response);
       if (body.error === "confirmation_required") {
         throw new ConfirmationRequiredError(body.message, body.reasons ?? []);
       }
       if (body.error) {
         throw new ServerError(body.error, body.message);
+      }
+      if (this.isGatewayStatus(response.status)) {
+        throw new UnreachableError();
       }
       throw new Error(`Failed to ${action}: ${response.statusText}`);
     }
@@ -358,6 +369,9 @@ export class APIClient {
       const body = await this.parseErrorBody(response);
       if (body.error) {
         throw new ServerError(body.error, body.message);
+      }
+      if (this.isGatewayStatus(response.status)) {
+        throw new UnreachableError();
       }
       throw new Error(`Failed to get state: ${response.statusText}`);
     }
@@ -427,6 +441,9 @@ export class APIClient {
       }
       if (body.error) {
         throw new ServerError(body.error, body.message);
+      }
+      if (this.isGatewayStatus(response.status)) {
+        throw new UnreachableError();
       }
       throw new Error(`Failed to start chat: ${response.statusText}`);
     }
@@ -846,12 +863,22 @@ export class APIClient {
     }
   }
 
-  /** Best-effort parse of a non-OK response's `{error, message}` JSON body. */
-  private async parseErrorBody(
-    response: Response
-  ): Promise<{ error?: string; message?: string }> {
+  /**
+   * Best-effort parse of a non-OK response's `{error, message}` JSON body.
+   * Treats a null, non-object, empty or unparseable body as `{}` rather than
+   * throwing -- a bodiless gateway response (e.g. Tailscale's proxy
+   * answering 502 for a downed server) can have `.json()` reject (empty
+   * body) or, in some runtimes, resolve to `null` outright.
+   */
+  private async parseErrorBody<
+    T extends object = { error?: string; message?: string },
+  >(response: Response): Promise<Partial<T>> {
     try {
-      return await response.json();
+      const body: unknown = await response.json();
+      if (body && typeof body === "object") {
+        return body as Partial<T>;
+      }
+      return {};
     } catch {
       return {};
     }

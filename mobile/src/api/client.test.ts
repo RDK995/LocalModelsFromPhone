@@ -14,6 +14,11 @@ import {
   UnreachableError,
 } from "./client";
 import type { ClientLifecycle, FetchImpl, StreamEvent } from "./client";
+import {
+  describeError,
+  UNREACHABLE_MESSAGE,
+  OLLAMA_DOWN_MESSAGE,
+} from "./errorMessages";
 
 const BASE_URL = "http://localhost:7789";
 
@@ -22,6 +27,24 @@ function jsonResponse(body: unknown, status = 200): Response {
     status,
     headers: { "Content-Type": "application/json" },
   });
+}
+
+/**
+ * A non-OK response whose `.json()` resolves to `null` instead of rejecting
+ * -- what Bun's `fetch` (and potentially other runtimes) can produce for a
+ * `content-length: 0` response, e.g. Tailscale's TLS-terminating proxy
+ * answering `502` with no body when the Mac is up but the server behind it
+ * is down. A plain `new Response(null, {status})`'s `.json()` rejects (see
+ * `parseErrorBody`'s catch), so this is deliberately a separate fake.
+ */
+function nullJsonResponse(status: number): Response {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    statusText: "",
+    headers: new Headers(),
+    json: async () => null,
+  } as unknown as Response;
 }
 
 /**
@@ -351,6 +374,87 @@ describe("APIClient network/server error mapping (FR16, M5b)", () => {
     expect(error).toBeInstanceOf(ServerError);
     expect((error as ServerError).code).toBe("generation_in_flight");
     expect((error as ServerError).message).toBe("A reply is already in progress");
+  });
+
+  it("throws UnreachableError (not a generic Error) for a bodiless 502 from getState, mapping to the unreachable message", async () => {
+    const fetchMock = mock(async () => new Response(null, { status: 502 }));
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+
+    const error = await client.getState().catch((e) => e);
+    expect(error).toBeInstanceOf(UnreachableError);
+    expect(describeError(error)).toBe(UNREACHABLE_MESSAGE);
+  });
+
+  it("throws UnreachableError for a bodiless 502 from loadModel", async () => {
+    const fetchMock = mock(async () => new Response(null, { status: 502 }));
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+
+    const error = await client.loadModel({ name: "m" }).catch((e) => e);
+    expect(error).toBeInstanceOf(UnreachableError);
+    expect(describeError(error)).toBe(UNREACHABLE_MESSAGE);
+  });
+
+  it("throws UnreachableError for a bodiless 503 from the initial chat POST", async () => {
+    const fetchMock = mock(async () => new Response(null, { status: 503 }));
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+
+    const error = await client
+      .chat(
+        { model: "m", messages: [{ role: "user", content: "hi" }] },
+        {
+          onEvent: () => {},
+          onError: () => {},
+          onComplete: () => {},
+        }
+      )
+      .catch((e) => e);
+
+    expect(error).toBeInstanceOf(UnreachableError);
+    expect(describeError(error)).toBe(UNREACHABLE_MESSAGE);
+  });
+
+  it("does not throw a TypeError, and maps to UnreachableError, when a 502's body resolves to null (getState)", async () => {
+    const fetchMock = mock(async () => nullJsonResponse(502));
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+
+    const error = await client.getState().catch((e) => e);
+    expect(error).not.toBeInstanceOf(TypeError);
+    expect(error).toBeInstanceOf(UnreachableError);
+    expect(describeError(error)).toBe(UNREACHABLE_MESSAGE);
+  });
+
+  it("does not throw a TypeError, and maps to UnreachableError, when a 504's body resolves to null (loadModel, via assertLoadUnloadOk)", async () => {
+    const fetchMock = mock(async () => nullJsonResponse(504));
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+
+    const error = await client.loadModel({ name: "m" }).catch((e) => e);
+    expect(error).not.toBeInstanceOf(TypeError);
+    expect(error).toBeInstanceOf(UnreachableError);
+    expect(describeError(error)).toBe(UNREACHABLE_MESSAGE);
+  });
+
+  it("still maps a 503 {error: 'ollama_down'} body to ServerError/OLLAMA_DOWN_MESSAGE, not unreachable", async () => {
+    const fetchMock = mock(async () =>
+      jsonResponse({ error: "ollama_down", message: "Unable to reach Ollama" }, 503)
+    );
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+
+    const error = await client.getState().catch((e) => e);
+    expect(error).toBeInstanceOf(ServerError);
+    expect((error as ServerError).code).toBe("ollama_down");
+    expect(describeError(error)).toBe(OLLAMA_DOWN_MESSAGE);
   });
 });
 
