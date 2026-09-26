@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M3",
+  "current_milestone": "M4a",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -14,8 +14,8 @@
     "FR6": "M2c",
     "FR7": "M3",
     "FR8": "M3",
-    "FR10": "M4",
-    "FR11": "M4",
+    "FR10": "M4a",
+    "FR11": "M4b",
     "FR15": "M5",
     "FR16": "M5",
     "FR17": "M5"
@@ -3500,14 +3500,13 @@
         "Reviewer OPTIONAL (M3 cycle 1): deleting a conversation is reachable only by long-press with no visible affordance (mobile/src/app/conversations.tsx); discoverability polish, not implemented."
       ]
     },
-    "M4": {
-      "id": "M4",
-      "title": "Thinking display and dropped-connection resume",
-      "outcome": "Reasoning output appears collapsed and expandable, separate from the answer, and a transport drop or app backgrounding mid-reply resumes cleanly with no gaps or duplication once the phone reconnects.",
-      "architecture": "C1, C2, C3, C6",
+    "M4a": {
+      "id": "M4a",
+      "title": "Thinking shown collapsed, prompt shown on Send, reply streams in place",
+      "outcome": "In the chat screen the user's prompt appears as soon as Send is pressed, the reply streams into its own final place in the conversation (no separate streaming area), and a model's reasoning output is shown in a collapsed, expandable section separate from the answer. Split from M4 at pickup (5 criteria, within size) because of operational-complexity signals CONCURRENCY_LIFECYCLE + IMPLEMENTATION_PLUS_LIVE_PROOF (a required split), plus SUBSYSTEMS_GT_3 and MULTIPLE_OUTCOMES; parts: M4a chat display (thinking, prompt on Send, reply streams in place), M4b dropped-connection and backgrounding resume.",
+      "architecture": "C1, C3",
       "requirements": [
-        "FR10",
-        "FR11"
+        "FR10"
       ],
       "status": "TODO",
       "review_cycles": 0,
@@ -3524,18 +3523,6 @@
         {
           "id": "M4-AC1",
           "text": "For a model that emits reasoning output, the app shows it in a collapsed, expandable section separate from the answer.",
-          "status": "PENDING",
-          "evidence": []
-        },
-        {
-          "id": "M4-AC2",
-          "text": "Killing the connection mid-reply and reconnecting yields the complete reply with no gaps and no duplicated text.",
-          "status": "PENDING",
-          "evidence": []
-        },
-        {
-          "id": "M4-AC3",
-          "text": "Backgrounding the app mid-reply and returning to foreground resumes the same reply and receives its terminal state, with only an explicit Stop cancelling generation.",
           "status": "PENDING",
           "evidence": []
         },
@@ -3558,7 +3545,57 @@
       "validation": [],
       "follow_ups": [
         "Added 2026-09-26 by the human after M3 DONE (on-device observation): in M3's chat screen the user's prompt is not shown until the reply arrives, and a long reply streams in a separate area then jumps into the conversation on completion. Folded into M4 as M4-AC4/M4-AC5 (trace: FR7, FR9) because M4 reworks the same streaming display."
-      ]
+      ],
+      "split": {
+        "from": "M4",
+        "signals": [
+          "CONCURRENCY_LIFECYCLE",
+          "IMPLEMENTATION_PLUS_LIVE_PROOF",
+          "SUBSYSTEMS_GT_3",
+          "MULTIPLE_OUTCOMES"
+        ],
+        "criteria_before": 5,
+        "criteria_after": 5
+      }
+    },
+    "M4b": {
+      "id": "M4b",
+      "title": "Dropped-connection and backgrounding resume",
+      "outcome": "A transport drop or app backgrounding mid-reply resumes the same reply once the phone reconnects, with no gaps or duplicated text and its terminal state received, and only an explicit Stop cancels generation. Second part of the M4 split (see M4a).",
+      "architecture": "C1, C2, C3, C6",
+      "requirements": [
+        "FR11"
+      ],
+      "status": "TODO",
+      "review_cycles": 0,
+      "review_override": null,
+      "baseline": {
+        "commit": "",
+        "branch": ""
+      },
+      "as_built": {
+        "artifact": null,
+        "result": "PENDING"
+      },
+      "criteria": [
+        {
+          "id": "M4-AC2",
+          "text": "Killing the connection mid-reply and reconnecting yields the complete reply with no gaps and no duplicated text.",
+          "status": "PENDING",
+          "evidence": []
+        },
+        {
+          "id": "M4-AC3",
+          "text": "Backgrounding the app mid-reply and returning to foreground resumes the same reply and receives its terminal state, with only an explicit Stop cancelling generation.",
+          "status": "PENDING",
+          "evidence": []
+        }
+      ],
+      "tasks": [],
+      "reviews": [],
+      "findings": [],
+      "validation": [],
+      "follow_ups": []
     },
     "M5": {
       "id": "M5",
