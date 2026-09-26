@@ -296,7 +296,7 @@ Treat logging in at the unlock screen as part of the reboot (no change), then do
 
 ### Follow-ups
 
-- FileVault login after reboot: see the escalation above.
+- FileVault login after reboot: resolved 2026-09-26 by the human — typing the Mac password at the unlock screen counts as part of rebooting, not a manual step. No change to FileVault or architecture. Reboot itself still pending.
 - R3 still applies: the bundle host serves the working tree, so a mid-edit checkout reaches the phone after any restart.
 
 ## M5b — Plain-language error messages

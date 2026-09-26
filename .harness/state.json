@@ -4600,7 +4600,7 @@
           "M5a-T2: read-only post-reboot readiness check ops/scripts/boot-readiness-check.sh, PASS pre-reboot.",
           "Checked boot behaviour: `fdesetup status` -> FileVault is On; loginwindow autoLoginUser unset."
         ],
-        "remaining": "Human reboot + phone check + post-reboot readiness log; and a decision on whether the FileVault login counts as a manual step.",
+        "remaining": "Human reboot + phone check + post-reboot readiness log. Decision resolved 2026-09-26 (human): typing the Mac password at the FileVault unlock screen counts as part of rebooting, not a manual step; no change to FileVault or architecture.",
         "recommended": "Treat logging in at the unlock screen as part of rebooting (no change), perform the reboot steps, and record the evidence; do not disable FileVault or move to system daemons (that would be a material architecture change)."
       }
     },
