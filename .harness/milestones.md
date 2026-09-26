@@ -258,8 +258,8 @@ Pending.
 ### Evidence
 
 Tasks (packets under .harness/tasks/):
-- M5b-T1 — error mapping + client/server/screens + unit tests: Mid (ORDINARY_IMPLEMENTATION), pending
-- M5b-T2 — live six-failure proof script: Mid (ORDINARY_IMPLEMENTATION), pending, depends on T1
+- M5b-T1 — error mapping + client/server/screens + unit tests: Mid (ORDINARY_IMPLEMENTATION). Attempt 3 CONTINUE (turn limit, handoff-1) → continuation 1 PASS; verifier PASS exit 0 (server 109, mobile 167 tests; typecheck, lint clean), tests weakened NO — .harness/evidence/M5b-T1-verifier.log. Accepted. Architecture deviation D-M5b-1 (operation.error_code, Material: no) recorded.
+- M5b-T2 — live six-failure proof script: Mid (ORDINARY_IMPLEMENTATION), not started (next phase dispatches it with .harness/tasks/M5b-T2.md)
 
 ### Validation
 

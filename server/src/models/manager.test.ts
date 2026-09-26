@@ -315,6 +315,7 @@ describe("ModelManager", () => {
       const state = await manager.state();
       expect(state.resident).toBeNull();
       expect(state.operation.error?.startsWith("Not enough memory to load target")).toBe(true);
+      expect(state.operation.error_code).toBe("load_failed");
     });
 
     it("a failed load reports a not-found reason", async () => {
@@ -329,6 +330,7 @@ describe("ModelManager", () => {
 
       const state = await manager.state();
       expect(state.operation.error).toBe("Model not found: target");
+      expect(state.operation.error_code).toBe("unknown_model");
     });
 
     it("a failed load from a network failure reports Ollama is unreachable", async () => {
@@ -343,6 +345,7 @@ describe("ModelManager", () => {
 
       const state = await manager.state();
       expect(state.operation.error).toBe("Ollama unreachable");
+      expect(state.operation.error_code).toBe("ollama_down");
     });
 
     it("best-effort unloads the target if ps lists it after a failed load", async () => {
@@ -360,6 +363,7 @@ describe("ModelManager", () => {
       const state = await manager.state();
       expect(state.resident).toBeNull();
       expect(state.operation.error).toBe("Load failed: some other failure");
+      expect(state.operation.error_code).toBe("load_failed");
       expect(ollama.calls.filter((c) => c.op === "unload" && c.name === "target").length).toBe(1);
     });
   });
@@ -605,6 +609,11 @@ describe("ModelManager", () => {
         expect(state.operation.error).toMatch(/reply/i);
         expect(ollama.calls).toEqual([]);
         expect(manager.isBusy()).toBe(false);
+        if (label === "load") {
+          expect(state.operation.error_code).toBe("load_failed");
+        } else {
+          expect(state.operation.error_code).toBeUndefined();
+        }
       });
     }
 

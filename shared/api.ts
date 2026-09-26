@@ -18,6 +18,13 @@ export interface Operation {
   kind: OperationKind;
   model?: string;
   error?: string;
+  /**
+   * Set alongside `error` for a failed LOAD (never set for an unload
+   * failure, or by a server that predates this field): the plain-language
+   * mapping (FR16, mobile/src/api/errorMessages.ts) uses this instead of
+   * parsing `error`'s free text.
+   */
+  error_code?: "ollama_down" | "unknown_model" | "load_failed";
 }
 
 export interface Generation {

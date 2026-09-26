@@ -22,9 +22,12 @@
 import { ModelNotResidentError, UnauthorizedError } from "@/api/client";
 import type { APIClient, StreamEvent } from "@/api/client";
 import type { ChatRequest } from "@shared/api";
+import { UNAUTHORIZED_MESSAGE } from "@/api/errorMessages";
 
 export const NO_MODEL_LOADED_MESSAGE = "No model loaded";
-export const UNAUTHORIZED_MESSAGE = "Password wrong or changed";
+/** Re-exported from errorMessages.ts (the single source of its text, M5b) so
+ * existing importers of this module keep working unchanged. */
+export { UNAUTHORIZED_MESSAGE };
 
 export interface SendMessageCallbacks {
   /** The `x-generation-id` header value, as soon as it arrives. */

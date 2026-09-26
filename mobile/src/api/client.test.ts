@@ -11,6 +11,7 @@ import {
   ConfirmationRequiredError,
   ServerError,
   UnauthorizedError,
+  UnreachableError,
 } from "./client";
 import type { ClientLifecycle, FetchImpl, StreamEvent } from "./client";
 
@@ -296,6 +297,60 @@ describe("APIClient load/unload error mapping", () => {
       {},
       { confirm: true },
     ]);
+  });
+});
+
+describe("APIClient network/server error mapping (FR16, M5b)", () => {
+  it("throws UnreachableError when the initial getState fetch rejects for a network reason", async () => {
+    const fetchMock = mock(async () => {
+      throw new TypeError("fetch failed");
+    });
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+
+    await expect(client.getState()).rejects.toBeInstanceOf(UnreachableError);
+  });
+
+  it("throws ServerError('ollama_down') for a 503 from /v1/state", async () => {
+    const fetchMock = mock(async () =>
+      jsonResponse({ error: "ollama_down", message: "Unable to reach Ollama" }, 503)
+    );
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+
+    const error = await client.getState().catch((e) => e);
+    expect(error).toBeInstanceOf(ServerError);
+    expect((error as ServerError).code).toBe("ollama_down");
+    expect((error as ServerError).message).toBe("Unable to reach Ollama");
+  });
+
+  it("throws ServerError('generation_in_flight') for a 409 from the initial chat POST", async () => {
+    const fetchMock = mock(async () =>
+      jsonResponse(
+        { error: "generation_in_flight", message: "A reply is already in progress" },
+        409
+      )
+    );
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+
+    const error = await client
+      .chat(
+        { model: "m", messages: [{ role: "user", content: "hi" }] },
+        {
+          onEvent: () => {},
+          onError: () => {},
+          onComplete: () => {},
+        }
+      )
+      .catch((e) => e);
+
+    expect(error).toBeInstanceOf(ServerError);
+    expect((error as ServerError).code).toBe("generation_in_flight");
+    expect((error as ServerError).message).toBe("A reply is already in progress");
   });
 });
 

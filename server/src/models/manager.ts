@@ -126,6 +126,25 @@ function reasonForError(error: unknown, name: string, elseVerb: "Load" | "Unload
   return "Ollama unreachable";
 }
 
+/**
+ * Map the same failure `reasonForError` describes to the machine-readable
+ * `operation.error_code` a LOAD ends with: an OllamaError that is a 404 or
+ * "not found" -> unknown_model; any other OllamaError or a timed-out wait ->
+ * load_failed; anything else (Ollama unreachable) -> ollama_down.
+ */
+function errorCodeForLoadFailure(error: unknown): "ollama_down" | "unknown_model" | "load_failed" {
+  if (error instanceof OllamaError) {
+    if (error.status === 404 || /not found/i.test(error.message)) {
+      return "unknown_model";
+    }
+    return "load_failed";
+  }
+  if (error instanceof WaitTimeoutError) {
+    return "load_failed";
+  }
+  return "ollama_down";
+}
+
 export class ModelManager {
   private operation: Operation = { kind: "idle" };
   /**
@@ -216,7 +235,12 @@ export class ModelManager {
       await this.stopActiveReply();
     } catch (error) {
       // Nothing was touched yet: report the reason, leave the models as they are.
-      this.finish({ kind: "idle", model: name, error: reasonForError(error, name, "Load") });
+      this.finish({
+        kind: "idle",
+        model: name,
+        error: reasonForError(error, name, "Load"),
+        error_code: errorCodeForLoadFailure(error),
+      });
       return;
     }
 
@@ -242,7 +266,12 @@ export class ModelManager {
     } catch (error) {
       this.loadedByServer = null;
       await this.bestEffortUnload(name);
-      this.finish({ kind: "idle", model: name, error: reasonForError(error, name, "Load") });
+      this.finish({
+        kind: "idle",
+        model: name,
+        error: reasonForError(error, name, "Load"),
+        error_code: errorCodeForLoadFailure(error),
+      });
     }
   }
 

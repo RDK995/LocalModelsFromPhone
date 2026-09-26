@@ -4467,11 +4467,73 @@
             "reason_code": "ORDINARY_IMPLEMENTATION",
             "detail": "ordinary feature work across client, two screens and one server field; every outcome has a stated string and a unit-test oracle"
           },
-          "status": "PENDING",
-          "attempts": 0,
+          "status": "ACCEPTED",
+          "attempts": 1,
           "packet": ".harness/tasks/M5b-T1.md",
           "commit": null,
-          "attempt_log": []
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": null,
+              "verdict": "CONTINUE",
+              "base": "050276b",
+              "changed_files": [],
+              "note": "turn limit; handoff .harness/tasks/M5b-T1-handoff-1.md (AC1, AC2 done; server field, chat.tsx, tests remaining). Continuation, no rung spent."
+            },
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M5b-T1-worker.log",
+              "verdict": "PASS",
+              "base": "050276b",
+              "changed_files": [
+                "mobile/src/api/errorMessages.ts",
+                "mobile/src/api/errorMessages.test.ts",
+                "mobile/src/api/client.ts",
+                "mobile/src/api/client.test.ts",
+                "mobile/src/chat/chatController.ts",
+                "mobile/src/chat/chatController.test.ts",
+                "mobile/src/ui/modelList.ts",
+                "mobile/src/ui/modelList.test.ts",
+                "mobile/src/app/models.tsx",
+                "mobile/src/app/chat.tsx",
+                "shared/api.ts",
+                "server/src/models/manager.ts",
+                "server/src/models/manager.test.ts"
+              ],
+              "note": "continuation 1 of 2; completed server error_code, chat.tsx, models.tsx model name, tests"
+            },
+            {
+              "attempt": 3,
+              "role": "verifier",
+              "tier": "Cheap",
+              "model": "haiku",
+              "artifact": ".harness/evidence/M5b-T1-verifier.log",
+              "verdict": "PASS",
+              "base": "050276b",
+              "changed_files": [
+                "mobile/src/api/errorMessages.ts",
+                "mobile/src/api/errorMessages.test.ts",
+                "mobile/src/api/client.ts",
+                "mobile/src/api/client.test.ts",
+                "mobile/src/chat/chatController.ts",
+                "mobile/src/chat/chatController.test.ts",
+                "mobile/src/ui/modelList.ts",
+                "mobile/src/ui/modelList.test.ts",
+                "mobile/src/app/models.tsx",
+                "mobile/src/app/chat.tsx",
+                "shared/api.ts",
+                "server/src/models/manager.ts",
+                "server/src/models/manager.test.ts"
+              ],
+              "note": "exit 0; server 109 pass, mobile 167 pass, typecheck+lint clean; all files allowed; tests weakened NO; exact strings match packet"
+            }
+          ]
         },
         {
           "id": "M5b-T2",

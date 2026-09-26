@@ -251,3 +251,14 @@ LaunchDaemon, passing TCP 8081 only on `lo0` and the Tailscale `utun` interface.
 None
 
 ## Deviations
+
+### D-M5b-1 — `operation.error_code` on `GET /v1/state`
+
+Milestone: M5b
+Material: no
+Change: I5's `operation` object gains an optional `error_code` (`ollama_down` | `unknown_model` |
+`load_failed`), set by C5 alongside the existing `error` string when a load fails. C2 maps it to
+plain-language wording (FR16) instead of parsing the `error` string.
+Why: the load/unload failure reason is otherwise free text; a typed code lets C2 tell "model no
+longer installed" from "model failed to load" and "Ollama down" reliably. Additive field; no
+component boundary, technology or responsibility changes.

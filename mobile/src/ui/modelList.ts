@@ -7,6 +7,7 @@
  */
 
 import type { StateResponse } from "@shared/api";
+import { describeOperationFailure } from "@/api/errorMessages";
 
 export interface ModelRow {
   name: string;
@@ -68,8 +69,9 @@ export function toModelListView(state: StateResponse): ModelListView {
 
   const busyLabel = toBusyLabel(state.operation);
 
-  const failureMessage =
-    !isBusy && state.operation.error ? state.operation.error : null;
+  const failureMessage = isBusy
+    ? null
+    : describeOperationFailure(state.operation);
 
   const canUnload = state.resident !== null && !isBusy;
 

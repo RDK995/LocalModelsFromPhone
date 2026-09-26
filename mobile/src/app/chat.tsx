@@ -45,6 +45,7 @@ import { getToken } from "@/api/secureStoreToken";
 import { createAPIClient } from "@/api/expoFetchClient";
 import { stopGeneration, UNAUTHORIZED_MESSAGE } from "@/chat/chatController";
 import { sendInConversation, newMessageId } from "@/chat/conversationSession";
+import { describeError } from "@/api/errorMessages";
 import {
   applyStreamEvent,
   initialStreamAccumulator,
@@ -169,7 +170,7 @@ export default function ChatScreen() {
             setBlockedMessage(message);
           },
           onError: (error: Error) => {
-            Alert.alert("Error", error.message);
+            Alert.alert("Error", describeError(error));
           },
           onUnauthorized: () => {
             Alert.alert(

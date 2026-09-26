@@ -176,6 +176,20 @@ export class UnauthorizedError extends Error {
 }
 
 /**
+ * Thrown when a fetch to the server rejects for a network reason (the Mac is
+ * off, unreachable over Tailscale, DNS/connection failure, etc.) rather than
+ * the caller's own AbortSignal firing. Covers the initial request of
+ * `getState`, `loadModel`, `unloadModel`, `chat` and `cancelGeneration`; the
+ * streaming reader's own drop/resume handling (FR11) is unrelated and unaffected.
+ */
+export class UnreachableError extends Error {
+  constructor(message = "Can't reach the Mac") {
+    super(message);
+    this.name = "UnreachableError";
+  }
+}
+
+/**
  * Thrown when the server rejects `POST /v1/chat` with 409
  * `{error:"model_not_resident"}` -- the model that was resident when we
  * checked `GET /v1/state` was unloaded before the chat request landed.
@@ -263,6 +277,22 @@ export class APIClient {
   }
 
   /**
+   * Called from each method's own `catch` around its initial `fetchImpl`
+   * call (not a wrapping async helper: an extra `await` hop here would shift
+   * the microtask timing the resume/foreground tests in client.test.ts
+   * depend on). Rethrows `error` unchanged if `init.signal` is already
+   * aborted -- the rejection is the caller's own cancellation (e.g. Stop
+   * pressed before the initial POST lands), not a network failure -- and as
+   * `UnreachableError` otherwise.
+   */
+  private rethrowFetchFailure(error: unknown, signal?: AbortSignal): never {
+    if (signal?.aborted) {
+      throw error;
+    }
+    throw new UnreachableError();
+  }
+
+  /**
    * Throw a typed error for a non-OK response: `UnauthorizedError` for 401,
    * a generic `Error` otherwise.
    */
@@ -311,22 +341,41 @@ export class APIClient {
   }
 
   async getState(): Promise<StateResponse> {
-    const response = await this.fetchImpl(`${this.baseUrl}/v1/state`, {
-      method: "GET",
-      headers: this.getHeaders(),
-    });
+    let response: Response;
+    try {
+      response = await this.fetchImpl(`${this.baseUrl}/v1/state`, {
+        method: "GET",
+        headers: this.getHeaders(),
+      });
+    } catch (error) {
+      this.rethrowFetchFailure(error);
+    }
 
-    this.assertOk(response, "get state");
+    if (response.status === 401) {
+      throw new UnauthorizedError();
+    }
+    if (!response.ok) {
+      const body = await this.parseErrorBody(response);
+      if (body.error) {
+        throw new ServerError(body.error, body.message);
+      }
+      throw new Error(`Failed to get state: ${response.statusText}`);
+    }
 
     return response.json();
   }
 
   async loadModel(request: LoadRequest): Promise<OperationResponse> {
-    const response = await this.fetchImpl(`${this.baseUrl}/v1/models/load`, {
-      method: "POST",
-      headers: this.getHeaders(),
-      body: JSON.stringify(request),
-    });
+    let response: Response;
+    try {
+      response = await this.fetchImpl(`${this.baseUrl}/v1/models/load`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify(request),
+      });
+    } catch (error) {
+      this.rethrowFetchFailure(error);
+    }
 
     await this.assertLoadUnloadOk(response, "load model");
 
@@ -334,11 +383,16 @@ export class APIClient {
   }
 
   async unloadModel(request: UnloadRequest): Promise<OperationResponse> {
-    const response = await this.fetchImpl(`${this.baseUrl}/v1/models/unload`, {
-      method: "POST",
-      headers: this.getHeaders(),
-      body: JSON.stringify(request),
-    });
+    let response: Response;
+    try {
+      response = await this.fetchImpl(`${this.baseUrl}/v1/models/unload`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify(request),
+      });
+    } catch (error) {
+      this.rethrowFetchFailure(error);
+    }
 
     await this.assertLoadUnloadOk(response, "unload model");
 
@@ -347,29 +401,35 @@ export class APIClient {
 
   async chat(request: ChatRequest, options: StreamOptions): Promise<string> {
     const initialController = this.linkSignal(options.signal);
-    const response = await this.fetchImpl(`${this.baseUrl}/v1/chat`, {
-      method: "POST",
-      headers: this.getHeaders(),
-      body: JSON.stringify(request),
-      signal: initialController.signal,
-    });
-
-    if (response.status === 409) {
-      // The model resident when we checked GET /v1/state may have been
-      // unloaded before this request landed; distinguish that from other
-      // 409s (e.g. a generation already in flight) by the error code.
-      let body: { error?: string; message?: string } = {};
-      try {
-        body = await response.json();
-      } catch {
-        // Not JSON (or empty body); fall through to the generic 409 error.
-      }
-      if (body.error === "model_not_resident") {
-        throw new ModelNotResidentError(body.message);
-      }
+    let response: Response;
+    try {
+      response = await this.fetchImpl(`${this.baseUrl}/v1/chat`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: JSON.stringify(request),
+        signal: initialController.signal,
+      });
+    } catch (error) {
+      this.rethrowFetchFailure(error, initialController.signal);
     }
 
-    this.assertOk(response, "start chat");
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new UnauthorizedError();
+      }
+      const body = await this.parseErrorBody(response);
+      if (response.status === 409 && body.error === "model_not_resident") {
+        // The model resident when we checked GET /v1/state may have been
+        // unloaded before this request landed; distinguish that from other
+        // non-OK responses (e.g. a generation already in flight, or Ollama
+        // down) by the error code.
+        throw new ModelNotResidentError(body.message);
+      }
+      if (body.error) {
+        throw new ServerError(body.error, body.message);
+      }
+      throw new Error(`Failed to start chat: ${response.statusText}`);
+    }
 
     const generationId = response.headers.get("x-generation-id");
     if (!generationId) {
@@ -843,13 +903,18 @@ export class APIClient {
   }
 
   async cancelGeneration(generationId: string): Promise<void> {
-    const response = await this.fetchImpl(
-      `${this.baseUrl}/v1/generations/${generationId}/cancel`,
-      {
-        method: "POST",
-        headers: this.getHeaders(),
-      }
-    );
+    let response: Response;
+    try {
+      response = await this.fetchImpl(
+        `${this.baseUrl}/v1/generations/${generationId}/cancel`,
+        {
+          method: "POST",
+          headers: this.getHeaders(),
+        }
+      );
+    } catch (error) {
+      this.rethrowFetchFailure(error);
+    }
 
     this.assertOk(response, "cancel generation");
   }

@@ -6,6 +6,7 @@
 
 import { describe, it, expect } from "bun:test";
 import { formatSize, toModelListView } from "./modelList";
+import { notInstalledMessage } from "@/api/errorMessages";
 import type { StateResponse } from "@shared/api";
 
 describe("formatSize", () => {
@@ -190,5 +191,23 @@ describe("toModelListView", () => {
     expect(view.residentLabel).toBe("Nothing loaded");
     expect(view.busyLabel).toBeNull();
     expect(view.rows[0].canLoad).toBe(true);
+  });
+
+  it("maps a load failure's error_code through describeOperationFailure (FR16, M5b)", () => {
+    const state: StateResponse = {
+      ...baseState,
+      models: [{ name: "llama3:70b", size_bytes: 39_000_000_000 }],
+      resident: null,
+      operation: {
+        kind: "idle",
+        model: "llama3:70b",
+        error: "Model not found: llama3:70b",
+        error_code: "unknown_model",
+      },
+    };
+
+    const view = toModelListView(state);
+
+    expect(view.failureMessage).toBe(notInstalledMessage("llama3:70b"));
   });
 });

@@ -30,8 +30,9 @@ import { useFocusEffect, useRouter } from "expo-router";
 import type { StateResponse } from "@shared/api";
 import { getToken } from "@/api/secureStoreToken";
 import { createAPIClient } from "@/api/expoFetchClient";
-import { ServerError, UnauthorizedError } from "@/api/client";
+import { UnauthorizedError } from "@/api/client";
 import { UNAUTHORIZED_MESSAGE } from "@/chat/chatController";
+import { describeError } from "@/api/errorMessages";
 import { toModelListView, type ModelRow } from "@/ui/modelList";
 import { runModelAction } from "@/ui/modelActions";
 import { buildConfirmationWarning } from "@/ui/confirmation";
@@ -99,9 +100,7 @@ export default function ModelsScreen() {
         setBusyLabel(null);
         setFailureMessage(null);
         setCanUnload(false);
-        setErrorMessage(
-          error instanceof Error ? error.message : "Can't reach the Mac"
-        );
+        setErrorMessage(describeError(error));
       } finally {
         setIsLoading(false);
         setIsRefreshing(false);
@@ -118,7 +117,8 @@ export default function ModelsScreen() {
     async (
       start: (confirm: boolean) => Promise<unknown>,
       confirmButtonLabel: string,
-      residentModelName: string | null
+      residentModelName: string | null,
+      loadingModelName?: string
     ) => {
       setIsActionPending(true);
 
@@ -156,11 +156,7 @@ export default function ModelsScreen() {
         }
 
         setBusyLabel(null);
-        setErrorMessage(
-          error instanceof ServerError || error instanceof Error
-            ? error.message
-            : "Can't reach the Mac"
-        );
+        setErrorMessage(describeError(error, loadingModelName));
       } finally {
         setIsActionPending(false);
       }
@@ -174,7 +170,8 @@ export default function ModelsScreen() {
       runAction(
         (confirm) => clientRef.current.loadModel({ name, confirm }),
         "Load anyway",
-        residentRow ? residentRow.name : null
+        residentRow ? residentRow.name : null,
+        name
       );
     },
     [runAction, rows]
