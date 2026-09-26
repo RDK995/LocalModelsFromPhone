@@ -87,6 +87,13 @@ describe("GenerationManager", () => {
     };
   }
 
+  function thinkingChunk(thinking: string, content: string, done: boolean): OllamaChatResponse {
+    return {
+      ...doneChunk(content, done),
+      message: { role: "assistant", content, thinking },
+    };
+  }
+
   it("runs a generation to completion with no subscriber and releases the active slot", async () => {
     let seenRequest: unknown;
     const client: OllamaChatClient = {
@@ -116,6 +123,43 @@ describe("GenerationManager", () => {
     });
     expect(manager.getActiveGenId()).toBeNull();
     expect(manager.cancelGeneration("gen-1")).toBe(false);
+  });
+
+  it("emits a thinking event before content for a chunk carrying both, replayable with correct seqs", async () => {
+    const client: OllamaChatClient = {
+      async *chat() {
+        yield thinkingChunk("pondering", "", false);
+        yield thinkingChunk("more thought", "hello", false);
+        yield doneChunk("", true);
+      },
+    };
+    const manager = new GenerationManager(client);
+    manager.startGeneration("gen-1", { model: "test", messages: [] });
+
+    const events = [];
+    for await (const e of manager.subscribe("gen-1")) events.push(e);
+
+    expect(events.map((e) => e.type)).toEqual(["thinking", "thinking", "content", "done"]);
+    expect(events.map((e) => e.seq)).toEqual([0, 1, 2, 3]);
+    expect(JSON.parse(events[0].data)).toEqual({ text: "pondering" });
+    expect(JSON.parse(events[1].data)).toEqual({ text: "more thought" });
+    expect(JSON.parse(events[2].data)).toEqual({ text: "hello" });
+    // eval_count comes from the final chunk's eval_count (7), unaffected by
+    // thinking chunks; only one chunk carried content.
+    expect(JSON.parse(events[3].data)).toEqual({
+      status: "complete",
+      model: "test",
+      eval_count: 7,
+      tokens_per_second: 14,
+    });
+
+    // Replay from a middle seq returns exactly the events at/after it, with
+    // their original seqs intact.
+    const replay = manager.getEventLog("gen-1", 2);
+    expect(replay.map((e) => ({ seq: e.seq, type: e.type }))).toEqual([
+      { seq: 2, type: "content" },
+      { seq: 3, type: "done" },
+    ]);
   });
 
   it("cancel stops a generation whose chat stream ignores the abort signal", async () => {

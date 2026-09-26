@@ -1,0 +1,35 @@
+Task: M4a-T1 — Server asks Ollama for reasoning output when the model supports it
+Verifier: Claude Haiku 4.5
+Date: 2026-09-26
+
+Test Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck && bash scripts/entry-smoke.sh
+
+Working Directory: /Users/ryankenny/Projects/CodingHarnessv2
+Commit: HEAD from branch m4a-chat-display
+
+=== TEST OUTPUT ===
+bun test v1.4.0 (1381054db)
+
+ 109 pass
+ 0 fail
+ 480 expect() calls
+Ran 109 tests across 4 files. [2.01s]
+$ tsc --noEmit
+Entry smoke: starting server on 127.0.0.1:62842
+PASS: server started and is listening on http://127.0.0.1:62842
+PASS: listens on 127.0.0.1 only (127.0.0.1:62842)
+PASS: no token -> 401
+PASS: wrong token -> 401
+PASS: correct token -> 200 (not 401)
+PASS: 0644 token file -> exits non-zero (1)
+PASS: missing token file -> exits non-zero (1)
+Entry smoke: all checks passed
+
+Exit Status: 0
+
+=== ANALYSIS ===
+Tests: 109 pass, 0 fail
+TypeCheck: passed (tsc --noEmit)
+Smoke Tests: 7 checks passed
+Overall: PASS

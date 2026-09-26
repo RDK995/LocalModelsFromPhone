@@ -10,12 +10,12 @@
  */
 
 import type { OllamaChatRequest, OllamaChatResponse } from "../ollama/client";
-import type { ChatRequest, ContentEvent, DoneEvent, ErrorEvent } from "@shared/api";
+import type { ChatRequest, ContentEvent, DoneEvent, ErrorEvent, ThinkingEvent } from "@shared/api";
 
 export interface GenerationEvent {
   seq: number;
   timestamp: number;
-  type: "content" | "done" | "error";
+  type: "thinking" | "content" | "done" | "error";
   data: string;
 }
 
@@ -119,6 +119,10 @@ export class GenerationManager {
         if (next.done) break;
 
         const chunk = next.value;
+        if (chunk.message?.thinking) {
+          const thinking: ThinkingEvent = { text: chunk.message.thinking };
+          this.append(record, "thinking", JSON.stringify(thinking));
+        }
         if (chunk.message?.content) {
           contentChunks++;
           const content: ContentEvent = { text: chunk.message.content };

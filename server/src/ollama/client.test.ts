@@ -122,3 +122,137 @@ describe("OllamaClient load/unload", () => {
     }
   });
 });
+
+describe("OllamaClient chat think capability", () => {
+  const CHAT_LINE =
+    JSON.stringify({
+      model: "m",
+      created_at: "",
+      message: { role: "assistant", content: "" },
+      done: true,
+      total_duration: 0,
+      load_duration: 0,
+      prompt_eval_count: 0,
+      prompt_eval_duration: 0,
+      eval_count: 0,
+      eval_duration: 0,
+    }) + "\n";
+
+  /** A fake Ollama serving both /api/show and /api/chat, recording each body seen. */
+  function fakeOllamaWithShow(showCapabilities: string[] | undefined, showStatus = 200) {
+    const showBodies: unknown[] = [];
+    const chatBodies: unknown[] = [];
+    const server = fakeOllamaHttp(async (req) => {
+      const url = new URL(req.url);
+      if (url.pathname === "/api/show") {
+        showBodies.push(await req.json());
+        if (showStatus !== 200) {
+          return new Response("show failed", { status: showStatus });
+        }
+        return new Response(JSON.stringify({ capabilities: showCapabilities }), {
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      if (url.pathname === "/api/chat") {
+        chatBodies.push(await req.json());
+        return new Response(CHAT_LINE, { headers: { "Content-Type": "application/x-ndjson" } });
+      }
+      return new Response("not found", { status: 404 });
+    });
+    return { server, showBodies, chatBodies };
+  }
+
+  async function drain(gen: AsyncGenerator<unknown, void, unknown>): Promise<void> {
+    for await (const _ of gen) {
+      // consume
+    }
+  }
+
+  it("sends think:true when /api/show capabilities include 'thinking'", async () => {
+    const { server, chatBodies } = fakeOllamaWithShow(["completion", "thinking"]);
+    try {
+      const client = new OllamaClient(`http://127.0.0.1:${server.port}`);
+      await drain(client.chat({ model: "thinker", messages: [{ role: "user", content: "hi" }] }));
+      expect(chatBodies).toEqual([
+        {
+          model: "thinker",
+          messages: [{ role: "user", content: "hi" }],
+          keep_alive: -1,
+          stream: true,
+          think: true,
+        },
+      ]);
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("sends no think key when /api/show capabilities do not include 'thinking'", async () => {
+    const { server, chatBodies } = fakeOllamaWithShow(["completion"]);
+    try {
+      const client = new OllamaClient(`http://127.0.0.1:${server.port}`);
+      await drain(client.chat({ model: "plain", messages: [{ role: "user", content: "hi" }] }));
+      expect(chatBodies).toEqual([
+        {
+          model: "plain",
+          messages: [{ role: "user", content: "hi" }],
+          keep_alive: -1,
+          stream: true,
+        },
+      ]);
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("sends no think key and still chats when /api/show fails", async () => {
+    const { server, chatBodies } = fakeOllamaWithShow(undefined, 500);
+    try {
+      const client = new OllamaClient(`http://127.0.0.1:${server.port}`);
+      await drain(client.chat({ model: "broken-show", messages: [{ role: "user", content: "hi" }] }));
+      expect(chatBodies).toEqual([
+        {
+          model: "broken-show",
+          messages: [{ role: "user", content: "hi" }],
+          keep_alive: -1,
+          stream: true,
+        },
+      ]);
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("sends no think key when /api/show succeeds but has no capabilities field", async () => {
+    const { server, chatBodies } = fakeOllamaWithShow(undefined, 200);
+    try {
+      const client = new OllamaClient(`http://127.0.0.1:${server.port}`);
+      await drain(client.chat({ model: "no-caps", messages: [{ role: "user", content: "hi" }] }));
+      expect(chatBodies).toEqual([
+        {
+          model: "no-caps",
+          messages: [{ role: "user", content: "hi" }],
+          keep_alive: -1,
+          stream: true,
+        },
+      ]);
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("calls /api/show once per model across two chats (cached)", async () => {
+    const { server, showBodies, chatBodies } = fakeOllamaWithShow(["thinking"]);
+    try {
+      const client = new OllamaClient(`http://127.0.0.1:${server.port}`);
+      await drain(client.chat({ model: "cached", messages: [{ role: "user", content: "one" }] }));
+      await drain(client.chat({ model: "cached", messages: [{ role: "user", content: "two" }] }));
+      expect(showBodies).toEqual([{ model: "cached" }]);
+      expect(chatBodies.length).toBe(2);
+      expect((chatBodies[0] as { think?: boolean }).think).toBe(true);
+      expect((chatBodies[1] as { think?: boolean }).think).toBe(true);
+    } finally {
+      server.stop(true);
+    }
+  });
+});

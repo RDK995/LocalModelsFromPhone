@@ -51,12 +51,17 @@ export interface OllamaChatRequest {
   }>;
 }
 
+export interface OllamaShowResponse {
+  capabilities?: string[];
+}
+
 export interface OllamaChatResponse {
   model: string;
   created_at: string;
   message: {
     role: "assistant";
     content: string;
+    thinking?: string;
   };
   done: boolean;
   total_duration: number;
@@ -111,6 +116,8 @@ async function ollamaErrorMessage(response: Response): Promise<string> {
 
 export class OllamaClient {
   private baseUrl: string;
+  /** Per-model "supports thinking" cache, kept for the life of the process (I9). */
+  private thinkingSupport: Map<string, boolean> = new Map();
 
   constructor(baseUrl: string = OLLAMA_BASE_URL) {
     this.baseUrl = baseUrl;
@@ -175,15 +182,59 @@ export class OllamaClient {
   }
 
   /**
+   * Get model details, including `capabilities` (e.g. "thinking") (I9).
+   */
+  async show(name: string): Promise<OllamaShowResponse> {
+    const response = await fetch(`${this.baseUrl}/api/show`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ model: name }),
+    });
+
+    if (!response.ok) {
+      throw new OllamaError(response.status, await ollamaErrorMessage(response));
+    }
+
+    return (await response.json()) as OllamaShowResponse;
+  }
+
+  /**
+   * Whether a model supports Ollama's `think` chat option, decided from
+   * `/api/show`'s `capabilities` array and cached per model name for the life
+   * of the process. Any failure (network, non-OK, missing/empty capabilities)
+   * is treated as "not supported": checking never fails a chat.
+   */
+  private async supportsThinking(model: string): Promise<boolean> {
+    const cached = this.thinkingSupport.get(model);
+    if (cached !== undefined) {
+      return cached;
+    }
+    let supported = false;
+    try {
+      const info = await this.show(model);
+      supported = Array.isArray(info.capabilities) && info.capabilities.includes("thinking");
+    } catch {
+      supported = false;
+    }
+    this.thinkingSupport.set(model, supported);
+    return supported;
+  }
+
+  /**
    * Stream a chat completion. The /api/chat body is built explicitly as
-   * {model, messages:[{role, content}], keep_alive:-1, stream:true}: nothing
-   * else from the caller reaches Ollama, and keep_alive:-1 keeps the resident
-   * model loaded indefinitely (FR4).
+   * {model, messages:[{role, content}], keep_alive:-1, stream:true, think:true
+   * when the model supports it}: only model and messages come from the
+   * caller, keep_alive:-1 keeps the resident model loaded indefinitely (FR4),
+   * and `think` is decided by the server from `/api/show` (I9) — the caller
+   * never requests it.
    */
   async *chat(
     request: OllamaChatRequest,
     signal?: AbortSignal
   ): AsyncGenerator<OllamaChatResponse, void, unknown> {
+    const think = await this.supportsThinking(request.model);
     const response = await fetch(`${this.baseUrl}/api/chat`, {
       method: "POST",
       headers: {
@@ -194,6 +245,7 @@ export class OllamaClient {
         messages: request.messages.map((m) => ({ role: m.role, content: m.content })),
         keep_alive: -1,
         stream: true,
+        ...(think ? { think: true } : {}),
       }),
       signal,
     });

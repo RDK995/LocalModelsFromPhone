@@ -156,7 +156,7 @@ Cycle 1: PASS, tier Mid (sonnet, MID_TIER_DIFF), full-milestone scope abce8c05ff
 
 ## M4a — Thinking shown collapsed, prompt shown on Send, reply streams in place
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -164,7 +164,7 @@ In the chat screen the user's prompt appears as soon as Send is pressed, the rep
 
 ### Architecture
 
-C1, C3
+C1, C3, C6, C7
 
 ### As-Built
 
@@ -178,11 +178,14 @@ Pending.
 
 ### Baseline
 
-Pending.
+7dee5da32a1f96ff040fdc1df75e45b53360d268 on m4a-chat-display
 
 ### Evidence
 
-Pending.
+Tasks (structured detail in state.json; packets under .harness/tasks/):
+- M4a-T1 server thinking: think:true when /api/show says the model supports it; thinking SSE events — Mid (ORDINARY_IMPLEMENTATION), in progress
+- M4a-T2 pure chat-display logic (chatItems, caller-chosen ids) — Mid (ORDINARY_IMPLEMENTATION), in progress
+- Planned: M4a-T3 chat.tsx wiring + collapsed thinking section (Mid); M4a-T4 runtime-smoke drive proving prompt-on-Send and reply-in-place in the bundled app (Mid); M4a-T5 live thinking proof over the tailnet (Cheap)
 
 ### Validation
 
@@ -198,6 +201,8 @@ Pending.
 
 ### Follow-ups
 
+- Size/shape check at pickup: 3 criteria (run). Entry point: live POST /v1/chat over the tailnet showing thinking SSE events separate from content (M4-AC1), and the bundled app driven by runtime smoke (M4-AC4/AC5). Signal IMPLEMENTATION_PLUS_LIVE_PROOF present; CONCURRENCY_LIFECYCLE, SUBSYSTEMS_GT_3, PRODUCTION_FILES_GT_8 (~6), WORKER_TASKS_GT_6 (5), MULTIPLE_OUTCOMES judged absent. One signal -> seam check: the live proof is a thin script with no independently reviewable half; runs unsplit.
+- Recon finding at pickup: the server never requested reasoning output (no think field in /api/chat; only content events emitted). Architecture I9/I10 already specifies think:true when supported, so this builds the agreed design (not a deviation); Architecture field widened from "C1, C3" to "C1, C3, C6, C7".
 - Added 2026-09-26 by the human after M3 DONE (on-device observation): in M3's chat screen the user's prompt is not shown until the reply arrives, and a long reply streams in a separate area then jumps into the conversation on completion. Folded into M4 as M4-AC4/M4-AC5 (trace: FR7, FR9) because M4 reworks the same streaming display.
 
 ## M4b — Dropped-connection and backgrounding resume

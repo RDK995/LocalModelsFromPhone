@@ -3504,16 +3504,16 @@
       "id": "M4a",
       "title": "Thinking shown collapsed, prompt shown on Send, reply streams in place",
       "outcome": "In the chat screen the user's prompt appears as soon as Send is pressed, the reply streams into its own final place in the conversation (no separate streaming area), and a model's reasoning output is shown in a collapsed, expandable section separate from the answer. Split from M4 at pickup (5 criteria, within size) because of operational-complexity signals CONCURRENCY_LIFECYCLE + IMPLEMENTATION_PLUS_LIVE_PROOF (a required split), plus SUBSYSTEMS_GT_3 and MULTIPLE_OUTCOMES; parts: M4a chat display (thinking, prompt on Send, reply streams in place), M4b dropped-connection and backgrounding resume.",
-      "architecture": "C1, C3",
+      "architecture": "C1, C3, C6, C7",
       "requirements": [
         "FR10"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
-        "commit": "",
-        "branch": ""
+        "commit": "7dee5da32a1f96ff040fdc1df75e45b53360d268",
+        "branch": "m4a-chat-display"
       },
       "as_built": {
         "artifact": null,
@@ -3539,12 +3539,110 @@
           "evidence": []
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M4a-T1",
+          "scope": "Server requests think:true from Ollama when /api/show capabilities include \"thinking\" (cached per model) and emits thinking SSE events separate from content",
+          "tests": "cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh",
+          "requirements": [
+            "FR10"
+          ],
+          "constraints": [
+            "no change to shared/, mobile/, ops/",
+            "no restart of Mac services"
+          ],
+          "findings": [],
+          "criteria": [
+            "M4-AC1"
+          ],
+          "paths": [
+            "server/src/ollama/client.ts",
+            "server/src/ollama/client.test.ts",
+            "server/src/generations/manager.ts",
+            "server/src/generations/manager.test.ts"
+          ],
+          "depends_on": [],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "ordinary feature work across C7 and C6 with unit tests as the oracle; no concurrency or lifecycle change"
+          },
+          "status": "ACCEPTED",
+          "attempts": 1,
+          "packet": ".harness/tasks/M4a-T1.md",
+          "commit": null,
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M4a-T1-worker.log",
+              "verdict": "PASS",
+              "base": "7dee5da",
+              "changed_files": [
+                "server/src/ollama/client.ts",
+                "server/src/ollama/client.test.ts",
+                "server/src/generations/manager.ts",
+                "server/src/generations/manager.test.ts"
+              ],
+              "verifier": {
+                "artifact": ".harness/evidence/M4a-T1-verifier.log",
+                "exit_code": 0,
+                "verdict": "PASS",
+                "tests_weakened": "NO",
+                "discrepancies": "NONE"
+              },
+              "note": "server 109 tests, typecheck, entry-smoke; new tests (a)-(e) at client.test.ts:171,190,208,244 and manager.test.ts:128"
+            }
+          ]
+        },
+        {
+          "id": "M4a-T2",
+          "scope": "Pure chat-display logic: caller-chosen message ids in sendInConversation; buildChatItems places pending prompt and in-flight reply in the list under their persisted ids; thinking collapsed-by-default helpers",
+          "tests": "cd mobile && bun run typecheck && bun test src/store src/api src/ui src/chat src/app-routing && bun run lint",
+          "requirements": [
+            "FR10",
+            "FR9",
+            "FR7"
+          ],
+          "constraints": [
+            "no change to server/, shared/, ops/, mobile/src/app/"
+          ],
+          "findings": [],
+          "criteria": [
+            "M4-AC1",
+            "M4-AC4",
+            "M4-AC5"
+          ],
+          "paths": [
+            "mobile/src/chat/conversationSession.ts",
+            "mobile/src/chat/conversationSession.test.ts",
+            "mobile/src/ui/chatItems.ts",
+            "mobile/src/ui/chatItems.test.ts"
+          ],
+          "depends_on": [],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "ordinary feature work in small pure mobile modules with unit tests as the oracle"
+          },
+          "status": "IN_PROGRESS",
+          "attempts": 0,
+          "packet": ".harness/tasks/M4a-T2.md",
+          "commit": null,
+          "attempt_log": []
+        }
+      ],
       "reviews": [],
       "findings": [],
       "validation": [],
       "follow_ups": [
-        "Added 2026-09-26 by the human after M3 DONE (on-device observation): in M3's chat screen the user's prompt is not shown until the reply arrives, and a long reply streams in a separate area then jumps into the conversation on completion. Folded into M4 as M4-AC4/M4-AC5 (trace: FR7, FR9) because M4 reworks the same streaming display."
+        "Added 2026-09-26 by the human after M3 DONE (on-device observation): in M3's chat screen the user's prompt is not shown until the reply arrives, and a long reply streams in a separate area then jumps into the conversation on completion. Folded into M4 as M4-AC4/M4-AC5 (trace: FR7, FR9) because M4 reworks the same streaming display.",
+        "Size/shape check at pickup: 3 criteria (run). Entry point: live POST /v1/chat over the tailnet showing thinking SSE events separate from content (M4-AC1), and the bundled app driven by runtime smoke (M4-AC4/AC5). Signal IMPLEMENTATION_PLUS_LIVE_PROOF present (live thinking proof); CONCURRENCY_LIFECYCLE, SUBSYSTEMS_GT_3 (server C6/C7 + mobile C1/C3 = two subsystems), PRODUCTION_FILES_GT_8 (~6), WORKER_TASKS_GT_6 (5) judged absent; MULTIPLE_OUTCOMES judged absent (the planner grouped these three as one chat-display outcome at the M4 split). One signal -> seam check: the live proof is a thin script over already-built modules with no independently reviewable half, so M4a runs unsplit.",
+        "Recon finding at pickup: the server never requested reasoning output (server/src/ollama/client.ts sent no think field; generations/manager.ts emitted only content). Architecture I9/I10 already specifies think:true when supported, so this is building the agreed design, not a deviation; the Architecture field is widened from \"C1, C3\" to \"C1, C3, C6, C7\" to name the server components M4-AC1 needs."
       ],
       "split": {
         "from": "M4",
