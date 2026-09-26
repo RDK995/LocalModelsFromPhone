@@ -196,7 +196,7 @@ Cycle 1: PASS, tier Top (opus, DIFFICULT_CONCURRENCY), full-milestone scope ef16
 
 ## M3 — Persisted multi-turn conversations with model attribution
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -230,16 +230,22 @@ Tasks (structured detail in state.json; packets under .harness/tasks/):
 
 - M3-T2b runtime smoke AsyncStorage fake + Conversations-first drive path, lint quote fixes — Mid (ORDINARY_IMPLEMENTATION), attempt 3 PASS; verifier PASS (typecheck, 102 tests, lint, smoke:runtime 3/3; tests not weakened) — .harness/evidence/M3-T2b-verifier.log
 
-Handoff (implementation phase CONTINUE, orchestrator turn ceiling). Remaining, in order:
-1. M3-T2b — .harness/tasks/M3-T2b.md: runtime-smoke AsyncStorage native-module fake and new drive path through Conversations (all 3 scenarios kept), fix 5 quote-style lint errors in conversationSession.test.ts. Route Mid. `bun run lint` and `bun run smoke:runtime` are red at cfc1a08 until this lands.
-2. M3-T3 — .harness/tasks/M3-T3.md: live tailnet proof (context, attribution across a switch, blocked, fresh-store persistence). Route Cheap.
-3. Record M3-AC5 on-device step as a human check (convention from M2a: on-phone visual checks recorded under Follow-ups), then Validation, then REVIEW.
+- M3-T3 live tailnet proof mobile/scripts/conversation-proof.{sh,ts} (app's sendInConversation, store over file-backed StoragePort, API client) — Cheap (BOUNDED_LOW_RISK), attempt 1 FAIL (exit 0 but two packet assertions missing: turn-2 sent messages not recorded; blocked-send chat calls not counted) -> Cheap attempt 2 PASS; verifier PASS (typecheck, lint, proof all checks PASS; tests not weakened) — .harness/evidence/M3-T3-verifier.log
 
-Criteria evidence: pending M3-T2b and M3-T3.
+Criteria evidence (full entries in state.json):
+- M3-AC1: store unit tests (M3-T1-verifier.log); conversationList unit tests + Conversations screen (M3-T2-verifier.log); runtime smoke lands on Conversations and drives New chat -> Chat (M3-T2b-verifier.log).
+- M3-AC2: live proof Step 3 — turn-2 request at client.chat carries turn-1 user and assistant messages, reply contains the run-time random code word (M3-T3-verifier.log).
+- M3-AC3: live proof Step 5 — same conversation, replies stored devstral:24b then qwen3.6:27b across a swap-load (M3-T3-verifier.log); chat.tsx per-reply label (M3-T2-verifier.log).
+- M3-AC4: live proof Step 6 — /api/ps empty, send blocked with "No model loaded — load one on the Models screen to send.", zero chat calls, no assistant message (M3-T3-verifier.log).
+- M3-AC5: storage-layer proxy only — live proof Step 7 fresh store over the same file-backed storage sees identical conversation (M3-T3-verifier.log). On-device Expo Go force-quit check is a pending human step (Follow-ups).
 
 ### Validation
 
-Pending.
+Reviewer runs once (about 12+ minutes; live proofs restart com.harness.server and com.harness.bundle-host and evict then restore the resident model; run nothing else against the Mac concurrently):
+
+`cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/e2e-tailnet-proof.sh && (cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh) && (cd ops && bun test src/token && bash scripts/verify-ops-install.sh) && (cd mobile && bun run typecheck && bun test src/store src/api src/ui src/chat src/app-routing && bun run lint && bun run smoke:runtime && bash scripts/model-list-proof.sh && bash scripts/model-swap-proof.sh && bash scripts/model-failed-load-proof.sh && bash scripts/conversation-proof.sh && npx expo export --platform ios && rm -rf dist)`
+
+Status: PENDING (reviewer). Task artifacts: .harness/evidence/M3-T1-verifier.log, M3-T2-verifier.log, M3-T2b-verifier.log, M3-T3-verifier.log.
 
 ### Review
 
@@ -252,6 +258,9 @@ Pending.
 ### Follow-ups
 
 - Size/shape check at pickup: 5 criteria (run). Entry point: live `POST /v1/chat` over the tailnet through the app's own client and conversation logic (M3-AC2). Operational-complexity signal `IMPLEMENTATION_PLUS_LIVE_PROOF` present (live context proof; on-device force-quit check); `SUBSYSTEMS_GT_3`, `CONCURRENCY_LIFECYCLE`, `PRODUCTION_FILES_GT_8` (~7), `WORKER_TASKS_GT_6` (4 tasks) and `MULTIPLE_OUTCOMES` judged absent (mobile only; server unchanged). One signal -> seam check: the live proof is a thin script over the same store and client, with no independently reviewable half, so M3 runs unsplit.
+- M3-T2: chat.tsx header also links back to /conversations (chat hides the Stack header); small addition beyond the packet's literal wording, left for review.
+- M3-AC5 on-device check (human, M2a convention): on the phone in Expo Go, create a conversation with two turns, force-quit Expo Go, reopen the project, and confirm the same conversations and messages (with model labels) are shown. Automated evidence is the storage-layer proxy only.
+- M3-T3 proof counts zero client.chat calls on the blocked send but does not separately assert the counter is >0 on successful sends; wiring is shown by the recorded turn-2 messages.
 
 ## M4 — Thinking display and dropped-connection resume
 
