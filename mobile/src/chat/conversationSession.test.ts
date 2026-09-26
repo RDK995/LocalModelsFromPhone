@@ -294,9 +294,9 @@ describe("sendInConversation: model attribution (FR8)", () => {
       }
       if (url.endsWith("/v1/chat")) {
         const stream = controlledSseResponse("gen-1");
-        stream.push('event: content\ndata: {"text":"hi"}\n\n');
+        stream.push("event: content\ndata: {\"text\":\"hi\"}\n\n");
         stream.push(
-          'event: done\ndata: {"status":"complete","eval_count":1,"tokens_per_second":1}\n\n'
+          "event: done\ndata: {\"status\":\"complete\",\"eval_count\":1,\"tokens_per_second\":1}\n\n"
         );
         stream.close();
         return stream.response;
@@ -326,7 +326,7 @@ describe("sendInConversation: model attribution (FR8)", () => {
       }
       if (url.endsWith("/v1/chat")) {
         const stream = controlledSseResponse("gen-1");
-        stream.push('event: content\ndata: {"text":"partial"}\n\n');
+        stream.push("event: content\ndata: {\"text\":\"partial\"}\n\n");
         stream.push(doneEvent("llama3", "cancelled"));
         stream.close();
         return stream.response;
@@ -357,9 +357,9 @@ describe("sendInConversation: stream error (keeps partial content)", () => {
       }
       if (url.endsWith("/v1/chat")) {
         const stream = controlledSseResponse("gen-1");
-        stream.push('event: content\ndata: {"text":"partial answer"}\n\n');
+        stream.push("event: content\ndata: {\"text\":\"partial answer\"}\n\n");
         stream.push(
-          'event: error\ndata: {"code":"generation_failed","message":"model crashed"}\n\n'
+          "event: error\ndata: {\"code\":\"generation_failed\",\"message\":\"model crashed\"}\n\n"
         );
         stream.close();
         return stream.response;

@@ -16,8 +16,15 @@
  *
  * What this proves: the bundled JS (app code + real expo-router, React,
  * react-native JS, react-native-screens JS) starts, RootLayout renders, and
- * the first screen (Chat when a token is stored, Setup otherwise) is
- * committed to the (fake) native view tree without a JS exception.
+ * the first screen (Conversations when a token is stored, Setup otherwise --
+ * M3-T2 moved the conversation list in front of Chat) is committed to the
+ * (fake) native view tree without a JS exception. A fake `PlatformLocalStorage`
+ * native module (in-memory, keyed the way
+ * @react-native-async-storage/async-storage actually looks it up -- see the
+ * `moduleOverrides.PlatformLocalStorage` comment below) backs the
+ * conversation store (src/store/conversationStore.ts, M3-T1) that
+ * Conversations and Chat read and write through, so store calls resolve
+ * instead of hanging.
  *
  * The `--token=absent` run additionally drives the real first-time path
  * (M1-C12): once Setup has rendered, it dispatches the same native Fabric
@@ -31,24 +38,31 @@
  * JS handler lives on the React fiber and is only reachable by dispatching
  * the matching native event through `dispatchFabricEvent`, not by calling
  * `node.props.onChange` directly. This runs setup.tsx's actual
- * `handleTokenSubmit` -> `saveToken` -> `router.replace("/chat")`. It then
- * asserts Chat mounted (its own in-app header text is present) with the
- * native Stack header hidden (one top bar), not two. This proves
- * RootLayout's screen options apply to a screen reached by client-side
- * navigation after Setup, not only to a screen reached by the initial
- * launch redirect.
+ * `handleTokenSubmit` -> `saveToken` -> `router.replace("/conversations")`.
+ * It then asserts Conversations mounted (its own in-app header text is
+ * present) with the native Stack header hidden (one top bar), not two. This
+ * proves RootLayout's screen options apply to a screen reached by
+ * client-side navigation after Setup, not only to a screen reached by the
+ * initial launch redirect.
  *
- * The `--token=wrong` run (M1-C15, FR13) stores a token so Chat is the first
- * screen, but every request the app makes gets back HTTP 401
+ * The `--token=wrong` run (M1-C15, FR13) stores a token so Conversations is
+ * the first screen (listing conversations from the fake AsyncStorage never
+ * touches the network), but every request the app makes gets back HTTP 401
  * `{"error":"unauthorized"}` from a fake `ExpoFetchModule` (the native module
  * behind `expo/fetch`, which the app's real API client uses -- see
  * `src/api/expoFetchClient.ts` and `node_modules/expo/src/winter/fetch/`).
- * Once Chat has rendered, it dispatches `topChange` "hello" on the message
- * TextInput and `topClick` on "Send" (same mechanism as the Setup -> Chat
- * drive above), which runs chat.tsx's real `handleSendMessage` ->
- * `sendMessage` -> `client.getState()` -> the fake 401 -> `onUnauthorized`.
- * It then asserts (a) the native Alert module (`AlertManager.alertWithArgs`,
- * see `node_modules/react-native/Libraries/Alert/{Alert,RCTAlertManager.ios}.js`)
+ * Once Conversations has rendered, it dispatches `topClick` on the "New
+ * chat" pressable (found the same way "Continue"/"Send" are found below --
+ * by walking the committed tree for a pressable whose text includes "New
+ * chat"), which runs conversations.tsx's real `handleNewChat` ->
+ * `store.create()` -> `router.push("/chat?id=...")`, landing on Chat bound
+ * to the freshly created conversation. It then dispatches `topChange`
+ * "hello" on Chat's message TextInput and `topClick` on "Send" (same
+ * dispatch mechanism as the Setup -> Conversations drive above), which runs
+ * chat.tsx's real `handleSendMessage` -> `sendInConversation` ->
+ * `client.getState()` -> the fake 401 -> `onUnauthorized`. It then asserts
+ * (a) the native Alert module (`AlertManager.alertWithArgs`, see
+ * `node_modules/react-native/Libraries/Alert/{Alert,RCTAlertManager.ios}.js`)
  * was called with title "Password wrong or changed" and not with title
  * "Error", and (b) Settings is mounted with its token form already open
  * ("Bearer Token" and "Save" present, "Update Token" absent). This proves
@@ -233,6 +247,57 @@ const moduleOverrides = {
     updateExceptionMessage: () => {},
     dismissRedbox: () => {},
   },
+  // AsyncStorage's native module: RCTAsyncStorage.js (see
+  // node_modules/@react-native-async-storage/async-storage/lib/module/
+  // RCTAsyncStorage.js) resolves it via
+  // `TurboModuleRegistry.get("PlatformLocalStorage") ||
+  // .get("RNC_AsyncSQLiteDBStorage") || .get("RNCAsyncStorage")`, in that
+  // order -- and the generic fallback proxy below (see `makeModule`) already
+  // answers "PlatformLocalStorage" truthily, with every unknown method
+  // resolving to `() => undefined`. Without this override, every
+  // AsyncStorage promise (and so every call the conversation store -- M3-T1,
+  // src/store/conversationStore.ts -- makes from the Conversations/Chat
+  // screens) hangs forever, since a callback that is never invoked never
+  // resolves the wrapping Promise. Backed by a plain in-memory map; the
+  // callback contract below matches what
+  // .../lib/module/AsyncStorage.native.js actually calls (see
+  // convertError/convertErrors in .../lib/module/helpers.js: the `errors`
+  // argument must be null/undefined/empty to read as success).
+  PlatformLocalStorage: (() => {
+    const map = new Map();
+    return {
+      multiGet: (keys, callback) => {
+        callback(
+          null,
+          keys.map(key => [key, map.has(key) ? map.get(key) : null])
+        );
+      },
+      multiSet: (pairs, callback) => {
+        for (const [key, value] of pairs) map.set(key, value);
+        callback(null);
+      },
+      multiRemove: (keys, callback) => {
+        for (const key of keys) map.delete(key);
+        callback(null);
+      },
+      multiMerge: (pairs, callback) => {
+        // Not called by this app's store, but implemented for contract
+        // completeness (a plain JSON-merge, per AsyncStorage's own docs).
+        for (const [key, value] of pairs) {
+          const existing = map.has(key) ? JSON.parse(map.get(key)) : {};
+          map.set(key, JSON.stringify({ ...existing, ...JSON.parse(value) }));
+        }
+        callback(null);
+      },
+      clear: callback => {
+        map.clear();
+        callback(null);
+      },
+      getAllKeys: callback => {
+        callback(null, [...map.keys()]);
+      },
+    };
+  })(),
 };
 function makeModule(name) {
   const base = moduleOverrides[name] ?? {};
@@ -586,7 +651,7 @@ function collectTree() {
   return { texts, headers, pressables, textInputs };
 }
 
-const expectedScreen = STORED_TOKEN ? "Chat" : "Setup";
+const expectedScreen = STORED_TOKEN ? "Conversations" : "Setup";
 const first = collectTree();
 log(`bundle: ${bundlePath}`);
 log(`stored token: ${tokenArg}; expected first screen: ${expectedScreen}`);
@@ -635,7 +700,7 @@ if (tokenArg === "absent" && exceptions.length === 0 && reachedFirstScreen) {
       dispatchFabricEvent?.(continueButton.node.instanceHandle, "topClick", {});
       await new HostPromise(r => hostSetTimeout(r, 1500));
       const afterPress = collectTree();
-      const chatMounted = afterPress.texts.includes("Chat");
+      const conversationsMounted = afterPress.texts.includes("Conversations");
       const backOnSetup = afterPress.texts.some(t =>
         t.includes("Enter Bearer Token")
       );
@@ -643,10 +708,10 @@ if (tokenArg === "absent" && exceptions.length === 0 && reachedFirstScreen) {
       driveToChat = {
         ok:
           exceptions.length === 0 &&
-          chatMounted &&
+          conversationsMounted &&
           !backOnSetup &&
           singleTopBar,
-        chatMounted,
+        conversationsMounted,
         backOnSetup,
         singleTopBar,
         rendered_text: [...new Set(afterPress.texts)],
@@ -654,69 +719,87 @@ if (tokenArg === "absent" && exceptions.length === 0 && reachedFirstScreen) {
       };
     }
   }
-  log(`drive Setup -> Chat: ${JSON.stringify(driveToChat)}`);
+  log(`drive Setup -> Conversations: ${JSON.stringify(driveToChat)}`);
 }
 
-// ---- M1-C15 (FR13): token-wrong run drives Chat's Send button while every
-// request 401s, proving chat.tsx's onUnauthorized wiring (not just
-// chatController's unit-tested logic) in a real bundle -- the alert shown,
-// and navigation to Settings with the token form already open. ----
+// ---- M1-C15 (FR13): token-wrong run first drives Conversations -> Chat
+// (tapping "New chat", the same way a real user reaches Chat now that it is
+// no longer the landing screen -- M3-T2), then drives Chat's Send button
+// while every request 401s, proving chat.tsx's onUnauthorized wiring (not
+// just chatController's unit-tested logic) in a real bundle -- the alert
+// shown, and navigation to Settings with the token form already open. ----
 let driveChat401 = null;
 if (tokenArg === "wrong" && exceptions.length === 0 && reachedFirstScreen) {
-  const messageInput = first.textInputs[0];
-  if (!messageInput) {
+  const newChatButton = first.pressables.find(p =>
+    p.texts.some(t => t.includes("New chat"))
+  );
+  if (!newChatButton) {
     driveChat401 = {
       ok: false,
-      reason: "Chat's message TextInput not found in the rendered tree",
+      reason: "Conversations' New chat button's onClick not found in the rendered tree",
     };
   } else {
-    // Same mechanism as the Setup -> Chat drive above: dispatch the native
-    // `topChange` a keystroke sends, then find "Send"'s onClick (only
-    // present once typing enables the button) and dispatch the native
-    // `topClick` a tap sends.
-    dispatchFabricEvent?.(messageInput.instanceHandle, "topChange", {
-      text: "hello",
-      eventCount: 1,
-      target: messageInput.tag,
-    });
-    await new HostPromise(r => hostSetTimeout(r, 300));
-    const afterType = collectTree();
-    const sendButton = afterType.pressables.find(p =>
-      p.texts.some(t => t.includes("Send"))
-    );
-    if (!sendButton) {
+    // Dispatch the native `topClick` event a real tap sends (same mechanism
+    // as the Setup -> Conversations drive above). Runs conversations.tsx's
+    // real `handleNewChat` -> `store.create()` -> `router.push("/chat?id=...")`.
+    dispatchFabricEvent?.(newChatButton.node.instanceHandle, "topClick", {});
+    await new HostPromise(r => hostSetTimeout(r, 1000));
+    const afterNewChat = collectTree();
+    const messageInput = afterNewChat.textInputs[0];
+    if (!messageInput) {
       driveChat401 = {
         ok: false,
-        reason: "Send button's onClick not found after typing a message",
+        reason: "Chat's message TextInput not found after tapping New chat",
       };
     } else {
-      dispatchFabricEvent?.(sendButton.node.instanceHandle, "topClick", {});
-      await new HostPromise(r => hostSetTimeout(r, 1500));
-      const afterPress = collectTree();
-      const texts = afterPress.texts;
-      const wrongAlertShown = alerts.some(
-        a => a.title === "Password wrong or changed"
+      // Same mechanism as the Setup -> Conversations drive above: dispatch
+      // the native `topChange` a keystroke sends, then find "Send"'s
+      // onClick (only present once typing enables the button) and dispatch
+      // the native `topClick` a tap sends.
+      dispatchFabricEvent?.(messageInput.instanceHandle, "topChange", {
+        text: "hello",
+        eventCount: 1,
+        target: messageInput.tag,
+      });
+      await new HostPromise(r => hostSetTimeout(r, 300));
+      const afterType = collectTree();
+      const sendButton = afterType.pressables.find(p =>
+        p.texts.some(t => t.includes("Send"))
       );
-      const errorAlertShown = alerts.some(a => a.title === "Error");
-      const settingsMounted =
-        texts.some(t => t.includes("Bearer Token")) &&
-        texts.some(t => t.includes("Save")) &&
-        !texts.some(t => t.includes("Update Token"));
-      driveChat401 = {
-        ok:
-          exceptions.length === 0 &&
-          wrongAlertShown &&
-          !errorAlertShown &&
+      if (!sendButton) {
+        driveChat401 = {
+          ok: false,
+          reason: "Send button's onClick not found after typing a message",
+        };
+      } else {
+        dispatchFabricEvent?.(sendButton.node.instanceHandle, "topClick", {});
+        await new HostPromise(r => hostSetTimeout(r, 1500));
+        const afterPress = collectTree();
+        const texts = afterPress.texts;
+        const wrongAlertShown = alerts.some(
+          a => a.title === "Password wrong or changed"
+        );
+        const errorAlertShown = alerts.some(a => a.title === "Error");
+        const settingsMounted =
+          texts.some(t => t.includes("Bearer Token")) &&
+          texts.some(t => t.includes("Save")) &&
+          !texts.some(t => t.includes("Update Token"));
+        driveChat401 = {
+          ok:
+            exceptions.length === 0 &&
+            wrongAlertShown &&
+            !errorAlertShown &&
+            settingsMounted,
+          wrongAlertShown,
+          errorAlertShown,
           settingsMounted,
-        wrongAlertShown,
-        errorAlertShown,
-        settingsMounted,
-        alerts,
-        rendered_text: [...new Set(texts)],
-      };
+          alerts,
+          rendered_text: [...new Set(texts)],
+        };
+      }
     }
   }
-  log(`drive Chat 401 -> Settings: ${JSON.stringify(driveChat401)}`);
+  log(`drive Conversations -> Chat -> 401 -> Settings: ${JSON.stringify(driveChat401)}`);
 }
 
 for (const e of exceptions) {
@@ -738,10 +821,12 @@ const pass =
 if (pass) {
   log(
     `RESULT: PASS (app launched, ${expectedScreen} rendered, no JS exception${
-      driveToChat ? ", Setup -> Chat drive reached Chat with one top bar" : ""
+      driveToChat
+        ? ", Setup -> Conversations drive reached Conversations with one top bar"
+        : ""
     }${
       driveChat401
-        ? ", Chat 401 drive reached Settings with the token form open"
+        ? ", Conversations -> Chat -> 401 drive reached Settings with the token form open"
         : ""
     })`
   );

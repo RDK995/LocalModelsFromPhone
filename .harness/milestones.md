@@ -228,6 +228,8 @@ Tasks (structured detail in state.json; packets under .harness/tasks/):
 - M3-T1 conversation store (C3) over AsyncStorage, one key per conversation plus an index — Mid (ORDINARY_IMPLEMENTATION), attempt 3 PASS; verifier PASS (typecheck, 86 tests, lint, smoke:runtime 3/3; tests not weakened) — .harness/evidence/M3-T1-verifier.log; commit fe8b088
 - M3-T2 conversation session, Conversations screen, conversation-bound chat with model label and load-a-model prompt — Mid (ORDINARY_IMPLEMENTATION), attempt 3 CONTINUE (turn limit) -> continuation 1 CONTINUE (turn limit) -> continuation cap reached; remainder split to M3-T2b; accepted scope verifier PASS (typecheck, 102 tests; tests not weakened) — .harness/evidence/M3-T2-verifier.log; commit cfc1a08
 
+- M3-T2b runtime smoke AsyncStorage fake + Conversations-first drive path, lint quote fixes — Mid (ORDINARY_IMPLEMENTATION), attempt 3 PASS; verifier PASS (typecheck, 102 tests, lint, smoke:runtime 3/3; tests not weakened) — .harness/evidence/M3-T2b-verifier.log
+
 Handoff (implementation phase CONTINUE, orchestrator turn ceiling). Remaining, in order:
 1. M3-T2b — .harness/tasks/M3-T2b.md: runtime-smoke AsyncStorage native-module fake and new drive path through Conversations (all 3 scenarios kept), fix 5 quote-style lint errors in conversationSession.test.ts. Route Mid. `bun run lint` and `bun run smoke:runtime` are red at cfc1a08 until this lands.
 2. M3-T3 — .harness/tasks/M3-T3.md: live tailnet proof (context, attribution across a switch, blocked, fresh-store persistence). Route Cheap.

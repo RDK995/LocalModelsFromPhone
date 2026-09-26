@@ -9,11 +9,12 @@
 #                                         the bundle host serves (its
 #                                         manifest's launchAsset.url)
 #
-# Runs the app three times: with a stored token (first screen must be Chat),
-# without one (first screen must be Setup), and with a stored token that the
-# server rejects with 401 (first screen is Chat, then Send must route to
-# Settings with the token form open -- FR13, M1-C15). Exits non-zero if any
-# of them fail.
+# Runs the app three times: with a stored token (first screen must be
+# Conversations, the M3-T2 landing screen), without one (first screen must
+# be Setup), and with a stored token that the server rejects with 401 (first
+# screen is Conversations, then tapping "New chat" into Chat and pressing
+# Send must route to Settings with the token form open -- FR13, M1-C15).
+# Exits non-zero if any of them fail.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
