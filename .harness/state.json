@@ -4464,7 +4464,7 @@
           "status": "ACCEPTED",
           "attempts": 1,
           "packet": ".harness/tasks/M5a-T1.md",
-          "commit": null,
+          "commit": "6322847",
           "attempt_log": [
             {
               "attempt": 3,
@@ -4491,6 +4491,66 @@
                 "ops/scripts/restart-proof.sh"
               ],
               "note": "exit 0; server 88260->89022 healthy 1s; bundle host 88461->89068 healthy 3s; 8081 listener 89068->89216 healthy 10s; one listener; tests weakened NO"
+            }
+          ]
+        },
+        {
+          "id": "M5a-T2",
+          "scope": "Read-only post-reboot readiness check: agents started by launchd since boot (ppid 1, start after boot), server 401/200 over tailnet, bundle status+iOS manifest+bundle fetch over tailnet, pf daemon loaded and anchor iface matches current tailnet utun",
+          "tests": "cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/verify-ops-install.sh && bash ops/scripts/boot-readiness-check.sh",
+          "requirements": [
+            "FR15"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M5-AC1"
+          ],
+          "paths": [
+            "ops/scripts/boot-readiness-check.sh",
+            "ops/scripts/verify-ops-install.sh"
+          ],
+          "depends_on": [
+            "M5a-T1"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "live read-only check across launchd, tailnet and pf; must be right on the single human reboot"
+          },
+          "status": "ACCEPTED",
+          "attempts": 1,
+          "packet": ".harness/tasks/M5a-T2.md",
+          "commit": null,
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M5a-T2-worker.log",
+              "verdict": "PASS",
+              "base": "6322847",
+              "changed_files": [
+                "ops/scripts/boot-readiness-check.sh",
+                "ops/scripts/verify-ops-install.sh"
+              ],
+              "note": "all checks PASS pre-reboot; LC_ALL=C for ps lstart parse"
+            },
+            {
+              "attempt": 3,
+              "role": "verifier",
+              "tier": "Cheap",
+              "model": "haiku",
+              "artifact": ".harness/evidence/M5a-T2-verifier.log",
+              "verdict": "PASS",
+              "base": "6322847",
+              "changed_files": [
+                "ops/scripts/boot-readiness-check.sh",
+                "ops/scripts/verify-ops-install.sh"
+              ],
+              "note": "exit 0; read-only confirmed; verify-ops-install diff additive; tests weakened NO"
             }
           ]
         }

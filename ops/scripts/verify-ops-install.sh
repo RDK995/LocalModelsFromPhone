@@ -18,6 +18,7 @@ required_scripts=(
   "uninstall-pf-anchor.sh"
   "pf-bundle-host-load.sh"
   "check-pf-rules.sh"
+  "boot-readiness-check.sh"
 )
 
 for script in "${required_scripts[@]}"; do
