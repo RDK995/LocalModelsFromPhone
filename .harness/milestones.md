@@ -219,13 +219,57 @@ Cycle 1: PASS, tier Mid (sonnet, MID_TIER_DIFF), full-milestone scope 7dee5da32a
 - M4a-T4 discrimination check reached only step 1 against the pre-M4a chat screen (the drive stops at the first failure), so the step-4 in-place assertion was not separately shown to fail against the old screen.
 - On-device check (human, M2a convention): in Expo Go, send to a thinking model and confirm the prompt shows at once, the reply grows in place without jumping, and "Show thinking" expands the reasoning.
 
-## M4b — Dropped-connection and backgrounding resume
+## M4b — Dropped-connection resume
 
 Status: TODO
 
 ### Outcome
 
-A transport drop or app backgrounding mid-reply resumes the same reply once the phone reconnects, with no gaps or duplicated text and its terminal state received, and only an explicit Stop cancels generation. Second part of the M4 split (see M4a).
+A transport drop mid-reply resumes the same reply once the phone reconnects (Last-Event-ID replay with backoff), with no gaps or duplicated text and its terminal state received. Second part of the M4 split (see M4a). Split from the original M4b (dropped-connection and backgrounding resume) at pickup (2 criteria, within size) because of operational-complexity signals CONCURRENCY_LIFECYCLE + IMPLEMENTATION_PLUS_LIVE_PROOF (a required split), plus MULTIPLE_OUTCOMES; parts: M4b dropped-connection resume (M4-AC2), M4c backgrounding resume with Stop-only cancel (M4-AC3).
+
+### Architecture
+
+C1, C2, C6
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M4-AC2**: Killing the connection mid-reply and reconnecting yields the complete reply with no gaps and no duplicated text.
+
+### Baseline
+
+Pending.
+
+### Evidence
+
+Pending.
+
+### Validation
+
+Pending.
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+- Recon at split (2026-09-26): server already supports resume -- GET /v1/generations/:id/events reads Last-Event-ID (server/src/http/server.ts parseResumeSeq lines 363-372, id format <gen>-<seq>, replays from seq+1), a client abort of /v1/chat does not cancel the generation (sseResponse cancel() lines 333-336; server.test.ts lines 649, 691), logs kept 10 min (manager.ts line 35). Phone has no resume: mobile/src/api/client.ts chat() ignores SSE id: lines and treats a body that ends without a terminal event as complete (onComplete); no Last-Event-ID, backoff or AppState code anywhere in mobile/src.
+
+## M4c — Backgrounding resume, only Stop cancels
+
+Status: TODO
+
+### Outcome
+
+Backgrounding the app mid-reply and returning to the foreground resumes the same reply and receives its terminal state; only an explicit Stop cancels generation. Third part of the M4 split; split from M4b at pickup (see M4b).
 
 ### Architecture
 
@@ -237,7 +281,6 @@ Pending.
 
 ### Acceptance Criteria
 
-- [ ] **M4-AC2**: Killing the connection mid-reply and reconnecting yields the complete reply with no gaps and no duplicated text.
 - [ ] **M4-AC3**: Backgrounding the app mid-reply and returning to foreground resumes the same reply and receives its terminal state, with only an explicit Stop cancelling generation.
 
 ### Baseline
@@ -262,7 +305,7 @@ Pending.
 
 ### Follow-ups
 
-None.
+- Recon at split (2026-09-26): server already supports resume -- GET /v1/generations/:id/events reads Last-Event-ID (server/src/http/server.ts parseResumeSeq lines 363-372, id format <gen>-<seq>, replays from seq+1), a client abort of /v1/chat does not cancel the generation (sseResponse cancel() lines 333-336; server.test.ts lines 649, 691), logs kept 10 min (manager.ts line 35). Phone has no resume: mobile/src/api/client.ts chat() ignores SSE id: lines and treats a body that ends without a terminal event as complete (onComplete); no Last-Event-ID, backoff or AppState code anywhere in mobile/src.
 
 ## M5 — Always-on Mac tooling, plain-language errors, and PWA retirement
 
