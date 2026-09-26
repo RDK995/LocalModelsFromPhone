@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M4b",
+  "current_milestone": "M4c",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -3923,7 +3923,7 @@
       "requirements": [
         "FR11"
       ],
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -3931,14 +3931,14 @@
         "branch": "m4b-dropped-connection-resume"
       },
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M4b.md",
+        "result": "RECORDED \u2014 6/6 files attributed; components C2,NEW-resume-proof; 4 edges; 3 claim mismatches (C1 and C6 claimed but not modified in diff; NEW-resume-proof observed but not claimed)"
       },
       "criteria": [
         {
           "id": "M4-AC2",
           "text": "Killing the connection mid-reply and reconnecting yields the complete reply with no gaps and no duplicated text.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "Client unit tests: APIClient.chat resumes after a drop via GET /v1/generations/{id}/events with Last-Event-ID, backoff 500/1000/2000/4000/8000 then 10000 ms, 300 s budget, seq dedupe, Stop and onEvent exceptions not treated as drops -- mobile/src/api/client.test.ts cases (a)-(k), resume.test.ts (.harness/evidence/M4b-T1-verifier.log)",
             "Live tailnet: the app's own sendInConversation over the resuming client, real /v1/chat connection aborted after 5 content events, one resume request with Last-Event-ID, one done complete; 309 content events and their concatenation exactly equal an independent full replay; stored assistant message complete and equal -- mobile/scripts/resume-proof.sh (.harness/evidence/M4b-T2-verifier.log)"
@@ -4072,7 +4072,27 @@
           ]
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "PASS",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "MID_TIER_DIFF",
+          "diff_range": "d46d8fd1757ca294fe9273c3aae11458c0198c07..9a0c70f",
+          "artifact": null,
+          "review_log": ".harness/evidence/M4b-review.log",
+          "per_criterion": {
+            "M4-AC2": "PASS"
+          },
+          "findings": {
+            "BLOCKER": 0,
+            "IMPORTANT": 0,
+            "OPTIONAL": 0
+          },
+          "notes": "Reviewer re-ran the full recorded validation chain against the real Mac (e2e-tailnet-proof; server tests + typecheck + entry-smoke; ops token tests + verify-ops-install; mobile typecheck, unit tests, lint, smoke:runtime, all live proofs incl. resume-proof, expo export); exit 0, resident model restored. First attempt hit the reviewer 50-turn cap while the validation chain ran in the background, then delivered its terminal envelope on that work's completion; no retry was dispatched. Discrimination: reviewer confirmed by reading client.ts at 309f9e7 that the pre-M4b client calls onError on a drop and never issues GET /v1/generations/{id}/events, so resume-proof cannot pass against it; the recorded worktree discrimination run remains invalid (follow-up stands)."
+        }
+      ],
       "findings": [],
       "validation": [
         {

@@ -221,7 +221,7 @@ Cycle 1: PASS, tier Mid (sonnet, MID_TIER_DIFF), full-milestone scope 7dee5da32a
 
 ## M4b — Dropped-connection resume
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -233,11 +233,11 @@ C1, C2, C6
 
 ### As-Built
 
-Pending.
+.harness/as-built/M4b.md — RECORDED — 6/6 files attributed; components C2,NEW-resume-proof; 4 edges; 3 claim mismatches (C1 and C6 claimed but not modified in diff; NEW-resume-proof observed but not claimed)
 
 ### Acceptance Criteria
 
-- [ ] **M4-AC2**: Killing the connection mid-reply and reconnecting yields the complete reply with no gaps and no duplicated text.
+- [x] **M4-AC2**: Killing the connection mid-reply and reconnecting yields the complete reply with no gaps and no duplicated text.
 
 ### Baseline
 
@@ -258,11 +258,11 @@ Reviewer runs once (about 16 minutes; live proofs restart com.harness.server and
 
 `cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/e2e-tailnet-proof.sh && (cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh) && (cd ops && bun test src/token && bash scripts/verify-ops-install.sh) && (cd mobile && bun run typecheck && bun test src/store src/api src/ui src/chat src/app-routing && bun run lint && bun run smoke:runtime && bash scripts/model-list-proof.sh && bash scripts/model-swap-proof.sh && bash scripts/model-failed-load-proof.sh && bash scripts/conversation-proof.sh && bash scripts/thinking-proof.sh && bash scripts/resume-proof.sh && npx expo export --platform ios && rm -rf dist)`
 
-Status: PENDING (reviewer). Task artifacts: .harness/evidence/M4b-T1-verifier.log, .harness/evidence/M4b-T2-verifier.log.
+Status: PASS (reviewer re-ran the full chain, exit 0 — .harness/evidence/M4b-review.log). Task artifacts: .harness/evidence/M4b-T1-verifier.log, .harness/evidence/M4b-T2-verifier.log.
 
 ### Review
 
-Pending.
+Cycle 1: PASS, tier Mid (sonnet, MID_TIER_DIFF), full-milestone scope d46d8fd1757ca294fe9273c3aae11458c0198c07..9a0c70f; M4-AC2 PASS; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL; no report file (PASS). Reviewer re-ran the full recorded validation chain against the real Mac (e2e-tailnet-proof; server tests + typecheck + entry-smoke; ops token tests + verify-ops-install; mobile typecheck, unit tests, lint, smoke:runtime, all live proofs incl. resume-proof, expo export); exit 0, resident model restored. First attempt hit the reviewer 50-turn cap while the validation chain ran in the background, then delivered its terminal envelope on that work's completion; no retry was dispatched. Discrimination: reviewer confirmed by reading client.ts at 309f9e7 that the pre-M4b client calls onError on a drop and never issues GET /v1/generations/{id}/events, so resume-proof cannot pass against it; the recorded worktree discrimination run remains invalid (follow-up stands). — .harness/evidence/M4b-review.log
 
 ### Review Cycles
 
