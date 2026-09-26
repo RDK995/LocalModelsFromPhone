@@ -4413,12 +4413,12 @@
       "requirements": [
         "FR15"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
-        "commit": "",
-        "branch": ""
+        "commit": "296b9e5b87b04a92fcac5ad92df442366f636454",
+        "branch": "m5a-always-on"
       },
       "as_built": {
         "artifact": null,
@@ -4438,7 +4438,63 @@
           "evidence": []
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M5a-T1",
+          "scope": "Live restart proof: SIGKILL launchd-tracked pid of server and bundle host, and the TCP 8081 listener; launchd restarts each with a new pid and it serves again",
+          "tests": "cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/verify-ops-install.sh && bash ops/scripts/restart-proof.sh",
+          "requirements": [
+            "FR15"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M5-AC2"
+          ],
+          "paths": [
+            "ops/scripts/restart-proof.sh"
+          ],
+          "depends_on": [],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "live launchd process-lifecycle proof; bundle host process tree may need a plist fix, needing judgement"
+          },
+          "status": "ACCEPTED",
+          "attempts": 1,
+          "packet": ".harness/tasks/M5a-T1.md",
+          "commit": null,
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M5a-T1-worker.log",
+              "verdict": "PASS",
+              "base": "296b9e5",
+              "changed_files": [
+                "ops/scripts/restart-proof.sh"
+              ],
+              "note": "no restart defect found; bun x expo execs into node so launchd pid == 8081 listener; authenticated 200 check uses GET /v1/state (GET /v1/models is not a route; packet error)"
+            },
+            {
+              "attempt": 3,
+              "role": "verifier",
+              "tier": "Cheap",
+              "model": "haiku",
+              "artifact": ".harness/evidence/M5a-T1-verifier.log",
+              "verdict": "PASS",
+              "base": "296b9e5",
+              "changed_files": [
+                "ops/scripts/restart-proof.sh"
+              ],
+              "note": "exit 0; server 88260->89022 healthy 1s; bundle host 88461->89068 healthy 3s; 8081 listener 89068->89216 healthy 10s; one listener; tests weakened NO"
+            }
+          ]
+        }
+      ],
       "reviews": [],
       "findings": [],
       "validation": [],

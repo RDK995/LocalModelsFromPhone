@@ -233,7 +233,7 @@ Cycle 1: PASS, tier Mid (sonnet, MID_TIER_DIFF), full-milestone scope 1d74498fc5
 
 ## M5a — Always-on server and bundle host
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -254,7 +254,7 @@ Pending.
 
 ### Baseline
 
-Pending.
+296b9e5b87b04a92fcac5ad92df442366f636454 on m5a-always-on
 
 ### Evidence
 
