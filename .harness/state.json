@@ -3743,11 +3743,33 @@
             "reason_code": "BOUNDED_LOW_RISK",
             "detail": "proof script in the established *-proof pattern; its assertions are the oracle"
           },
-          "status": "IN_PROGRESS",
-          "attempts": 0,
+          "status": "ACCEPTED",
+          "attempts": 1,
           "packet": ".harness/tasks/M4a-T5.md",
           "commit": null,
-          "attempt_log": []
+          "attempt_log": [
+            {
+              "attempt": 1,
+              "role": "worker",
+              "tier": "Cheap",
+              "model": "haiku",
+              "artifact": ".harness/evidence/M4a-T5-worker.log",
+              "verdict": "PASS",
+              "base": "0694ddf",
+              "changed_files": [
+                "mobile/scripts/thinking-proof.sh",
+                "mobile/scripts/thinking-proof.ts"
+              ],
+              "verifier": {
+                "artifact": ".harness/evidence/M4a-T5-verifier.log",
+                "exit_code": 0,
+                "verdict": "PASS",
+                "tests_weakened": "NO",
+                "discrepancies": "NONE"
+              },
+              "note": "live: T=qwen3.6:27b (thinking) N=devstral:24b; thinking before content, stored thinking and content separate, content \"42\"; N zero thinking events, no stored thinking; Mac restored"
+            }
+          ]
         }
       ],
       "reviews": [],
