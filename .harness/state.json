@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M5a",
+  "current_milestone": "M5b",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -4405,6 +4405,40 @@
         "M4c-T2 exceeded two worker continuations (turn limits during a live-run diagnosis); split into M4c-T3 once diagnosed."
       ]
     },
+    "M5b": {
+      "id": "M5b",
+      "title": "Plain-language error messages",
+      "outcome": "The app shows a distinct plain-language message for each failure mode: Mac or server unreachable, Ollama down, wrong password, model failed to load, model no longer installed, and a reply already in progress. Second part of the M5 split (see M5a).",
+      "architecture": "C1, C2, C4",
+      "requirements": [
+        "FR16"
+      ],
+      "status": "TODO",
+      "review_cycles": 0,
+      "review_override": null,
+      "baseline": {
+        "commit": "",
+        "branch": ""
+      },
+      "as_built": {
+        "artifact": null,
+        "result": "PENDING"
+      },
+      "criteria": [
+        {
+          "id": "M5-AC3",
+          "text": "The app shows a distinct message for each of: Mac or server unreachable, Ollama down, wrong password, model failed to load, model no longer installed, and reply already in progress.",
+          "status": "PENDING",
+          "evidence": []
+        }
+      ],
+      "tasks": [],
+      "reviews": [],
+      "findings": [],
+      "validation": [],
+      "follow_ups": [],
+      "split_from": "M5"
+    },
     "M5a": {
       "id": "M5a",
       "title": "Always-on server and bundle host",
@@ -4573,7 +4607,8 @@
       ],
       "follow_ups": [
         "FileVault is On and auto-login is off on this Mac, so after a reboot per-user LaunchAgents (and Tailscale, Ollama) start only after the user logs in at the FileVault screen; whether that login counts as a 'manual step' for M5-AC1/AC11 is escalated.",
-        "R3 still applies: the bundle host serves the working tree, so a mid-edit checkout reaches the phone after a restart."
+        "R3 still applies: the bundle host serves the working tree, so a mid-edit checkout reaches the phone after a restart.",
+        "Reordered 2026-09-26 by the human: M5b runs before M5a while M5a waits on the human-performed reboot for M5-AC1 (human not at the Mac). M5a stays BLOCKED until the reboot evidence exists; M5c still runs last."
       ],
       "split_from": "M5",
       "complexity_signals": [
@@ -4603,40 +4638,6 @@
         "remaining": "Human reboot + phone check + post-reboot readiness log. Decision resolved 2026-09-26 (human): typing the Mac password at the FileVault unlock screen counts as part of rebooting, not a manual step; no change to FileVault or architecture.",
         "recommended": "Treat logging in at the unlock screen as part of rebooting (no change), perform the reboot steps, and record the evidence; do not disable FileVault or move to system daemons (that would be a material architecture change)."
       }
-    },
-    "M5b": {
-      "id": "M5b",
-      "title": "Plain-language error messages",
-      "outcome": "The app shows a distinct plain-language message for each failure mode: Mac or server unreachable, Ollama down, wrong password, model failed to load, model no longer installed, and a reply already in progress. Second part of the M5 split (see M5a).",
-      "architecture": "C1, C2, C4",
-      "requirements": [
-        "FR16"
-      ],
-      "status": "TODO",
-      "review_cycles": 0,
-      "review_override": null,
-      "baseline": {
-        "commit": "",
-        "branch": ""
-      },
-      "as_built": {
-        "artifact": null,
-        "result": "PENDING"
-      },
-      "criteria": [
-        {
-          "id": "M5-AC3",
-          "text": "The app shows a distinct message for each of: Mac or server unreachable, Ollama down, wrong password, model failed to load, model no longer installed, and reply already in progress.",
-          "status": "PENDING",
-          "evidence": []
-        }
-      ],
-      "tasks": [],
-      "reviews": [],
-      "findings": [],
-      "validation": [],
-      "follow_ups": [],
-      "split_from": "M5"
     },
     "M5c": {
       "id": "M5c",

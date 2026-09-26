@@ -231,6 +231,50 @@ Cycle 1: PASS, tier Mid (sonnet, MID_TIER_DIFF), full-milestone scope 1d74498fc5
 - mobile/src/api/client.ts createAPIClient(baseUrl, fetchImpl) cannot take a lifecycle/clock, which silently cost M4c-T2 two attempts; production uses expoFetchClient.createAPIClient, which passes it. Consider removing or extending the client.ts factory (out of scope).
 - M4c-T2 exceeded its two worker continuations (turn limits during a live-run diagnosis) and was split into M4c-T3 once diagnosed.
 
+## M5b — Plain-language error messages
+
+Status: TODO
+
+### Outcome
+
+The app shows a distinct plain-language message for each failure mode: Mac or server unreachable, Ollama down, wrong password, model failed to load, model no longer installed, and a reply already in progress. Second part of the M5 split (see M5a).
+
+### Architecture
+
+C1, C2, C4
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M5-AC3**: The app shows a distinct message for each of: Mac or server unreachable, Ollama down, wrong password, model failed to load, model no longer installed, and reply already in progress.
+
+### Baseline
+
+Pending.
+
+### Evidence
+
+Pending.
+
+### Validation
+
+Pending.
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+None.
+
 ## M5a — Always-on server and bundle host
 
 Status: BLOCKED
@@ -297,51 +341,8 @@ Treat logging in at the unlock screen as part of the reboot (no change), then do
 ### Follow-ups
 
 - FileVault login after reboot: resolved 2026-09-26 by the human — typing the Mac password at the unlock screen counts as part of rebooting, not a manual step. No change to FileVault or architecture. Reboot itself still pending.
+- Reordered 2026-09-26 by the human: M5b runs before M5a while M5a waits on the human-performed reboot for M5-AC1 (human not at the Mac). M5a stays BLOCKED until the reboot evidence exists; M5c still runs last.
 - R3 still applies: the bundle host serves the working tree, so a mid-edit checkout reaches the phone after any restart.
-
-## M5b — Plain-language error messages
-
-Status: TODO
-
-### Outcome
-
-The app shows a distinct plain-language message for each failure mode: Mac or server unreachable, Ollama down, wrong password, model failed to load, model no longer installed, and a reply already in progress. Second part of the M5 split (see M5a).
-
-### Architecture
-
-C1, C2, C4
-
-### As-Built
-
-Pending.
-
-### Acceptance Criteria
-
-- [ ] **M5-AC3**: The app shows a distinct message for each of: Mac or server unreachable, Ollama down, wrong password, model failed to load, model no longer installed, and reply already in progress.
-
-### Baseline
-
-Pending.
-
-### Evidence
-
-Pending.
-
-### Validation
-
-Pending.
-
-### Review
-
-Pending.
-
-### Review Cycles
-
-0
-
-### Follow-ups
-
-None.
 
 ## M5c — PWA retirement
 
