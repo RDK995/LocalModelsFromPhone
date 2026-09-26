@@ -196,7 +196,7 @@ Cycle 1: PASS, tier Top (opus, DIFFICULT_CONCURRENCY), full-milestone scope ef16
 
 ## M3 — Persisted multi-turn conversations with model attribution
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -220,7 +220,7 @@ Pending.
 
 ### Baseline
 
-Pending.
+abce8c05ff1f889081a0252f3835074fc924df1b on m3-persisted-conversations
 
 ### Evidence
 
@@ -240,7 +240,7 @@ Pending.
 
 ### Follow-ups
 
-None.
+- Size/shape check at pickup: 5 criteria (run). Entry point: live `POST /v1/chat` over the tailnet through the app's own client and conversation logic (M3-AC2). Operational-complexity signal `IMPLEMENTATION_PLUS_LIVE_PROOF` present (live context proof; on-device force-quit check); `SUBSYSTEMS_GT_3`, `CONCURRENCY_LIFECYCLE`, `PRODUCTION_FILES_GT_8` (~7), `WORKER_TASKS_GT_6` (4 tasks) and `MULTIPLE_OUTCOMES` judged absent (mobile only; server unchanged). One signal -> seam check: the live proof is a thin script over the same store and client, with no independently reviewable half, so M3 runs unsplit.
 
 ## M4 — Thinking display and dropped-connection resume
 
