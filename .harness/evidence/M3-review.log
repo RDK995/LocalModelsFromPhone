@@ -1,0 +1,15 @@
+=== M3 cycle1 reviewer-run validation ===
+
+$ cd mobile && bun run typecheck && bun test src/store src/api src/ui src/chat src/app-routing && bun run lint
+tsc --noEmit: clean
+102 pass, 0 fail, 234 expect() calls
+eslint: clean (--max-warnings 0)
+
+$ cd mobile && bun run smoke:runtime
+3/3 scenarios PASS (token present -> Conversations; token absent -> Setup -> Conversations drive; token wrong -> Conversations -> Chat -> 401 -> Settings)
+
+$ cd mobile && bash scripts/conversation-proof.sh   (live, over tailnet, single run)
+All steps PASS: Step1 load A resident; Step2 turn1 persisted with model; Step3 (M3-AC2) turn-2 request carries turn-1 messages, context check passed; Step4/5 (M3-AC3) swap to model B, turn1 still devstral:24b, turn3 qwen3.6:27b; Step6 (M3-AC4) unload -> blocked send, zero client.chat calls, no assistant message added; Step7 (M3-AC5 proxy) fresh store over same storage sees identical conversation.
+Mac restored to original state (devstral:24b resident) on cleanup.
+
+Not re-run (unchanged by this diff -- diff touches only mobile/ and .harness/, no server/ or ops/ changes): server bun test, server typecheck, entry-smoke.sh, ops bun test, verify-ops-install.sh, ops/scripts/e2e-tailnet-proof.sh, model-list-proof.sh, model-swap-proof.sh, model-failed-load-proof.sh, expo export.

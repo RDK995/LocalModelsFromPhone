@@ -196,7 +196,7 @@ Cycle 1: PASS, tier Top (opus, DIFFICULT_CONCURRENCY), full-milestone scope ef16
 
 ## M3 — Persisted multi-turn conversations with model attribution
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -208,15 +208,15 @@ C1, C3
 
 ### As-Built
 
-Pending.
+.harness/as-built/M3.md — RECORDED — 17/23 files attributed; components C1,C3; 13 edges; no claim mismatches
 
 ### Acceptance Criteria
 
-- [ ] **M3-AC1**: Conversations can be created, opened and deleted, and are listed newest first.
-- [ ] **M3-AC2**: A follow-up prompt in the same conversation demonstrably uses context from an earlier turn.
-- [ ] **M3-AC3**: Each assistant reply displays the model name that produced it, including after a mid-conversation model switch.
-- [ ] **M3-AC4**: Sending with no model resident is blocked with a prompt to load one.
-- [ ] **M3-AC5**: Force-quitting and reopening Expo Go shows the same conversations and messages as before.
+- [x] **M3-AC1**: Conversations can be created, opened and deleted, and are listed newest first.
+- [x] **M3-AC2**: A follow-up prompt in the same conversation demonstrably uses context from an earlier turn.
+- [x] **M3-AC3**: Each assistant reply displays the model name that produced it, including after a mid-conversation model switch.
+- [x] **M3-AC4**: Sending with no model resident is blocked with a prompt to load one.
+- [x] **M3-AC5**: Force-quitting and reopening Expo Go shows the same conversations and messages as before.
 
 ### Baseline
 
@@ -249,7 +249,7 @@ Status: PENDING (reviewer). Task artifacts: .harness/evidence/M3-T1-verifier.log
 
 ### Review
 
-Pending.
+Cycle 1: PASS, tier Mid (sonnet, MID_TIER_DIFF), full-milestone scope abce8c05ff1f889081a0252f3835074fc924df1b..f2042eb; M3-AC1..M3-AC5 PASS; 0 BLOCKER, 0 IMPORTANT, 1 OPTIONAL; no report file (PASS). Reviewer re-ran typecheck + 102 tests + lint, smoke:runtime 3/3, and the live conversation-proof.sh (7/7 steps) against the real Mac: EXIT=0. M3-AC5 graded on the storage-layer proxy per the M1 convention; on-device Expo Go force-quit check remains a recorded human follow-up. OPTIONAL: conversation delete is long-press only with no visible affordance (mobile/src/app/conversations.tsx); recorded under Follow-ups. — .harness/evidence/M3-review.log
 
 ### Review Cycles
 
@@ -261,6 +261,7 @@ Pending.
 - M3-T2: chat.tsx header also links back to /conversations (chat hides the Stack header); small addition beyond the packet's literal wording, left for review.
 - M3-AC5 on-device check (human, M2a convention): on the phone in Expo Go, create a conversation with two turns, force-quit Expo Go, reopen the project, and confirm the same conversations and messages (with model labels) are shown. Automated evidence is the storage-layer proxy only.
 - M3-T3 proof counts zero client.chat calls on the blocked send but does not separately assert the counter is >0 on successful sends; wiring is shown by the recorded turn-2 messages.
+- Reviewer OPTIONAL (M3 cycle 1): deleting a conversation is reachable only by long-press with no visible affordance (mobile/src/app/conversations.tsx); discoverability polish, not implemented.
 
 ## M4 — Thinking display and dropped-connection resume
 
