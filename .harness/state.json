@@ -4122,12 +4122,12 @@
       "requirements": [
         "FR11"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
-        "commit": "",
-        "branch": ""
+        "commit": "1d74498fc5099d7fa3a049c39a1a036bb33d1137",
+        "branch": "m4c-backgrounding-resume"
       },
       "as_built": {
         "artifact": null,
@@ -4141,12 +4141,79 @@
           "evidence": []
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M4c-T1",
+          "scope": "APIClient.chat resumes immediately on app foreground (injected lifecycle; internal per-transport abort treated as drop; backoff wait ended early; budget not exhausted while backgrounded); AppState wired in expoFetchClient; backgrounding never cancels",
+          "tests": "cd mobile && bun run typecheck && bun test src/api src/chat src/store src/ui src/app-routing && bun run lint && bun run smoke:runtime",
+          "requirements": [
+            "FR11"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M4-AC3"
+          ],
+          "paths": [
+            "mobile/src/api/client.ts",
+            "mobile/src/api/client.test.ts",
+            "mobile/src/api/resume.ts",
+            "mobile/src/api/resume.test.ts",
+            "mobile/src/api/expoFetchClient.ts",
+            "mobile/src/api/lifecycle.ts",
+            "mobile/src/api/lifecycle.test.ts"
+          ],
+          "depends_on": [],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "extends the M4b resume loop with a foreground trigger and internal abort; foreground-vs-Stop race is the risky part; fake-fetch/fake-lifecycle unit tests are the oracle"
+          },
+          "status": "PENDING",
+          "attempts": 0,
+          "packet": ".harness/tasks/M4c-T1.md",
+          "commit": null,
+          "attempt_log": []
+        },
+        {
+          "id": "M4c-T2",
+          "scope": "live tailnet proof mobile/scripts/background-proof.{sh,ts}: stall the stream (background) after 5 content events, foreground after 8 s -> resume to done complete equal to an independent replay, no cancel POST; Stop after foreground -> one cancel POST, done cancelled",
+          "tests": "cd mobile && bun run typecheck && bun run lint && bash scripts/background-proof.sh",
+          "requirements": [
+            "FR11"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M4-AC3"
+          ],
+          "paths": [
+            "mobile/scripts/background-proof.sh",
+            "mobile/scripts/background-proof.ts"
+          ],
+          "depends_on": [
+            "M4c-T1"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "proof script copied from resume-proof pattern; assertions against an independent full replay are the oracle"
+          },
+          "status": "PENDING",
+          "attempts": 0,
+          "packet": ".harness/tasks/M4c-T2.md",
+          "commit": null,
+          "attempt_log": []
+        }
+      ],
       "reviews": [],
       "findings": [],
       "validation": [],
       "follow_ups": [
-        "Recon at split (2026-09-26): server already supports resume -- GET /v1/generations/:id/events reads Last-Event-ID (server/src/http/server.ts parseResumeSeq lines 363-372, id format <gen>-<seq>, replays from seq+1), a client abort of /v1/chat does not cancel the generation (sseResponse cancel() lines 333-336; server.test.ts lines 649, 691), logs kept 10 min (manager.ts line 35). Phone has no resume: mobile/src/api/client.ts chat() ignores SSE id: lines and treats a body that ends without a terminal event as complete (onComplete); no Last-Event-ID, backoff or AppState code anywhere in mobile/src."
+        "Recon at split (2026-09-26): server already supports resume -- GET /v1/generations/:id/events reads Last-Event-ID (server/src/http/server.ts parseResumeSeq lines 363-372, id format <gen>-<seq>, replays from seq+1), a client abort of /v1/chat does not cancel the generation (sseResponse cancel() lines 333-336; server.test.ts lines 649, 691), logs kept 10 min (manager.ts line 35). Phone has no resume: mobile/src/api/client.ts chat() ignores SSE id: lines and treats a body that ends without a terminal event as complete (onComplete); no Last-Event-ID, backoff or AppState code anywhere in mobile/src.",
+        "Pickup size/shape check (2026-09-26): 1 criterion; entry point = the app's APIClient/sendInConversation driven live over the tailnet; operational signal IMPLEMENTATION_PLUS_LIVE_PROOF only (CONCURRENCY_LIFECYCLE judged absent: a foreground listener is added but no component's ownership of generation lifecycle or cancellation changes -- server owns the generation, Stop alone cancels). Seam check: the only seam is implementation vs proof, which is not independently reviewable and would split a single criterion; run as one milestone. Live proof simulates AppState with an injected lifecycle; an on-device Expo Go background/foreground check is a human spot-check."
       ]
     },
     "M5": {

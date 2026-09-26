@@ -279,7 +279,7 @@ Cycle 1: PASS, tier Mid (sonnet, MID_TIER_DIFF), full-milestone scope d46d8fd175
 
 ## M4c — Backgrounding resume, only Stop cancels
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -299,11 +299,13 @@ Pending.
 
 ### Baseline
 
-Pending.
+1d74498fc5099d7fa3a049c39a1a036bb33d1137 on m4c-backgrounding-resume
 
 ### Evidence
 
-Pending.
+Tasks (structured detail in state.json; packets under .harness/tasks/):
+- M4c-T1 foreground resume in the app client + AppState wiring — Mid (ORDINARY_IMPLEMENTATION) — pending
+- M4c-T2 live tailnet background/foreground proof mobile/scripts/background-proof.{sh,ts} — Cheap (BOUNDED_LOW_RISK) — pending
 
 ### Validation
 
@@ -320,6 +322,7 @@ Pending.
 ### Follow-ups
 
 - Recon at split (2026-09-26): server already supports resume -- GET /v1/generations/:id/events reads Last-Event-ID (server/src/http/server.ts parseResumeSeq lines 363-372, id format <gen>-<seq>, replays from seq+1), a client abort of /v1/chat does not cancel the generation (sseResponse cancel() lines 333-336; server.test.ts lines 649, 691), logs kept 10 min (manager.ts line 35). Phone has no resume: mobile/src/api/client.ts chat() ignores SSE id: lines and treats a body that ends without a terminal event as complete (onComplete); no Last-Event-ID, backoff or AppState code anywhere in mobile/src.
+- Pickup size/shape check (2026-09-26): 1 criterion; operational signal IMPLEMENTATION_PLUS_LIVE_PROOF only (CONCURRENCY_LIFECYCLE judged absent: a foreground listener is added, but ownership of generation lifecycle and cancellation does not change). Seam check: the only seam is implementation vs proof, not independently reviewable; run as one milestone. The live proof simulates AppState with an injected lifecycle; an on-device Expo Go background/foreground check is a human spot-check.
 
 ## M5 — Always-on Mac tooling, plain-language errors, and PWA retirement
 
