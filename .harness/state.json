@@ -3508,7 +3508,7 @@
       "requirements": [
         "FR10"
       ],
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -3524,19 +3524,29 @@
           "id": "M4-AC1",
           "text": "For a model that emits reasoning output, the app shows it in a collapsed, expandable section separate from the answer.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "Server: think:true only for models whose /api/show capabilities include \"thinking\"; thinking SSE events before content, replayable \u2014 server/src/ollama/client.test.ts, server/src/generations/manager.test.ts (.harness/evidence/M4a-T1-verifier.log)",
+            "Live tailnet: qwen3.6:27b streams thinking before content; stored thinking and content separate, content \"42\"; devstral:24b zero thinking events \u2014 mobile/scripts/thinking-proof.sh (.harness/evidence/M4a-T5-verifier.log)",
+            "Bundled app: thinking shown behind \"Show thinking\", text hidden until tapped, then its own section with \"Hide thinking\" \u2014 runtime-smoke --token=stream steps 2-3 (.harness/evidence/M4a-T4-verifier.log); toggle helpers unit-tested (.harness/evidence/M4a-T2-verifier.log)"
+          ]
         },
         {
           "id": "M4-AC4",
           "text": "After Send, the user's prompt appears in the conversation immediately, before any reply token arrives.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "Bundled app: prompt text in the committed tree after Send while the fake /v1/chat body has sent no byte \u2014 runtime-smoke --token=stream step 1; fails against pre-M4a chat.tsx (.harness/evidence/M4a-T4-verifier.log)",
+            "chat.tsx sets the pending turn before its first await (verifier lines 126-138, .harness/evidence/M4a-T3-verifier.log); buildChatItems unit tests (.harness/evidence/M4a-T2-verifier.log)"
+          ]
         },
         {
           "id": "M4-AC5",
           "text": "A streaming reply renders incrementally in its final place in the conversation; on completion it stays where it is, with no separate streaming area whose text then moves into the conversation.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "Bundled app: exactly one node holds the reply while streaming and after done; same list position; same enclosing <Text> Fabric node (tag 158) before and after completion \u2014 runtime-smoke --token=stream step 4 (.harness/evidence/M4a-T4-verifier.log)",
+            "buildChatItems keeps the same keys at the same indices through Send -> streaming -> persisted, never duplicating an id (.harness/evidence/M4a-T2-verifier.log); single list, no separate streaming block in chat.tsx (.harness/evidence/M4a-T3-verifier.log)"
+          ]
         }
       ],
       "tasks": [
@@ -3770,15 +3780,105 @@
               "note": "live: T=qwen3.6:27b (thinking) N=devstral:24b; thinking before content, stored thinking and content separate, content \"42\"; N zero thinking events, no stored thinking; Mac restored"
             }
           ]
+        },
+        {
+          "id": "M4a-T4",
+          "scope": "runtime-smoke --token=stream run: fake streamed /v1/chat held open; asserts prompt visible before any reply byte, reply grows in place in one node at the same list position through completion, thinking collapsed until Show thinking tapped",
+          "tests": "cd mobile && bun run typecheck && bun run lint && bun run smoke:runtime",
+          "requirements": [
+            "FR10",
+            "FR9"
+          ],
+          "constraints": [
+            "only runtime-smoke.{mjs,sh}",
+            "existing three runs unchanged"
+          ],
+          "findings": [],
+          "criteria": [
+            "M4-AC1",
+            "M4-AC4",
+            "M4-AC5"
+          ],
+          "paths": [
+            "mobile/scripts/runtime-smoke.mjs",
+            "mobile/scripts/runtime-smoke.sh"
+          ],
+          "depends_on": [
+            "M4a-T3"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "extends the in-process bundle harness with a controllable streamed response; assertions stated in the packet are the oracle"
+          },
+          "status": "ACCEPTED",
+          "attempts": 1,
+          "packet": ".harness/tasks/M4a-T4.md",
+          "commit": null,
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": null,
+              "verdict": "INTERRUPTED",
+              "base": "8ce0d66",
+              "changed_files": [
+                "mobile/scripts/runtime-smoke.mjs",
+                "mobile/scripts/runtime-smoke.sh"
+              ],
+              "note": "hit 40-turn limit with no report; uncommitted edits left in tree; continuation 1 dispatched with .harness/tasks/M4a-T4-handoff-1.md (no ladder rung spent)"
+            },
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M4a-T4-worker.log",
+              "verdict": "PASS",
+              "base": "769618c",
+              "changed_files": [
+                "mobile/scripts/runtime-smoke.mjs",
+                "mobile/scripts/runtime-smoke.sh"
+              ],
+              "continuation": 1,
+              "verifier": {
+                "artifact": ".harness/evidence/M4a-T4-verifier.log",
+                "exit_code": 0,
+                "verdict": "PASS",
+                "tests_weakened": "NO",
+                "discrepancies": "NONE"
+              },
+              "note": "smoke:runtime 4/4, stream steps 1-4 PASS; in-place check compares the enclosing <Text> container Fabric tag (158 before and after) because RN Fabric recreates raw-text leaves on content change (verifier confirmed ReactFabric-dev.js ~line 10085). Discrimination: against pre-M4a chat.tsx (0694ddf) the stream run FAILS at step 1 (\"Loading response...\" instead of the prompt); later steps not reached there, so step-4 discrimination against the old screen is not separately shown."
+            }
+          ]
         }
       ],
       "reviews": [],
       "findings": [],
-      "validation": [],
+      "validation": [
+        {
+          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/e2e-tailnet-proof.sh && (cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh) && (cd ops && bun test src/token && bash scripts/verify-ops-install.sh) && (cd mobile && bun run typecheck && bun test src/store src/api src/ui src/chat src/app-routing && bun run lint && bun run smoke:runtime && bash scripts/model-list-proof.sh && bash scripts/model-swap-proof.sh && bash scripts/model-failed-load-proof.sh && bash scripts/conversation-proof.sh && bash scripts/thinking-proof.sh && npx expo export --platform ios && rm -rf dist)",
+          "note": "M3 chain plus thinking-proof.sh; smoke:runtime now 4 runs incl. --token=stream. About 15 minutes (model-swap-proof idles 600 s); live proofs restart com.harness.server and com.harness.bundle-host and swap/evict then restore the resident model; run nothing else against the Mac concurrently.",
+          "artifacts": [
+            ".harness/evidence/M4a-T1-verifier.log",
+            ".harness/evidence/M4a-T2-verifier.log",
+            ".harness/evidence/M4a-T3-verifier.log",
+            ".harness/evidence/M4a-T4-verifier.log",
+            ".harness/evidence/M4a-T5-verifier.log"
+          ],
+          "status": "PENDING"
+        }
+      ],
       "follow_ups": [
         "Added 2026-09-26 by the human after M3 DONE (on-device observation): in M3's chat screen the user's prompt is not shown until the reply arrives, and a long reply streams in a separate area then jumps into the conversation on completion. Folded into M4 as M4-AC4/M4-AC5 (trace: FR7, FR9) because M4 reworks the same streaming display.",
         "Size/shape check at pickup: 3 criteria (run). Entry point: live POST /v1/chat over the tailnet showing thinking SSE events separate from content (M4-AC1), and the bundled app driven by runtime smoke (M4-AC4/AC5). Signal IMPLEMENTATION_PLUS_LIVE_PROOF present (live thinking proof); CONCURRENCY_LIFECYCLE, SUBSYSTEMS_GT_3 (server C6/C7 + mobile C1/C3 = two subsystems), PRODUCTION_FILES_GT_8 (~6), WORKER_TASKS_GT_6 (5) judged absent; MULTIPLE_OUTCOMES judged absent (the planner grouped these three as one chat-display outcome at the M4 split). One signal -> seam check: the live proof is a thin script over already-built modules with no independently reviewable half, so M4a runs unsplit.",
-        "Recon finding at pickup: the server never requested reasoning output (server/src/ollama/client.ts sent no think field; generations/manager.ts emitted only content). Architecture I9/I10 already specifies think:true when supported, so this is building the agreed design, not a deviation; the Architecture field is widened from \"C1, C3\" to \"C1, C3, C6, C7\" to name the server components M4-AC1 needs."
+        "Recon finding at pickup: the server never requested reasoning output (server/src/ollama/client.ts sent no think field; generations/manager.ts emitted only content). Architecture I9/I10 already specifies think:true when supported, so this is building the agreed design, not a deviation; the Architecture field is widened from \"C1, C3\" to \"C1, C3, C6, C7\" to name the server components M4-AC1 needs.",
+        "M4a-T2 worker reported tests written alongside the implementation (red not observed first); accepted on the verifier mapping every packet rule to a test.",
+        "M4a-T4 discrimination check reached only step 1 against the pre-M4a chat screen (the drive stops at the first failure), so the step-4 in-place assertion was not separately shown to fail against the old screen.",
+        "On-device check (human, M2a convention): in Expo Go, send to a thinking model and confirm the prompt shows at once, the reply grows in place without jumping, and \"Show thinking\" expands the reasoning."
       ],
       "split": {
         "from": "M4",

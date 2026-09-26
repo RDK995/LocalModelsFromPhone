@@ -12,7 +12,7 @@
  * or if the expected first screen does not render.
  *
  * Usage:
- *   node scripts/runtime-smoke.mjs <bundle.js> --token=<present|absent|wrong>
+ *   node scripts/runtime-smoke.mjs <bundle.js> --token=<present|absent|wrong|stream>
  *
  * What this proves: the bundled JS (app code + real expo-router, React,
  * react-native JS, react-native-screens JS) starts, RootLayout renders, and
@@ -69,14 +69,41 @@
  * chat.tsx's and settings.tsx's screen wiring for a 401 (FR13) in a real
  * bundle, not just chatController's unit-tested logic.
  *
+ * The `--token=stream` run (M4a-T3/T4, FR9/FR10) also drives Conversations ->
+ * New chat -> Chat -> Send, but with a stored token the fake `ExpoFetchModule`
+ * accepts: `GET /v1/state` answers 200 with a resident model, and
+ * `POST /v1/chat` answers 200 `text/event-stream` (header `x-generation-id:
+ * gen-smoke`) whose body this run holds open and feeds step by step -- by
+ * calling `.emit("didReceiveResponseData", ...)`/`.emit("didComplete")`
+ * directly on the captured `StreamingNativeResponse` instance, the same
+ * events real native code would send (see `FetchResponse`'s `body` getter in
+ * node_modules/expo/src/winter/fetch/FetchResponse.ts) -- instead of
+ * answering all at once like the fixed 401 above. It asserts, in this order:
+ * (1) once Send is tapped, with every reply byte still held back, the prompt
+ * is already in the committed tree (M4-AC4); (2) once `thinking`/`content`
+ * SSE frames are fed, the partial reply text is shown, in exactly one text
+ * node, with its thinking collapsed behind a "Show thinking" pressable
+ * (M4-AC1); (3) tapping that pressable reveals the thinking text in its own
+ * (separate) node; (4) once the rest of the content is fed and the stream is
+ * closed with a terminal `done` event, exactly one text node holds the full
+ * reply, and its *enclosing* Fabric node (its container `<Text>`, by tag) is
+ * the same one that held the partial reply in (2) -- i.e. the message bubble
+ * was updated in place, not unmounted and recreated -- at the same position
+ * in the message list, alongside the model label (M4-AC5). The container's
+ * tag, not the raw-text leaf's own tag, is what is compared: React Native's
+ * Fabric renderer always recreates a text leaf when its string content
+ * changes (see collectStreamTree()'s doc comment below), on any app, so a
+ * leaf-tag comparison could never pass.
+ *
  * What it cannot prove: anything native (layout, keyboard geometry, how the
  * native header draws), Hermes-specific engine behaviour, the Expo Go version
  * on the phone, real network/streaming to the server (the 401 response for
- * `--token=wrong` is synthesised in-process, not sent over a socket), a
- * non-401 chat flow, or that a real finger tap dispatches events identically
- * to calling the handler directly (the gesture responder / hit-testing
- * geometry is not exercised, only the `onPress` callback it would eventually
- * invoke).
+ * `--token=wrong`, and the SSE stream for `--token=stream`, are both
+ * synthesised in-process and fed on demand, not sent over a socket with real
+ * TCP framing/backpressure), or that a real finger tap dispatches events
+ * identically to calling the handler directly (the gesture responder /
+ * hit-testing geometry is not exercised, only the `onPress` callback it would
+ * eventually invoke).
  */
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
@@ -90,9 +117,9 @@ const bundlePath = process.argv[2];
 const tokenArg = (
   process.argv.find(a => a.startsWith("--token=")) ?? "--token=present"
 ).split("=")[1];
-if (!bundlePath || !["present", "absent", "wrong"].includes(tokenArg)) {
+if (!bundlePath || !["present", "absent", "wrong", "stream"].includes(tokenArg)) {
   console.error(
-    "usage: runtime-smoke.mjs <bundle.js> --token=present|absent|wrong"
+    "usage: runtime-smoke.mjs <bundle.js> --token=present|absent|wrong|stream"
   );
   process.exit(2);
 }
@@ -101,7 +128,9 @@ const STORED_TOKEN =
     ? "smoke-test-token"
     : tokenArg === "wrong"
       ? "wrong-smoke-token"
-      : null;
+      : tokenArg === "stream"
+        ? "smoke-stream-token"
+        : null;
 
 const exceptions = [];
 const consoleErrors = [];
@@ -412,6 +441,114 @@ class FakeNativeRequest extends SharedObject {
   }
   cancel() {}
 }
+
+// ---- Fake ExpoFetchModule for the `--token=stream` run: unlike the fixed
+// 401 above, this run needs different canned responses per route (GET
+// /v1/state vs POST /v1/chat), and the chat route's body must be held open
+// and fed step by step by the drive below instead of answered all at once.
+// `StreamingNativeResponse.startStreaming()` returning `null` (rather than a
+// byte array) is `FetchResponse`'s own contract for "not complete yet" (see
+// its `body` getter's `pull()` in
+// node_modules/expo/src/winter/fetch/FetchResponse.ts) -- the body then only
+// grows through this `SharedObject`'s own `didReceiveResponseData`/
+// `didComplete` events, the same events real native code would emit, which
+// the drive below triggers directly by calling `.emit(...)` on the captured
+// response instance (resolved through `chatStreamStarted` below, the moment
+// `POST /v1/chat` is issued).
+let resolveChatStreamStarted = null;
+const chatStreamStarted = new HostPromise(resolve => {
+  resolveChatStreamStarted = resolve;
+});
+// Matches shared/api.ts's StateResponse shape exactly.
+const STREAM_STATE_BODY = {
+  models: [{ name: "smoke-model:1b", size_bytes: 1 }],
+  resident: { name: "smoke-model:1b", loaded_by_server: true },
+  operation: { kind: "idle" },
+  generation: null,
+};
+class StreamingNativeResponse extends SharedObject {
+  constructor() {
+    super();
+    this._status = 404;
+    this._statusText = "Not Found";
+    this._url = "";
+    this._redirected = false;
+    this._bodyUsed = false;
+    this._headers = [["content-type", "application/json"]];
+    this._immediateBody = new TextEncoder().encode("{}");
+    // Set true for the chat route: startStreaming() then reports "not
+    // complete yet" instead of the whole body, and further bytes only
+    // arrive via emitted didReceiveResponseData/didComplete (fed by the
+    // drive below), not by returning more from startStreaming() again.
+    this._deferred = false;
+  }
+  get status() {
+    return this._status;
+  }
+  get statusText() {
+    return this._statusText;
+  }
+  get url() {
+    return this._url;
+  }
+  get redirected() {
+    return this._redirected;
+  }
+  get _rawHeaders() {
+    return this._headers;
+  }
+  get bodyUsed() {
+    return this._bodyUsed;
+  }
+  async startStreaming() {
+    this._bodyUsed = true;
+    return this._deferred ? null : this._immediateBody;
+  }
+  cancelStreaming() {}
+  async arrayBuffer() {
+    this._bodyUsed = true;
+    return this._immediateBody.buffer;
+  }
+  async text() {
+    this._bodyUsed = true;
+    return new TextDecoder().decode(this._immediateBody);
+  }
+}
+class StreamingNativeRequest extends SharedObject {
+  constructor(response) {
+    super();
+    this.response = response;
+  }
+  async start(url, requestInit) {
+    const method = (requestInit?.method ?? "GET").toUpperCase();
+    this.response._url = String(url);
+    if (method === "GET" && this.response._url.endsWith("/v1/state")) {
+      this.response._status = 200;
+      this.response._statusText = "OK";
+      this.response._headers = [["content-type", "application/json"]];
+      this.response._immediateBody = new TextEncoder().encode(
+        JSON.stringify(STREAM_STATE_BODY)
+      );
+    } else if (method === "POST" && this.response._url.endsWith("/v1/chat")) {
+      this.response._status = 200;
+      this.response._statusText = "OK";
+      this.response._headers = [
+        ["content-type", "text/event-stream"],
+        ["x-generation-id", "gen-smoke"],
+      ];
+      this.response._deferred = true;
+      resolveChatStreamStarted(this.response);
+    }
+    return this.response;
+  }
+  cancel() {}
+}
+/** One SSE frame in the format mobile/src/api/client.ts parses. */
+function sseFrame(id, event, data) {
+  return `id: ${id}\nevent: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+}
+const sseEncoder = new TextEncoder();
+
 // Same shape Expo Go receives from the bundle host (see the manifest's
 // extra.expoClient): built from this project's app.json.
 const appJson = JSON.parse(
@@ -461,10 +598,16 @@ const expoOverrides = {
     addListener() {},
     removeListeners() {},
   },
-  ExpoFetchModule: {
-    NativeRequest: FakeNativeRequest,
-    NativeResponse: FakeNativeResponse,
-  },
+  ExpoFetchModule:
+    tokenArg === "stream"
+      ? {
+          NativeRequest: StreamingNativeRequest,
+          NativeResponse: StreamingNativeResponse,
+        }
+      : {
+          NativeRequest: FakeNativeRequest,
+          NativeResponse: FakeNativeResponse,
+        },
 };
 const expoModules = new Proxy(
   {},
@@ -651,6 +794,49 @@ function collectTree() {
   return { texts, headers, pressables, textInputs };
 }
 
+// Same walk as collectTree(), but keeps each text's *container* Fabric node
+// tag alongside its string (the --token=stream drive below needs this to
+// check whether the reply is updated in place across the send, not just what
+// its text reads). The container is the RCTRawText leaf's immediate parent
+// (the actual <Text> host component the app renders), not the leaf itself:
+// per React Native's Fabric renderer (see `completeWork`'s HostText case,
+// tag 6, in node_modules/react-native/Libraries/Renderer/implementations/
+// ReactFabric-dev.js), a text leaf whose string content changes is always
+// torn down and recreated via `createTextInstance` -- it is never updated in
+// place, on any app, real device included. The *enclosing* host component
+// (the HostComponent case just above it) keeps its native tag stable across
+// such updates (its shadow node is cloned via `cloneNodeWithNewChildren`,
+// which this harness's fake fabric implements as `{...n, children: []}`,
+// preserving `tag`). So the container's tag, not the leaf's, is what tells
+// us whether the message bubble itself was updated in place or unmounted and
+// recreated. Kept separate so collectTree()'s existing callers/shape -- and
+// their assertions -- are untouched.
+function collectStreamTree() {
+  const texts = []; // [{ tag, containerTag, text }]
+  const pressables = []; // [{ node, texts: [...] }] - node.instanceHandle to dispatch a tap
+  const textInputs = [];
+  const walk = (n, parent, ancestorPressable) => {
+    if (!n) return;
+    const pressable = n.props?.onClick === true ? n : ancestorPressable;
+    if (n.viewName === "RCTRawText" && n.props?.text) {
+      texts.push({ tag: n.tag, containerTag: parent?.tag, text: n.props.text });
+      if (pressable) {
+        let entry = pressables.find(p => p.node === pressable);
+        if (!entry) {
+          entry = { node: pressable, texts: [] };
+          pressables.push(entry);
+        }
+        entry.texts.push(n.props.text);
+      }
+    }
+    if (n.props?.onChange === true && /TextInput/i.test(n.viewName ?? ""))
+      textInputs.push(n);
+    n.children?.forEach(c => walk(c, n, pressable));
+  };
+  (roots.get(1) ?? []).forEach(n => walk(n, null, null));
+  return { texts, pressables, textInputs };
+}
+
 const expectedScreen = STORED_TOKEN ? "Conversations" : "Setup";
 const first = collectTree();
 log(`bundle: ${bundlePath}`);
@@ -802,6 +988,230 @@ if (tokenArg === "wrong" && exceptions.length === 0 && reachedFirstScreen) {
   log(`drive Conversations -> Chat -> 401 -> Settings: ${JSON.stringify(driveChat401)}`);
 }
 
+// ---- M4a-T3/T4 (FR9/FR10): token-stream run drives Conversations -> New
+// chat -> Chat -> Send with a resident model and a held-open SSE reply, and
+// asserts, in order, that (1) the prompt shows before any reply byte, (2) the
+// partial reply shows with its thinking collapsed, (3) the thinking section
+// expands separately from the answer, and (4) the finished reply lands in
+// the same place, in the same Fabric node, once the stream closes. Each of
+// the four is logged as its own PASS/FAIL line (see module doc comment). ----
+let driveChatStream = null;
+if (tokenArg === "stream" && exceptions.length === 0 && reachedFirstScreen) {
+  driveChatStream = await (async () => {
+    const PROMPT = "What is six times seven?";
+    const steps = [];
+    const record = (n, description, ok, details) => {
+      steps.push({ n, description, ok, details });
+      log(
+        `stream step ${n} (${description}): ${ok ? "PASS" : "FAIL"}${
+          details === undefined ? "" : ` - ${JSON.stringify(details)}`
+        }`
+      );
+      return ok;
+    };
+
+    const newChatButton = first.pressables.find(p =>
+      p.texts.some(t => t.includes("New chat"))
+    );
+    if (!newChatButton) {
+      record(1, "prompt shown before any reply byte", false, {
+        reason: "Conversations' New chat button's onClick not found in the rendered tree",
+      });
+      return { ok: false, steps };
+    }
+    dispatchFabricEvent?.(newChatButton.node.instanceHandle, "topClick", {});
+    await new HostPromise(r => hostSetTimeout(r, 1000));
+    const afterNewChat = collectStreamTree();
+    const messageInput = afterNewChat.textInputs[0];
+    if (!messageInput) {
+      record(1, "prompt shown before any reply byte", false, {
+        reason: "Chat's message TextInput not found after tapping New chat",
+      });
+      return { ok: false, steps };
+    }
+    dispatchFabricEvent?.(messageInput.instanceHandle, "topChange", {
+      text: PROMPT,
+      eventCount: 1,
+      target: messageInput.tag,
+    });
+    await new HostPromise(r => hostSetTimeout(r, 300));
+    const afterType = collectStreamTree();
+    const sendButton = afterType.pressables.find(p =>
+      p.texts.some(t => t.includes("Send"))
+    );
+    if (!sendButton) {
+      record(1, "prompt shown before any reply byte", false, {
+        reason: "Send button's onClick not found after typing the prompt",
+      });
+      return { ok: false, steps };
+    }
+    dispatchFabricEvent?.(sendButton.node.instanceHandle, "topClick", {});
+    // Let the event loop settle -- the chat response holds back every byte
+    // (nothing has been fed to it yet) -- before checking the prompt landed.
+    await new HostPromise(r => hostSetTimeout(r, 400));
+
+    const afterSend = collectStreamTree();
+    const promptShown = afterSend.texts.some(t => t.text === PROMPT);
+    if (
+      !record(1, "prompt shown before any reply byte", promptShown, {
+        rendered_text: [...new Set(afterSend.texts.map(t => t.text))],
+      })
+    ) {
+      return { ok: false, steps };
+    }
+
+    const chatHandle = await chatStreamStarted;
+    if (!chatHandle) {
+      record(2, "partial reply shown, thinking collapsed", false, {
+        reason: "POST /v1/chat was never issued",
+      });
+      return { ok: false, steps };
+    }
+
+    chatHandle.emit(
+      "didReceiveResponseData",
+      sseEncoder.encode(sseFrame(1, "thinking", { text: "SMOKE-THINKING-TEXT" }))
+    );
+    chatHandle.emit(
+      "didReceiveResponseData",
+      sseEncoder.encode(sseFrame(2, "content", { text: "Partial answer" }))
+    );
+    await new HostPromise(r => hostSetTimeout(r, 300));
+
+    const afterPartial = collectStreamTree();
+    const partialAnswerNodes = afterPartial.texts.filter(t =>
+      t.text.includes("Partial answer")
+    );
+    const showThinking = afterPartial.pressables.find(p =>
+      p.texts.some(t => t === "Show thinking")
+    );
+    const thinkingHiddenWhileCollapsed = !afterPartial.texts.some(t =>
+      t.text.includes("SMOKE-THINKING-TEXT")
+    );
+    const step2ok =
+      partialAnswerNodes.length === 1 &&
+      !!showThinking &&
+      thinkingHiddenWhileCollapsed;
+    if (
+      !record(2, "partial reply shown, thinking collapsed", step2ok, {
+        message_texts: [...new Set(afterPartial.texts.map(t => t.text))],
+        partial_answer_node_count: partialAnswerNodes.length,
+        show_thinking_present: !!showThinking,
+        thinking_text_hidden: thinkingHiddenWhileCollapsed,
+      })
+    ) {
+      return { ok: false, steps };
+    }
+    // The reply's *container* tag (its enclosing <Text>), not the raw-text
+    // leaf's own tag -- see collectStreamTree()'s doc comment: the leaf is
+    // always recreated when its string changes, on any RN Fabric app.
+    const partialAnswerContainerTag = partialAnswerNodes[0].containerTag;
+
+    dispatchFabricEvent?.(showThinking.node.instanceHandle, "topClick", {});
+    await new HostPromise(r => hostSetTimeout(r, 300));
+    const afterExpand = collectStreamTree();
+    const thinkingNode = afterExpand.texts.find(t =>
+      t.text.includes("SMOKE-THINKING-TEXT")
+    );
+    const hideThinkingShown = afterExpand.pressables.some(p =>
+      p.texts.some(t => t === "Hide thinking")
+    );
+    const thinkingSeparateFromAnswer =
+      !!thinkingNode && !thinkingNode.text.includes("Partial answer");
+    const step3ok =
+      !!thinkingNode && hideThinkingShown && thinkingSeparateFromAnswer;
+    if (
+      !record(3, "thinking expands into its own section", step3ok, {
+        thinking_text_present: !!thinkingNode,
+        hide_thinking_present: hideThinkingShown,
+        thinking_separate_from_answer: thinkingSeparateFromAnswer,
+      })
+    ) {
+      return { ok: false, steps };
+    }
+    chatHandle.emit(
+      "didReceiveResponseData",
+      sseEncoder.encode(sseFrame(3, "content", { text: " 42" }))
+    );
+    await new HostPromise(r => hostSetTimeout(r, 300));
+    chatHandle.emit(
+      "didReceiveResponseData",
+      sseEncoder.encode(
+        sseFrame(4, "done", {
+          status: "complete",
+          model: "smoke-model:1b",
+          eval_count: 3,
+          tokens_per_second: 1,
+        })
+      )
+    );
+    await new HostPromise(r => hostSetTimeout(r, 300));
+    chatHandle.emit("didComplete");
+
+    // Settle until the send finishes (Send button back, Stop gone), rather
+    // than a single fixed wait: completion runs through the fake AsyncStorage
+    // (persisting the reply, then reloading the conversation) before
+    // isLoading clears.
+    let afterDone = collectStreamTree();
+    let sendBackStopGone = false;
+    for (let i = 0; i < 20 && !sendBackStopGone; i++) {
+      afterDone = collectStreamTree();
+      sendBackStopGone =
+        afterDone.pressables.some(p => p.texts.some(t => t.includes("Send"))) &&
+        !afterDone.pressables.some(p => p.texts.some(t => t.includes("Stop")));
+      if (!sendBackStopGone) {
+        await new HostPromise(r => hostSetTimeout(r, 150));
+      }
+    }
+
+    const finalAnswerNodes = afterDone.texts.filter(t =>
+      t.text.includes("Partial answer 42")
+    );
+    const promptNodes = afterDone.texts.filter(t => t.text === PROMPT);
+    const modelLabelShown = afterDone.texts.some(t => t.text === "smoke-model:1b");
+    const promptIdx = afterDone.texts.findIndex(t => t.text === PROMPT);
+    const replyIdx = afterDone.texts.findIndex(t =>
+      t.text.includes("Partial answer 42")
+    );
+    const orderOk = promptIdx !== -1 && replyIdx !== -1 && promptIdx < replyIdx;
+    // Compare the *container* tag (see collectStreamTree()'s doc comment),
+    // not the raw-text leaf's own tag: React Native's Fabric renderer always
+    // recreates a text leaf when its string content changes (confirmed in
+    // node_modules/react-native/Libraries/Renderer/implementations/
+    // ReactFabric-dev.js's completeWork, HostText case, tag 6 -- it calls
+    // createTextInstance unconditionally on a props change, unlike the
+    // HostComponent case just above it, which clones the existing node and
+    // keeps its tag). So the leaf's tag churning across an SSE update is true
+    // of every RN Fabric app and would make a leaf-tag comparison here always
+    // fail regardless of whether chat.tsx's message bubble was updated in
+    // place; the enclosing <Text> host component's tag is the one that
+    // reflects the message bubble's own identity.
+    const sameFabricNode =
+      finalAnswerNodes.length === 1 &&
+      finalAnswerNodes[0].containerTag === partialAnswerContainerTag;
+    const step4ok =
+      sendBackStopGone &&
+      finalAnswerNodes.length === 1 &&
+      promptNodes.length === 1 &&
+      modelLabelShown &&
+      orderOk &&
+      sameFabricNode;
+    record(4, "reply updates in place through completion", step4ok, {
+      send_back_stop_gone: sendBackStopGone,
+      final_answer_node_count: finalAnswerNodes.length,
+      prompt_occurrences: promptNodes.length,
+      model_label_shown: modelLabelShown,
+      order_ok: orderOk,
+      partial_answer_container_tag_step2: partialAnswerContainerTag,
+      final_answer_container_tag: finalAnswerNodes[0]?.containerTag,
+      same_fabric_node: sameFabricNode,
+      rendered_text: [...new Set(afterDone.texts.map(t => t.text))],
+    });
+
+    return { ok: step4ok, steps };
+  })();
+}
+
 for (const e of exceptions) {
   log(`JS EXCEPTION via ${e.via}: ${e.message}`);
   if (e.stack) log(String(e.stack).split("\n").slice(0, 6).join("\n"));
@@ -817,7 +1227,8 @@ const pass =
   rendered &&
   reachedFirstScreen &&
   (driveToChat === null || driveToChat.ok === true) &&
-  (driveChat401 === null || driveChat401.ok === true);
+  (driveChat401 === null || driveChat401.ok === true) &&
+  (driveChatStream === null || driveChatStream.ok === true);
 if (pass) {
   log(
     `RESULT: PASS (app launched, ${expectedScreen} rendered, no JS exception${
@@ -828,6 +1239,10 @@ if (pass) {
       driveChat401
         ? ", Conversations -> Chat -> 401 drive reached Settings with the token form open"
         : ""
+    }${
+      driveChatStream
+        ? ", Conversations -> Chat -> streamed reply drive passed all 4 steps"
+        : ""
     })`
   );
   process.exit(0);
@@ -835,6 +1250,8 @@ if (pass) {
 log(
   `RESULT: FAIL (exceptions=${exceptions.length}, rendered=${rendered}, reached ${expectedScreen}=${reachedFirstScreen}${
     driveToChat ? `, driveToChat.ok=${driveToChat.ok}` : ""
-  }${driveChat401 ? `, driveChat401.ok=${driveChat401.ok}` : ""})`
+  }${driveChat401 ? `, driveChat401.ok=${driveChat401.ok}` : ""}${
+    driveChatStream ? `, driveChatStream.ok=${driveChatStream.ok}` : ""
+  })`
 );
 process.exit(1);
