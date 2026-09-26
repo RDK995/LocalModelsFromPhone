@@ -233,7 +233,7 @@ Cycle 1: PASS, tier Mid (sonnet, MID_TIER_DIFF), full-milestone scope 1d74498fc5
 
 ## M5a — Always-on server and bundle host
 
-Status: IN_PROGRESS
+Status: BLOCKED
 
 ### Outcome
 
@@ -250,7 +250,7 @@ Pending.
 ### Acceptance Criteria
 
 - [ ] **M5-AC1**: After a Mac reboot, opening the project in Expo Go on the phone works with no manual step on the Mac.
-- [ ] **M5-AC2**: Killing either the server process or the bundle host process causes it to restart automatically.
+- [x] **M5-AC2**: Killing either the server process or the bundle host process causes it to restart automatically.
 
 ### Baseline
 
@@ -258,15 +258,37 @@ Pending.
 
 ### Evidence
 
-Pending.
+- M5a-T1 live restart proof ops/scripts/restart-proof.sh — Mid (ORDINARY_IMPLEMENTATION: live launchd lifecycle proof), attempt 3 PASS; verifier PASS — .harness/evidence/M5a-T1-verifier.log. Commit 6322847.
+- M5a-T2 read-only post-reboot readiness check ops/scripts/boot-readiness-check.sh (+1 entry in verify-ops-install.sh) — Mid (ORDINARY_IMPLEMENTATION: must be right on the single human reboot), attempt 3 PASS; verifier PASS — .harness/evidence/M5a-T2-verifier.log. Commit 3fe0ae2.
+- M5-AC2: SIGKILL of launchd's tracked pid — server 88260->89022 healthy in 1 s (unauth 401, auth /v1/state 200); bundle host 88461->89068 healthy in 3 s (/status running, iOS manifest 200 naming ryans-mac-studio.tailc3648a.ts.net); SIGKILL of the TCP 8081 listener (lsof) 89068->89216 healthy in 10 s; exactly one 8081 listener after each; exit 0. No plist change needed: `bun x expo` execs into node, so launchd's pid is the listener.
+- M5-AC1: NOT YET PROVEN. Mac-side check passes pre-reboot (current boot 2026-08-22). Needs the human reboot below.
 
 ### Validation
 
-Pending.
+`cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/verify-ops-install.sh && bash ops/scripts/restart-proof.sh && bash ops/scripts/boot-readiness-check.sh && (cd ops && bun test src/token)` — reviewer runs once; restart-proof kills and restarts the live services (no sudo); boot-readiness-check is read-only. M5-AC1 also needs .harness/evidence/M5a-AC1-reboot.log and the phone observation.
 
 ### Review
 
 Pending.
+
+Human Escalation (BLOCKED):
+
+Problem:
+M5-AC1 needs a real Mac reboot and an Expo Go check on the phone; agents may not reboot. Also, FileVault is On and auto-login is off (`fdesetup status`; loginwindow autoLoginUser unset), so after a reboot the per-user LaunchAgents, Tailscale and Ollama start only once the user types the Mac password at the unlock screen.
+
+Requirement/milestone affected:
+M5a / M5-AC1 (FR15, AC11).
+
+Attempts made:
+1. M5a-T1: live kill/restart proof for both services — PASS (M5-AC2 proven).
+2. M5a-T2: read-only post-reboot readiness check — PASS pre-reboot.
+3. Checked boot behaviour: FileVault On, no auto-login.
+
+Remaining issue:
+The reboot itself, the phone check, and the post-reboot readiness log; plus a decision on whether the unlock-screen login counts as a "manual step on the Mac".
+
+Recommended decision:
+Treat logging in at the unlock screen as part of the reboot (no change), then do: (1) reboot the Mac; (2) log in at the password screen and do nothing else on the Mac — no Terminal, no starting anything; (3) wait about two minutes; (4) on the iPhone with Tailscale connected, force-quit Expo Go, reopen it, open the project (exp://ryans-mac-studio.tailc3648a.ts.net:8081), confirm the app loads, the Models screen lists models, and a short message gets a reply — take a screenshot; (5) only then, on the Mac: `cd ~/Projects/CodingHarnessv2 && bash ops/scripts/boot-readiness-check.sh 2>&1 | tee .harness/evidence/M5a-AC1-reboot.log` and confirm it ends "PASS: ALL CHECKS PASSED" with a boot time from today. Then set M5a to REVIEW. Not recommended: disabling FileVault for auto-login (security cost), or moving to system-level daemons (a material architecture change to C9).
 
 ### Review Cycles
 
@@ -274,7 +296,8 @@ Pending.
 
 ### Follow-ups
 
-None.
+- FileVault login after reboot: see the escalation above.
+- R3 still applies: the bundle host serves the working tree, so a mid-edit checkout reaches the phone after any restart.
 
 ## M5b — Plain-language error messages
 

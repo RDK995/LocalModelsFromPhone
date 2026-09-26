@@ -4413,7 +4413,7 @@
       "requirements": [
         "FR15"
       ],
-      "status": "IN_PROGRESS",
+      "status": "BLOCKED",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -4429,13 +4429,17 @@
           "id": "M5-AC1",
           "text": "After a Mac reboot, opening the project in Expo Go on the phone works with no manual step on the Mac.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "Mac-side check built and passing pre-reboot: ops/scripts/boot-readiness-check.sh (.harness/evidence/M5a-T2-verifier.log). Needs a human reboot + Expo Go check; not yet performed (current boot 2026-08-22)."
+          ]
         },
         {
           "id": "M5-AC2",
           "text": "Killing either the server process or the bundle host process causes it to restart automatically.",
-          "status": "PENDING",
-          "evidence": []
+          "status": "PASS",
+          "evidence": [
+            "Live: ops/scripts/restart-proof.sh SIGKILLs launchd's tracked pid of com.harness.server (88260->89022, healthy 1s: unauth 401, auth /v1/state 200) and com.harness.bundle-host (88461->89068, healthy 3s: /status running, iOS manifest 200 naming the tailnet host), then the TCP 8081 listener found by lsof (89068->89216, healthy 10s); exactly one 8081 listener after each; exit 0 (.harness/evidence/M5a-T1-verifier.log). No plist change needed: bun x expo execs into node, so launchd's pid is the listener."
+          ]
         }
       ],
       "tasks": [
@@ -4557,8 +4561,20 @@
       ],
       "reviews": [],
       "findings": [],
-      "validation": [],
-      "follow_ups": [],
+      "validation": [
+        {
+          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/verify-ops-install.sh && bash ops/scripts/restart-proof.sh && bash ops/scripts/boot-readiness-check.sh && (cd ops && bun test src/token)",
+          "note": "reviewer runs once; restart-proof kills and restarts the live LaunchAgent services (allowed, no sudo); boot-readiness-check is read-only. M5-AC1 additionally needs the human post-reboot log .harness/evidence/M5a-AC1-reboot.log and the phone observation.",
+          "artifacts": [
+            ".harness/evidence/M5a-T1-verifier.log",
+            ".harness/evidence/M5a-T2-verifier.log"
+          ]
+        }
+      ],
+      "follow_ups": [
+        "FileVault is On and auto-login is off on this Mac, so after a reboot per-user LaunchAgents (and Tailscale, Ollama) start only after the user logs in at the FileVault screen; whether that login counts as a 'manual step' for M5-AC1/AC11 is escalated.",
+        "R3 still applies: the bundle host serves the working tree, so a mid-edit checkout reaches the phone after a restart."
+      ],
       "split_from": "M5",
       "complexity_signals": [
         "CONCURRENCY_LIFECYCLE",
@@ -4575,6 +4591,17 @@
         ],
         "criteria_before": 4,
         "criteria_after": 4
+      },
+      "blocked": {
+        "problem": "M5-AC1 needs a real Mac reboot and an Expo Go check on the phone, which an agent may not perform. Separately, FileVault is On with no auto-login, so after a reboot nothing per-user (LaunchAgents, Tailscale, Ollama) starts until the user types the Mac password at the unlock screen.",
+        "affected": "M5a / M5-AC1 (FR15, AC11)",
+        "attempts": [
+          "M5a-T1: live kill/restart proof for both services, PASS (M5-AC2 proven).",
+          "M5a-T2: read-only post-reboot readiness check ops/scripts/boot-readiness-check.sh, PASS pre-reboot.",
+          "Checked boot behaviour: `fdesetup status` -> FileVault is On; loginwindow autoLoginUser unset."
+        ],
+        "remaining": "Human reboot + phone check + post-reboot readiness log; and a decision on whether the FileVault login counts as a manual step.",
+        "recommended": "Treat logging in at the unlock screen as part of rebooting (no change), perform the reboot steps, and record the evidence; do not disable FileVault or move to system daemons (that would be a material architecture change)."
       }
     },
     "M5b": {
