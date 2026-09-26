@@ -233,11 +233,11 @@ Cycle 1: PASS, tier Mid (sonnet, MID_TIER_DIFF), full-milestone scope 1d74498fc5
 
 ## M5b — Plain-language error messages
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
-The app shows a distinct plain-language message for each failure mode: Mac or server unreachable, Ollama down, wrong password, model failed to load, model no longer installed, and a reply already in progress. Second part of the M5 split (see M5a).
+The app shows a distinct plain-language message for each failure mode: Mac or server unreachable, Ollama down, wrong password, model failed to load, model no longer installed, and a reply already in progress. Second part of the M5 split (see M5a). Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; seam check: the live proof is the criterion itself, so separating it would leave a component-only half — not split).
 
 ### Architecture
 
@@ -253,11 +253,13 @@ Pending.
 
 ### Baseline
 
-Pending.
+69aed5333cdee09d7d1c38aa73fcfa06f2ff3c16 on m5b-plain-errors
 
 ### Evidence
 
-Pending.
+Tasks (packets under .harness/tasks/):
+- M5b-T1 — error mapping + client/server/screens + unit tests: Mid (ORDINARY_IMPLEMENTATION), pending
+- M5b-T2 — live six-failure proof script: Mid (ORDINARY_IMPLEMENTATION), pending, depends on T1
 
 ### Validation
 

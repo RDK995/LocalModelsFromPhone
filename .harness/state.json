@@ -4413,12 +4413,12 @@
       "requirements": [
         "FR16"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
-        "commit": "",
-        "branch": ""
+        "commit": "69aed5333cdee09d7d1c38aa73fcfa06f2ff3c16",
+        "branch": "m5b-plain-errors"
       },
       "as_built": {
         "artifact": null,
@@ -4432,12 +4432,87 @@
           "evidence": []
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M5b-T1",
+          "scope": "Plain-language error mapping module in the app client, typed UnreachableError/ServerError from getState/chat, server operation.error_code, Models/Chat screens use the mapping; unit tests",
+          "tests": "cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd server && bun test && bun run typecheck) && (cd mobile && bun run typecheck && bun test src/store src/api src/ui src/chat src/app-routing && bun run lint)",
+          "requirements": [
+            "FR16"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M5-AC3"
+          ],
+          "paths": [
+            "mobile/src/api/errorMessages.ts",
+            "mobile/src/api/errorMessages.test.ts",
+            "mobile/src/api/client.ts",
+            "mobile/src/api/client.test.ts",
+            "mobile/src/chat/chatController.ts",
+            "mobile/src/chat/chatController.test.ts",
+            "mobile/src/ui/modelList.ts",
+            "mobile/src/ui/modelList.test.ts",
+            "mobile/src/app/models.tsx",
+            "mobile/src/app/chat.tsx",
+            "shared/api.ts",
+            "server/src/models/manager.ts",
+            "server/src/models/manager.test.ts"
+          ],
+          "depends_on": [],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "ordinary feature work across client, two screens and one server field; every outcome has a stated string and a unit-test oracle"
+          },
+          "status": "PENDING",
+          "attempts": 0,
+          "packet": ".harness/tasks/M5b-T1.md",
+          "commit": null,
+          "attempt_log": []
+        },
+        {
+          "id": "M5b-T2",
+          "scope": "Live proof: induce each of the six failure modes against the live server and Ollama; the app client + mapping yield six distinct exact sentences; restore every service",
+          "tests": "cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun run lint && bash scripts/error-messages-proof.sh",
+          "requirements": [
+            "FR16"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M5-AC3"
+          ],
+          "paths": [
+            "mobile/scripts/error-messages-proof.sh",
+            "mobile/scripts/error-messages-proof.ts"
+          ],
+          "depends_on": [
+            "M5b-T1"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "live-environment proof script modelled on existing proofs; judgement needed to induce Ollama-down and server-unreachable safely and restore services"
+          },
+          "status": "PENDING",
+          "attempts": 0,
+          "packet": ".harness/tasks/M5b-T2.md",
+          "commit": null,
+          "attempt_log": []
+        }
+      ],
       "reviews": [],
       "findings": [],
       "validation": [],
       "follow_ups": [],
-      "split_from": "M5"
+      "split_from": "M5",
+      "complexity_signals": [
+        "IMPLEMENTATION_PLUS_LIVE_PROOF"
+      ]
     },
     "M5a": {
       "id": "M5a",
