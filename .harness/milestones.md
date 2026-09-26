@@ -275,7 +275,7 @@ Pending.
 
 ### Follow-ups
 
-None.
+- New feature requested by the human 2026-09-26, out of scope for current requirements: internet (web) search for the models, e.g. via Ollama's web search / tool calling. Needs roast-requirements (search provider and privacy, which models, how the app shows searching and sources) before any implementation.
 
 ## M5a — Always-on server and bundle host
 
