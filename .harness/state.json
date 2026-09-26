@@ -3097,7 +3097,7 @@
         "FR7",
         "FR8"
       ],
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -3113,31 +3113,48 @@
           "id": "M3-AC1",
           "text": "Conversations can be created, opened and deleted, and are listed newest first.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "Unit mobile/src/store/conversationStore.test.ts: create/get/delete, list newest first, write-through persistence, corrupt entries skipped \u2014 .harness/evidence/M3-T1-verifier.log",
+            "Unit mobile/src/ui/conversationList.test.ts + mobile/src/app/conversations.tsx (list newest first, New chat, open, delete) \u2014 .harness/evidence/M3-T2-verifier.log",
+            "Runtime smoke (bundled app, faked native modules incl. AsyncStorage): token present lands on Conversations; Conversations -> New chat -> Chat drive \u2014 .harness/evidence/M3-T2b-verifier.log"
+          ]
         },
         {
           "id": "M3-AC2",
           "text": "A follow-up prompt in the same conversation demonstrably uses context from an earlier turn.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "Live tailnet proof mobile/scripts/conversation-proof.sh Step 3: turn-2 request recorded at client.chat contains turn-1 user and assistant messages; reply contains the run-time random code word \u2014 .harness/evidence/M3-T3-verifier.log",
+            "Unit mobile/src/chat/conversationSession.test.ts: full history sent on every send \u2014 .harness/evidence/M3-T2-verifier.log"
+          ]
         },
         {
           "id": "M3-AC3",
           "text": "Each assistant reply displays the model name that produced it, including after a mid-conversation model switch.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "Live proof Step 5: same conversation, reply before swap stored with devstral:24b, reply after swap-load stored with qwen3.6:27b, first still devstral:24b \u2014 .harness/evidence/M3-T3-verifier.log",
+            "Unit conversationSession.test.ts per-reply model from done event; chat.tsx renders each assistant reply's model label \u2014 .harness/evidence/M3-T2-verifier.log"
+          ]
         },
         {
           "id": "M3-AC4",
           "text": "Sending with no model resident is blocked with a prompt to load one.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "Live proof Step 6: after unload /api/ps empty; send blocked with 'No model loaded \u2014 load one on the Models screen to send.'; zero client.chat calls; no assistant message added \u2014 .harness/evidence/M3-T3-verifier.log",
+            "Unit conversationSession.test.ts blocked path; chat.tsx Load-a-model button \u2014 .harness/evidence/M3-T2-verifier.log"
+          ]
         },
         {
           "id": "M3-AC5",
           "text": "Force-quitting and reopening Expo Go shows the same conversations and messages as before.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "Storage-layer proxy, live proof Step 7: a fresh store over the same file-backed StoragePort sees identical conversation, message order, contents and model labels \u2014 .harness/evidence/M3-T3-verifier.log",
+            "Unit conversationStore.test.ts: new store over same StoragePort reloads persisted conversations \u2014 .harness/evidence/M3-T1-verifier.log",
+            "HUMAN STEP PENDING: on-device Expo Go force-quit and reopen shows the same conversations and messages (see Follow-ups)"
+          ]
         }
       ],
       "tasks": [
@@ -3325,7 +3342,7 @@
           "status": "ACCEPTED",
           "attempts": 1,
           "packet": ".harness/tasks/M3-T2b.md",
-          "commit": null,
+          "commit": "352be43",
           "attempt_log": [
             {
               "attempt": 3,
@@ -3350,14 +3367,112 @@
               "note": "typecheck, 102 tests, lint clean, smoke:runtime 3/3 (present->Conversations; absent->Setup->Conversations; wrong->Conversations->New chat->Chat->Send->401->Settings token form)"
             }
           ]
+        },
+        {
+          "id": "M3-T3",
+          "scope": "Live tailnet proof mobile/scripts/conversation-proof.{sh,ts} over the app's sendInConversation, conversation store (file-backed StoragePort, mobile/src/store/fileStorage.ts, not imported by the app) and API client: context, attribution across a swap, blocked with nothing resident, fresh-store persistence",
+          "tests": "cd mobile && bun run typecheck && bun run lint && bash scripts/conversation-proof.sh",
+          "requirements": [
+            "FR7",
+            "FR8"
+          ],
+          "constraints": [
+            "no change to shared/, server/, mobile/src/app, mobile/src/chat, mobile/src/api",
+            "restore resident model on any exit"
+          ],
+          "findings": [],
+          "criteria": [
+            "M3-AC2",
+            "M3-AC3",
+            "M3-AC4",
+            "M3-AC5"
+          ],
+          "paths": [
+            "mobile/scripts/conversation-proof.sh",
+            "mobile/scripts/conversation-proof.ts",
+            "mobile/src/store/fileStorage.ts"
+          ],
+          "depends_on": [
+            "M3-T2b"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "proof script in the established *-proof pattern over already-built modules; its assertions are the oracle"
+          },
+          "status": "ACCEPTED",
+          "attempts": 2,
+          "packet": ".harness/tasks/M3-T3.md",
+          "commit": null,
+          "attempt_log": [
+            {
+              "attempt": 1,
+              "role": "worker",
+              "tier": "Cheap",
+              "model": "haiku",
+              "artifact": ".harness/evidence/M3-T3-worker.log",
+              "verdict": "FAIL",
+              "base": "352be43",
+              "changed_files": [
+                "mobile/scripts/conversation-proof.sh",
+                "mobile/scripts/conversation-proof.ts",
+                "mobile/src/store/fileStorage.ts"
+              ],
+              "verifier": {
+                "artifact": ".harness/evidence/M3-T3-verifier.log",
+                "exit_code": 0,
+                "verdict": "PASS",
+                "tests_weakened": "NO",
+                "discrepancies": "packet-required assertions missing: turn-2 sent messages not recorded/asserted; POST /v1/chat not counted during blocked send"
+              },
+              "note": "exit 0 but not accepted by orchestrator: two packet assertions absent (see discrepancies); retried at Cheap attempt 2 with Previous Attempt block"
+            },
+            {
+              "attempt": 2,
+              "role": "worker",
+              "tier": "Cheap",
+              "model": "haiku",
+              "artifact": ".harness/evidence/M3-T3-worker.log",
+              "verdict": "PASS",
+              "base": "352be43",
+              "changed_files": [
+                "mobile/scripts/conversation-proof.sh",
+                "mobile/scripts/conversation-proof.ts",
+                "mobile/src/store/fileStorage.ts"
+              ],
+              "verifier": {
+                "artifact": ".harness/evidence/M3-T3-verifier.log",
+                "exit_code": 0,
+                "verdict": "PASS",
+                "tests_weakened": "NO",
+                "discrepancies": "NONE"
+              },
+              "note": "wrapped client.chat is the instance passed to sendInConversation for every check; turn-2 sent messages include turn-1 user+assistant; blocked send chat-call count 0. Counter is not separately asserted >0 on successful sends; wiring is shown by the recorded turn-2 messages. Models A=devstral:24b, B=qwen3.6:27b from /api/tags."
+            }
+          ]
         }
       ],
       "reviews": [],
       "findings": [],
-      "validation": [],
+      "validation": [
+        {
+          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/e2e-tailnet-proof.sh && (cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh) && (cd ops && bun test src/token && bash scripts/verify-ops-install.sh) && (cd mobile && bun run typecheck && bun test src/store src/api src/ui src/chat src/app-routing && bun run lint && bun run smoke:runtime && bash scripts/model-list-proof.sh && bash scripts/model-swap-proof.sh && bash scripts/model-failed-load-proof.sh && bash scripts/conversation-proof.sh && npx expo export --platform ios && rm -rf dist)",
+          "note": "M2c broad chain plus src/store tests and conversation-proof.sh; about 12+ minutes (model-swap-proof idles 600 s); live proofs restart com.harness.server and com.harness.bundle-host and evict then restore the resident model; run nothing else against the Mac concurrently. Server unchanged in M3.",
+          "artifacts": [
+            ".harness/evidence/M3-T1-verifier.log",
+            ".harness/evidence/M3-T2-verifier.log",
+            ".harness/evidence/M3-T2b-verifier.log",
+            ".harness/evidence/M3-T3-verifier.log"
+          ],
+          "status": "PENDING"
+        }
+      ],
       "follow_ups": [
         "Size/shape check at pickup: 5 criteria (run). Entry point: live POST /v1/chat over the tailnet through the app's own client and conversation logic (M3-AC2). Operational-complexity signal IMPLEMENTATION_PLUS_LIVE_PROOF present; SUBSYSTEMS_GT_3, CONCURRENCY_LIFECYCLE, PRODUCTION_FILES_GT_8 (~7), WORKER_TASKS_GT_6 (4 tasks), MULTIPLE_OUTCOMES judged absent (mobile only; server unchanged). One signal -> seam check: the live proof is a thin script over the same store and client, with no independently reviewable half, so M3 runs unsplit.",
-        "M3-T2: chat.tsx header also links back to /conversations (chat hides the Stack header); small addition beyond the packet's literal wording, left for review."
+        "M3-T2: chat.tsx header also links back to /conversations (chat hides the Stack header); small addition beyond the packet's literal wording, left for review.",
+        "M3-AC5 on-device check (human, M2a convention): on the phone in Expo Go, create a conversation with two turns, force-quit Expo Go, reopen the project, and confirm the same conversations and messages (with model labels) are shown. Automated evidence is the storage-layer proxy only.",
+        "M3-T3 proof counts zero client.chat calls on the blocked send but does not separately assert the counter is >0 on successful sends; wiring is shown by the recorded turn-2 messages."
       ]
     },
     "M4": {
