@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M4a",
+  "current_milestone": "M4b",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -3508,7 +3508,7 @@
       "requirements": [
         "FR10"
       ],
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -3516,14 +3516,14 @@
         "branch": "m4a-chat-display"
       },
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M4a.md",
+        "result": "RECORDED \u2014 13/13 files attributed; components C1,C6,C7,NEW-chatItems; 6 edges; 2 claim mismatches (claimed C3 had no file changes; NEW-chatItems not claimed)"
       },
       "criteria": [
         {
           "id": "M4-AC1",
           "text": "For a model that emits reasoning output, the app shows it in a collapsed, expandable section separate from the answer.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "Server: think:true only for models whose /api/show capabilities include \"thinking\"; thinking SSE events before content, replayable \u2014 server/src/ollama/client.test.ts, server/src/generations/manager.test.ts (.harness/evidence/M4a-T1-verifier.log)",
             "Live tailnet: qwen3.6:27b streams thinking before content; stored thinking and content separate, content \"42\"; devstral:24b zero thinking events \u2014 mobile/scripts/thinking-proof.sh (.harness/evidence/M4a-T5-verifier.log)",
@@ -3533,7 +3533,7 @@
         {
           "id": "M4-AC4",
           "text": "After Send, the user's prompt appears in the conversation immediately, before any reply token arrives.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "Bundled app: prompt text in the committed tree after Send while the fake /v1/chat body has sent no byte \u2014 runtime-smoke --token=stream step 1; fails against pre-M4a chat.tsx (.harness/evidence/M4a-T4-verifier.log)",
             "chat.tsx sets the pending turn before its first await (verifier lines 126-138, .harness/evidence/M4a-T3-verifier.log); buildChatItems unit tests (.harness/evidence/M4a-T2-verifier.log)"
@@ -3542,7 +3542,7 @@
         {
           "id": "M4-AC5",
           "text": "A streaming reply renders incrementally in its final place in the conversation; on completion it stays where it is, with no separate streaming area whose text then moves into the conversation.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "Bundled app: exactly one node holds the reply while streaming and after done; same list position; same enclosing <Text> Fabric node (tag 158) before and after completion \u2014 runtime-smoke --token=stream step 4 (.harness/evidence/M4a-T4-verifier.log)",
             "buildChatItems keeps the same keys at the same indices through Send -> streaming -> persisted, never duplicating an id (.harness/evidence/M4a-T2-verifier.log); single list, no separate streaming block in chat.tsx (.harness/evidence/M4a-T3-verifier.log)"
@@ -3856,7 +3856,29 @@
           ]
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "PASS",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "MID_TIER_DIFF",
+          "diff_range": "7dee5da32a1f96ff040fdc1df75e45b53360d268..17a7cf2",
+          "artifact": null,
+          "review_log": ".harness/evidence/M4a-review.log",
+          "per_criterion": {
+            "M4-AC1": "PASS",
+            "M4-AC4": "PASS",
+            "M4-AC5": "PASS"
+          },
+          "findings": {
+            "BLOCKER": 0,
+            "IMPORTANT": 0,
+            "OPTIONAL": 0
+          },
+          "notes": "Reviewer re-ran the full recorded validation chain in sequential segments against the real Mac: e2e-tailnet-proof, server 109 tests + typecheck + entry-smoke, ops token tests + verify-ops-install, mobile typecheck + 123 tests + lint + smoke:runtime 4/4 (all 4 stream steps), model-list/swap/failed-load/conversation/thinking live proofs, expo export; all passed and the resident model was restored. First attempt hit the reviewer 50-turn cap while model-swap-proof ran in the background, then delivered its terminal envelope on that work's completion; no retry was dispatched. Non-blocking note: the M4a-T4 discrimination drive stops at step 1 against pre-M4a chat.tsx, so AC5's step-4 check was not separately shown failing end-to-end; chatItems.test.ts key/index-stability test covers it at the pure-function level."
+        }
+      ],
       "findings": [],
       "validation": [
         {
@@ -3867,9 +3889,10 @@
             ".harness/evidence/M4a-T2-verifier.log",
             ".harness/evidence/M4a-T3-verifier.log",
             ".harness/evidence/M4a-T4-verifier.log",
-            ".harness/evidence/M4a-T5-verifier.log"
+            ".harness/evidence/M4a-T5-verifier.log",
+            ".harness/evidence/M4a-review.log"
           ],
-          "status": "PENDING"
+          "status": "PASS"
         }
       ],
       "follow_ups": [

@@ -156,7 +156,7 @@ Cycle 1: PASS, tier Mid (sonnet, MID_TIER_DIFF), full-milestone scope abce8c05ff
 
 ## M4a — Thinking shown collapsed, prompt shown on Send, reply streams in place
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -168,13 +168,13 @@ C1, C3, C6, C7
 
 ### As-Built
 
-Pending.
+.harness/as-built/M4a.md — RECORDED — 13/13 files attributed; components C1,C6,C7,NEW-chatItems; 6 edges; 2 claim mismatches (claimed C3 had no file changes; NEW-chatItems not claimed)
 
 ### Acceptance Criteria
 
-- [ ] **M4-AC1**: For a model that emits reasoning output, the app shows it in a collapsed, expandable section separate from the answer.
-- [ ] **M4-AC4**: After Send, the user's prompt appears in the conversation immediately, before any reply token arrives.
-- [ ] **M4-AC5**: A streaming reply renders incrementally in its final place in the conversation; on completion it stays where it is, with no separate streaming area whose text then moves into the conversation.
+- [x] **M4-AC1**: For a model that emits reasoning output, the app shows it in a collapsed, expandable section separate from the answer.
+- [x] **M4-AC4**: After Send, the user's prompt appears in the conversation immediately, before any reply token arrives.
+- [x] **M4-AC5**: A streaming reply renders incrementally in its final place in the conversation; on completion it stays where it is, with no separate streaming area whose text then moves into the conversation.
 
 ### Baseline
 
@@ -200,11 +200,11 @@ Reviewer runs once (about 15 minutes; live proofs restart com.harness.server and
 
 `cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/e2e-tailnet-proof.sh && (cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh) && (cd ops && bun test src/token && bash scripts/verify-ops-install.sh) && (cd mobile && bun run typecheck && bun test src/store src/api src/ui src/chat src/app-routing && bun run lint && bun run smoke:runtime && bash scripts/model-list-proof.sh && bash scripts/model-swap-proof.sh && bash scripts/model-failed-load-proof.sh && bash scripts/conversation-proof.sh && bash scripts/thinking-proof.sh && npx expo export --platform ios && rm -rf dist)`
 
-Status: PENDING (reviewer). Task artifacts: .harness/evidence/M4a-T1..T5-verifier.log.
+Status: PASS (reviewer re-ran the full chain; .harness/evidence/M4a-review.log). Task artifacts: .harness/evidence/M4a-T1..T5-verifier.log.
 
 ### Review
 
-Pending.
+Cycle 1: PASS, tier Mid (sonnet, MID_TIER_DIFF), full-milestone scope 7dee5da32a1f96ff040fdc1df75e45b53360d268..17a7cf2; M4-AC1, M4-AC4, M4-AC5 PASS; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL; no report file (PASS). Reviewer re-ran the full recorded validation chain in sequential segments against the real Mac: e2e-tailnet-proof, server 109 tests + typecheck + entry-smoke, ops token tests + verify-ops-install, mobile typecheck + 123 tests + lint + smoke:runtime 4/4 (all 4 stream steps), model-list/swap/failed-load/conversation/thinking live proofs, expo export; all passed and the resident model was restored. First attempt hit the reviewer 50-turn cap while model-swap-proof ran in the background, then delivered its terminal envelope on that work's completion; no retry was dispatched. Non-blocking note: the M4a-T4 discrimination drive stops at step 1 against pre-M4a chat.tsx, so AC5's step-4 check was not separately shown failing end-to-end; chatItems.test.ts key/index-stability test covers it at the pure-function level. — .harness/evidence/M4a-review.log
 
 ### Review Cycles
 
