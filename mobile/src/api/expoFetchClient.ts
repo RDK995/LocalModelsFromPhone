@@ -13,14 +13,37 @@
 
 import Constants from "expo-constants";
 import { fetch as expoFetch } from "expo/fetch";
-import { createAPIClient as createClient, type FetchImpl } from "./client";
-import type { APIClient } from "./client";
+import { AppState } from "react-native";
+import { APIClient, type ClientLifecycle, type FetchImpl } from "./client";
 import { resolveServerUrl } from "./config";
 
 export const SERVER_URL = resolveServerUrl(
   Constants.expoConfig?.extra as { serverUrl?: unknown } | undefined
 );
 
+/**
+ * `ClientLifecycle` backed by the real React Native `AppState` (FR11, AC
+ * M4-AC3): `isForeground()` reflects the current state, and `onForeground`
+ * fires only on a transition into `"active"` (not on every `AppState`
+ * change, and not on the initial subscription), tracking the previous state
+ * per subscription so concurrent chats each see their own transitions.
+ */
+export const appStateLifecycle: ClientLifecycle = {
+  isForeground: () => AppState.currentState === "active",
+  onForeground: (listener: () => void) => {
+    let previous = AppState.currentState;
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "active" && previous !== "active") {
+        listener();
+      }
+      previous = state;
+    });
+    return () => sub.remove();
+  },
+};
+
 export function createAPIClient(baseUrl: string = SERVER_URL): APIClient {
-  return createClient(baseUrl, expoFetch as unknown as FetchImpl);
+  return new APIClient(baseUrl, expoFetch as unknown as FetchImpl, {
+    lifecycle: appStateLifecycle,
+  });
 }

@@ -56,6 +56,33 @@ export type FetchImpl = (
 ) => Promise<Response>;
 
 /**
+ * App-lifecycle hook the resume loop (`chat()`) uses to react to the app
+ * returning to the foreground (FR11, AC M4-AC3): a reply mid-flight abandons
+ * its current transport and re-attaches at once instead of waiting out a
+ * backoff delay or the resume budget. Injectable via the constructor so
+ * tests can drive it directly; the app wires the real React Native
+ * `AppState` in via `./expoFetchClient`. `client.ts` itself never imports
+ * react-native.
+ */
+export interface ClientLifecycle {
+  /** Whether the app is currently in the foreground. */
+  isForeground(): boolean;
+  /**
+   * Register `listener` to be called on every foreground transition (the app
+   * moving from background/inactive to active). Returns an unsubscribe
+   * function.
+   */
+  onForeground(listener: () => void): () => void;
+}
+
+/** Default lifecycle when none is injected: always foreground, never fires
+ * (M4b behaviour -- no foreground handling at all). */
+const defaultLifecycle: ClientLifecycle = {
+  isForeground: () => true,
+  onForeground: () => () => {},
+};
+
+/**
  * Timer functions the resume loop (`chat()`) drives its backoff waits and
  * budget tracking through, injectable via the constructor so tests can make
  * a `RESUME_BUDGET_MS`-long loop run instantly and deterministically. Default
@@ -69,6 +96,9 @@ export interface ClientClock {
    */
   sleep?: (ms: number, signal?: AbortSignal) => Promise<void>;
   now?: () => number;
+  /** App-lifecycle hook for foreground resume (see `ClientLifecycle`).
+   * Defaults to always-foreground/never-fires when absent. */
+  lifecycle?: ClientLifecycle;
 }
 
 function defaultSleep(ms: number, signal?: AbortSignal): Promise<void> {
@@ -109,9 +139,30 @@ type StreamOutcome = "terminal" | "aborted" | "drop";
 
 /** Result of driving the resume retry loop after a drop. */
 type ResumeOutcome =
-  | { outcome: "response"; response: Response }
+  | { outcome: "response"; response: Response; firstDropAt: number }
   | { outcome: "aborted" }
   | { outcome: "error"; error: Error };
+
+/**
+ * Mutable state shared between `chat()`'s main loop and `resumeStream()` so a
+ * foreground event (AC3) can interrupt whichever phase -- reading a stream,
+ * a backoff wait, or nothing (a resume fetch already in flight, or the reply
+ * already settled) -- is currently active, without either side needing to
+ * know about the other's internals.
+ */
+interface ForegroundHandle {
+  /** Set once the reply has settled (terminal/aborted/error): a foreground
+   * event after this point does nothing (AC3d). */
+  settled: boolean;
+  /** True while a resume GET is in flight (issued, not yet returned): a
+   * foreground event during this phase is ignored, so at most one transport
+   * is ever in flight (AC3c). */
+  fetchInFlight: boolean;
+  /** The internal `AbortController` for whichever interruptible phase
+   * (reading the current response, or a backoff wait) is currently active.
+   * The foreground listener aborts this directly. */
+  activeController: AbortController;
+}
 
 /**
  * Thrown when the server rejects a request with 401 Unauthorized (missing or
@@ -185,12 +236,14 @@ export class APIClient {
   private fetchImpl: FetchImpl;
   private sleepImpl: (ms: number, signal?: AbortSignal) => Promise<void>;
   private nowImpl: () => number;
+  private lifecycleImpl: ClientLifecycle;
 
   constructor(baseUrl: string, fetchImpl: FetchImpl, clock: ClientClock = {}) {
     this.baseUrl = baseUrl;
     this.fetchImpl = fetchImpl;
     this.sleepImpl = clock.sleep ?? defaultSleep;
     this.nowImpl = clock.now ?? Date.now;
+    this.lifecycleImpl = clock.lifecycle ?? defaultLifecycle;
   }
 
   setToken(token: string): void {
@@ -293,11 +346,12 @@ export class APIClient {
   }
 
   async chat(request: ChatRequest, options: StreamOptions): Promise<string> {
+    const initialController = this.linkSignal(options.signal);
     const response = await this.fetchImpl(`${this.baseUrl}/v1/chat`, {
       method: "POST",
       headers: this.getHeaders(),
       body: JSON.stringify(request),
-      signal: options.signal,
+      signal: initialController.signal,
     });
 
     if (response.status === 409) {
@@ -325,6 +379,28 @@ export class APIClient {
     options.onStart?.(generationId);
 
     const cursor: ResumeCursor = { lastId: null, lastSeq: null };
+    const lifecycle = this.lifecycleImpl;
+
+    // Foreground handling (FR11, AC M4-AC3): a foreground event mid-reply
+    // abandons the current transport (whichever is currently active) and
+    // re-attaches at once, without waiting out a backoff delay. `handle` is
+    // the shared mutable link between this loop/resumeStream and the
+    // listener below; backgrounding itself never touches any of this --
+    // nothing here reacts to a background transition (AC5).
+    const handle: ForegroundHandle = {
+      settled: false,
+      fetchInFlight: false,
+      activeController: initialController,
+    };
+    const unsubscribe = lifecycle.onForeground(() => {
+      if (handle.settled || handle.fetchInFlight) {
+        // (c) a resume fetch is already in flight: at most one transport at
+        // a time, so this event does nothing. (d) already settled: nothing
+        // to abandon either.
+        return;
+      }
+      handle.activeController.abort();
+    });
 
     try {
       let currentResponse: Response = response;
@@ -340,13 +416,21 @@ export class APIClient {
         if (outcome === "terminal" || outcome === "aborted") {
           // "aborted" is normal cancellation (Stop): the caller's signal was
           // aborted, so it sees the same completion it would without resume.
+          handle.settled = true;
+          unsubscribe();
           options.onComplete();
           return generationId;
         }
 
-        // outcome === "drop": a transport failure, not a caller abort (FR11).
-        // Re-attach to the same generation instead of ending the reply here.
-        if (firstDropAt === null) {
+        // outcome === "drop": either a genuine transport failure, or a
+        // foreground event aborted `handle.activeController` (the controller
+        // behind `currentResponse`) while this read was pending (AC3a) --
+        // distinguished by whether that specific controller (not the
+        // caller's own signal) is the one that aborted.
+        const foregroundDrop =
+          handle.activeController.signal.aborted && !options.signal?.aborted;
+
+        if (firstDropAt === null || foregroundDrop) {
           firstDropAt = this.nowImpl();
         }
 
@@ -354,29 +438,91 @@ export class APIClient {
           generationId,
           options,
           cursor,
-          firstDropAt
+          firstDropAt,
+          handle,
+          foregroundDrop,
+          lifecycle
         );
 
         if (resumed.outcome === "aborted") {
+          handle.settled = true;
+          unsubscribe();
           options.onComplete();
           return generationId;
         }
         if (resumed.outcome === "error") {
+          handle.settled = true;
+          unsubscribe();
           options.onError(resumed.error);
           return generationId;
         }
 
         currentResponse = resumed.response;
+        firstDropAt = resumed.firstDropAt;
       }
     } catch (error) {
       // Not a transport drop: most likely the caller's own onEvent threw
       // (conversationSession.ts does this to route an `error` SSE event to
       // onError). No resume is attempted for this.
+      handle.settled = true;
+      unsubscribe();
       options.onError(
         error instanceof Error ? error : new Error(String(error))
       );
       return generationId;
     }
+  }
+
+  /**
+   * Create a fresh internal `AbortController` for one transport request,
+   * wired so that aborting `signal` (the caller's own `options.signal`, e.g.
+   * Stop) aborts it too -- this keeps the caller's cancellation semantics
+   * unchanged (AC2) while giving the resume loop its own controller it can
+   * abort for a foreground reason without ever touching the caller's signal.
+   */
+  private linkSignal(signal?: AbortSignal): AbortController {
+    const controller = new AbortController();
+    if (!signal) {
+      return controller;
+    }
+    if (signal.aborted) {
+      controller.abort();
+      return controller;
+    }
+    const onAbort = () => controller.abort();
+    signal.addEventListener("abort", onAbort, { once: true });
+    controller.signal.addEventListener(
+      "abort",
+      () => signal.removeEventListener("abort", onAbort),
+      { once: true }
+    );
+    return controller;
+  }
+
+  /**
+   * Wait until either the next foreground event or the caller's `signal`
+   * aborts, whichever comes first (AC4: the resume budget is exhausted while
+   * backgrounded). No request is made while waiting.
+   */
+  private waitForForegroundOrAbort(
+    lifecycle: ClientLifecycle,
+    signal?: AbortSignal
+  ): Promise<void> {
+    return new Promise((resolve) => {
+      if (signal?.aborted) {
+        resolve();
+        return;
+      }
+      const onAbort = () => {
+        unsubscribeForeground();
+        resolve();
+      };
+      signal?.addEventListener("abort", onAbort, { once: true });
+      const unsubscribeForeground = lifecycle.onForeground(() => {
+        signal?.removeEventListener("abort", onAbort);
+        resolve();
+      });
+    });
   }
 
   /**
@@ -497,21 +643,34 @@ export class APIClient {
    * Drive the resume retry loop after a drop (FR11): wait
    * `resumeDelayMs(attempt)`, then `GET
    * {baseUrl}/v1/generations/{generationId}/events` with `Last-Event-ID` set
-   * from `cursor.lastId` (omitted if none yet) and `signal: options.signal`.
-   * A network error or 502/503/504 counts as a failed attempt and retries
-   * (with the attempt counter incrementing); any other non-200 status ends
-   * the loop with a terminal error. Stops early, without a further request,
-   * if `options.signal` aborts (during the wait or the fetch) or if the
-   * budget since `firstDropAt` is exhausted when the next attempt would
-   * start.
+   * from `cursor.lastId` (omitted if none yet), via an internal
+   * `AbortController` linked to `options.signal` (AC2). A network error or
+   * 502/503/504 counts as a failed attempt and retries (with the attempt
+   * counter incrementing); any other non-200 status ends the loop with a
+   * terminal error. Stops early, without a further request, if
+   * `options.signal` aborts (during the wait or the fetch).
+   *
+   * If the resume budget since `firstDropAt` is exhausted while the app is
+   * backgrounded (`lifecycle.isForeground()` is false), the loop does not
+   * error out; instead it waits, without making any request, for the next
+   * foreground event (AC4), then resumes immediately as though that event
+   * had interrupted a backoff wait (AC3b). `skipInitialDelay` (set when the
+   * drop that led here was itself caused by a foreground event, AC3a) makes
+   * the very first attempt fire with no backoff wait. Either way, resuming
+   * after a foreground event resets the attempt counter to 1 and restarts
+   * the budget clock from `now()` (AC3).
    */
   private async resumeStream(
     generationId: string,
     options: StreamOptions,
     cursor: ResumeCursor,
-    firstDropAt: number
+    firstDropAt: number,
+    handle: ForegroundHandle,
+    skipInitialDelay: boolean,
+    lifecycle: ClientLifecycle
   ): Promise<ResumeOutcome> {
     let attempt = 1;
+    let skipWait = skipInitialDelay;
 
     for (;;) {
       if (options.signal?.aborted) {
@@ -519,6 +678,26 @@ export class APIClient {
       }
 
       if (this.nowImpl() - firstDropAt > RESUME_BUDGET_MS) {
+        if (!lifecycle.isForeground()) {
+          // AC4: do not give up while backgrounded; wait (no requests) for
+          // the next foreground event instead. No interruptible transport is
+          // active during this wait, so gate the shared foreground listener
+          // the same way an in-flight fetch does (AC3c) -- this dedicated
+          // wait is what actually resumes it.
+          handle.fetchInFlight = true;
+          await this.waitForForegroundOrAbort(lifecycle, options.signal);
+          handle.fetchInFlight = false;
+
+          if (options.signal?.aborted) {
+            return { outcome: "aborted" };
+          }
+
+          attempt = 1;
+          firstDropAt = this.nowImpl();
+          skipWait = true;
+          continue;
+        }
+
         return {
           outcome: "error",
           error: new Error(
@@ -527,33 +706,52 @@ export class APIClient {
         };
       }
 
-      await this.sleepImpl(resumeDelayMs(attempt), options.signal);
+      if (!skipWait) {
+        const waitController = this.linkSignal(options.signal);
+        handle.activeController = waitController;
 
-      if (options.signal?.aborted) {
-        return { outcome: "aborted" };
+        await this.sleepImpl(resumeDelayMs(attempt), waitController.signal);
+
+        if (options.signal?.aborted) {
+          return { outcome: "aborted" };
+        }
+
+        if (waitController.signal.aborted) {
+          // A foreground event ended the wait early (AC3b): resume at once,
+          // with no further delay.
+          attempt = 1;
+          firstDropAt = this.nowImpl();
+        }
       }
+      skipWait = false;
 
       const headers = this.getHeaders();
       if (cursor.lastId) {
         headers["Last-Event-ID"] = cursor.lastId;
       }
 
+      handle.fetchInFlight = true;
+      const fetchController = this.linkSignal(options.signal);
+      handle.activeController = fetchController;
+
       let response: Response;
       try {
         response = await this.fetchImpl(
           `${this.baseUrl}/v1/generations/${generationId}/events`,
-          { method: "GET", headers, signal: options.signal }
+          { method: "GET", headers, signal: fetchController.signal }
         );
       } catch {
+        handle.fetchInFlight = false;
         if (options.signal?.aborted) {
           return { outcome: "aborted" };
         }
         attempt += 1;
         continue;
       }
+      handle.fetchInFlight = false;
 
       if (response.status === 200) {
-        return { outcome: "response", response };
+        return { outcome: "response", response, firstDropAt };
       }
 
       if (response.status === 401) {
