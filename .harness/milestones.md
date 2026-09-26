@@ -221,7 +221,7 @@ Cycle 1: PASS, tier Mid (sonnet, MID_TIER_DIFF), full-milestone scope 7dee5da32a
 
 ## M4b — Dropped-connection resume
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -241,11 +241,13 @@ Pending.
 
 ### Baseline
 
-Pending.
+d46d8fd1757ca294fe9273c3aae11458c0198c07 on m4b-dropped-connection-resume
 
 ### Evidence
 
-Pending.
+Tasks (structured detail in state.json; packets under .harness/tasks/):
+- M4b-T1 client resume across drops — Mid (ORDINARY_IMPLEMENTATION) — pending
+- M4b-T2 live tailnet resume proof — Cheap (BOUNDED_LOW_RISK) — pending
 
 ### Validation
 
@@ -262,6 +264,7 @@ Pending.
 ### Follow-ups
 
 - Recon at split (2026-09-26): server already supports resume -- GET /v1/generations/:id/events reads Last-Event-ID (server/src/http/server.ts parseResumeSeq lines 363-372, id format <gen>-<seq>, replays from seq+1), a client abort of /v1/chat does not cancel the generation (sseResponse cancel() lines 333-336; server.test.ts lines 649, 691), logs kept 10 min (manager.ts line 35). Phone has no resume: mobile/src/api/client.ts chat() ignores SSE id: lines and treats a body that ends without a terminal event as complete (onComplete); no Last-Event-ID, backoff or AppState code anywhere in mobile/src.
+- Size/shape check at pickup: 1 criterion (run). Entry point: live tailnet proof driving the app's own send path through a killed /v1/chat connection (mobile/scripts/resume-proof.sh). Signal IMPLEMENTATION_PLUS_LIVE_PROOF present; CONCURRENCY_LIFECYCLE (no AppState/lifecycle ownership here; that is M4c), SUBSYSTEMS_GT_3, PRODUCTION_FILES_GT_8 (~2), WORKER_TASKS_GT_6 (2), MULTIPLE_OUTCOMES judged absent. One signal -> seam check: the live proof is a thin script with no independently reviewable half; runs unsplit. Server resume already exists (see recon), so C6 needs no change; C1 unchanged because resume is transparent inside C2.
 
 ## M4c — Backgrounding resume, only Stop cancels
 

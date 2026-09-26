@@ -3923,12 +3923,12 @@
       "requirements": [
         "FR11"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
-        "commit": "",
-        "branch": ""
+        "commit": "d46d8fd1757ca294fe9273c3aae11458c0198c07",
+        "branch": "m4b-dropped-connection-resume"
       },
       "as_built": {
         "artifact": null,
@@ -3942,12 +3942,76 @@
           "evidence": []
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M4b-T1",
+          "scope": "APIClient.chat resumes across a transport drop: Last-Event-ID GET /v1/generations/{id}/events, backoff 500..8000 then 10000 ms, 300 s budget, seq dedupe, Stop and callback exceptions not treated as drops",
+          "tests": "cd mobile && bun run typecheck && bun test src/api src/chat src/store src/ui src/app-routing && bun run lint && bun run smoke:runtime",
+          "requirements": [
+            "FR11"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M4-AC2"
+          ],
+          "paths": [
+            "mobile/src/api/client.ts",
+            "mobile/src/api/client.test.ts",
+            "mobile/src/api/resume.ts",
+            "mobile/src/api/resume.test.ts"
+          ],
+          "depends_on": [],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "stream-reading and retry logic in one client module; drop vs Stop vs callback-exception classification is the risky part; fake-fetch unit tests are the oracle"
+          },
+          "status": "PENDING",
+          "attempts": 0,
+          "packet": ".harness/tasks/M4b-T1.md",
+          "commit": null,
+          "attempt_log": []
+        },
+        {
+          "id": "M4b-T2",
+          "scope": "live tailnet proof mobile/scripts/resume-proof.{sh,ts}: kill the /v1/chat connection after 5 content events, app resumes, reply equals an independent full server replay, stored complete",
+          "tests": "cd mobile && bun run typecheck && bun run lint && bash scripts/resume-proof.sh",
+          "requirements": [
+            "FR11"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M4-AC2"
+          ],
+          "paths": [
+            "mobile/scripts/resume-proof.sh",
+            "mobile/scripts/resume-proof.ts"
+          ],
+          "depends_on": [
+            "M4b-T1"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "proof script in the established *-proof pattern; its assertions against an independent full replay are the oracle"
+          },
+          "status": "PENDING",
+          "attempts": 0,
+          "packet": ".harness/tasks/M4b-T2.md",
+          "commit": null,
+          "attempt_log": []
+        }
+      ],
       "reviews": [],
       "findings": [],
       "validation": [],
       "follow_ups": [
-        "Recon at split (2026-09-26): server already supports resume -- GET /v1/generations/:id/events reads Last-Event-ID (server/src/http/server.ts parseResumeSeq lines 363-372, id format <gen>-<seq>, replays from seq+1), a client abort of /v1/chat does not cancel the generation (sseResponse cancel() lines 333-336; server.test.ts lines 649, 691), logs kept 10 min (manager.ts line 35). Phone has no resume: mobile/src/api/client.ts chat() ignores SSE id: lines and treats a body that ends without a terminal event as complete (onComplete); no Last-Event-ID, backoff or AppState code anywhere in mobile/src."
+        "Recon at split (2026-09-26): server already supports resume -- GET /v1/generations/:id/events reads Last-Event-ID (server/src/http/server.ts parseResumeSeq lines 363-372, id format <gen>-<seq>, replays from seq+1), a client abort of /v1/chat does not cancel the generation (sseResponse cancel() lines 333-336; server.test.ts lines 649, 691), logs kept 10 min (manager.ts line 35). Phone has no resume: mobile/src/api/client.ts chat() ignores SSE id: lines and treats a body that ends without a terminal event as complete (onComplete); no Last-Event-ID, backoff or AppState code anywhere in mobile/src.",
+        "Size/shape check at pickup: 1 criterion (run). Entry point: live tailnet proof driving the app's own send path through a killed /v1/chat connection (mobile/scripts/resume-proof.sh). Signal IMPLEMENTATION_PLUS_LIVE_PROOF present; CONCURRENCY_LIFECYCLE (no AppState/lifecycle ownership here; that is M4c), SUBSYSTEMS_GT_3, PRODUCTION_FILES_GT_8 (~2), WORKER_TASKS_GT_6 (2), MULTIPLE_OUTCOMES judged absent. One signal -> seam check: the live proof is a thin script with no independently reviewable half; runs unsplit. Server resume already exists (see recon), so C6 needs no change; C1 unchanged because resume is transparent inside C2."
       ]
     },
     "M4c": {
