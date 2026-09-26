@@ -247,7 +247,7 @@ d46d8fd1757ca294fe9273c3aae11458c0198c07 on m4b-dropped-connection-resume
 
 Tasks (structured detail in state.json; packets under .harness/tasks/):
 - M4b-T1 client resume across drops (mobile/src/api/client.ts, resume.ts + tests) — Mid (ORDINARY_IMPLEMENTATION), attempt 3 INTERRUPTED (turn limit) -> continuation 1 PASS; verifier PASS (typecheck, 137 tests, lint, smoke:runtime 4/4; tests not weakened) — .harness/evidence/M4b-T1-verifier.log; commit d2f7077
-- M4b-T2 live tailnet resume proof mobile/scripts/resume-proof.{sh,ts} — Cheap (BOUNDED_LOW_RISK), attempt 1 PASS; verifier PASS (typecheck, lint, live proof all checks PASS, Mac restored) — .harness/evidence/M4b-T2-verifier.log
+- M4b-T2 live tailnet resume proof mobile/scripts/resume-proof.{sh,ts} — Cheap (BOUNDED_LOW_RISK), attempt 1 PASS; verifier PASS (typecheck, lint, live proof all checks PASS, Mac restored) — .harness/evidence/M4b-T2-verifier.log; commit a67cb44
 
 Criteria evidence (full entries in state.json):
 - M4-AC2: live proof — real /v1/chat connection aborted after 5 content events; the app's client resumed with Last-Event-ID; 309 content events equal an independent full server replay, one done complete, stored message complete (M4b-T2-verifier.log); client unit cases (a)-(k) for resume, dedupe, backoff, budget, Stop (M4b-T1-verifier.log).

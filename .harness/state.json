@@ -3974,7 +3974,7 @@
           "status": "ACCEPTED",
           "attempts": 1,
           "packet": ".harness/tasks/M4b-T1.md",
-          "commit": null,
+          "commit": "d2f7077",
           "attempt_log": [
             {
               "attempt": 3,
@@ -4046,7 +4046,7 @@
           "status": "ACCEPTED",
           "attempts": 1,
           "packet": ".harness/tasks/M4b-T2.md",
-          "commit": null,
+          "commit": "a67cb44",
           "attempt_log": [
             {
               "attempt": 1,
