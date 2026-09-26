@@ -4413,7 +4413,7 @@
       "requirements": [
         "FR16"
       ],
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -4429,7 +4429,10 @@
           "id": "M5-AC3",
           "text": "The app shows a distinct message for each of: Mac or server unreachable, Ollama down, wrong password, model failed to load, model no longer installed, and reply already in progress.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "Unit: errorMessages mapping and typed client errors (UnreachableError, ServerError codes incl. operation.error_code) with screen wiring -- .harness/evidence/M5b-T1-verifier.log; bodiless/null-body gateway 502/503/504 -> UnreachableError, ollama_down body unaffected -- mobile/src/api/client.test.ts (.harness/evidence/M5b-T3-verifier.log)",
+            "Live (Mac Studio over tailnet + live Ollama): mobile/scripts/error-messages-proof.sh induces all six modes (bogus token; ollama cp/rm probe; mismatched-LoRA failed load; concurrent chat; Ollama killed; server LaunchAgent booted out) and asserts the app client + mapping yield six exact, pairwise-distinct sentences, then restores every service -- exit 0, .harness/evidence/M5b-T2-verifier.log"
+          ]
         }
       ],
       "tasks": [
@@ -4560,18 +4563,124 @@
             "reason_code": "ORDINARY_IMPLEMENTATION",
             "detail": "live-environment proof script modelled on existing proofs; judgement needed to induce Ollama-down and server-unreachable safely and restore services"
           },
-          "status": "PENDING",
-          "attempts": 0,
+          "status": "ACCEPTED",
+          "attempts": 1,
           "packet": ".harness/tasks/M5b-T2.md",
-          "commit": null,
-          "attempt_log": []
+          "commit": "f0dd837",
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": null,
+              "verdict": "INTERRUPTED",
+              "base": "ca45637",
+              "changed_files": [],
+              "note": "turn limit with no report and no handoff; untracked drafts left in tree; services checked healthy; resumed fresh at same tier, no rung spent"
+            },
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M5b-T2-worker.log",
+              "verdict": "FAIL",
+              "base": "ca45637",
+              "changed_files": [
+                "mobile/scripts/error-messages-proof.sh",
+                "mobile/scripts/error-messages-proof.ts"
+              ],
+              "note": "5/6 PASS; scenario 6 exposed a product defect in mobile/src/api/client.ts (Tailscale proxy answers bodiless 502 when server is down; client threw TypeError, not UnreachableError). Script not at fault; correction routed as M5b-T3."
+            },
+            {
+              "attempt": 3,
+              "role": "verifier",
+              "tier": "Cheap",
+              "model": "haiku",
+              "artifact": ".harness/evidence/M5b-T2-verifier.log",
+              "verdict": "PASS",
+              "base": "e82554a",
+              "changed_files": [
+                "mobile/scripts/error-messages-proof.sh",
+                "mobile/scripts/error-messages-proof.ts"
+              ],
+              "note": "re-run after M5b-T3 fix: exit 0, 6/6 PASS, pairwise distinct, services restored (orchestrator spot-checked: server 401, Ollama 200, qwen3.8:27b keep_alive -1, no m5b probes)"
+            }
+          ]
+        },
+        {
+          "id": "M5b-T3",
+          "scope": "Correction found by M5b-T2: bodiless/null-body 502/503/504 from the Tailscale proxy (server down) surfaces as UnreachableError in getState, load/unload and chat start; JSON error bodies unchanged; resume retry unchanged",
+          "tests": "cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun test && bun run typecheck && bun run lint",
+          "requirements": [
+            "FR16"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M5-AC3"
+          ],
+          "paths": [
+            "mobile/src/api/client.ts",
+            "mobile/src/api/client.test.ts"
+          ],
+          "depends_on": [
+            "M5b-T1"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "correction across several request paths in client.ts whose microtask timing other tests depend on"
+          },
+          "status": "ACCEPTED",
+          "attempts": 1,
+          "packet": ".harness/tasks/M5b-T3.md",
+          "commit": "e82554a",
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M5b-T3-worker.log",
+              "verdict": "PASS",
+              "base": "ca45637",
+              "changed_files": [
+                "mobile/src/api/client.ts",
+                "mobile/src/api/client.test.ts"
+              ],
+              "note": "Red (5 failing) -> Green; 6 new tests"
+            },
+            {
+              "attempt": 3,
+              "role": "verifier",
+              "tier": "Cheap",
+              "model": "haiku",
+              "artifact": ".harness/evidence/M5b-T3-verifier.log",
+              "verdict": "PASS",
+              "base": "ca45637",
+              "changed_files": [
+                "mobile/src/api/client.ts",
+                "mobile/src/api/client.test.ts"
+              ],
+              "note": "exit 0; 173 pass; typecheck, lint clean; tests weakened NO"
+            }
+          ]
         }
       ],
       "reviews": [],
       "findings": [],
-      "validation": [],
+      "validation": [
+        {
+          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd server && bun test && bun run typecheck) && (cd mobile && bun run typecheck && bun test && bun run lint && bash scripts/error-messages-proof.sh)",
+          "note": "Live proof stops Ollama and the server LaunchAgent temporarily and restores both via trap; about 4 minutes. Scenario 3's mismatched-LoRA failed-load technique has been seen to load successfully once (pre-existing flake shared with model-failed-load-proof.sh); a single rerun is reasonable if only scenario 3 fails. Never reboot the Mac."
+        }
+      ],
       "follow_ups": [
-        "New feature requested by the human 2026-09-26, out of scope for current requirements: internet (web) search for the models, e.g. via Ollama's web search / tool calling. Needs roast-requirements (search provider and privacy, which models, how the app shows searching and sources) before any implementation."
+        "New feature requested by the human 2026-09-26, out of scope for current requirements: internet (web) search for the models, e.g. via Ollama's web search / tool calling. Needs roast-requirements (search provider and privacy, which models, how the app shows searching and sources) before any implementation.",
+        "Scenario 3 of error-messages-proof.sh (and model-failed-load-proof.sh) relies on a mismatched LoRA adapter failing to load; the M5b-T2 worker saw it load successfully once. A more deterministic failed-load induction would make both proofs less flaky."
       ],
       "split_from": "M5",
       "complexity_signals": [
