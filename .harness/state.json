@@ -3240,7 +3240,7 @@
           "status": "ACCEPTED",
           "attempts": 1,
           "packet": ".harness/tasks/M3-T2.md",
-          "commit": "",
+          "commit": "cfc1a08",
           "attempt_log": [
             {
               "attempt": 3,
