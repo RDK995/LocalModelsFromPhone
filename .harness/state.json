@@ -3688,11 +3688,32 @@
             "reason_code": "ORDINARY_IMPLEMENTATION",
             "detail": "UI rewiring of one screen onto tested pure logic"
           },
-          "status": "IN_PROGRESS",
-          "attempts": 0,
+          "status": "ACCEPTED",
+          "attempts": 1,
           "packet": ".harness/tasks/M4a-T3.md",
           "commit": null,
-          "attempt_log": []
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M4a-T3-worker.log",
+              "verdict": "PASS",
+              "base": "0694ddf",
+              "changed_files": [
+                "mobile/src/app/chat.tsx"
+              ],
+              "verifier": {
+                "artifact": ".harness/evidence/M4a-T3-verifier.log",
+                "exit_code": 0,
+                "verdict": "PASS",
+                "tests_weakened": "NO",
+                "discrepancies": "NONE"
+              },
+              "note": "typecheck, 123 tests, lint, smoke:runtime 3/3; verifier located goal items 1-6 in chat.tsx (pending set lines 126-132 before first await line 138; finally reloads line 196 before setPending(null) line 197)"
+            }
+          ]
         },
         {
           "id": "M4a-T5",

@@ -4,9 +4,21 @@
  * renders its persisted messages (each assistant reply shows the model that
  * produced it). Sending goes through `sendInConversation`
  * (src/chat/conversationSession.ts), which persists the prompt and the
- * reply through the store -- once a send settles, the conversation is
- * reloaded from the store rather than merged into React state by hand, so
- * the store stays the single source of truth.
+ * reply through the store.
+ *
+ * FR9/FR10 (M4a-T3): the prompt appears the instant Send is pressed and the
+ * in-flight reply streams into its own place in the message list, rather
+ * than the list only refreshing once the send settles. This is done by
+ * minting the prompt/reply's ids up front (`newMessageId`) and holding them,
+ * with the streamed-so-far text, in `pending` -- a `PendingTurn` merged with
+ * the store's persisted messages by `buildChatItems` (src/ui/chatItems.ts)
+ * into the single list rendered below. Once the send settles, the
+ * conversation is reloaded from the store *before* `pending` is cleared, so
+ * there is never a render where the turn is missing; `buildChatItems` dedupes
+ * by id so the pending item is simply replaced in place by the persisted one.
+ * Each reply's thinking text is collapsed by default behind a "Show
+ * thinking" toggle (`thinkingToggleLabel`/`toggleExpanded`), tracked per
+ * message id in `expandedKeys`.
  *
  * The header keeps its own static "Chat" title (not the conversation's
  * title): this is a judgment call (M3-T2's packet leaves it open), kept to
@@ -32,11 +44,17 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { getToken } from "@/api/secureStoreToken";
 import { createAPIClient } from "@/api/expoFetchClient";
 import { stopGeneration, UNAUTHORIZED_MESSAGE } from "@/chat/chatController";
-import { sendInConversation } from "@/chat/conversationSession";
+import { sendInConversation, newMessageId } from "@/chat/conversationSession";
 import {
   applyStreamEvent,
   initialStreamAccumulator,
 } from "@/ui/streamReducer";
+import {
+  buildChatItems,
+  thinkingToggleLabel,
+  toggleExpanded,
+} from "@/ui/chatItems";
+import type { PendingTurn } from "@/ui/chatItems";
 import { createConversationStore } from "@/store/conversationStore";
 import type { Conversation } from "@/store/conversationStore";
 import { asyncStoragePort } from "@/store/asyncStorage";
@@ -47,8 +65,10 @@ export default function ChatScreen() {
   const [isLoadingConversation, setIsLoadingConversation] = useState(true);
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [thinking, setThinking] = useState("");
-  const [response, setResponse] = useState("");
+  const [pending, setPending] = useState<PendingTurn | null>(null);
+  const [expandedKeys, setExpandedKeys] = useState<ReadonlySet<string>>(
+    new Set()
+  );
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [blockedMessage, setBlockedMessage] = useState<string | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -95,11 +115,21 @@ export default function ChatScreen() {
     }
 
     const prompt = inputText.trim();
+    const userMessageId = newMessageId();
+    const assistantMessageId = newMessageId();
     setInputText("");
     setIsLoading(true);
-    setThinking("");
-    setResponse("");
     setBlockedMessage(null);
+    // Set synchronously, before the token re-read below awaits, so the
+    // prompt appears in the list on this render rather than after the send
+    // settles (FR9/FR10).
+    setPending({
+      userMessageId,
+      prompt,
+      assistantMessageId,
+      accumulator: initialStreamAccumulator,
+      blocked: false,
+    });
 
     try {
       // Re-read the token before every request so a token pasted in
@@ -112,61 +142,61 @@ export default function ChatScreen() {
       }
       clientRef.current.setToken(token);
 
-      let accumulated = initialStreamAccumulator;
       let startedGenerationId: string | null = null;
 
-      await sendInConversation(clientRef.current, storeRef.current, id, prompt, {
-        onStart: (genId) => {
-          startedGenerationId = genId;
-          setGenerationId(genId);
+      await sendInConversation(
+        clientRef.current,
+        storeRef.current,
+        id,
+        prompt,
+        {
+          onStart: (genId) => {
+            startedGenerationId = genId;
+            setGenerationId(genId);
+          },
+          onEvent: (event) => {
+            setPending((prev) =>
+              prev
+                ? { ...prev, accumulator: applyStreamEvent(prev.accumulator, event) }
+                : prev
+            );
+            if (event.type === "content") {
+              scrollViewRef.current?.scrollToEnd({ animated: false });
+            }
+          },
+          onBlocked: (message) => {
+            setPending((prev) => (prev ? { ...prev, blocked: true } : prev));
+            setBlockedMessage(message);
+          },
+          onError: (error: Error) => {
+            Alert.alert("Error", error.message);
+          },
+          onUnauthorized: () => {
+            Alert.alert(
+              UNAUTHORIZED_MESSAGE,
+              "The password on this phone no longer matches the Mac. Paste the current one from the Mac (pbcopy < ~/.phone-models/token)."
+            );
+            router.push({
+              pathname: "/settings",
+              params: { updateToken: "1" },
+            });
+          },
+          onComplete: () => {
+            void startedGenerationId;
+          },
         },
-        onEvent: (event) => {
-          if (event.type === "error") {
-            // Persistence and reporting happen via onError below; nothing
-            // further to accumulate for display.
-            return;
-          }
-          if (event.type === "done") {
-            return;
-          }
-
-          accumulated = applyStreamEvent(accumulated, event);
-          setThinking(accumulated.thinking);
-          setResponse(accumulated.content);
-          if (event.type === "content") {
-            scrollViewRef.current?.scrollToEnd({ animated: false });
-          }
-        },
-        onBlocked: (message) => {
-          setBlockedMessage(message);
-        },
-        onError: (error: Error) => {
-          Alert.alert("Error", error.message);
-        },
-        onUnauthorized: () => {
-          Alert.alert(
-            UNAUTHORIZED_MESSAGE,
-            "The password on this phone no longer matches the Mac. Paste the current one from the Mac (pbcopy < ~/.phone-models/token)."
-          );
-          router.push({
-            pathname: "/settings",
-            params: { updateToken: "1" },
-          });
-        },
-        onComplete: () => {
-          void startedGenerationId;
-        },
-      });
+        { userMessageId, assistantMessageId }
+      );
     } finally {
-      setIsLoading(false);
-      setGenerationId(null);
-      setThinking("");
-      setResponse("");
       // The store is the single source of truth for persisted messages:
       // reload it now that sendInConversation has settled (complete,
       // stopped, error, or blocked all persist through the store before
-      // resolving).
+      // resolving), then clear the pending turn -- in that order, so there
+      // is never a render where the turn is missing from the list.
       await loadConversation();
+      setPending(null);
+      setIsLoading(false);
+      setGenerationId(null);
     }
   };
 
@@ -187,6 +217,7 @@ export default function ChatScreen() {
   };
 
   const messages = conversation?.messages ?? [];
+  const chatItems = buildChatItems(messages, pending);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -228,50 +259,48 @@ export default function ChatScreen() {
               keyboardShouldPersistTaps="handled"
               keyboardDismissMode="interactive"
             >
-              {messages.map((message) => (
-                <View key={message.id} style={styles.messageGroup}>
-                  {message.thinking && (
-                    <View style={styles.thinkingContainer}>
-                      <Text style={styles.thinkingLabel}>Thinking:</Text>
-                      <Text style={styles.thinkingText}>{message.thinking}</Text>
+              {chatItems.map((item) => (
+                <View key={item.key} style={styles.messageGroup}>
+                  {item.thinking && (
+                    <View style={styles.thinkingToggleRow}>
+                      <TouchableOpacity
+                        accessibilityRole="button"
+                        onPress={() =>
+                          setExpandedKeys((prev) => toggleExpanded(prev, item.key))
+                        }
+                      >
+                        <Text style={styles.thinkingToggleText}>
+                          {thinkingToggleLabel(expandedKeys.has(item.key))}
+                        </Text>
+                      </TouchableOpacity>
+                      {expandedKeys.has(item.key) && (
+                        <View style={styles.thinkingContainer}>
+                          <Text style={styles.thinkingLabel}>Thinking:</Text>
+                          <Text style={styles.thinkingText}>{item.thinking}</Text>
+                        </View>
+                      )}
                     </View>
                   )}
                   <View
                     style={[
                       styles.message,
-                      message.role === "user"
+                      item.role === "user"
                         ? styles.userMessage
                         : styles.assistantMessage,
                     ]}
                   >
-                    <Text style={styles.messageText}>{message.content}</Text>
+                    {item.content.length > 0 && (
+                      <Text style={styles.messageText}>{item.content}</Text>
+                    )}
+                    {item.streaming && (
+                      <ActivityIndicator style={styles.loadingDots} />
+                    )}
                   </View>
-                  {message.role === "assistant" && message.model && (
-                    <Text style={styles.modelLabel}>{message.model}</Text>
+                  {item.role === "assistant" && item.model && (
+                    <Text style={styles.modelLabel}>{item.model}</Text>
                   )}
                 </View>
               ))}
-
-              {thinking && (
-                <View style={styles.thinkingContainer}>
-                  <Text style={styles.thinkingLabel}>Thinking:</Text>
-                  <Text style={styles.thinkingText}>{thinking}</Text>
-                </View>
-              )}
-
-              {response && (
-                <View style={styles.message}>
-                  <Text style={styles.messageText}>{response}</Text>
-                  {isLoading && <ActivityIndicator style={styles.loadingDots} />}
-                </View>
-              )}
-
-              {isLoading && !response && (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="large" color="#007AFF" />
-                  <Text style={styles.loadingText}>Loading response...</Text>
-                </View>
-              )}
             </ScrollView>
 
             {blockedMessage && (
@@ -392,6 +421,14 @@ const styles = StyleSheet.create({
     marginTop: 2,
     marginLeft: 4,
   },
+  thinkingToggleRow: {
+    marginBottom: 4,
+  },
+  thinkingToggleText: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#007AFF",
+  },
   thinkingContainer: {
     marginBottom: 8,
     paddingHorizontal: 12,
@@ -414,11 +451,6 @@ const styles = StyleSheet.create({
   },
   loadingDots: {
     marginTop: 8,
-  },
-  loadingText: {
-    marginTop: 8,
-    color: "#666",
-    fontSize: 14,
   },
   blockedContainer: {
     paddingHorizontal: 20,

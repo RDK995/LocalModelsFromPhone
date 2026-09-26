@@ -1,0 +1,54 @@
+VERIFICATION RUN FOR M4a-T3
+
+Commit: 0694ddf (HEAD of m4a-chat-display)
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test src/store src/api src/ui src/chat src/app-routing && bun run lint && bun run smoke:runtime
+
+=== TYPECHECK ===
+$ tsc --noEmit
+(no output = success)
+
+=== UNIT TESTS ===
+bun test v1.4.0 (1381054db)
+
+ 123 pass
+ 0 fail
+ 277 expect() calls
+Ran 123 tests across 16 files. [43.00ms]
+
+=== LINT ===
+$ eslint src --max-warnings 0
+(no output = success)
+
+=== SMOKE RUNTIME ===
+$ scripts/runtime-smoke.sh
+=== token present ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.cKDCOD/dist/_expo/static/js/ios/expo-router-8feca5c1b813ad16cf0463929b12f01a.js
+stored token: present; expected first screen: Conversations
+rendered text: ["Conversations","Models","Settings","New chat","No conversations yet. Tap \"New chat\" to start one."]
+native stack headers: [{"title":"Conversations","hidden":true}]
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 5
+RESULT: PASS (app launched, Conversations rendered, no JS exception)
+=== token absent ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.cKDCOD/dist/_expo/static/js/ios/expo-router-8feca5c1b813ad16cf0463929b12f01a.js
+stored token: absent; expected first screen: Setup
+rendered text: ["Enter Bearer Token","Paste the token from your server","Continue"]
+native stack headers: [{"title":"Setup","hidden":false}]
+drive Setup -> Conversations: {"ok":true,"conversationsMounted":true,"backOnSetup":false,"singleTopBar":true,"rendered_text":["Conversations","Models","Settings","New chat","No conversations yet. Tap \"New chat\" to start one."],"native_stack_headers":[{"title":"Conversations","hidden":true}]}
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 9
+RESULT: PASS (app launched, Setup rendered, no JS exception, Setup -> Conversations drive reached Conversations with one top bar)
+=== token wrong ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.cKDCOD/dist/_expo/static/js/ios/expo-router-8feca5c1b813ad16cf0463929b12f01a.js
+stored token: wrong; expected first screen: Conversations
+rendered text: ["Conversations","Models","Settings","New chat","No conversations yet. Tap \"New chat\" to start one."]
+native stack headers: [{"title":"Conversations","hidden":true}]
+drive Conversations -> Chat -> 401 -> Settings: {"ok":true,"wrongAlertShown":true,"errorAlertShown":false,"settingsMounted":true,"alerts":[{"title":"Password wrong or changed","message":"The password on this phone no longer matches the Mac. Paste the current one from the Mac (pbcopy < ~/.phone-models/token)."}],"rendered_text":["Conversations","Models","Settings","New chat","No conversations yet. Tap \"New chat\" to start one.","Chat","hello","Send","Bearer Token","Cancel","Save","Logout"]}
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 11
+RESULT: PASS (app launched, Conversations rendered, no JS exception, Conversations -> Chat -> 401 drive reached Settings with the token form open)
+
+EXIT STATUS: 0
