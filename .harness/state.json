@@ -3629,9 +3629,102 @@
             "reason_code": "ORDINARY_IMPLEMENTATION",
             "detail": "ordinary feature work in small pure mobile modules with unit tests as the oracle"
           },
+          "status": "ACCEPTED",
+          "attempts": 1,
+          "packet": ".harness/tasks/M4a-T2.md",
+          "commit": null,
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M4a-T2-worker.log",
+              "verdict": "PASS",
+              "base": "7dee5da",
+              "changed_files": [
+                "mobile/src/chat/conversationSession.ts",
+                "mobile/src/chat/conversationSession.test.ts",
+                "mobile/src/ui/chatItems.ts",
+                "mobile/src/ui/chatItems.test.ts"
+              ],
+              "verifier": {
+                "artifact": ".harness/evidence/M4a-T2-verifier.log",
+                "exit_code": 0,
+                "verdict": "PASS",
+                "tests_weakened": "NO",
+                "discrepancies": "NONE"
+              },
+              "note": "typecheck, 123 tests, lint; worker reports tests and implementation written together (red not observed first) - accepted on verifier coverage mapping of every packet rule; recorded as a process note"
+            }
+          ]
+        },
+        {
+          "id": "M4a-T3",
+          "scope": "chat.tsx: pending turn set synchronously at Send, one list from buildChatItems, reply streams in its own bubble, thinking behind a collapsed Show thinking toggle",
+          "tests": "cd mobile && bun run typecheck && bun test src/store src/api src/ui src/chat src/app-routing && bun run lint && bun run smoke:runtime",
+          "requirements": [
+            "FR10",
+            "FR9"
+          ],
+          "constraints": [
+            "only chat.tsx"
+          ],
+          "findings": [],
+          "criteria": [
+            "M4-AC1",
+            "M4-AC4",
+            "M4-AC5"
+          ],
+          "paths": [
+            "mobile/src/app/chat.tsx"
+          ],
+          "depends_on": [
+            "M4a-T2"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "UI rewiring of one screen onto tested pure logic"
+          },
           "status": "IN_PROGRESS",
           "attempts": 0,
-          "packet": ".harness/tasks/M4a-T2.md",
+          "packet": ".harness/tasks/M4a-T3.md",
+          "commit": null,
+          "attempt_log": []
+        },
+        {
+          "id": "M4a-T5",
+          "scope": "Live tailnet proof mobile/scripts/thinking-proof.{sh,ts}: thinking-capable model streams thinking events before content, stored separately; non-thinking model unaffected",
+          "tests": "cd mobile && bun run typecheck && bun run lint && bash scripts/thinking-proof.sh",
+          "requirements": [
+            "FR10"
+          ],
+          "constraints": [
+            "no change to shared/, server/, mobile/src/",
+            "restore resident model on any exit"
+          ],
+          "findings": [],
+          "criteria": [
+            "M4-AC1"
+          ],
+          "paths": [
+            "mobile/scripts/thinking-proof.sh",
+            "mobile/scripts/thinking-proof.ts"
+          ],
+          "depends_on": [
+            "M4a-T1"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "proof script in the established *-proof pattern; its assertions are the oracle"
+          },
+          "status": "IN_PROGRESS",
+          "attempts": 0,
+          "packet": ".harness/tasks/M4a-T5.md",
           "commit": null,
           "attempt_log": []
         }

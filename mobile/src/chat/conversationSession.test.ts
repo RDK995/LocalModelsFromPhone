@@ -15,6 +15,7 @@ import { createConversationStore } from "@/store/conversationStore";
 import { createMemoryStorage } from "@/store/storagePort";
 import {
   BLOCKED_MESSAGE,
+  newMessageId,
   sendInConversation,
   titleFromPrompt,
 } from "./conversationSession";
@@ -429,5 +430,182 @@ describe("sendInConversation: blocked (no resident model, FR8)", () => {
 
     const stored = await store.get(conversation.id);
     expect(stored!.title).toBe("hello?");
+  });
+});
+
+describe("newMessageId", () => {
+  it("returns a non-empty id, different each call", () => {
+    const a = newMessageId();
+    const b = newMessageId();
+    expect(a).not.toBe("");
+    expect(a).not.toBe(b);
+  });
+});
+
+describe("sendInConversation: caller-supplied ids (M4a-T2)", () => {
+  it("uses fresh ids when no options are supplied", async () => {
+    const store = createConversationStore(createMemoryStorage());
+    const conversation = await store.create();
+
+    const fetchMock = mock(async (url: string) => {
+      if (url.endsWith("/v1/state")) {
+        return stateResponse({ name: "llama3" });
+      }
+      if (url.endsWith("/v1/chat")) {
+        return completedChatResponse("reply", "llama3");
+      }
+      throw new Error(`unexpected request: ${url}`);
+    });
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+
+    await sendInConversation(client, store, conversation.id, "hi", newCallbacks().callbacks);
+
+    const stored = await store.get(conversation.id);
+    expect(stored!.messages[0].id).not.toBe("");
+    expect(stored!.messages[1].id).not.toBe("");
+    expect(stored!.messages[0].id).not.toBe(stored!.messages[1].id);
+  });
+
+  it("persists the user message and a completed reply under the supplied ids", async () => {
+    const store = createConversationStore(createMemoryStorage());
+    const conversation = await store.create();
+
+    const fetchMock = mock(async (url: string) => {
+      if (url.endsWith("/v1/state")) {
+        return stateResponse({ name: "llama3" });
+      }
+      if (url.endsWith("/v1/chat")) {
+        return completedChatResponse("reply", "llama3");
+      }
+      throw new Error(`unexpected request: ${url}`);
+    });
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+
+    await sendInConversation(
+      client,
+      store,
+      conversation.id,
+      "hi",
+      newCallbacks().callbacks,
+      { userMessageId: "u-1", assistantMessageId: "a-1" }
+    );
+
+    const stored = await store.get(conversation.id);
+    expect(stored!.messages).toEqual([
+      expect.objectContaining({ id: "u-1", role: "user", content: "hi" }),
+      expect.objectContaining({
+        id: "a-1",
+        role: "assistant",
+        content: "reply",
+        status: "complete",
+      }),
+    ]);
+  });
+
+  it("persists a stopped reply under the supplied assistant id", async () => {
+    const store = createConversationStore(createMemoryStorage());
+    const conversation = await store.create();
+
+    const fetchMock = mock(async (url: string) => {
+      if (url.endsWith("/v1/state")) {
+        return stateResponse({ name: "llama3" });
+      }
+      if (url.endsWith("/v1/chat")) {
+        const stream = controlledSseResponse("gen-1");
+        stream.push("event: content\ndata: {\"text\":\"partial\"}\n\n");
+        stream.push(doneEvent("llama3", "cancelled"));
+        stream.close();
+        return stream.response;
+      }
+      throw new Error(`unexpected request: ${url}`);
+    });
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+
+    await sendInConversation(
+      client,
+      store,
+      conversation.id,
+      "hi",
+      newCallbacks().callbacks,
+      { userMessageId: "u-2", assistantMessageId: "a-2" }
+    );
+
+    const stored = await store.get(conversation.id);
+    expect(stored!.messages[1]).toMatchObject({
+      id: "a-2",
+      status: "stopped",
+      content: "partial",
+    });
+  });
+
+  it("persists an error reply under the supplied assistant id", async () => {
+    const store = createConversationStore(createMemoryStorage());
+    const conversation = await store.create();
+
+    const fetchMock = mock(async (url: string) => {
+      if (url.endsWith("/v1/state")) {
+        return stateResponse({ name: "llama3" });
+      }
+      if (url.endsWith("/v1/chat")) {
+        const stream = controlledSseResponse("gen-1");
+        stream.push("event: content\ndata: {\"text\":\"partial answer\"}\n\n");
+        stream.push(
+          "event: error\ndata: {\"code\":\"generation_failed\",\"message\":\"model crashed\"}\n\n"
+        );
+        stream.close();
+        return stream.response;
+      }
+      throw new Error(`unexpected request: ${url}`);
+    });
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+
+    await sendInConversation(
+      client,
+      store,
+      conversation.id,
+      "hi",
+      newCallbacks().callbacks,
+      { userMessageId: "u-3", assistantMessageId: "a-3" }
+    );
+
+    const stored = await store.get(conversation.id);
+    expect(stored!.messages[0]).toMatchObject({ id: "u-3" });
+    expect(stored!.messages[1]).toMatchObject({
+      id: "a-3",
+      status: "error",
+      content: "partial answer",
+    });
+  });
+
+  it("persists the prompt under the supplied user id and stores no reply when blocked", async () => {
+    const store = createConversationStore(createMemoryStorage());
+    const conversation = await store.create();
+
+    const fetchMock = mock(async (url: string) => {
+      if (url.endsWith("/v1/state")) {
+        return stateResponse(null);
+      }
+      throw new Error(`unexpected request: ${url}`);
+    });
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+
+    await sendInConversation(
+      client,
+      store,
+      conversation.id,
+      "hello?",
+      newCallbacks().callbacks,
+      { userMessageId: "u-4", assistantMessageId: "a-4" }
+    );
+
+    const stored = await store.get(conversation.id);
+    expect(stored!.messages).toEqual([
+      expect.objectContaining({ id: "u-4", role: "user", content: "hello?" }),
+    ]);
   });
 });

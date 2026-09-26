@@ -52,7 +52,13 @@ export function titleFromPrompt(prompt: string): string {
     : trimmed;
 }
 
-function newId(): string {
+/**
+ * Mints a message id the same way `sendInConversation` does when the caller
+ * does not supply one, so the chat screen can pre-mint the ids for the
+ * prompt and the in-flight reply (see the `options` parameter below) and
+ * reuse them once the send settles.
+ */
+export function newMessageId(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return crypto.randomUUID();
   }
@@ -80,13 +86,20 @@ export interface SendInConversationCallbacks {
  * assistant's reply (success, stopped, or error) once the send settles.
  * Resolves once the store is fully updated; outcomes are reported via
  * `callbacks`, not thrown.
+ *
+ * `options.userMessageId`/`options.assistantMessageId`, when given, are used
+ * as the persisted ids for the prompt and the reply (whichever outcome it
+ * settles to) instead of freshly minted ones -- so a caller that has already
+ * shown the prompt/reply optimistically under those ids (via `newMessageId`)
+ * sees the same ids land in the store, rather than a duplicate.
  */
 export async function sendInConversation(
   client: StateAndChatClient,
   store: ConversationStore,
   conversationId: string,
   prompt: string,
-  callbacks: SendInConversationCallbacks
+  callbacks: SendInConversationCallbacks,
+  options?: { userMessageId?: string; assistantMessageId?: string }
 ): Promise<void> {
   const conversation = await store.get(conversationId);
   if (!conversation) {
@@ -102,7 +115,7 @@ export async function sendInConversation(
 
   const isFirstMessage = conversation.messages.length === 0;
   await store.appendMessage(conversationId, {
-    id: newId(),
+    id: options?.userMessageId ?? newMessageId(),
     role: "user",
     content: prompt,
     status: "complete",
@@ -119,7 +132,7 @@ export async function sendInConversation(
 
   function persistReply(status: MessageStatus): void {
     const message: Message = {
-      id: newId(),
+      id: options?.assistantMessageId ?? newMessageId(),
       role: "assistant",
       content: accumulator.content,
       status,
