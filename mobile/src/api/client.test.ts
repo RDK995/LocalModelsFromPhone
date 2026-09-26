@@ -12,7 +12,7 @@ import {
   ServerError,
   UnauthorizedError,
 } from "./client";
-import type { StreamEvent } from "./client";
+import type { FetchImpl, StreamEvent } from "./client";
 
 const BASE_URL = "http://localhost:7789";
 
@@ -382,6 +382,803 @@ describe("APIClient SSE comment lines", () => {
     expect(errored).toBeNull();
     expect(completed).toBe(true);
     expect(events.map((e) => e.type)).toEqual(["content", "done"]);
+  });
+});
+
+/**
+ * Like `controlledSseResponse`, but also exposes `fail` (simulates
+ * `reader.read()` rejecting with a transport error -- a drop, distinct from a
+ * caller abort) and `endWithoutTerminal` (simulates the body closing before a
+ * `done`/`error` event was delivered -- also a drop, per AC2) for the resume
+ * tests below.
+ */
+function resumableSseResponse(
+  options: {
+    generationId?: string;
+    signal?: AbortSignal | null;
+    status?: number;
+  } = {}
+): {
+  response: Response;
+  push: (chunk: string) => void;
+  fail: (error?: Error) => void;
+  endWithoutTerminal: () => void;
+} {
+  const encoder = new TextEncoder();
+  let controllerRef!: ReadableStreamDefaultController<Uint8Array>;
+
+  const body = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controllerRef = controller;
+      const onAbort = () => {
+        const abortError = new Error("Aborted");
+        abortError.name = "AbortError";
+        controller.error(abortError);
+      };
+      if (options.signal) {
+        if (options.signal.aborted) {
+          onAbort();
+        } else {
+          options.signal.addEventListener("abort", onAbort);
+        }
+      }
+    },
+  });
+
+  const response = new Response(body, {
+    status: options.status ?? 200,
+    headers: {
+      "Content-Type": "text/event-stream",
+      "x-generation-id": options.generationId ?? "gen-1",
+    },
+  });
+
+  return {
+    response,
+    push: (chunk: string) => controllerRef.enqueue(encoder.encode(chunk)),
+    fail: (error?: Error) =>
+      controllerRef.error(error ?? new Error("transport drop")),
+    endWithoutTerminal: () => controllerRef.close(),
+  };
+}
+
+/** Formats one SSE event exactly as the server does (server.ts formatSSE). */
+function sseEvent(id: string, type: string, data: unknown): string {
+  return `id: ${id}\nevent: ${type}\ndata: ${JSON.stringify(data)}\n\n`;
+}
+
+/**
+ * A fake sleep/clock pair for the resume loop's backoff waits and budget
+ * check, so tests run instantly and deterministically (per the task's
+ * injectable-clock constraint). `sleep` records each requested delay and
+ * returns a promise that stays pending until the test calls `release()`
+ * (oldest first) or the passed `signal` aborts -- mirroring the real
+ * implementation's "resolve promptly on abort" contract. `advance` moves the
+ * virtual clock `now()` reports, independently of `release`/`sleep`, so a
+ * budget-exhaustion test does not need to release dozens of pending sleeps.
+ */
+function fakeClock(): {
+  now: () => number;
+  sleep: (ms: number, signal?: AbortSignal) => Promise<void>;
+  sleeps: number[];
+  release: () => void;
+  advance: (ms: number) => void;
+} {
+  let current = 0;
+  const sleeps: number[] = [];
+  const pending: Array<() => void> = [];
+
+  return {
+    now: () => current,
+    sleep: (ms: number, signal?: AbortSignal) =>
+      new Promise((resolve) => {
+        sleeps.push(ms);
+        if (signal?.aborted) {
+          resolve();
+          return;
+        }
+        const onAbort = () => resolve();
+        signal?.addEventListener("abort", onAbort, { once: true });
+        pending.push(() => {
+          signal?.removeEventListener("abort", onAbort);
+          resolve();
+        });
+      }),
+    sleeps,
+    release: () => {
+      const next = pending.shift();
+      if (next) next();
+    },
+    advance: (ms: number) => {
+      current += ms;
+    },
+  };
+}
+
+/** Yields to the macrotask queue, letting pending microtasks settle. */
+function flush(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+/** Polls `predicate` until it is true, rather than guessing a tick count. */
+async function waitFor(
+  predicate: () => boolean,
+  description: string
+): Promise<void> {
+  for (let i = 0; i < 200; i++) {
+    if (predicate()) {
+      return;
+    }
+    await flush();
+  }
+  throw new Error(`Timed out waiting for: ${description}`);
+}
+
+/** Builds a sequential fake fetch: call N is handled by `handlers[N]`. */
+function sequentialFetch(
+  handlers: Array<
+    (url: string, init?: RequestInit) => Promise<Response> | Response
+  >
+): ReturnType<typeof mock> & {
+  calls: Array<{ url: string; init?: RequestInit }>;
+} {
+  const calls: Array<{ url: string; init?: RequestInit }> = [];
+  const fetchMock = mock(async (url: string, init?: RequestInit) => {
+    calls.push({ url, init });
+    const handler = handlers[calls.length - 1];
+    if (!handler) {
+      throw new Error(`Unexpected fetch call #${calls.length}: ${url}`);
+    }
+    return handler(url, init);
+  });
+  return Object.assign(fetchMock, { calls });
+}
+
+describe("APIClient dropped-connection resume (FR11)", () => {
+  it("(a) resumes once after a drop mid-reply: GET events with Last-Event-ID g-2, then g-3.. and done, each event delivered once, onComplete once", async () => {
+    const initial = resumableSseResponse({ generationId: "gen-a" });
+    const resumed = resumableSseResponse({ generationId: "gen-a" });
+    const clock = fakeClock();
+
+    const fetchMock = sequentialFetch([
+      () => initial.response,
+      () => resumed.response,
+    ]);
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as FetchImpl, {
+      sleep: clock.sleep,
+      now: clock.now,
+    });
+    client.setToken("t");
+
+    const events: StreamEvent[] = [];
+    let completed = false;
+    let errored: Error | null = null;
+    let startedGenerationId: string | null = null;
+
+    const chatPromise = client.chat(
+      { model: "m", messages: [{ role: "user", content: "hi" }] },
+      {
+        onStart: (id) => {
+          startedGenerationId = id;
+        },
+        onEvent: (event) => events.push(event),
+        onError: (error) => {
+          errored = error;
+        },
+        onComplete: () => {
+          completed = true;
+        },
+      }
+    );
+
+    await waitFor(() => fetchMock.calls.length >= 1, "initial chat request");
+
+    initial.push(sseEvent("gen-a-1", "content", { text: "Hello" }));
+    initial.push(sseEvent("gen-a-2", "content", { text: " World" }));
+    await waitFor(() => events.length === 2, "g-1 and g-2 delivered");
+
+    initial.fail();
+    await waitFor(() => clock.sleeps.length === 1, "backoff wait requested");
+    expect(clock.sleeps).toEqual([500]);
+
+    clock.release();
+    await waitFor(() => fetchMock.calls.length === 2, "resume GET request");
+
+    const resumeCall = fetchMock.calls[1]!;
+    expect(resumeCall.url).toBe(`${BASE_URL}/v1/generations/gen-a/events`);
+    const resumeHeaders = resumeCall.init?.headers as Record<string, string>;
+    expect(resumeHeaders["Last-Event-ID"]).toBe("gen-a-2");
+    expect(resumeHeaders.Authorization).toBe("Bearer t");
+
+    resumed.push(sseEvent("gen-a-3", "content", { text: "!" }));
+    resumed.push(
+      sseEvent("gen-a-4", "done", {
+        status: "complete",
+        model: "m",
+        eval_count: 3,
+        tokens_per_second: 1,
+      })
+    );
+
+    await chatPromise;
+
+    // Cast: TS narrows this `let` to `null` from its initializer, since the
+    // reassignment happens inside a nested closure it cannot see as having
+    // run by this point in the (synchronous) control flow.
+    expect(startedGenerationId as string | null).toBe("gen-a");
+    expect(errored).toBeNull();
+    expect(completed).toBe(true);
+    expect(events.map((e) => e.type)).toEqual([
+      "content",
+      "content",
+      "content",
+      "done",
+    ]);
+    expect(fetchMock.calls.length).toBe(2);
+  });
+
+  it("(b) does not redeliver an event the resumed stream re-sends", async () => {
+    const initial = resumableSseResponse({ generationId: "gen-b" });
+    const resumed = resumableSseResponse({ generationId: "gen-b" });
+    const clock = fakeClock();
+
+    const fetchMock = sequentialFetch([
+      () => initial.response,
+      () => resumed.response,
+    ]);
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as FetchImpl, {
+      sleep: clock.sleep,
+      now: clock.now,
+    });
+    client.setToken("t");
+
+    const events: StreamEvent[] = [];
+    let completed = false;
+
+    const chatPromise = client.chat(
+      { model: "m", messages: [{ role: "user", content: "hi" }] },
+      {
+        onEvent: (event) => events.push(event),
+        onError: () => {},
+        onComplete: () => {
+          completed = true;
+        },
+      }
+    );
+
+    await waitFor(() => fetchMock.calls.length >= 1, "initial chat request");
+    initial.push(sseEvent("gen-b-1", "content", { text: "a" }));
+    initial.push(sseEvent("gen-b-2", "content", { text: "b" }));
+    await waitFor(() => events.length === 2, "g-1 and g-2 delivered");
+
+    initial.fail();
+    await waitFor(() => clock.sleeps.length === 1, "backoff wait requested");
+    clock.release();
+    await waitFor(() => fetchMock.calls.length === 2, "resume GET request");
+
+    // The resumed stream re-sends the already-delivered g-2, then a new
+    // event and done.
+    resumed.push(sseEvent("gen-b-2", "content", { text: "b" }));
+    resumed.push(sseEvent("gen-b-3", "content", { text: "c" }));
+    resumed.push(
+      sseEvent("gen-b-4", "done", {
+        status: "complete",
+        model: "m",
+        eval_count: 3,
+        tokens_per_second: 1,
+      })
+    );
+
+    await chatPromise;
+
+    expect(completed).toBe(true);
+    expect(events.map((e) => e.type)).toEqual([
+      "content",
+      "content",
+      "content",
+      "done",
+    ]);
+    expect(events.map((e) => (e as { data: { text?: string } }).data.text)).toEqual(
+      ["a", "b", "c", undefined]
+    );
+  });
+
+  it("(c) resumes when the body ends without a done/error event", async () => {
+    const initial = resumableSseResponse({ generationId: "gen-c" });
+    const resumed = resumableSseResponse({ generationId: "gen-c" });
+    const clock = fakeClock();
+
+    const fetchMock = sequentialFetch([
+      () => initial.response,
+      () => resumed.response,
+    ]);
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as FetchImpl, {
+      sleep: clock.sleep,
+      now: clock.now,
+    });
+    client.setToken("t");
+
+    const events: StreamEvent[] = [];
+    let completed = false;
+
+    const chatPromise = client.chat(
+      { model: "m", messages: [{ role: "user", content: "hi" }] },
+      {
+        onEvent: (event) => events.push(event),
+        onError: () => {},
+        onComplete: () => {
+          completed = true;
+        },
+      }
+    );
+
+    await waitFor(() => fetchMock.calls.length >= 1, "initial chat request");
+    initial.push(sseEvent("gen-c-1", "content", { text: "a" }));
+    await waitFor(() => events.length === 1, "g-1 delivered");
+
+    // Body ends cleanly, but no done/error event was ever delivered.
+    initial.endWithoutTerminal();
+    await waitFor(() => clock.sleeps.length === 1, "backoff wait requested");
+    clock.release();
+    await waitFor(() => fetchMock.calls.length === 2, "resume GET request");
+
+    resumed.push(
+      sseEvent("gen-c-2", "done", {
+        status: "complete",
+        model: "m",
+        eval_count: 1,
+        tokens_per_second: 1,
+      })
+    );
+
+    await chatPromise;
+
+    expect(completed).toBe(true);
+    expect(events.map((e) => e.type)).toEqual(["content", "done"]);
+    expect(fetchMock.calls.length).toBe(2);
+  });
+
+  it("(d) omits Last-Event-ID when the drop happens before any event carried an id", async () => {
+    const initial = resumableSseResponse({ generationId: "gen-d" });
+    const resumed = resumableSseResponse({ generationId: "gen-d" });
+    const clock = fakeClock();
+
+    const fetchMock = sequentialFetch([
+      () => initial.response,
+      () => resumed.response,
+    ]);
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as FetchImpl, {
+      sleep: clock.sleep,
+      now: clock.now,
+    });
+    client.setToken("t");
+
+    const chatPromise = client.chat(
+      { model: "m", messages: [{ role: "user", content: "hi" }] },
+      {
+        onEvent: () => {},
+        onError: () => {},
+        onComplete: () => {},
+      }
+    );
+
+    await waitFor(() => fetchMock.calls.length >= 1, "initial chat request");
+    initial.fail();
+    await waitFor(() => clock.sleeps.length === 1, "backoff wait requested");
+    clock.release();
+    await waitFor(() => fetchMock.calls.length === 2, "resume GET request");
+
+    const resumeHeaders = fetchMock.calls[1]!.init?.headers as Record<
+      string,
+      string
+    >;
+    expect("Last-Event-ID" in resumeHeaders).toBe(false);
+
+    resumed.push(
+      sseEvent("gen-d-1", "done", {
+        status: "complete",
+        model: "m",
+        eval_count: 0,
+        tokens_per_second: 0,
+      })
+    );
+
+    await chatPromise;
+  });
+
+  it("(e) a user abort mid-read makes no resume request and completes once", async () => {
+    const abortController = new AbortController();
+    let stream: ReturnType<typeof resumableSseResponse>;
+    const clock = fakeClock();
+
+    const fetchMock = mock(async (_url: string, init?: RequestInit) => {
+      stream = resumableSseResponse({
+        generationId: "gen-e",
+        signal: init?.signal ?? null,
+      });
+      return stream.response;
+    });
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as FetchImpl, {
+      sleep: clock.sleep,
+      now: clock.now,
+    });
+    client.setToken("t");
+
+    const events: StreamEvent[] = [];
+    let completed = false;
+    let errored: Error | null = null;
+
+    const chatPromise = client.chat(
+      { model: "m", messages: [{ role: "user", content: "hi" }] },
+      {
+        onEvent: (event) => events.push(event),
+        onError: (error) => {
+          errored = error;
+        },
+        onComplete: () => {
+          completed = true;
+        },
+        signal: abortController.signal,
+      }
+    );
+
+    await flush();
+    stream!.push(sseEvent("gen-e-1", "content", { text: "one" }));
+    await waitFor(() => events.length === 1, "one token delivered");
+
+    abortController.abort();
+    await chatPromise;
+
+    expect(errored).toBeNull();
+    expect(completed).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(clock.sleeps).toEqual([]);
+  });
+
+  it("(f) a user abort during a backoff wait makes no resume request and completes once", async () => {
+    const abortController = new AbortController();
+    const initial = resumableSseResponse({
+      generationId: "gen-f",
+      signal: abortController.signal,
+    });
+    const clock = fakeClock();
+
+    const fetchMock = sequentialFetch([() => initial.response]);
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as FetchImpl, {
+      sleep: clock.sleep,
+      now: clock.now,
+    });
+    client.setToken("t");
+
+    let completed = false;
+    let errored: Error | null = null;
+
+    const chatPromise = client.chat(
+      { model: "m", messages: [{ role: "user", content: "hi" }] },
+      {
+        onEvent: () => {},
+        onError: (error) => {
+          errored = error;
+        },
+        onComplete: () => {
+          completed = true;
+        },
+        signal: abortController.signal,
+      }
+    );
+
+    await waitFor(() => fetchMock.calls.length >= 1, "initial chat request");
+    initial.fail();
+    await waitFor(() => clock.sleeps.length === 1, "backoff wait requested");
+
+    // Stop is pressed while the backoff wait is still pending.
+    abortController.abort();
+    await chatPromise;
+
+    expect(errored).toBeNull();
+    expect(completed).toBe(true);
+    expect(fetchMock.calls.length).toBe(1); // no resume GET was ever sent
+  });
+
+  it("(g) waits 500, 1000, 2000ms across consecutive failed resume attempts", async () => {
+    const initial = resumableSseResponse({ generationId: "gen-g" });
+    const finalStream = resumableSseResponse({ generationId: "gen-g" });
+    const clock = fakeClock();
+
+    const fetchMock = sequentialFetch([
+      () => initial.response,
+      () => {
+        throw new Error("network error");
+      },
+      () => new Response(JSON.stringify({ error: "ollama_down" }), {
+        status: 503,
+      }),
+      () => finalStream.response,
+    ]);
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as FetchImpl, {
+      sleep: clock.sleep,
+      now: clock.now,
+    });
+    client.setToken("t");
+
+    let completed = false;
+
+    const chatPromise = client.chat(
+      { model: "m", messages: [{ role: "user", content: "hi" }] },
+      {
+        onEvent: () => {},
+        onError: () => {},
+        onComplete: () => {
+          completed = true;
+        },
+      }
+    );
+
+    await waitFor(() => fetchMock.calls.length >= 1, "initial chat request");
+    initial.fail();
+
+    await waitFor(() => clock.sleeps.length === 1, "attempt 1 wait");
+    clock.release();
+    await waitFor(() => fetchMock.calls.length === 2, "attempt 1 request");
+
+    await waitFor(() => clock.sleeps.length === 2, "attempt 2 wait");
+    clock.release();
+    await waitFor(() => fetchMock.calls.length === 3, "attempt 2 request");
+
+    await waitFor(() => clock.sleeps.length === 3, "attempt 3 wait");
+    clock.release();
+    await waitFor(() => fetchMock.calls.length === 4, "attempt 3 request");
+
+    finalStream.push(
+      sseEvent("gen-g-1", "done", {
+        status: "complete",
+        model: "m",
+        eval_count: 0,
+        tokens_per_second: 0,
+      })
+    );
+
+    await chatPromise;
+
+    expect(clock.sleeps).toEqual([500, 1000, 2000]);
+    expect(completed).toBe(true);
+  });
+
+  it("(h) a 404 from the resume request ends the loop with ServerError unknown_generation and no further requests", async () => {
+    const initial = resumableSseResponse({ generationId: "gen-h" });
+    const clock = fakeClock();
+
+    const fetchMock = sequentialFetch([
+      () => initial.response,
+      () =>
+        new Response(
+          JSON.stringify({
+            error: "unknown_generation",
+            message: "No such generation",
+          }),
+          { status: 404 }
+        ),
+    ]);
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as FetchImpl, {
+      sleep: clock.sleep,
+      now: clock.now,
+    });
+    client.setToken("t");
+
+    let errored: Error | null = null;
+    let completed = false;
+
+    const chatPromise = client.chat(
+      { model: "m", messages: [{ role: "user", content: "hi" }] },
+      {
+        onEvent: () => {},
+        onError: (error) => {
+          errored = error;
+        },
+        onComplete: () => {
+          completed = true;
+        },
+      }
+    );
+
+    await waitFor(() => fetchMock.calls.length >= 1, "initial chat request");
+    initial.fail();
+    await waitFor(() => clock.sleeps.length === 1, "backoff wait requested");
+    clock.release();
+
+    await chatPromise;
+
+    expect(completed).toBe(false);
+    expect(errored).toBeInstanceOf(ServerError);
+    expect((errored as unknown as ServerError).code).toBe("unknown_generation");
+    expect((errored as unknown as ServerError).message).toBe(
+      "No such generation"
+    );
+    expect(fetchMock.calls.length).toBe(2);
+  });
+
+  it("(i) stops and reports an error once the resume budget is exhausted", async () => {
+    const initial = resumableSseResponse({ generationId: "gen-i" });
+    const clock = fakeClock();
+
+    const fetchMock = sequentialFetch([
+      () => initial.response,
+      () => {
+        throw new Error("network error");
+      },
+    ]);
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as FetchImpl, {
+      sleep: clock.sleep,
+      now: clock.now,
+    });
+    client.setToken("t");
+
+    let errored: Error | null = null;
+    let completed = false;
+
+    const chatPromise = client.chat(
+      { model: "m", messages: [{ role: "user", content: "hi" }] },
+      {
+        onEvent: () => {},
+        onError: (error) => {
+          errored = error;
+        },
+        onComplete: () => {
+          completed = true;
+        },
+      }
+    );
+
+    await waitFor(() => fetchMock.calls.length >= 1, "initial chat request");
+    initial.fail();
+    await waitFor(() => clock.sleeps.length === 1, "attempt 1 wait");
+
+    // Simulate a very long time having passed before attempt 1 lands.
+    clock.advance(300_001);
+    clock.release();
+
+    await waitFor(() => fetchMock.calls.length === 2, "attempt 1 request");
+    // Attempt 1's request fails (network error); the loop re-checks the
+    // budget before attempt 2 and stops instead of waiting/retrying again.
+
+    await chatPromise;
+
+    expect(completed).toBe(false);
+    expect(errored).not.toBeNull();
+    expect(errored).not.toBeInstanceOf(ServerError);
+    expect(errored!.message).toContain("connection to the Mac was lost");
+    expect(clock.sleeps.length).toBe(1); // no second backoff wait
+    expect(fetchMock.calls.length).toBe(2); // no further resume attempts
+  });
+
+  it("(j) an exception thrown by onEvent is reported to onError, without a resume request", async () => {
+    const initial = resumableSseResponse({ generationId: "gen-j" });
+    const clock = fakeClock();
+
+    const fetchMock = sequentialFetch([() => initial.response]);
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as FetchImpl, {
+      sleep: clock.sleep,
+      now: clock.now,
+    });
+    client.setToken("t");
+
+    const thrown = new Error("boom: onEvent callback failed");
+    let errored: Error | null = null;
+    let completed = false;
+
+    const chatPromise = client.chat(
+      { model: "m", messages: [{ role: "user", content: "hi" }] },
+      {
+        onEvent: () => {
+          throw thrown;
+        },
+        onError: (error) => {
+          errored = error;
+        },
+        onComplete: () => {
+          completed = true;
+        },
+      }
+    );
+
+    await waitFor(() => fetchMock.calls.length >= 1, "initial chat request");
+    initial.push(sseEvent("gen-j-1", "content", { text: "x" }));
+
+    await chatPromise;
+
+    // Cast: same narrowing quirk as above (see the comment on
+    // startedGenerationId).
+    expect(errored as Error | null).toBe(thrown);
+    expect(completed).toBe(false);
+    expect(fetchMock.calls.length).toBe(1);
+    expect(clock.sleeps).toEqual([]);
+  });
+
+  it("(k) a drop on the resumed stream itself resumes again from the latest id", async () => {
+    const initial = resumableSseResponse({ generationId: "gen-k" });
+    const resumedOnce = resumableSseResponse({ generationId: "gen-k" });
+    const resumedTwice = resumableSseResponse({ generationId: "gen-k" });
+    const clock = fakeClock();
+
+    const fetchMock = sequentialFetch([
+      () => initial.response,
+      () => resumedOnce.response,
+      () => resumedTwice.response,
+    ]);
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as FetchImpl, {
+      sleep: clock.sleep,
+      now: clock.now,
+    });
+    client.setToken("t");
+
+    const events: StreamEvent[] = [];
+    let completed = false;
+
+    const chatPromise = client.chat(
+      { model: "m", messages: [{ role: "user", content: "hi" }] },
+      {
+        onEvent: (event) => events.push(event),
+        onError: () => {},
+        onComplete: () => {
+          completed = true;
+        },
+      }
+    );
+
+    await waitFor(() => fetchMock.calls.length >= 1, "initial chat request");
+    initial.push(sseEvent("gen-k-1", "content", { text: "a" }));
+    await waitFor(() => events.length === 1, "g-1 delivered");
+
+    initial.fail();
+    await waitFor(() => clock.sleeps.length === 1, "first backoff wait");
+    clock.release();
+    await waitFor(() => fetchMock.calls.length === 2, "first resume request");
+    expect(
+      (fetchMock.calls[1]!.init?.headers as Record<string, string>)[
+        "Last-Event-ID"
+      ]
+    ).toBe("gen-k-1");
+
+    resumedOnce.push(sseEvent("gen-k-2", "content", { text: "b" }));
+    await waitFor(() => events.length === 2, "g-2 delivered");
+
+    // The resumed stream itself drops before a terminal event.
+    resumedOnce.fail();
+    await waitFor(() => clock.sleeps.length === 2, "second backoff wait");
+    expect(clock.sleeps).toEqual([500, 500]); // attempt counter reset to 1
+    clock.release();
+    await waitFor(() => fetchMock.calls.length === 3, "second resume request");
+    expect(
+      (fetchMock.calls[2]!.init?.headers as Record<string, string>)[
+        "Last-Event-ID"
+      ]
+    ).toBe("gen-k-2");
+
+    resumedTwice.push(
+      sseEvent("gen-k-3", "done", {
+        status: "complete",
+        model: "m",
+        eval_count: 2,
+        tokens_per_second: 1,
+      })
+    );
+
+    await chatPromise;
+
+    expect(completed).toBe(true);
+    expect(events.map((e) => e.type)).toEqual(["content", "content", "done"]);
+    expect(fetchMock.calls.length).toBe(3);
   });
 });
 

@@ -22,6 +22,7 @@ import type {
   ErrorEvent,
   ConfirmationRequiredError as ConfirmationRequiredBody,
 } from "@shared/api";
+import { resumeDelayMs, RESUME_BUDGET_MS } from "./resume";
 
 export type StreamEvent =
   | { type: "thinking"; data: ThinkingEvent }
@@ -53,6 +54,64 @@ export type FetchImpl = (
   url: string,
   init?: RequestInit
 ) => Promise<Response>;
+
+/**
+ * Timer functions the resume loop (`chat()`) drives its backoff waits and
+ * budget tracking through, injectable via the constructor so tests can make
+ * a `RESUME_BUDGET_MS`-long loop run instantly and deterministically. Default
+ * to real timers / `Date.now` for production use.
+ */
+export interface ClientClock {
+  /**
+   * Wait `ms` milliseconds, resolving early (without rejecting) if `signal`
+   * aborts first -- the caller is responsible for checking
+   * `signal?.aborted` afterwards to tell a timeout from an abort.
+   */
+  sleep?: (ms: number, signal?: AbortSignal) => Promise<void>;
+  now?: () => number;
+}
+
+function defaultSleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve) => {
+    if (signal?.aborted) {
+      resolve();
+      return;
+    }
+    const timer = setTimeout(() => {
+      cleanup();
+      resolve();
+    }, ms);
+    const onAbort = () => {
+      cleanup();
+      resolve();
+    };
+    function cleanup(): void {
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", onAbort);
+    }
+    signal?.addEventListener("abort", onAbort);
+  });
+}
+
+/**
+ * Tracks the SSE `id:` field (`<generationId>-<seq>`) of the last event
+ * delivered to `onEvent` for one `chat()` call, so a resume request can
+ * carry `Last-Event-ID` and duplicate events (already-delivered seqs
+ * replayed by a resume) can be dropped.
+ */
+interface ResumeCursor {
+  lastId: string | null;
+  lastSeq: number | null;
+}
+
+/** Result of reading one SSE response body to completion or a drop. */
+type StreamOutcome = "terminal" | "aborted" | "drop";
+
+/** Result of driving the resume retry loop after a drop. */
+type ResumeOutcome =
+  | { outcome: "response"; response: Response }
+  | { outcome: "aborted" }
+  | { outcome: "error"; error: Error };
 
 /**
  * Thrown when the server rejects a request with 401 Unauthorized (missing or
@@ -124,10 +183,14 @@ export class APIClient {
   private baseUrl: string;
   private token: string = "";
   private fetchImpl: FetchImpl;
+  private sleepImpl: (ms: number, signal?: AbortSignal) => Promise<void>;
+  private nowImpl: () => number;
 
-  constructor(baseUrl: string, fetchImpl: FetchImpl) {
+  constructor(baseUrl: string, fetchImpl: FetchImpl, clock: ClientClock = {}) {
     this.baseUrl = baseUrl;
     this.fetchImpl = fetchImpl;
+    this.sleepImpl = clock.sleep ?? defaultSleep;
+    this.nowImpl = clock.now ?? Date.now;
   }
 
   setToken(token: string): void {
@@ -261,7 +324,79 @@ export class APIClient {
 
     options.onStart?.(generationId);
 
-    // Stream events from server
+    const cursor: ResumeCursor = { lastId: null, lastSeq: null };
+
+    try {
+      let currentResponse: Response = response;
+      let firstDropAt: number | null = null;
+
+      for (;;) {
+        const outcome = await this.readSSEStream(
+          currentResponse,
+          options,
+          cursor
+        );
+
+        if (outcome === "terminal" || outcome === "aborted") {
+          // "aborted" is normal cancellation (Stop): the caller's signal was
+          // aborted, so it sees the same completion it would without resume.
+          options.onComplete();
+          return generationId;
+        }
+
+        // outcome === "drop": a transport failure, not a caller abort (FR11).
+        // Re-attach to the same generation instead of ending the reply here.
+        if (firstDropAt === null) {
+          firstDropAt = this.nowImpl();
+        }
+
+        const resumed = await this.resumeStream(
+          generationId,
+          options,
+          cursor,
+          firstDropAt
+        );
+
+        if (resumed.outcome === "aborted") {
+          options.onComplete();
+          return generationId;
+        }
+        if (resumed.outcome === "error") {
+          options.onError(resumed.error);
+          return generationId;
+        }
+
+        currentResponse = resumed.response;
+      }
+    } catch (error) {
+      // Not a transport drop: most likely the caller's own onEvent threw
+      // (conversationSession.ts does this to route an `error` SSE event to
+      // onError). No resume is attempted for this.
+      options.onError(
+        error instanceof Error ? error : new Error(String(error))
+      );
+      return generationId;
+    }
+  }
+
+  /**
+   * Read one SSE response body, delivering each new event to `options.onEvent`
+   * and updating `cursor` with the last `id:` seen, until either a `done`
+   * event is delivered (returns "terminal", after cancelling the reader), the
+   * body ends without ever delivering `done`/`error` (returns "drop"), or
+   * `reader.read()` rejects (returns "aborted" if `options.signal` is already
+   * aborted, "drop" otherwise -- including an AbortError whose origin is not
+   * the caller's own signal).
+   *
+   * An exception thrown by `options.onEvent` itself is not caught here: it
+   * propagates to the caller, which is `chat()`'s own try/catch (AC8 -- that
+   * is not a drop and must not trigger a resume).
+   */
+  private async readSSEStream(
+    response: Response,
+    options: StreamOptions,
+    cursor: ResumeCursor
+  ): Promise<StreamOutcome> {
     const reader = response.body?.getReader();
     if (!reader) {
       throw new Error("Response body is not readable");
@@ -269,60 +404,199 @@ export class APIClient {
 
     const decoder = new TextDecoder();
     let buffer = "";
+    let terminalSeen = false;
 
-    try {
-      for (;;) {
-        const { done, value } = await reader.read();
-
-        if (done) {
-          options.onComplete();
-          break;
+    for (;;) {
+      let readResult: Awaited<ReturnType<typeof reader.read>>;
+      try {
+        readResult = await reader.read();
+      } catch {
+        if (options.signal?.aborted) {
+          return "aborted";
         }
-
-        buffer += decoder.decode(value, { stream: true });
-
-        // SSE events are separated by a blank line; keep the trailing
-        // incomplete event in the buffer
-        const blocks = buffer.split(/\r?\n\r?\n/);
-        buffer = blocks.pop() || "";
-
-        for (const block of blocks) {
-          let eventType = "";
-          const dataLines: string[] = [];
-          for (const line of block.split(/\r?\n/)) {
-            if (line.startsWith("event:")) {
-              eventType = line.slice(6).trim();
-            } else if (line.startsWith("data:")) {
-              dataLines.push(line.slice(5).replace(/^ /, ""));
-            }
-          }
-          if (!eventType || dataLines.length === 0) {
-            continue;
-          }
-          const event = this.parseSSEEvent(
-            eventType as "thinking" | "content" | "done" | "error",
-            dataLines.join("\n")
-          );
-          if (event) {
-            options.onEvent(event);
-          }
-        }
+        return "drop";
       }
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        error.name === "AbortError"
-      ) {
-        // Normal cancellation
-        options.onComplete();
-      } else {
-        options.onError(
-          error instanceof Error ? error : new Error(String(error))
+
+      const { done, value } = readResult;
+
+      if (done) {
+        return terminalSeen ? "terminal" : "drop";
+      }
+
+      buffer += decoder.decode(value, { stream: true });
+
+      // SSE events are separated by a blank line; keep the trailing
+      // incomplete event in the buffer
+      const blocks = buffer.split(/\r?\n\r?\n/);
+      buffer = blocks.pop() || "";
+
+      for (const block of blocks) {
+        let eventType = "";
+        let idLine: string | null = null;
+        const dataLines: string[] = [];
+        for (const line of block.split(/\r?\n/)) {
+          if (line.startsWith("event:")) {
+            eventType = line.slice(6).trim();
+          } else if (line.startsWith("data:")) {
+            dataLines.push(line.slice(5).replace(/^ /, ""));
+          } else if (line.startsWith("id:")) {
+            idLine = line.slice(3).trim();
+          }
+        }
+
+        let seq: number | null = null;
+        if (idLine) {
+          const match = idLine.match(/-(\d+)$/);
+          if (match) {
+            seq = Number(match[1]);
+          }
+        }
+
+        // Already delivered by an earlier attempt at this generation.
+        if (seq !== null && cursor.lastSeq !== null && seq <= cursor.lastSeq) {
+          continue;
+        }
+
+        if (!eventType || dataLines.length === 0) {
+          if (seq !== null) {
+            cursor.lastId = idLine;
+            cursor.lastSeq = seq;
+          }
+          continue;
+        }
+
+        const event = this.parseSSEEvent(
+          eventType as "thinking" | "content" | "done" | "error",
+          dataLines.join("\n")
         );
+
+        if (seq !== null) {
+          cursor.lastId = idLine;
+          cursor.lastSeq = seq;
+        }
+
+        if (!event) {
+          continue;
+        }
+
+        if (event.type === "done" || event.type === "error") {
+          terminalSeen = true;
+        }
+
+        options.onEvent(event);
+
+        if (event.type === "done") {
+          await reader.cancel().catch(() => {});
+          return "terminal";
+        }
       }
     }
+  }
 
-    return generationId;
+  /**
+   * Drive the resume retry loop after a drop (FR11): wait
+   * `resumeDelayMs(attempt)`, then `GET
+   * {baseUrl}/v1/generations/{generationId}/events` with `Last-Event-ID` set
+   * from `cursor.lastId` (omitted if none yet) and `signal: options.signal`.
+   * A network error or 502/503/504 counts as a failed attempt and retries
+   * (with the attempt counter incrementing); any other non-200 status ends
+   * the loop with a terminal error. Stops early, without a further request,
+   * if `options.signal` aborts (during the wait or the fetch) or if the
+   * budget since `firstDropAt` is exhausted when the next attempt would
+   * start.
+   */
+  private async resumeStream(
+    generationId: string,
+    options: StreamOptions,
+    cursor: ResumeCursor,
+    firstDropAt: number
+  ): Promise<ResumeOutcome> {
+    let attempt = 1;
+
+    for (;;) {
+      if (options.signal?.aborted) {
+        return { outcome: "aborted" };
+      }
+
+      if (this.nowImpl() - firstDropAt > RESUME_BUDGET_MS) {
+        return {
+          outcome: "error",
+          error: new Error(
+            "The connection to the Mac was lost and could not be restored."
+          ),
+        };
+      }
+
+      await this.sleepImpl(resumeDelayMs(attempt), options.signal);
+
+      if (options.signal?.aborted) {
+        return { outcome: "aborted" };
+      }
+
+      const headers = this.getHeaders();
+      if (cursor.lastId) {
+        headers["Last-Event-ID"] = cursor.lastId;
+      }
+
+      let response: Response;
+      try {
+        response = await this.fetchImpl(
+          `${this.baseUrl}/v1/generations/${generationId}/events`,
+          { method: "GET", headers, signal: options.signal }
+        );
+      } catch {
+        if (options.signal?.aborted) {
+          return { outcome: "aborted" };
+        }
+        attempt += 1;
+        continue;
+      }
+
+      if (response.status === 200) {
+        return { outcome: "response", response };
+      }
+
+      if (response.status === 401) {
+        return { outcome: "error", error: new UnauthorizedError() };
+      }
+
+      if (response.status === 404) {
+        const body = await this.parseErrorBody(response);
+        return {
+          outcome: "error",
+          error: new ServerError(
+            "unknown_generation",
+            body.message ?? "No such generation"
+          ),
+        };
+      }
+
+      if (
+        response.status === 502 ||
+        response.status === 503 ||
+        response.status === 504
+      ) {
+        attempt += 1;
+        continue;
+      }
+
+      const body = await this.parseErrorBody(response);
+      return {
+        outcome: "error",
+        error: new ServerError(body.error ?? "unknown_error", body.message),
+      };
+    }
+  }
+
+  /** Best-effort parse of a non-OK response's `{error, message}` JSON body. */
+  private async parseErrorBody(
+    response: Response
+  ): Promise<{ error?: string; message?: string }> {
+    try {
+      return await response.json();
+    } catch {
+      return {};
+    }
   }
 
   private parseSSEEvent(

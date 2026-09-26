@@ -3968,11 +3968,52 @@
             "reason_code": "ORDINARY_IMPLEMENTATION",
             "detail": "stream-reading and retry logic in one client module; drop vs Stop vs callback-exception classification is the risky part; fake-fetch unit tests are the oracle"
           },
-          "status": "PENDING",
-          "attempts": 0,
+          "status": "ACCEPTED",
+          "attempts": 1,
           "packet": ".harness/tasks/M4b-T1.md",
           "commit": null,
-          "attempt_log": []
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": null,
+              "verdict": "INTERRUPTED",
+              "base": "309f9e7",
+              "changed_files": [
+                "mobile/src/api/client.ts",
+                "mobile/src/api/client.test.ts",
+                "mobile/src/api/resume.ts",
+                "mobile/src/api/resume.test.ts"
+              ],
+              "note": "hit 40-turn limit with no report; uncommitted edits left in tree; continuation 1 dispatched with .harness/tasks/M4b-T1-handoff-1.md (no ladder rung spent)"
+            },
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M4b-T1-worker.log",
+              "verdict": "PASS",
+              "base": "309f9e7",
+              "continuation": 1,
+              "changed_files": [
+                "mobile/src/api/client.ts",
+                "mobile/src/api/client.test.ts",
+                "mobile/src/api/resume.ts",
+                "mobile/src/api/resume.test.ts"
+              ],
+              "verifier": {
+                "artifact": ".harness/evidence/M4b-T1-verifier.log",
+                "exit_code": 0,
+                "verdict": "PASS",
+                "tests_weakened": "NO",
+                "discrepancies": "NONE"
+              },
+              "note": "typecheck, 137 tests, lint, smoke:runtime 4/4; packet criteria 1-9 mapped to code and cases (a)-(k) at client.test.ts lines 538-1107. Verifier said case (c) assertions were modified; orchestrator checked git diff 309f9e7: the only removed line in client.test.ts is an import (widened to add FetchImpl), so no existing assertion changed."
+            }
+          ]
         },
         {
           "id": "M4b-T2",
