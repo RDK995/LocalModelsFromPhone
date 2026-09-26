@@ -36,6 +36,14 @@ export interface SendMessageCallbacks {
   /** The token was rejected with a 401 (FR13); `onError` is not called. */
   onUnauthorized: () => void;
   onComplete: () => void;
+  /**
+   * The model this send is going to, as soon as `GET /v1/state` confirms one
+   * is resident and before `POST /v1/chat` is made. The server's terminal
+   * `done` event already carries the model that produced a reply; this lets
+   * a caller (conversationSession.ts, M3-T2) fall back to the model a send
+   * targeted if that field were ever missing.
+   */
+  onModelResolved?: (model: string) => void;
   signal?: AbortSignal;
 }
 
@@ -71,6 +79,8 @@ export async function sendMessage(
     callbacks.onBlocked(NO_MODEL_LOADED_MESSAGE);
     return;
   }
+
+  callbacks.onModelResolved?.(resident);
 
   try {
     await client.chat(

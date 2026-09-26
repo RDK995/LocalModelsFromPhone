@@ -1,8 +1,20 @@
 /**
- * Main chat screen with streaming response
+ * Chat screen bound to a stored conversation (FR7/FR8, M3-T2): takes a
+ * conversation id as a route param, loads it from the M3-T1 store, and
+ * renders its persisted messages (each assistant reply shows the model that
+ * produced it). Sending goes through `sendInConversation`
+ * (src/chat/conversationSession.ts), which persists the prompt and the
+ * reply through the store -- once a send settles, the conversation is
+ * reloaded from the store rather than merged into React state by hand, so
+ * the store stays the single source of truth.
+ *
+ * The header keeps its own static "Chat" title (not the conversation's
+ * title): this is a judgment call (M3-T2's packet leaves it open), kept to
+ * minimize churn in the runtime-smoke text assertions that already look for
+ * "Chat".
  */
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
   TextInput,
@@ -16,28 +28,23 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { getToken } from "@/api/secureStoreToken";
 import { createAPIClient } from "@/api/expoFetchClient";
-import {
-  sendMessage,
-  stopGeneration,
-  UNAUTHORIZED_MESSAGE,
-} from "@/chat/chatController";
+import { stopGeneration, UNAUTHORIZED_MESSAGE } from "@/chat/chatController";
+import { sendInConversation } from "@/chat/conversationSession";
 import {
   applyStreamEvent,
   initialStreamAccumulator,
 } from "@/ui/streamReducer";
-
-interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  thinking?: string;
-}
+import { createConversationStore } from "@/store/conversationStore";
+import type { Conversation } from "@/store/conversationStore";
+import { asyncStoragePort } from "@/store/asyncStorage";
 
 export default function ChatScreen() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const [conversation, setConversation] = useState<Conversation | null>(null);
+  const [isLoadingConversation, setIsLoadingConversation] = useState(true);
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [thinking, setThinking] = useState("");
@@ -47,6 +54,16 @@ export default function ChatScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const router = useRouter();
   const clientRef = useRef(createAPIClient());
+  const storeRef = useRef(createConversationStore(asyncStoragePort));
+
+  const loadConversation = useCallback(async () => {
+    if (!id) {
+      return;
+    }
+    const found = await storeRef.current.get(id);
+    setConversation(found);
+    setIsLoadingConversation(false);
+  }, [id]);
 
   // Initialize client with token on mount
   useEffect(() => {
@@ -68,18 +85,16 @@ export default function ChatScreen() {
     initializeClient();
   }, [router]);
 
+  useEffect(() => {
+    loadConversation();
+  }, [loadConversation]);
+
   const handleSendMessage = async () => {
-    if (!inputText.trim() || isLoading) {
+    if (!inputText.trim() || isLoading || !id) {
       return;
     }
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: inputText.trim(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
+    const prompt = inputText.trim();
     setInputText("");
     setIsLoading(true);
     setThinking("");
@@ -100,69 +115,58 @@ export default function ChatScreen() {
       let accumulated = initialStreamAccumulator;
       let startedGenerationId: string | null = null;
 
-      await sendMessage(
-        clientRef.current,
-        messages.concat(userMessage).map((m) => ({
-          role: m.role,
-          content: m.content,
-        })),
-        {
-          onStart: (id) => {
-            startedGenerationId = id;
-            setGenerationId(id);
-          },
-          onEvent: (event) => {
-            if (event.type === "error") {
-              throw new Error(`${event.data.code}: ${event.data.message}`);
-            }
-            if (event.type === "done") {
-              console.log("Generation complete:", event.data);
-              return;
-            }
+      await sendInConversation(clientRef.current, storeRef.current, id, prompt, {
+        onStart: (genId) => {
+          startedGenerationId = genId;
+          setGenerationId(genId);
+        },
+        onEvent: (event) => {
+          if (event.type === "error") {
+            // Persistence and reporting happen via onError below; nothing
+            // further to accumulate for display.
+            return;
+          }
+          if (event.type === "done") {
+            return;
+          }
 
-            accumulated = applyStreamEvent(accumulated, event);
-            setThinking(accumulated.thinking);
-            setResponse(accumulated.content);
-            if (event.type === "content") {
-              // Scroll to bottom
-              scrollViewRef.current?.scrollToEnd({ animated: false });
-            }
-          },
-          onBlocked: (message) => {
-            setBlockedMessage(message);
-          },
-          onError: (error: Error) => {
-            Alert.alert("Error", error.message);
-          },
-          onUnauthorized: () => {
-            Alert.alert(
-              UNAUTHORIZED_MESSAGE,
-              "The password on this phone no longer matches the Mac. Paste the current one from the Mac (pbcopy < ~/.phone-models/token)."
-            );
-            router.push({
-              pathname: "/settings",
-              params: { updateToken: "1" },
-            });
-          },
-          onComplete: () => {
-            if (startedGenerationId) {
-              // Add assistant message to history
-              const assistantMessage: Message = {
-                id: startedGenerationId,
-                role: "assistant",
-                content: accumulated.content,
-                thinking: accumulated.thinking,
-              };
-              setMessages((prev) => [...prev, assistantMessage]);
-            }
-            setResponse("");
-            setThinking("");
-          },
-        }
-      );
+          accumulated = applyStreamEvent(accumulated, event);
+          setThinking(accumulated.thinking);
+          setResponse(accumulated.content);
+          if (event.type === "content") {
+            scrollViewRef.current?.scrollToEnd({ animated: false });
+          }
+        },
+        onBlocked: (message) => {
+          setBlockedMessage(message);
+        },
+        onError: (error: Error) => {
+          Alert.alert("Error", error.message);
+        },
+        onUnauthorized: () => {
+          Alert.alert(
+            UNAUTHORIZED_MESSAGE,
+            "The password on this phone no longer matches the Mac. Paste the current one from the Mac (pbcopy < ~/.phone-models/token)."
+          );
+          router.push({
+            pathname: "/settings",
+            params: { updateToken: "1" },
+          });
+        },
+        onComplete: () => {
+          void startedGenerationId;
+        },
+      });
     } finally {
       setIsLoading(false);
       setGenerationId(null);
+      setThinking("");
+      setResponse("");
+      // The store is the single source of truth for persisted messages:
+      // reload it now that sendInConversation has settled (complete,
+      // stopped, error, or blocked all persist through the store before
+      // resolving).
+      await loadConversation();
     }
   };
 
@@ -182,6 +186,8 @@ export default function ChatScreen() {
     }
   };
 
+  const messages = conversation?.messages ?? [];
+
   return (
     <SafeAreaView style={styles.container}>
       {/*
@@ -197,6 +203,9 @@ export default function ChatScreen() {
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Chat</Text>
           <View style={styles.headerLinks}>
+            <TouchableOpacity onPress={() => router.push("/conversations")}>
+              <Text style={styles.settingsButton}>Conversations</Text>
+            </TouchableOpacity>
             <TouchableOpacity onPress={() => router.push("/models")}>
               <Text style={styles.settingsButton}>Models</Text>
             </TouchableOpacity>
@@ -206,91 +215,108 @@ export default function ChatScreen() {
           </View>
         </View>
 
-        <ScrollView
-          ref={scrollViewRef}
-          style={styles.messagesContainer}
-          contentContainerStyle={styles.messagesContent}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="interactive"
-        >
-          {messages.map((message) => (
-            <View key={message.id} style={styles.messageGroup}>
-              {message.thinking && (
+        {isLoadingConversation ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#007AFF" />
+          </View>
+        ) : (
+          <>
+            <ScrollView
+              ref={scrollViewRef}
+              style={styles.messagesContainer}
+              contentContainerStyle={styles.messagesContent}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="interactive"
+            >
+              {messages.map((message) => (
+                <View key={message.id} style={styles.messageGroup}>
+                  {message.thinking && (
+                    <View style={styles.thinkingContainer}>
+                      <Text style={styles.thinkingLabel}>Thinking:</Text>
+                      <Text style={styles.thinkingText}>{message.thinking}</Text>
+                    </View>
+                  )}
+                  <View
+                    style={[
+                      styles.message,
+                      message.role === "user"
+                        ? styles.userMessage
+                        : styles.assistantMessage,
+                    ]}
+                  >
+                    <Text style={styles.messageText}>{message.content}</Text>
+                  </View>
+                  {message.role === "assistant" && message.model && (
+                    <Text style={styles.modelLabel}>{message.model}</Text>
+                  )}
+                </View>
+              ))}
+
+              {thinking && (
                 <View style={styles.thinkingContainer}>
                   <Text style={styles.thinkingLabel}>Thinking:</Text>
-                  <Text style={styles.thinkingText}>{message.thinking}</Text>
+                  <Text style={styles.thinkingText}>{thinking}</Text>
                 </View>
               )}
-              <View
-                style={[
-                  styles.message,
-                  message.role === "user"
-                    ? styles.userMessage
-                    : styles.assistantMessage,
-                ]}
-              >
-                <Text style={styles.messageText}>{message.content}</Text>
+
+              {response && (
+                <View style={styles.message}>
+                  <Text style={styles.messageText}>{response}</Text>
+                  {isLoading && <ActivityIndicator style={styles.loadingDots} />}
+                </View>
+              )}
+
+              {isLoading && !response && (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color="#007AFF" />
+                  <Text style={styles.loadingText}>Loading response...</Text>
+                </View>
+              )}
+            </ScrollView>
+
+            {blockedMessage && (
+              <View style={styles.blockedContainer}>
+                <Text style={styles.blockedText}>{blockedMessage}</Text>
+                <TouchableOpacity
+                  style={styles.loadModelButton}
+                  onPress={() => router.push("/models")}
+                >
+                  <Text style={styles.loadModelButtonText}>Load a model</Text>
+                </TouchableOpacity>
               </View>
-            </View>
-          ))}
+            )}
 
-          {thinking && (
-            <View style={styles.thinkingContainer}>
-              <Text style={styles.thinkingLabel}>Thinking:</Text>
-              <Text style={styles.thinkingText}>{thinking}</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={[styles.input, isLoading && styles.inputDisabled]}
+                placeholder="Type a message..."
+                value={inputText}
+                onChangeText={setInputText}
+                editable={!isLoading}
+                placeholderTextColor="#999"
+              />
+              {isLoading ? (
+                <TouchableOpacity
+                  style={[styles.button, styles.stopButton]}
+                  onPress={handleStop}
+                >
+                  <Text style={styles.buttonText}>Stop</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    !inputText.trim() && styles.buttonDisabled,
+                  ]}
+                  onPress={handleSendMessage}
+                  disabled={!inputText.trim()}
+                >
+                  <Text style={styles.buttonText}>Send</Text>
+                </TouchableOpacity>
+              )}
             </View>
-          )}
-
-          {response && (
-            <View style={styles.message}>
-              <Text style={styles.messageText}>{response}</Text>
-              {isLoading && <ActivityIndicator style={styles.loadingDots} />}
-            </View>
-          )}
-
-          {isLoading && !response && (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#007AFF" />
-              <Text style={styles.loadingText}>Loading response...</Text>
-            </View>
-          )}
-        </ScrollView>
-
-        {blockedMessage && (
-          <View style={styles.blockedContainer}>
-            <Text style={styles.blockedText}>{blockedMessage}</Text>
-          </View>
+          </>
         )}
-
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={[styles.input, isLoading && styles.inputDisabled]}
-            placeholder="Type a message..."
-            value={inputText}
-            onChangeText={setInputText}
-            editable={!isLoading}
-            placeholderTextColor="#999"
-          />
-          {isLoading ? (
-            <TouchableOpacity
-              style={[styles.button, styles.stopButton]}
-              onPress={handleStop}
-            >
-              <Text style={styles.buttonText}>Stop</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={[
-                styles.button,
-                !inputText.trim() && styles.buttonDisabled,
-              ]}
-              onPress={handleSendMessage}
-              disabled={!inputText.trim()}
-            >
-              <Text style={styles.buttonText}>Send</Text>
-            </TouchableOpacity>
-          )}
-        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -327,6 +353,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
   },
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 20,
+  },
   messagesContainer: {
     flex: 1,
   },
@@ -354,6 +386,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#000",
   },
+  modelLabel: {
+    fontSize: 11,
+    color: "#999",
+    marginTop: 2,
+    marginLeft: 4,
+  },
   thinkingContainer: {
     marginBottom: 8,
     paddingHorizontal: 12,
@@ -374,11 +412,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontStyle: "italic",
   },
-  loadingContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 20,
-  },
   loadingDots: {
     marginTop: 8,
   },
@@ -393,12 +426,25 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffe6e6",
     borderTopWidth: 1,
     borderTopColor: "#eee",
+    alignItems: "center",
+    gap: 8,
   },
   blockedText: {
     color: "#ff3b30",
     fontSize: 14,
     fontWeight: "500",
     textAlign: "center",
+  },
+  loadModelButton: {
+    backgroundColor: "#007AFF",
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  loadModelButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 13,
   },
   inputContainer: {
     flexDirection: "row",

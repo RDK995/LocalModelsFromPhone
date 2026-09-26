@@ -4,6 +4,6 @@
  * every file under that directory becomes an expo-router route.
  */
 
-export function initialRoute(token: string | null): "/chat" | "/setup" {
-  return token !== null ? "/chat" : "/setup";
+export function initialRoute(token: string | null): "/conversations" | "/setup" {
+  return token !== null ? "/conversations" : "/setup";
 }

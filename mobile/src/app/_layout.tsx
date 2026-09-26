@@ -68,6 +68,17 @@ export default function RootLayout() {
           headerShown: true,
         }}
       />
+      <Stack.Screen
+        name="conversations"
+        options={{
+          title: "Conversations",
+          // Conversations renders its own in-screen header (title + New
+          // chat + Models/Settings links), the same pattern chat.tsx uses
+          // (see M1-C9 above): hiding the Stack header keeps a single
+          // header.
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }

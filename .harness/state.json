@@ -3173,7 +3173,7 @@
           "status": "ACCEPTED",
           "attempts": 1,
           "packet": ".harness/tasks/M3-T1.md",
-          "commit": "",
+          "commit": "fe8b088",
           "attempt_log": [
             {
               "attempt": 3,
@@ -3201,13 +3201,104 @@
               "note": "86 tests (14 new store tests), typecheck, lint, smoke:runtime 3/3. Pre-existing repo-wide prettier drift (format:check, 24 files) not in the task's validation."
             }
           ]
+        },
+        {
+          "id": "M3-T2",
+          "scope": "Pure conversationSession (full history on every send, per-reply model from done event, stopped/error status, blocked with load-a-model message, title from first prompt), conversationList view-model, Conversations route (list newest first/create/open/delete), conversation-bound chat.tsx with model label and Load-a-model button, landing route /conversations",
+          "tests": "cd mobile && bun run typecheck && bun test src/store src/api src/ui src/chat src/app-routing (narrowed at split; smoke and lint moved to M3-T2b)",
+          "requirements": [
+            "FR7",
+            "FR8"
+          ],
+          "constraints": [
+            "no change to shared/, server/, mobile/src/api/",
+            "no new dependencies"
+          ],
+          "findings": [],
+          "criteria": [
+            "M3-AC1",
+            "M3-AC2",
+            "M3-AC3",
+            "M3-AC4",
+            "M3-AC5"
+          ],
+          "paths": [
+            "mobile/src/app/",
+            "mobile/src/chat/",
+            "mobile/src/ui/",
+            "mobile/src/app-routing/"
+          ],
+          "depends_on": [
+            "M3-T1"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "wires the M3-T1 store and existing send controller into expo-router screens plus one pure session module"
+          },
+          "status": "ACCEPTED",
+          "attempts": 1,
+          "packet": ".harness/tasks/M3-T2.md",
+          "commit": "",
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/tasks/M3-T2-handoff-1.md",
+              "verdict": "CONTINUE",
+              "note": "turn limit; session module done"
+            },
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "continuation": 1,
+              "artifact": ".harness/tasks/M3-T2-handoff-2.md",
+              "verdict": "CONTINUE",
+              "note": "turn limit; screens, routing done; smoke + 5 lint quote errors remain -> continuation cap reached, remainder split to M3-T2b"
+            },
+            {
+              "attempt": 3,
+              "role": "verifier",
+              "tier": "Mid",
+              "model": "sonnet",
+              "base": "fe8b088",
+              "changed_files": [
+                "mobile/src/chat/chatController.ts",
+                "mobile/src/chat/conversationSession.ts",
+                "mobile/src/chat/conversationSession.test.ts",
+                "mobile/src/ui/conversationList.ts",
+                "mobile/src/ui/conversationList.test.ts",
+                "mobile/src/app/conversations.tsx",
+                "mobile/src/app/chat.tsx",
+                "mobile/src/app/setup.tsx",
+                "mobile/src/app/_layout.tsx",
+                "mobile/src/app-routing/initialRoute.ts",
+                "mobile/src/app-routing/initialRoute.test.ts",
+                "mobile/src/app-routing/stackChildren.test.ts"
+              ],
+              "verifier": {
+                "artifact": ".harness/evidence/M3-T2-verifier.log",
+                "exit_code": 0,
+                "verdict": "PASS",
+                "tests_weakened": "NO",
+                "discrepancies": "NONE"
+              },
+              "note": "typecheck + 102 tests; app-routing test edits follow the genuine landing-route change /chat -> /conversations and 4 -> 5 declared screens"
+            }
+          ]
         }
       ],
       "reviews": [],
       "findings": [],
       "validation": [],
       "follow_ups": [
-        "Size/shape check at pickup: 5 criteria (run). Entry point: live POST /v1/chat over the tailnet through the app's own client and conversation logic (M3-AC2). Operational-complexity signal IMPLEMENTATION_PLUS_LIVE_PROOF present; SUBSYSTEMS_GT_3, CONCURRENCY_LIFECYCLE, PRODUCTION_FILES_GT_8 (~7), WORKER_TASKS_GT_6 (4 tasks), MULTIPLE_OUTCOMES judged absent (mobile only; server unchanged). One signal -> seam check: the live proof is a thin script over the same store and client, with no independently reviewable half, so M3 runs unsplit."
+        "Size/shape check at pickup: 5 criteria (run). Entry point: live POST /v1/chat over the tailnet through the app's own client and conversation logic (M3-AC2). Operational-complexity signal IMPLEMENTATION_PLUS_LIVE_PROOF present; SUBSYSTEMS_GT_3, CONCURRENCY_LIFECYCLE, PRODUCTION_FILES_GT_8 (~7), WORKER_TASKS_GT_6 (4 tasks), MULTIPLE_OUTCOMES judged absent (mobile only; server unchanged). One signal -> seam check: the live proof is a thin script over the same store and client, with no independently reviewable half, so M3 runs unsplit.",
+        "M3-T2: chat.tsx header also links back to /conversations (chat hides the Stack header); small addition beyond the packet's literal wording, left for review."
       ]
     },
     "M4": {

@@ -36,8 +36,9 @@ export default function SetupScreen() {
     setIsLoading(true);
     try {
       await saveToken(token.trim());
-      // Navigate to chat screen
-      router.replace("/chat");
+      // Navigate to the conversations list (FR7/FR8, M3-T2): setup no
+      // longer lands directly in a chat.
+      router.replace("/conversations");
     } catch (error) {
       Alert.alert(
         "Error",

@@ -33,8 +33,8 @@ describe("RootLayout <Stack> children", () => {
     expect(stackBody).not.toMatch(/<>|<\/>|<(React\.)?Fragment\b/);
   });
 
-  it("still declares the chat, settings, setup and models screens", () => {
-    for (const name of ["chat", "settings", "setup", "models"]) {
+  it("still declares the chat, settings, setup, models and conversations screens", () => {
+    for (const name of ["chat", "settings", "setup", "models", "conversations"]) {
       expect(stackBody).toContain(`name="${name}"`);
     }
   });
@@ -55,7 +55,7 @@ describe("RootLayout <Stack> children", () => {
     const screenStarts = [...stackBody.matchAll(/<Stack\.Screen\b/g)].map(
       m => m.index as number
     );
-    expect(screenStarts.length).toBe(4);
+    expect(screenStarts.length).toBe(5);
     for (const idx of screenStarts) {
       // The nearest preceding non-whitespace token must not be a
       // conditional-rendering operator (&&, the truthy/falsy side of a
