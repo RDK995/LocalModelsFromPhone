@@ -4470,7 +4470,7 @@
           "status": "ACCEPTED",
           "attempts": 1,
           "packet": ".harness/tasks/M5b-T1.md",
-          "commit": null,
+          "commit": "e6a3aa5",
           "attempt_log": [
             {
               "attempt": 3,
