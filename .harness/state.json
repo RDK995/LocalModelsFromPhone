@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M5",
+  "current_milestone": "M5a",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -16,9 +16,9 @@
     "FR8": "M3",
     "FR10": "M4a",
     "FR11": "M4b",
-    "FR15": "M5",
-    "FR16": "M5",
-    "FR17": "M5"
+    "FR15": "M5a",
+    "FR16": "M5b",
+    "FR17": "M5c"
   },
   "milestones": {
     "M1": {
@@ -4405,15 +4405,13 @@
         "M4c-T2 exceeded two worker continuations (turn limits during a live-run diagnosis); split into M4c-T3 once diagnosed."
       ]
     },
-    "M5": {
-      "id": "M5",
-      "title": "Always-on Mac tooling, plain-language errors, and PWA retirement",
-      "outcome": "The server and app bundle host survive a Mac reboot with no manual step, every failure mode shows a distinct plain-language message, and the old PWA is retired without disturbing the harness's own endpoint.",
-      "architecture": "C4, C8, C9",
+    "M5a": {
+      "id": "M5a",
+      "title": "Always-on server and bundle host",
+      "outcome": "The server and the app bundle host run under per-user LaunchAgents that restart them after a crash or a Mac reboot, so opening the project in Expo Go on the phone needs no manual step on the Mac. Split from M5 at pickup (4 criteria, within size) because of operational-complexity signals CONCURRENCY_LIFECYCLE + IMPLEMENTATION_PLUS_LIVE_PROOF (a required split), plus MULTIPLE_OUTCOMES; parts: M5a always-on LaunchAgents for server and bundle host (M5-AC1, M5-AC2), M5b plain-language error messages (M5-AC3), M5c PWA retirement (M5-AC4).",
+      "architecture": "C8, C9",
       "requirements": [
-        "FR15",
-        "FR16",
-        "FR17"
+        "FR15"
       ],
       "status": "TODO",
       "review_cycles": 0,
@@ -4438,13 +4436,85 @@
           "text": "Killing either the server process or the bundle host process causes it to restart automatically.",
           "status": "PENDING",
           "evidence": []
-        },
+        }
+      ],
+      "tasks": [],
+      "reviews": [],
+      "findings": [],
+      "validation": [],
+      "follow_ups": [],
+      "split_from": "M5",
+      "complexity_signals": [
+        "CONCURRENCY_LIFECYCLE",
+        "IMPLEMENTATION_PLUS_LIVE_PROOF",
+        "MULTIPLE_OUTCOMES"
+      ],
+      "split_reason": "Split from M5 at pickup (4 criteria, within size) because of operational-complexity signals CONCURRENCY_LIFECYCLE + IMPLEMENTATION_PLUS_LIVE_PROOF (a required split), plus MULTIPLE_OUTCOMES; parts: M5a always-on LaunchAgents for server and bundle host (M5-AC1, M5-AC2), M5b plain-language error messages (M5-AC3), M5c PWA retirement (M5-AC4).",
+      "split": {
+        "from": "M5",
+        "signals": [
+          "CONCURRENCY_LIFECYCLE",
+          "IMPLEMENTATION_PLUS_LIVE_PROOF",
+          "MULTIPLE_OUTCOMES"
+        ],
+        "criteria_before": 4,
+        "criteria_after": 4
+      }
+    },
+    "M5b": {
+      "id": "M5b",
+      "title": "Plain-language error messages",
+      "outcome": "The app shows a distinct plain-language message for each failure mode: Mac or server unreachable, Ollama down, wrong password, model failed to load, model no longer installed, and a reply already in progress. Second part of the M5 split (see M5a).",
+      "architecture": "C1, C2, C4",
+      "requirements": [
+        "FR16"
+      ],
+      "status": "TODO",
+      "review_cycles": 0,
+      "review_override": null,
+      "baseline": {
+        "commit": "",
+        "branch": ""
+      },
+      "as_built": {
+        "artifact": null,
+        "result": "PENDING"
+      },
+      "criteria": [
         {
           "id": "M5-AC3",
           "text": "The app shows a distinct message for each of: Mac or server unreachable, Ollama down, wrong password, model failed to load, model no longer installed, and reply already in progress.",
           "status": "PENDING",
           "evidence": []
-        },
+        }
+      ],
+      "tasks": [],
+      "reviews": [],
+      "findings": [],
+      "validation": [],
+      "follow_ups": [],
+      "split_from": "M5"
+    },
+    "M5c": {
+      "id": "M5c",
+      "title": "PWA retirement",
+      "outcome": "The old PWA's LaunchAgent and its Tailscale Serve /app handler are removed, leaving the harness's own / handler intact and the phoneToLocalModel repository untouched on disk. Third part of the M5 split (see M5a); runs last because FR17 requires this app's acceptance criteria to pass first.",
+      "architecture": "C9",
+      "requirements": [
+        "FR17"
+      ],
+      "status": "TODO",
+      "review_cycles": 0,
+      "review_override": null,
+      "baseline": {
+        "commit": "",
+        "branch": ""
+      },
+      "as_built": {
+        "artifact": null,
+        "result": "PENDING"
+      },
+      "criteria": [
         {
           "id": "M5-AC4",
           "text": "After retirement, /app no longer resolves, the PWA's LaunchAgent is gone, and the harness's / handler still works.",
@@ -4456,7 +4526,8 @@
       "reviews": [],
       "findings": [],
       "validation": [],
-      "follow_ups": []
+      "follow_ups": [],
+      "split_from": "M5"
     }
   }
 }
