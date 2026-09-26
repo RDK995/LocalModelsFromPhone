@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M5b",
+  "current_milestone": "M5a",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -4413,7 +4413,7 @@
       "requirements": [
         "FR16"
       ],
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -4421,14 +4421,14 @@
         "branch": "m5b-plain-errors"
       },
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M5b.md",
+        "result": "RECORDED \u2014 15/17 files attributed; components C1,C2,C5; 7 edges; 2 claim mismatches (C4 claimed but not modified; C5 modified but not claimed, covered by D-M5b-1)"
       },
       "criteria": [
         {
           "id": "M5-AC3",
           "text": "The app shows a distinct message for each of: Mac or server unreachable, Ollama down, wrong password, model failed to load, model no longer installed, and reply already in progress.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "Unit: errorMessages mapping and typed client errors (UnreachableError, ServerError codes incl. operation.error_code) with screen wiring -- .harness/evidence/M5b-T1-verifier.log; bodiless/null-body gateway 502/503/504 -> UnreachableError, ollama_down body unaffected -- mobile/src/api/client.test.ts (.harness/evidence/M5b-T3-verifier.log)",
             "Live (Mac Studio over tailnet + live Ollama): mobile/scripts/error-messages-proof.sh induces all six modes (bogus token; ollama cp/rm probe; mismatched-LoRA failed load; concurrent chat; Ollama killed; server LaunchAgent booted out) and asserts the app client + mapping yield six exact, pairwise-distinct sentences, then restores every service -- exit 0, .harness/evidence/M5b-T2-verifier.log"
@@ -4670,7 +4670,27 @@
           ]
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "PASS",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "MID_TIER_DIFF",
+          "diff_range": "69aed5333cdee09d7d1c38aa73fcfa06f2ff3c16..a664ee2",
+          "artifact": null,
+          "review_log": ".harness/evidence/M5b-review.log",
+          "per_criterion": {
+            "M5-AC3": "PASS"
+          },
+          "findings": {
+            "BLOCKER": 0,
+            "IMPORTANT": 0,
+            "OPTIONAL": 0
+          },
+          "notes": "Full-milestone scope. Reviewer re-ran server tests+typecheck, mobile typecheck/tests/lint and the live six-scenario error-messages-proof against the real Mac; exit 0, services and resident model restored. D-M5b-1 matches the diff; no drift."
+        }
+      ],
       "findings": [],
       "validation": [
         {

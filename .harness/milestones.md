@@ -233,7 +233,7 @@ Cycle 1: PASS, tier Mid (sonnet, MID_TIER_DIFF), full-milestone scope 1d74498fc5
 
 ## M5b — Plain-language error messages
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -245,11 +245,11 @@ C1, C2, C4
 
 ### As-Built
 
-Pending.
+.harness/as-built/M5b.md — RECORDED — 15/17 files attributed; components C1,C2,C5; 7 edges; 2 claim mismatches (C4 claimed but not modified; C5 modified but not claimed, covered by D-M5b-1)
 
 ### Acceptance Criteria
 
-- [ ] **M5-AC3**: The app shows a distinct message for each of: Mac or server unreachable, Ollama down, wrong password, model failed to load, model no longer installed, and reply already in progress.
+- [x] **M5-AC3**: The app shows a distinct message for each of: Mac or server unreachable, Ollama down, wrong password, model failed to load, model no longer installed, and reply already in progress.
 
 ### Baseline
 
@@ -272,7 +272,7 @@ The live proof temporarily stops Ollama and the server LaunchAgent and restores 
 
 ### Review
 
-Pending.
+Cycle 1: PASS, tier Mid (sonnet, MID_TIER_DIFF), full-milestone scope 69aed5333cdee09d7d1c38aa73fcfa06f2ff3c16..a664ee2; M5-AC3 PASS; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL; no report file (PASS). Reviewer re-ran server tests + typecheck and mobile typecheck, 173 unit tests, lint and the live six-scenario error-messages-proof against the real Mac; exit 0, services and resident model restored. D-M5b-1 matches the diff. — .harness/evidence/M5b-review.log
 
 ### Review Cycles
 
