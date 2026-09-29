@@ -4871,7 +4871,7 @@
       ],
       "traces": "AC15",
       "status": "REVIEW",
-      "review_cycles": 0,
+      "review_cycles": 1,
       "review_override": null,
       "baseline": {
         "commit": "662d1901ad22979562feda4dc08ac68a6fdda028",
@@ -5029,6 +5029,36 @@
           ],
           "status": "ACCEPTED",
           "commit": "534f971"
+        },
+        {
+          "id": "M6-C1",
+          "scope": "extraction offline: Defuddle useAsync false + rejecting fetch option; zero-network-call tests",
+          "findings": [
+            "M6-cycle1-F1"
+          ],
+          "tests": "cd /Users/ryankenny/Projects/CodingHarnessv2/search && bun install && bun test && bun run typecheck",
+          "paths": [
+            "search/src/extract/extract.ts",
+            "search/src/extract/extract.test.ts"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "NOT_LOW_RISK",
+            "detail": "closes an unguarded outbound network path from the SSRF-guarded component; design fixed by I18, so not Top"
+          },
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "evidence": ".harness/evidence/M6-C1-verifier.log"
+            }
+          ],
+          "packet": ".harness/tasks/M6-C1.md",
+          "status": "ACCEPTED",
+          "commit": "524e79e"
         }
       ],
       "reviews": [
@@ -5043,17 +5073,28 @@
           "review_log": ".harness/evidence/M6-review.log",
           "pre_correction": "953d0e30d0e9caef8acda19021867b8ee1266d4c",
           "correction_diff": "953d0e30d0e9caef8acda19021867b8ee1266d4c..HEAD",
-          "correction_files": [],
-          "files_outside_findings": "pending"
+          "correction_files": [
+            "search/src/extract/extract.test.ts",
+            "search/src/extract/extract.ts"
+          ],
+          "files_outside_findings": "none; both files are named by finding F1 (extract.ts fix, extract.test.ts offline test). Plus .harness/ records.",
+          "cycle_validation": {
+            "command": "cd /Users/ryankenny/Projects/CodingHarnessv2/search && bun install && bun test && bun run typecheck",
+            "exit": 0,
+            "result": "118 pass, 0 fail; typecheck clean",
+            "artifact": ".harness/evidence/M6-C1-verifier.log",
+            "note": "read-proof.sh (live) not re-run this cycle; the reviewer re-runs full milestone validation."
+          }
         }
       ],
       "findings": [
         {
           "id": "M6-cycle1-F1",
           "severity": "IMPORTANT",
-          "status": "OPEN",
+          "status": "CORRECTED",
           "correction_task": "M6-C1",
-          "report": ".harness/reviews/M6-cycle1.md"
+          "report": ".harness/reviews/M6-cycle1.md",
+          "commit": "524e79e"
         }
       ],
       "validation": [

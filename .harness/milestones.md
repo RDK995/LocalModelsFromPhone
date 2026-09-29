@@ -189,11 +189,15 @@ Routing: T1 Top (SECURITY) attempt 4 PASS; T2 Mid attempt 3 PASS; T3 Mid attempt
 
 Cycle 1: CHANGES REQUIRED (SUBSTANTIVE), tier Top (opus) — .harness/reviews/M6-cycle1.md (F1 IMPORTANT: Defuddle async extractors make unguarded outbound requests via globalThis.fetch); M6-AC1..AC4 PASS; reviewer validation exit 0 — .harness/evidence/M6-review.log
 Pre-correction: 953d0e30d0e9caef8acda19021867b8ee1266d4c (6d57379 plus the committed review report and log; no code change)
-Corrections: in progress.
+Corrections (each verifier-confirmed, committed):
+- M6-C1 F1 extraction makes no network requests: Defuddle gets `useAsync: false` and a `fetch` that rejects ("network access disabled during extraction") — Mid (NOT_LOW_RISK), attempt 3 PASS; three zero-call tests (globalThis.fetch recorder; dropbox .../status/123, x.com status, reddit comments URLs) Red on the old extract.ts (2 calls each, re-confirmed by verifier) then Green; bun test 118 pass, typecheck 0 — .harness/evidence/M6-C1-verifier.log; 524e79e
+Cycle-1 validation: `cd search && bun install && bun test && bun run typecheck` exit 0 (verifier). Live read-proof.sh not re-run this cycle; the reviewer re-runs full milestone validation.
+Correction diff: git diff 953d0e30d0e9caef8acda19021867b8ee1266d4c HEAD
+Files changed by corrections: search/src/extract/extract.ts; search/src/extract/extract.test.ts (plus .harness/ records). No file outside finding F1's scope.
 
 ### Review Cycles
 
-0
+1
 
 ### Follow-ups
 
