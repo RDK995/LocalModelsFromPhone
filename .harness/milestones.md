@@ -174,7 +174,7 @@ Pending.
 
 ### Evidence
 
-- M6-T1 — search/ scaffold + SSRF-guarded fetcher (search/src/fetch/): Top (SECURITY), attempt 4, PASS. Verifier re-ran `bun install && bun test && bun run typecheck` in search/: exit 0, 102 pass; files within allowlist; tests not weakened; no external network in tests; R6 proof re-checked by mutation (removing `lookup:` → 25 fail) — .harness/evidence/M6-T1-verifier.log. R6 resolved: Bun honours the custom lookup.
+- M6-T1 — search/ scaffold + SSRF-guarded fetcher (search/src/fetch/): Top (SECURITY), attempt 4, PASS. Verifier re-ran `bun install && bun test && bun run typecheck` in search/: exit 0, 102 pass; files within allowlist; tests not weakened; no external network in tests; R6 proof re-checked by mutation (removing `lookup:` → 25 fail) — .harness/evidence/M6-T1-verifier.log. R6 resolved: Bun honours the custom lookup. Commit a7166a0.
 
 Remaining (packets on disk): M6-T2 extraction + HTTP service (Mid, .harness/tasks/M6-T2.md), then M6-T3 live proof script (Mid, .harness/tasks/M6-T3.md).
 
