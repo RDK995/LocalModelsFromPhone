@@ -1,0 +1,103 @@
+VERIFICATION RUN: M6-T2
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/search && bun install && bun test && bun run typecheck
+Timestamp: 2026-09-29
+Exit Status: 0
+
+Output:
+bun install v1.4.0 (1381054db)
+Checked 33 installs across 32 packages (no changes) [4.00ms]
+
+bun test v1.4.0 (1381054db)
+ 115 pass
+ 0 fail
+ 227 expect() calls
+Ran 115 tests across 4 files. [1.74s]
+
+$ tsc --noEmit
+(typecheck passed with no output)
+
+Files Changed (from git status --porcelain):
+- search/bun.lock (modified)
+- search/package.json (modified, untracked but recorded)
+- search/src/index.ts (new, untracked)
+- search/src/http/server.ts (new, untracked)
+- search/src/http/server.test.ts (new, untracked)
+- search/src/extract/extract.ts (new, untracked)
+- search/src/extract/extract.test.ts (new, untracked)
+
+All files are within the Files Allowed To Change list.
+No changes to search/src/fetch/ (verified via git diff HEAD).
+
+Tests Weakened: NO
+- Fetch tests (addressPolicy.test.ts, fetchPage.test.ts) unchanged
+- No deleted assertions or loosened comparisons
+- All 115 tests pass, all conditions meet original intent
+
+Acceptance Criteria Exercised:
+1. Extractor removes boilerplate, keeps article and code blocks: 
+   - extractPage "extracts article markdown without boilerplate and keeps the code block"
+   - Verifies markdown contains article text, npm install command, and lacks NAVBOILERPLATE/SIDEBARBOILERPLATE/FOOTERBOILERPLATE
+
+2. Truncation with marker at 40,000 chars:
+   - extractPage "truncates over-long content with a marker"
+   - Verifies truncated=true, markdown ends with "[… truncated: page exceeded 40000 characters]", length bounded
+
+3. Truncated flag when fetcher cuts body:
+   - extractPage "marks truncated with the marker when the fetcher cut the body"
+   - Sets truncated=true and adds marker when bodyTruncated=true
+
+4. text/plain as-is:
+   - extractPage "returns text/plain as-is, truncated when long"
+   - Preserves HTML entities in plain text, respects truncation
+
+5. Service binds to loopback 127.0.0.1:
+   - "binds to loopback" 
+   - Asserts strict.hostname === "127.0.0.1"
+
+6. GET /v1/health:
+   - "GET /v1/health -> 200 {ok:true}"
+   - Returns 200 with {ok:true}
+
+7. Unknown route 404, wrong method 405:
+   - "unknown route -> 404 JSON; wrong method -> 405 JSON"
+   - /nope → 404 with {error:"not_found"}
+   - GET /v1/health → 405 (POST method on GET-only route)
+
+8. 400 bad_url for ftp scheme, missing url, invalid JSON:
+   - "400 bad_url for ftp scheme, missing url, and invalid JSON"
+   - ftp://example.com/ → 400
+   - Missing url field → 400
+   - Invalid JSON → 400
+
+9. 400 blocked_destination for loopback literals:
+   - "400 blocked_destination for loopback IPv4 and IPv6 literals (strict default)"
+   - 127.0.0.1:7789 and [::1] → 400 with {error:"blocked_destination"}
+   - Uses strict (default) variant, not lax override
+
+10. 200 success path with extracted markdown:
+    - "200 success path returns extracted markdown"
+    - Returns url, final_url, title, markdown, truncated
+    - Markdown extracted, boilerplate removed
+
+11. 415 unsupported_content:
+    - "415 unsupported_content"
+    - image/png → 415 with {error:"unsupported_content"}
+
+12. 502 fetch_failed with upstream status:
+    - "502 fetch_failed carries the upstream status"
+    - 404 upstream → 502 with {error:"fetch_failed", status:404}
+
+13. 504 timeout:
+    - "504 timeout"
+    - Slow server that never responds → 504 with {error:"timeout"}
+
+Other Verifications:
+- src/index.ts: calls startServer(port) with no fetchOptions override ✓
+- src/index.ts: port defaults to 7790, overridable via SEARCH_PORT env ✓
+- src/index.ts: hostname NOT overridable (hardcoded in Bun.serve) ✓
+- Server bound to 127.0.0.1 (line 70 of server.ts) ✓
+- No external network calls: all tests use localhost, injected test data, or mocked responses ✓
+- idleTimeout set to 60s (line 73) to prevent 15s fetch timeout cutoff ✓
+- Dependencies added: defuddle and linkedom ✓
+
+No Issues Found.
