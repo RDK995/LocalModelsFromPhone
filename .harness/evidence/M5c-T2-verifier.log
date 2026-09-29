@@ -1,0 +1,44 @@
+=== Command Run ===
+cd /Users/ryankenny/Projects/CodingHarnessv2 && bash -n ops/scripts/retire-pwa-proof.sh && bash ops/scripts/retire-pwa-proof.sh && ! lsof -nP -iTCP:7787 -sTCP:LISTEN
+
+=== Current Commit ===
+97572ed0facf9c2c083076ee626e681b9c93e77a
+
+=== Test Output ===
+Syntax check exit status: 0
+
+M5c retire-pwa proof (M5-AC4 / FR17)  (2026-09-29 15:24:15)
+repo commit: 97572ed0facf9c2c083076ee626e681b9c93e77a
+
+==== a. /app no longer resolves ====
+PASS tailscale serve status --json has no /app handler on :443 (got: absent)
+      curl https://ryans-mac-studio.tailc3648a.ts.net/app -> status 502 (curl exit 0)
+      body head: 
+PASS https://ryans-mac-studio.tailc3648a.ts.net/app does not return the PWA's content
+
+==== b. LaunchAgent gone ====
+PASS launchctl print gui/501/com.ryankenny.phone-pwa fails (LaunchAgent gone)
+PASS plist absent from ~/Library/LaunchAgents (/Users/ryankenny/Library/LaunchAgents/com.ryankenny.phone-pwa.plist)
+PASS nothing listens on 127.0.0.1:7788 (got 0 listener(s))
+
+==== c. Harness / handler still works ====
+PASS a pre-retirement tailscale-serve-status-*.json backup exists in /Users/ryankenny/.phone-models/retired-pwa (/Users/ryankenny/.phone-models/retired-pwa/tailscale-serve-status-20260929T141247Z.json)
+PASS :443 / still targets its original proxy (http://127.0.0.1:7787)
+      /app while sentinel is up: status 200, body: m5c-root-sentinel-f7f3390692b95f40
+PASS / handler routes through Tailscale Serve to 127.0.0.1:7787 (sentinel round-trip)
+
+==== d. :8443 mapping unchanged ====
+PASS https://ryans-mac-studio.tailc3648a.ts.net:8443/v1/state returns 401 (got 401)
+
+==== e. phoneToLocalModel untouched ====
+PASS phoneToLocalModel HEAD is 5c866080fbf58da3b5cf38a736536db29760cc7c (got 5c866080fbf58da3b5cf38a736536db29760cc7c)
+PASS phoneToLocalModel git status --porcelain is empty
+
+==== Result ====
+PASS: ALL CHECKS PASSED
+Proof script exit status: 0
+
+Lsof check exit status: 0
+
+=== Final Exit Status ===
+0 (all commands passed)

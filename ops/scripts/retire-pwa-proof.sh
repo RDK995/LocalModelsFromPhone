@@ -26,7 +26,17 @@ PWA_MARKER_REGEX='Phone Reasoning Surface|app\.webmanifest'
 FAILURES=0
 WORK="$(mktemp -d)"
 chmod 700 "$WORK"
-trap 'rm -rf "$WORK"' EXIT
+responder_pid=""
+
+cleanup() {
+  if [[ -n "$responder_pid" ]]; then
+    kill "$responder_pid" 2>/dev/null || true
+    wait "$responder_pid" 2>/dev/null || true
+  fi
+  rm -rf "$WORK"
+}
+
+trap 'cleanup' EXIT
 
 section() { printf '\n==== %s ====\n' "$1"; }
 pass() { printf 'PASS %s\n' "$1"; }
@@ -37,6 +47,99 @@ check() { # check <description> <command...>
   if "$@"; then pass "$desc"; else fail "$desc"; fi
 }
 now() { date '+%Y-%m-%d %H:%M:%S'; }
+
+check_root_routing() {
+  # Prove that :443 "/" still routes to 127.0.0.1:7787
+  local listener_exists
+  listener_exists="$(lsof -nP -iTCP:7787 -sTCP:LISTEN -t 2>/dev/null | wc -l | tr -d ' ')"
+
+  if [[ "$listener_exists" -gt 0 ]]; then
+    # Something is already listening on 7787; just verify curl gets a response
+    local root_http root_curl_exit
+    root_http="$(curl -s -m 10 -o "$WORK/root-body" -w '%{http_code}' "https://$TAILNET_NAME/" 2>"$WORK/root-curl-err")"
+    root_curl_exit=$?
+    if [[ $root_curl_exit -eq 0 ]] && [[ "$root_http" != "502" ]] && [[ "$root_http" != "000" ]]; then
+      pass "/ handler reaches the live harness on 7787 (got $root_http)"
+      return 0
+    else
+      fail "/ handler reaches the live harness on 7787 (got $root_http, curl exit $root_curl_exit)"
+      return 1
+    fi
+  else
+    # No listener; start a sentinel responder
+    local sentinel_suffix sentinel_body
+    sentinel_suffix="$(openssl rand -hex 8)"
+    if [[ -z "$sentinel_suffix" ]]; then
+      fail "/ handler routes through Tailscale Serve to 127.0.0.1:7787 (failed to generate random suffix)"
+      return 1
+    fi
+    sentinel_body="m5c-root-sentinel-$sentinel_suffix"
+
+    # Start the responder in the background
+    "$BUN" -e "Bun.serve({hostname:'127.0.0.1',port:7787,fetch:()=>new Response('$sentinel_body')})" &
+    responder_pid=$!
+
+    # Poll for the responder to be ready (up to ~50 tries with 1s timeout each)
+    local tries=0
+    while [[ $tries -lt 50 ]]; do
+      if curl -s -m 1 "http://127.0.0.1:7787/" >/dev/null 2>&1; then
+        break
+      fi
+      tries=$((tries + 1))
+    done
+
+    if [[ $tries -ge 50 ]]; then
+      fail "/ handler routes through Tailscale Serve to 127.0.0.1:7787 (responder failed to start)"
+      return 1
+    fi
+
+    # Now test the full routing: curl https://TAILNET_NAME/ should get the sentinel body
+    local root_http root_body root_curl_exit
+    root_http="$(curl -s -m 10 -o "$WORK/root-body" -w '%{http_code}' "https://$TAILNET_NAME/" 2>"$WORK/root-curl-err")"
+    root_curl_exit=$?
+    root_body="$(cat "$WORK/root-body" 2>/dev/null)"
+
+    if [[ $root_curl_exit -ne 0 ]]; then
+      fail "/ handler routes through Tailscale Serve to 127.0.0.1:7787 (curl failed with exit $root_curl_exit)"
+      return 1
+    elif [[ "$root_http" != "200" ]]; then
+      fail "/ handler routes through Tailscale Serve to 127.0.0.1:7787 (got status $root_http)"
+      return 1
+    elif [[ "$root_body" != "$sentinel_body" ]]; then
+      fail "/ handler routes through Tailscale Serve to 127.0.0.1:7787 (body mismatch: got '$root_body', expected '$sentinel_body')"
+      return 1
+    fi
+
+    # Check /app while the sentinel is up
+    local app_http app_body app_curl_exit
+    app_http="$(curl -s -m 10 -o "$WORK/app-body-sentinel" -w '%{http_code}' "https://$TAILNET_NAME/app" 2>"$WORK/app-curl-err-sentinel")"
+    app_curl_exit=$?
+    app_body="$(cat "$WORK/app-body-sentinel" 2>/dev/null)"
+
+    if [[ $app_curl_exit -eq 0 ]] && printf '%s' "$app_body" | grep -qE "$PWA_MARKER_REGEX"; then
+      fail "/app does not return PWA while sentinel is up (found PWA marker: $(printf '%s' "$app_body" | head -c 100))"
+      return 1
+    fi
+    info "/app while sentinel is up: status $app_http, body: $(printf '%s' "$app_body" | head -c 100)"
+
+    pass "/ handler routes through Tailscale Serve to 127.0.0.1:7787 (sentinel round-trip)"
+
+    # Kill the responder
+    kill "$responder_pid" 2>/dev/null || true
+    wait "$responder_pid" 2>/dev/null || true
+    responder_pid=""
+
+    # Verify nothing listens on 7787 after cleanup
+    local listener_after
+    listener_after="$(lsof -nP -iTCP:7787 -sTCP:LISTEN -t 2>/dev/null | wc -l | tr -d ' ')"
+    if [[ "$listener_after" -ne 0 ]]; then
+      fail "nothing listens on 127.0.0.1:7787 after check (found $listener_after listener(s))"
+      return 1
+    fi
+
+    return 0
+  fi
+}
 
 echo "M5c retire-pwa proof (M5-AC4 / FR17)  ($(now))"
 echo "repo commit: $(git -C "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)" rev-parse HEAD 2>/dev/null || echo NON-GIT)"
@@ -124,10 +227,7 @@ else
     test "$CURRENT_ROOT_TARGET" = "$ORIGINAL_ROOT_TARGET"
 fi
 
-ROOT_HTTP="$(curl -s -m 10 -o "$WORK/root-body" -w '%{http_code}' "https://$TAILNET_NAME/" 2>"$WORK/root-curl-err")"
-ROOT_CURL_EXIT=$?
-info "curl https://$TAILNET_NAME/ -> status $ROOT_HTTP (curl exit $ROOT_CURL_EXIT); compare against the"
-info "pre-retirement capture in the evidence log -- this script has no machine-readable record of it."
+check_root_routing
 
 # ---------------------------------------------------------------------------
 section "d. :8443 mapping unchanged"
