@@ -1,0 +1,180 @@
+=== M5c-T1 live run: 2026-09-29T14:12:42Z ===
+repo commit: 52bc8248c798fe91e1029cb27b7f28e60b881fbb
+
+---- PRE-RETIREMENT STATE ----
+-- tailscale serve status --json --
+{
+  "TCP": {
+    "443": {
+      "HTTPS": true
+    },
+    "8443": {
+      "HTTPS": true
+    }
+  },
+  "Web": {
+    "ryans-mac-studio.tailc3648a.ts.net:443": {
+      "Handlers": {
+        "/": {
+          "Proxy": "http://127.0.0.1:7787"
+        },
+        "/app": {
+          "Proxy": "http://127.0.0.1:7788"
+        }
+      }
+    },
+    "ryans-mac-studio.tailc3648a.ts.net:8443": {
+      "Handlers": {
+        "/": {
+          "Proxy": "http://127.0.0.1:7789"
+        }
+      }
+    }
+  }
+}
+
+-- curl https://ryans-mac-studio.tailc3648a.ts.net/app (status + first 200 bytes) --
+HTTP_STATUS=200
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+	<title>Phone Reasoning Surface</title>
+	<styl
+
+-- curl https://ryans-mac-studio.tailc3648a.ts.net/ (status + first 200 bytes) --
+HTTP_STATUS=502
+
+
+-- launchctl print gui/501/com.ryankenny.phone-pwa --
+gui/501/com.ryankenny.phone-pwa = {
+	active count = 1
+	path = /Users/ryankenny/Library/LaunchAgents/com.ryankenny.phone-pwa.plist
+	type = LaunchAgent
+	state = running
+
+	program = /Users/ryankenny/.bun/bin/bun
+	arguments = {
+		/Users/ryankenny/.bun/bin/bun
+		--watch
+		run
+		/Users/ryankenny/Projects/phoneToLocalModel/src/host/pwa-server.ts
+	}
+
+	working directory = /Users/ryankenny/Projects/phoneToLocalModel
+
+	stdout path = /Users/ryankenny/Library/Logs/phone-pwa/stdout.log
+	stderr path = /Users/ryankenny/Library/Logs/phone-pwa/stderr.log
+	inherited environment = {
+		SSH_AUTH_SOCK => /var/run/com.apple.launchd.xRMwqENwqb/Listeners
+	}
+
+	default environment = {
+		PATH => /usr/bin:/bin:/usr/sbin:/sbin
+	}
+
+	environment = {
+		OSLogRateLimit => 64
+		PHONE_PWA_PORT => 7788
+		PHONE_PWA_BUNDLE_ROOT => /Users/ryankenny/Projects/phoneToLocalModel/web/dist
+
+---- FIRST RUN: retire-pwa.sh ----
+Backed up plist: /Users/ryankenny/Library/LaunchAgents/com.ryankenny.phone-pwa.plist -> /Users/ryankenny/.phone-models/retired-pwa/com.ryankenny.phone-pwa.plist.backup
+Backed up tailscale serve status --json: /Users/ryankenny/.phone-models/retired-pwa/tailscale-serve-status-20260929T141247Z.json
+Removing :443 /app Serve handler...
+Removed :443 /app Serve handler.
+Unloading LaunchAgent com.ryankenny.phone-pwa...
+Unloaded LaunchAgent com.ryankenny.phone-pwa.
+Moved plist: /Users/ryankenny/Library/LaunchAgents/com.ryankenny.phone-pwa.plist -> /Users/ryankenny/.phone-models/retired-pwa/com.ryankenny.phone-pwa.plist
+
+To undo this retirement:
+  cp "/Users/ryankenny/.phone-models/retired-pwa/com.ryankenny.phone-pwa.plist" "/Users/ryankenny/Library/LaunchAgents/com.ryankenny.phone-pwa.plist"
+  launchctl bootstrap gui/501 "/Users/ryankenny/Library/LaunchAgents/com.ryankenny.phone-pwa.plist"
+  tailscale serve --bg --https=443 --set-path=/app http://127.0.0.1:7788
+EXIT_STATUS=0
+
+---- SECOND RUN: retire-pwa.sh (idempotence) ----
+already retired: pre-flight backup already exists at /Users/ryankenny/.phone-models/retired-pwa/com.ryankenny.phone-pwa.plist.backup
+already retired: :443 /app Serve handler
+already retired: LaunchAgent com.ryankenny.phone-pwa is not loaded
+already retired: plist not present at /Users/ryankenny/Library/LaunchAgents/com.ryankenny.phone-pwa.plist
+
+To undo this retirement:
+  cp "/Users/ryankenny/.phone-models/retired-pwa/com.ryankenny.phone-pwa.plist" "/Users/ryankenny/Library/LaunchAgents/com.ryankenny.phone-pwa.plist"
+  launchctl bootstrap gui/501 "/Users/ryankenny/Library/LaunchAgents/com.ryankenny.phone-pwa.plist"
+  tailscale serve --bg --https=443 --set-path=/app http://127.0.0.1:7788
+EXIT_STATUS=0
+
+---- retire-pwa-proof.sh ----
+M5c retire-pwa proof (M5-AC4 / FR17)  (2026-09-29 15:13:07)
+repo commit: 52bc8248c798fe91e1029cb27b7f28e60b881fbb
+
+==== a. /app no longer resolves ====
+PASS tailscale serve status --json has no /app handler on :443 (got: absent)
+      curl https://ryans-mac-studio.tailc3648a.ts.net/app -> status 502 (curl exit 0)
+      body head: 
+PASS https://ryans-mac-studio.tailc3648a.ts.net/app does not return the PWA's content
+
+==== b. LaunchAgent gone ====
+PASS launchctl print gui/501/com.ryankenny.phone-pwa fails (LaunchAgent gone)
+PASS plist absent from ~/Library/LaunchAgents (/Users/ryankenny/Library/LaunchAgents/com.ryankenny.phone-pwa.plist)
+PASS nothing listens on 127.0.0.1:7788 (got 0 listener(s))
+
+==== c. Harness / handler still works ====
+PASS a pre-retirement tailscale-serve-status-*.json backup exists in /Users/ryankenny/.phone-models/retired-pwa (/Users/ryankenny/.phone-models/retired-pwa/tailscale-serve-status-20260929T141247Z.json)
+PASS :443 / still targets its original proxy (http://127.0.0.1:7787)
+      curl https://ryans-mac-studio.tailc3648a.ts.net/ -> status 502 (curl exit 0); compare against the
+      pre-retirement capture in the evidence log -- this script has no machine-readable record of it.
+
+==== d. :8443 mapping unchanged ====
+PASS https://ryans-mac-studio.tailc3648a.ts.net:8443/v1/state returns 401 (got 401)
+
+==== e. phoneToLocalModel untouched ====
+PASS phoneToLocalModel HEAD is 5c866080fbf58da3b5cf38a736536db29760cc7c (got 5c866080fbf58da3b5cf38a736536db29760cc7c)
+PASS phoneToLocalModel git status --porcelain is empty
+
+==== Result ====
+PASS: ALL CHECKS PASSED
+EXIT_STATUS=0
+
+---- Packet Tests command (bash -n x2 && retire-pwa.sh (idempotent run) && retire-pwa-proof.sh) ----
+already retired: pre-flight backup already exists at /Users/ryankenny/.phone-models/retired-pwa/com.ryankenny.phone-pwa.plist.backup
+already retired: :443 /app Serve handler
+already retired: LaunchAgent com.ryankenny.phone-pwa is not loaded
+already retired: plist not present at /Users/ryankenny/Library/LaunchAgents/com.ryankenny.phone-pwa.plist
+
+To undo this retirement:
+  cp "/Users/ryankenny/.phone-models/retired-pwa/com.ryankenny.phone-pwa.plist" "/Users/ryankenny/Library/LaunchAgents/com.ryankenny.phone-pwa.plist"
+  launchctl bootstrap gui/501 "/Users/ryankenny/Library/LaunchAgents/com.ryankenny.phone-pwa.plist"
+  tailscale serve --bg --https=443 --set-path=/app http://127.0.0.1:7788
+M5c retire-pwa proof (M5-AC4 / FR17)  (2026-09-29 15:13:29)
+repo commit: 52bc8248c798fe91e1029cb27b7f28e60b881fbb
+
+==== a. /app no longer resolves ====
+PASS tailscale serve status --json has no /app handler on :443 (got: absent)
+      curl https://ryans-mac-studio.tailc3648a.ts.net/app -> status 502 (curl exit 0)
+      body head: 
+PASS https://ryans-mac-studio.tailc3648a.ts.net/app does not return the PWA's content
+
+==== b. LaunchAgent gone ====
+PASS launchctl print gui/501/com.ryankenny.phone-pwa fails (LaunchAgent gone)
+PASS plist absent from ~/Library/LaunchAgents (/Users/ryankenny/Library/LaunchAgents/com.ryankenny.phone-pwa.plist)
+PASS nothing listens on 127.0.0.1:7788 (got 0 listener(s))
+
+==== c. Harness / handler still works ====
+PASS a pre-retirement tailscale-serve-status-*.json backup exists in /Users/ryankenny/.phone-models/retired-pwa (/Users/ryankenny/.phone-models/retired-pwa/tailscale-serve-status-20260929T141247Z.json)
+PASS :443 / still targets its original proxy (http://127.0.0.1:7787)
+      curl https://ryans-mac-studio.tailc3648a.ts.net/ -> status 502 (curl exit 0); compare against the
+      pre-retirement capture in the evidence log -- this script has no machine-readable record of it.
+
+==== d. :8443 mapping unchanged ====
+PASS https://ryans-mac-studio.tailc3648a.ts.net:8443/v1/state returns 401 (got 401)
+
+==== e. phoneToLocalModel untouched ====
+PASS phoneToLocalModel HEAD is 5c866080fbf58da3b5cf38a736536db29760cc7c (got 5c866080fbf58da3b5cf38a736536db29760cc7c)
+PASS phoneToLocalModel git status --porcelain is empty
+
+==== Result ====
+PASS: ALL CHECKS PASSED
+EXIT_STATUS=0

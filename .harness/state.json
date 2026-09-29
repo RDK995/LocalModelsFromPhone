@@ -4715,12 +4715,12 @@
       "requirements": [
         "FR17"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
-        "commit": "",
-        "branch": ""
+        "commit": "52bc8248c798fe91e1029cb27b7f28e60b881fbb",
+        "branch": "m5c-pwa-retirement"
       },
       "as_built": {
         "artifact": null,
