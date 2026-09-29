@@ -88,49 +88,7 @@ Status: DONE
 
 The app shows a distinct plain-language message for each failure mode: Mac or server unreachable, Ollama down, wrong password, model failed to load, model no longer installed, and a reply already in progress. Second part of the M5 split (see M5a). Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; seam check: the live proof is the criterion itself, so separating it would leave a component-only half — not split).
 
-### Architecture
-
-C1, C2, C4
-
-### As-Built
-
-.harness/as-built/M5b.md — RECORDED — 15/17 files attributed; components C1,C2,C5; 7 edges; 2 claim mismatches (C4 claimed but not modified; C5 modified but not claimed, covered by D-M5b-1)
-
-### Acceptance Criteria
-
-- [x] **M5-AC3**: The app shows a distinct message for each of: Mac or server unreachable, Ollama down, wrong password, model failed to load, model no longer installed, and reply already in progress.
-
-### Baseline
-
-69aed5333cdee09d7d1c38aa73fcfa06f2ff3c16 on m5b-plain-errors
-
-### Evidence
-
-Tasks (packets under .harness/tasks/):
-- M5b-T1 — error mapping + client/server/screens + unit tests: Mid (ORDINARY_IMPLEMENTATION). Attempt 3 CONTINUE (turn limit, handoff-1) → continuation 1 PASS; verifier PASS exit 0 (server 109, mobile 167 tests; typecheck, lint clean), tests weakened NO — .harness/evidence/M5b-T1-verifier.log. Accepted. Architecture deviation D-M5b-1 (operation.error_code, Material: no) recorded.
-- M5b-T2 — live six-failure proof script: Mid (ORDINARY_IMPLEMENTATION). Attempt 3 INTERRUPTED (turn limit, no report; services checked healthy; fresh resume, no rung) → attempt 3 FAIL: 5/6 PASS, scenario 6 exposed a product defect in client.ts (Tailscale proxy answers bodiless 502 when the server is down; client threw TypeError instead of UnreachableError) — script not at fault, correction routed as M5b-T3 → after T3, verifier re-run PASS exit 0, 6/6 PASS, pairwise distinct, services restored — .harness/evidence/M5b-T2-verifier.log. Accepted, f0dd837.
-- M5b-T3 — correction: bodiless/null-body gateway 502/503/504 → UnreachableError (getState, load/unload, chat start); JSON error bodies and resume retry unchanged: Mid (ORDINARY_IMPLEMENTATION), attempt 3 PASS; verifier PASS exit 0 (mobile 173 tests, typecheck, lint), tests weakened NO — .harness/evidence/M5b-T3-verifier.log. Accepted, e82554a.
-
-M5-AC3 evidence (for the reviewer's table): unit — M5b-T1 and M5b-T3 verifier logs; live — mobile/scripts/error-messages-proof.sh against the Mac Studio over the tailnet and live Ollama, six exact pairwise-distinct sentences, exit 0 (.harness/evidence/M5b-T2-verifier.log).
-
-### Validation
-
-`cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd server && bun test && bun run typecheck) && (cd mobile && bun run typecheck && bun test && bun run lint && bash scripts/error-messages-proof.sh)`
-
-The live proof temporarily stops Ollama and the server LaunchAgent and restores both via trap (about 4 minutes). Never reboot the Mac. Scenario 3's mismatched-LoRA failed load was once seen to load successfully (pre-existing flake shared with model-failed-load-proof.sh); one rerun is reasonable if only scenario 3 fails.
-
-### Review
-
-Cycle 1: PASS, tier Mid (sonnet, MID_TIER_DIFF), full-milestone scope 69aed5333cdee09d7d1c38aa73fcfa06f2ff3c16..a664ee2; M5-AC3 PASS; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL; no report file (PASS). Reviewer re-ran server tests + typecheck and mobile typecheck, 173 unit tests, lint and the live six-scenario error-messages-proof against the real Mac; exit 0, services and resident model restored. D-M5b-1 matches the diff. — .harness/evidence/M5b-review.log
-
-### Review Cycles
-
-0
-
-### Follow-ups
-
-- New feature requested by the human 2026-09-26, out of scope for current requirements: internet (web) search for the models, e.g. via Ollama's web search / tool calling. Needs roast-requirements (search provider and privacy, which models, how the app shows searching and sources) before any implementation.
-- Scenario 3 of error-messages-proof.sh (and model-failed-load-proof.sh) relies on a mismatched LoRA adapter failing to load; the M5b-T2 worker saw it load successfully once. A more deterministic failed-load induction would make both proofs less flaky.
+Detail: `.harness/archive/M5b.md`
 
 ## M5c — PWA retirement
 
@@ -184,6 +142,375 @@ Cycle 1: PASS, tier Mid (sonnet, MID_TIER_DIFF), full-milestone scope 52bc8248c7
 - Reordered 2026-09-29 by the human: M5c runs before M5a while M5a still awaits reboot attempt 2 for M5-AC1 (human busy on the Mac). FR17's ordering ('after this app's acceptance criteria pass') is waived by the human for this milestone only, accepting the risk that there is no fallback PWA if reboot attempt 2 fails. M5a stays BLOCKED until the reboot evidence exists.
 - ops/scripts/verify-ops-install.sh does not list retire-pwa.sh / retire-pwa-proof.sh in required_scripts. Not needed for M5-AC4; left out of scope.
 - retire-pwa-proof.sh check_root_routing: the readiness poll is 50 `curl --max-time 1` tries with no delay; connection-refused returns instantly, so the wait is bounded by count (well under a second), not ~50s. Passed twice live; could spuriously fail on a slow bun start. Consider a time-based bound.
+
+## M6 — The search service reads a web page safely over loopback
+
+Status: TODO
+
+### Outcome
+
+A new loopback-only search service on 127.0.0.1:7790 answers POST /v1/read: it fetches a public page on the Mac and returns its main content as markdown, truncated and marked when too long, and refuses local, private, tailnet and other non-public destinations at connect time, including via redirects. First web milestone: proves risk R6 (Bun honouring a custom lookup) before anything depends on it. Planned 2026-09-29 for FR18-FR25; operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; seam check: the live fetches are the criteria themselves, so separating them would leave a component-only half - not split).
+
+Owns: FR21. Traces to: AC15.
+
+### Architecture
+
+C13, C15
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M6-AC1**: POST /v1/read on the search service (127.0.0.1:7790) with a real public article URL returns 200 with its main text as markdown (boilerplate removed) and truncated false; a page longer than the size limit comes back truncated true with a truncation marker.
+- [ ] **M6-AC2**: POST /v1/read refuses with 400 blocked_destination each of http://127.0.0.1:7789, http://localhost, a 100.x tailnet address, a 192.168.x.x address, http://[::1], and a hostname that resolves to 127.0.0.1; the check is made on the address actually connected to (no DNS-rebinding gap).
+- [ ] **M6-AC3**: A public URL that redirects to any blocked destination is refused (every redirect hop re-checked), and a non-http(s) scheme returns 400 bad_url.
+- [ ] **M6-AC4**: Non-text content returns 415 unsupported_content, and a fetch exceeding its time limit returns 504 timeout instead of hanging.
+
+### Baseline
+
+
+### Evidence
+
+
+### Validation
+
+Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2/search && bun test && bun run typecheck && bash scripts/read-proof.sh`
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+- R6: if Bun ignores the custom lookup, moving page fetching into C14 changes which component owns a responsibility - a Material deviation needing human agreement, not a silent workaround.
+
+## M7 — The search service answers web searches with no account, falling back to a headless browser
+
+Status: TODO
+
+### Outcome
+
+POST /v1/search on the search service returns UK/English results from ddgs run in a short-lived Python helper; when ddgs errors or returns nothing, a headless Chromium started on demand performs the search and is closed afterwards; when both fail the service says search is unavailable. The ops tooling installs the helper's Python venv, ddgs, Playwright and Chromium. Proves risk R7 (ddgs on Python 3.14, engine blocking). Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; seam check: live engines are the criteria - not split).
+
+Owns: FR20. Traces to: AC16 (browser fallback), FR24 (service time limit).
+
+### Architecture
+
+C9, C13, C14, C15
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M7-AC1**: POST /v1/search {query} returns 200 with results [{title,url,snippet}] and backend ddgs, requested for region UK/English, using a helper venv created by an ops installer (Python, ddgs, Playwright, Chromium); no account, API key or payment is involved.
+- [ ] **M7-AC2**: With ddgs forced to fail or to return nothing, the same request returns results with backend browser, and no headless Chromium process remains afterwards.
+- [ ] **M7-AC3**: With both backends forced to fail, the service returns 503 search_unavailable; a search exceeding its time limit returns 504 timeout and its helper process is killed.
+
+### Baseline
+
+
+### Evidence
+
+
+### Validation
+
+Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/install-search-helper.sh && (cd search && bun test && bun run typecheck && bash scripts/search-proof.sh)`
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+- R7: if ddgs does not install on Python 3.14, pin a compatible Homebrew Python for the venv (architecture R7); results are best-effort by requirement.
+
+## M8 — The search service is always on, loopback only, with a documented API
+
+Status: TODO
+
+### Outcome
+
+The search service runs under its own per-user LaunchAgent (com.harness.search) that restarts it after it is killed, answers only on loopback with no token and no Tailscale Serve mapping, and its HTTP API is documented so OpenCode can use it later. Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; the LaunchAgent follows the existing C9 pattern and changes no existing lifecycle ownership - not split).
+
+Owns: FR25. Traces to: AC19.
+
+### Architecture
+
+C9, C13
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M8-AC1**: The search service runs under the per-user LaunchAgent com.harness.search and answers GET /v1/health on 127.0.0.1:7790; killing its process makes launchd restart it and it answers again.
+- [ ] **M8-AC2**: The service is not reachable on the Mac's tailnet address or LAN address, no Tailscale Serve mapping points at it, and it requires no token.
+- [ ] **M8-AC3**: The HTTP API (search, read, health: requests, responses, errors) is documented in the repository, and each documented route answers as documented on loopback.
+
+### Baseline
+
+
+### Evidence
+
+
+### Validation
+
+Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/verify-ops-install.sh && bash ops/scripts/search-service-proof.sh`
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+None.
+
+## M9 — The server answers a web-enabled chat by running the model's search tool loop
+
+Status: TODO
+
+### Outcome
+
+POST /v1/chat with web:true makes the server offer web_search and read_page to the resident model through Ollama tool calling, with the current date, run each call against the search service, stream step and sources events, and cap a reply at 10 tool calls; GET /v1/state reports each model's tools capability. Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; the tool loop runs inside the existing generation lifecycle, and Stop/resume interactions are M11 and M12 - not split).
+
+Owns: FR19. Traces to: AC13 (switch off), AC14 (server half), AC17 (10-call cap), FR18 (capability gate).
+
+### Architecture
+
+C4, C5, C6, C7, C12
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M9-AC1**: GET /v1/state reports each model's tools capability from Ollama /api/show, and POST /v1/chat with web:true for a resident model without tools returns 409 tools_unsupported (proven with a stubbed capability check if every installed model has tools).
+- [ ] **M9-AC2**: With web:true, a prompt asking for current information against the live resident model makes the server offer web_search and read_page with a note of the current date; the SSE stream carries at least one step event (started, then its final status), a sources event before done, and the final answer.
+- [ ] **M9-AC3**: With web absent or false, the Ollama chat request carries no tools and the search service receives no request.
+- [ ] **M9-AC4**: A reply is capped at 10 tool calls: after the 10th the tools are withdrawn and the model gives its answer.
+
+### Baseline
+
+
+### Evidence
+
+
+### Validation
+
+Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck && bash scripts/web-chat-proof.sh`
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+- R8: tool-calling quality varies by model; acceptance is proven on at least one installed model, others observed.
+
+## M10 — The phone has a per-chat web-search switch and shows steps and sources live
+
+Status: TODO
+
+### Outcome
+
+Each conversation on the phone has a web-search switch, off by default and saved with it, disabled with an explanation for a model without tools; with it on, the chat shows each web step live, collapses the steps after the answer, and ends the answer with sources that open in Safari. Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; seam check: the phone proof is the criteria - not split).
+
+Owns: FR18, FR22. Traces to: AC13, AC14.
+
+### Architecture
+
+C1, C2, C3
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M10-AC1**: Each conversation has a web-search switch, off by default (including for conversations created before this change), and its state survives force-quitting and reopening Expo Go.
+- [ ] **M10-AC2**: The switch is disabled with an explanation when the resident model lacks the tools capability (proven with a stubbed capability check if no installed model lacks it), and changing it while a reply is in progress takes effect from the next prompt.
+- [ ] **M10-AC3**: With the switch on, a prompt asking for today's news shows each web step live on the phone (e.g. Searching: <query>, Reading: <domain>), then the final answer, and the steps collapse into an expandable section after completion.
+- [ ] **M10-AC4**: An answer that used the web ends with a source list whose links open in Safari.
+
+### Baseline
+
+
+### Evidence
+
+
+### Validation
+
+Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/web-switch-proof.sh` plus the owner's phone observation (screenshot) for the live steps, collapse and Safari links.
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+None.
+
+## M11 — Web replies are saved, resume after a drop, and keep page text out of later prompts
+
+Status: TODO
+
+### Outcome
+
+A web reply's steps and sources are saved with it in the conversation, a dropped connection mid-web-reply resumes with steps and text complete and unduplicated, page text and full results are never stored or re-sent, and a searching reply counts as a reply in progress. Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; resume reuses the existing per-reply event log, no lifecycle change - not split).
+
+Owns: FR23. Traces to: AC17 (resume), AC18 (persistence).
+
+### Architecture
+
+C1, C2, C3, C6
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M11-AC1**: Killing the connection during a web reply and reconnecting yields the complete steps and answer with no gaps and no duplicates.
+- [ ] **M11-AC2**: Persisted conversations contain each web reply's steps and sources but no page text or full search results, and a follow-up prompt sends prior answers with their source lists without re-sending page text.
+- [ ] **M11-AC3**: While a reply is searching, sending another prompt is refused as a reply in progress, and a swap or unload requires the busy confirmation.
+
+### Baseline
+
+
+### Evidence
+
+
+### Validation
+
+Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd server && bun test && bun run typecheck) && (cd mobile && bun run typecheck && bun test && bash scripts/web-resume-proof.sh)`
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+None.
+
+## M12 — Stop during a web search ends it on the Mac
+
+Status: TODO
+
+### Outcome
+
+Pressing Stop while a reply is searching or reading a page cancels the reply and the in-flight search or page read on the Mac: the helper process is killed or the fetch aborted, and output stops. Operational-complexity signals: CONCURRENCY_LIFECYCLE + IMPLEMENTATION_PLUS_LIVE_PROOF (abort propagating C6 -> C12 -> C13 -> C14, proven live). Cut apart from M13 for that reason; with one criterion it is the narrowest seam and cannot be split further.
+
+Owns: none owned (FR23 Stop clause, owned by M11). Traces to: AC17 (Stop), FR23 (Stop cancels search).
+
+### Architecture
+
+C6, C12, C13, C14
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M12-AC1**: Stop during an in-flight search or page read ends it on the Mac (search helper process killed or page fetch aborted in the search service) and the reply stops.
+
+### Baseline
+
+
+### Evidence
+
+
+### Validation
+
+Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd server && bun test) && (cd search && bun test) && bash server/scripts/web-stop-proof.sh`
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+None.
+
+## M13 — Search failures and time limits never hang a web reply, and no hosted search is used
+
+Status: TODO
+
+### Outcome
+
+When both search backends fail the reply still completes and the app shows search was unavailable; a step that exceeds its time limit is failed, the model is told, and the reply carries on; and no hosted search or fetch API or key is configured or called. Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal - not split).
+
+Owns: FR24. Traces to: AC16 (both fail, time limit), AC18 (no hosted API).
+
+### Architecture
+
+C1, C12, C13, C14
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M13-AC1**: With both search backends forced to fail, the web reply still completes with an answer and the app shows that search was unavailable.
+- [ ] **M13-AC2**: A search or page read exceeding its time limit is shown as a failed step, the model is told it failed, and the reply completes without hanging.
+- [ ] **M13-AC3**: No hosted search or fetch API or key is configured or called: code and config inspection, plus an outbound-connection check during a live web reply.
+
+### Baseline
+
+
+### Evidence
+
+
+### Validation
+
+Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd server && bun test) && (cd mobile && bun test) && bash server/scripts/web-failure-proof.sh && bash search/scripts/no-hosted-api-check.sh`
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+None.
 
 ## M5a — Always-on server and bundle host
 
@@ -256,3 +583,4 @@ Treat logging in at the unlock screen as part of the reboot (no change), then do
 - Reboot attempt 1 (2026-09-28, boot 18:35:40 BST): FAIL. Human reported the app opened in Expo Go after the reboot, but boot-readiness-check.sh failed one check -- authenticated GET /v1/state over the tailnet -> 503 (not 200) because Ollama (C11) was not running: it had no login LaunchAgent and had only ever been started by hand. Evidence: .harness/evidence/M5a-AC1-reboot-attempt1-FAIL.log.
 - Fix approved by the human 2026-09-28: Ollama starts at login. `brew services start ollama` was blocked (Xcode license not accepted, needs sudo), so Homebrew's own plist was installed the same way brew services would: cp /opt/homebrew/opt/ollama/homebrew.mxcl.ollama.plist ~/Library/LaunchAgents/ && launchctl bootstrap gui/$UID (label homebrew.mxcl.ollama, RunAtLoad + KeepAlive, env OLLAMA_FLASH_ATTENTION=1, OLLAMA_KV_CACHE_TYPE=q8_0). Undo: launchctl bootout gui/$UID/homebrew.mxcl.ollama && rm the plist. Pre-reboot re-run of boot-readiness-check.sh: PASS: ALL CHECKS PASSED. M5-AC1 still needs reboot attempt 2 (same steps as above, including a model reply on the phone) with its log at .harness/evidence/M5a-AC1-reboot.log.
 - Reboot attempt 2 (2026-09-29, boot 20:43:59 BST): INCONCLUSIVE, M5-AC1 not proven. Both LaunchAgents started by launchd after boot (ppid 1), and Ollama came up at login, but Tailscale was disconnected ('Tailscale is stopped'; app and network extension running), so boot-readiness-check.sh run 1 failed 7 tailnet-dependent checks. With the human's approval an agent ran `tailscale up`; run 2 then passed all checks, retire-pwa-proof.sh exit 0 (11 PASS), and the human reported 'Expo Go works on my phone'. It is unknown whether Tailscale was already disconnected before the reboot (restartState = maintainCurrentState, TailscaleStartOnLogin = 1; no Tailscale unified-log entries). Procedure deviation: the Mac-side check ran before the phone check, and a model reply on the phone was not separately confirmed. Evidence: .harness/evidence/M5a-AC1-reboot-attempt2-INCONCLUSIVE.log, .harness/evidence/M5a-AC1-reboot-attempt2-retire-pwa-proof.log. Next: before reboot attempt 3, confirm Tailscale shows Connected; if it is disconnected after that reboot, Tailscale does not reconnect at login on its own and needs a fix before M5-AC1 can pass.
+- Parked 2026-09-29 by the human (verbatim: "Park the restart for now we're moving on"): M5a stays BLOCKED with criteria, evidence and status unchanged; reboot attempt 3 for M5-AC1 is deferred; M5a is reordered to run after the web search milestones (M6-M13). Its escalation stands and is picked up again after M13.
