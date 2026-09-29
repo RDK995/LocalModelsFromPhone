@@ -98,50 +98,7 @@ Status: DONE
 
 The old PWA's LaunchAgent and its Tailscale Serve /app handler are removed, leaving the harness's own / handler intact and the phoneToLocalModel repository untouched on disk. Third part of the M5 split (see M5a); runs last because FR17 requires this app's acceptance criteria to pass first.
 
-### Architecture
-
-C9
-
-### As-Built
-
-.harness/as-built/M5c.md — RECORDED: C9 observed, 2 of 2 files attributed, 2 edges, no claim mismatches
-
-### Acceptance Criteria
-
-- [x] **M5-AC4**: After retirement, /app no longer resolves, the PWA's LaunchAgent is gone, and the harness's / handler still works.
-
-### Baseline
-
-52bc8248c798fe91e1029cb27b7f28e60b881fbb on m5c-pwa-retirement
-
-### Evidence
-
-- T1 — PWA retirement scripts + live run: Mid (routed Mid: live outward-facing change, not low risk), attempt 3, PASS; commit c4e3e33. Verifier re-ran `bash ops/scripts/retire-pwa.sh && bash ops/scripts/retire-pwa-proof.sh` exit 0 (idempotent "already retired" x4, 9 PASS) — .harness/evidence/M5c-T1-verifier.log; worker live run incl. pre-retirement capture (/app 200 with PWA HTML; / 502 because nothing listens on 127.0.0.1:7787) — .harness/evidence/M5c-T1-worker.log. :443 now has only "/" -> http://127.0.0.1:7787; :8443 "/" -> 7789 unchanged (401 on /v1/state); phoneToLocalModel HEAD 5c86608, clean.
-- T2 — end-to-end :443 "/" routing proof: Cheap attempt 1 FAIL (EXIT trap clobbered $WORK cleanup; empty sentinel suffix; reverted) → Cheap attempt 2 PASS; commit 7a1098b. Verifier re-ran the packet's Tests command, exit 0: sentinel responder on 127.0.0.1:7787 only, `https://<mac>/` returned 200 with the exact random sentinel body via Tailscale Serve; `/app` returned the sentinel (not the PWA); nothing listens on 7787 afterwards; no mktemp dir leaked; no existing check removed (only two info lines replaced) — .harness/evidence/M5c-T2-verifier.log.
-- Undo (printed by retire-pwa.sh; backups in ~/.phone-models/retired-pwa/):
-  `cp ~/.phone-models/retired-pwa/com.ryankenny.phone-pwa.plist ~/Library/LaunchAgents/com.ryankenny.phone-pwa.plist`
-  `launchctl bootstrap gui/501 ~/Library/LaunchAgents/com.ryankenny.phone-pwa.plist`
-  `tailscale serve --bg --https=443 --set-path=/app http://127.0.0.1:7788`
-
-### Validation
-
-`cd /Users/ryankenny/Projects/CodingHarnessv2 && bash -n ops/scripts/retire-pwa.sh && bash -n ops/scripts/retire-pwa-proof.sh && bash ops/scripts/retire-pwa-proof.sh && ! lsof -nP -iTCP:7787 -sTCP:LISTEN`
-
-Read-only against live config, except a temporary sentinel HTTP responder on 127.0.0.1:7787 (started only when nothing already listens there) that an EXIT trap kills. Takes seconds. Do not run the undo commands.
-
-### Review
-
-Cycle 1: PASS, tier Mid (sonnet, MID_TIER_DIFF), full-milestone scope 52bc8248c798fe91e1029cb27b7f28e60b881fbb..6a0c87a; M5-AC4 PASS; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL; no report file (PASS). Full-milestone scope. Reviewer re-ran the recorded validation live (bash -n on both scripts, retire-pwa-proof.sh, no listener on 7787 after): exit 0, 12 checks PASS, sentinel round-trip through Tailscale Serve / confirmed; phoneToLocalModel HEAD 5c86608 with clean tree. Matches C9/I14; no drift. No review log file written.
-
-### Review Cycles
-
-0
-
-### Follow-ups
-
-- Reordered 2026-09-29 by the human: M5c runs before M5a while M5a still awaits reboot attempt 2 for M5-AC1 (human busy on the Mac). FR17's ordering ('after this app's acceptance criteria pass') is waived by the human for this milestone only, accepting the risk that there is no fallback PWA if reboot attempt 2 fails. M5a stays BLOCKED until the reboot evidence exists.
-- ops/scripts/verify-ops-install.sh does not list retire-pwa.sh / retire-pwa-proof.sh in required_scripts. Not needed for M5-AC4; left out of scope.
-- retire-pwa-proof.sh check_root_routing: the readiness poll is 50 `curl --max-time 1` tries with no delay; connection-refused returns instantly, so the wait is bounded by count (well under a second), not ~50s. Passed twice live; could spuriously fail on a slow bun start. Consider a time-based bound.
+Detail: `.harness/archive/M5c.md`
 
 ## M6 — The search service reads a web page safely over loopback
 
@@ -211,15 +168,15 @@ Cycle 2: PASS, tier Mid (sonnet), correction-diff scope 953d0e3..f0de0a6, all cr
 - M6-T3: read-proof.sh depends on en.wikipedia.org and httpbin.org; page drift could break AC1 assertions.
 - milestones.md is ~600 lines but nothing is archivable: M5c is the most recently settled milestone and the rest are TODO/active/BLOCKED.
 
-## M7 — The search service answers web searches with no account, falling back to a headless browser
+## M7a — The search service answers a web search through ddgs with no account
 
 Status: TODO
 
 ### Outcome
 
-POST /v1/search on the search service returns UK/English results from ddgs run in a short-lived Python helper; when ddgs errors or returns nothing, a headless Chromium started on demand performs the search and is closed afterwards; when both fail the service says search is unavailable. The ops tooling installs the helper's Python venv, ddgs, Playwright and Chromium. Proves risk R7 (ddgs on Python 3.14, engine blocking). Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; seam check: live engines are the criteria - not split).
+POST /v1/search on the search service returns UK/English results from ddgs run in a short-lived Python helper (one subprocess per search, JSON on stdout per I17), using a helper venv the ops tooling installs (Python, ddgs, Playwright, Chromium). Proves risk R7 (ddgs on Python 3.14). Split 2026-09-29 from M7 ("The search service answers web searches with no account, falling back to a headless browser", 3 criteria) at pickup: operational-complexity signals CONCURRENCY_LIFECYCLE (per-search helper subprocess spawned, killed on timeout; Chromium started on demand and closed) + IMPLEMENTATION_PLUS_LIVE_PROOF (live ddgs/engine proof) require a split, and MULTIPLE_OUTCOMES (ddgs answer, browser fallback, failure/timeout handling are independently demonstrable). Criteria conserved unchanged in wording: M7a-AC1 = M7-AC1, M7b-AC1 = M7-AC2, M7c-AC1 = M7-AC3. This part keeps IMPLEMENTATION_PLUS_LIVE_PROOF only (spawn-and-wait; no timeout kill or browser lifecycle); seam check: the live ddgs search is the criterion itself - not split further.
 
-Owns: FR20. Traces to: AC16 (browser fallback), FR24 (service time limit).
+Traces to: FR20 (ddgs path).
 
 ### Architecture
 
@@ -231,9 +188,7 @@ Pending.
 
 ### Acceptance Criteria
 
-- [ ] **M7-AC1**: POST /v1/search {query} returns 200 with results [{title,url,snippet}] and backend ddgs, requested for region UK/English, using a helper venv created by an ops installer (Python, ddgs, Playwright, Chromium); no account, API key or payment is involved.
-- [ ] **M7-AC2**: With ddgs forced to fail or to return nothing, the same request returns results with backend browser, and no headless Chromium process remains afterwards.
-- [ ] **M7-AC3**: With both backends forced to fail, the service returns 503 search_unavailable; a search exceeding its time limit returns 504 timeout and its helper process is killed.
+- [ ] **M7a-AC1**: POST /v1/search {query} returns 200 with results [{title,url,snippet}] and backend ddgs, requested for region UK/English, using a helper venv created by an ops installer (Python, ddgs, Playwright, Chromium); no account, API key or payment is involved.
 
 ### Baseline
 
@@ -256,6 +211,92 @@ Pending.
 ### Follow-ups
 
 - R7: if ddgs does not install on Python 3.14, pin a compatible Homebrew Python for the venv (architecture R7); results are best-effort by requirement.
+
+## M7b — When ddgs fails, a headless browser answers the search and is closed afterwards
+
+Status: TODO
+
+### Outcome
+
+When ddgs errors or returns nothing, the search helper starts headless Chromium on demand via Playwright, performs the search on a search-engine results page, closes the browser, and the service returns results with backend browser. Second part of the M7 split (see M7a). Signals: IMPLEMENTATION_PLUS_LIVE_PROOF and the Chromium lifecycle (CONCURRENCY_LIFECYCLE) remain inside one criterion, which cannot be split further; the lifecycle is confined to one helper process and checked by process absence afterwards.
+
+Owns: FR20. Traces to: AC16 (browser fallback).
+
+### Architecture
+
+C13, C14, C15
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M7b-AC1**: With ddgs forced to fail or to return nothing, the same request returns results with backend browser, and no headless Chromium process remains afterwards.
+
+### Baseline
+
+
+### Evidence
+
+
+### Validation
+
+Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd search && bun test && bun run typecheck && bash scripts/search-proof.sh)` with ddgs forced to fail/return nothing, then `! pgrep -f 'chrom.*headless'`
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+
+## M7c — A search that cannot be answered or runs too long ends with a clear error and its helper killed
+
+Status: TODO
+
+### Outcome
+
+When both search backends fail the service returns 503 search_unavailable, and a search exceeding the service's time limit returns 504 timeout with its helper process (and any browser it started) killed. Third part of the M7 split (see M7a). Signal: CONCURRENCY_LIFECYCLE (timeout kill); proof uses forced failures and a forced slow helper locally, so no live-environment dependency.
+
+Traces to: FR20 (unavailable), FR24 (service time limit).
+
+### Architecture
+
+C13, C14
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M7c-AC1**: With both backends forced to fail, the service returns 503 search_unavailable; a search exceeding its time limit returns 504 timeout and its helper process is killed.
+
+### Baseline
+
+
+### Evidence
+
+
+### Validation
+
+Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2/search && bun test && bun run typecheck && bash scripts/search-proof.sh`
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
 
 ## M8 — The search service is always on, loopback only, with a documented API
 

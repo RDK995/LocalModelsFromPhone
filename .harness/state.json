@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M6",
+  "current_milestone": "M7a",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -20,7 +20,7 @@
     "FR16": "M5b",
     "FR17": "M5c",
     "FR21": "M6",
-    "FR20": "M7",
+    "FR20": "M7b",
     "FR25": "M8",
     "FR19": "M9",
     "FR18": "M10",
@@ -5149,15 +5149,13 @@
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
       ]
     },
-    "M7": {
-      "id": "M7",
-      "title": "The search service answers web searches with no account, falling back to a headless browser",
-      "outcome": "POST /v1/search on the search service returns UK/English results from ddgs run in a short-lived Python helper; when ddgs errors or returns nothing, a headless Chromium started on demand performs the search and is closed afterwards; when both fail the service says search is unavailable. The ops tooling installs the helper's Python venv, ddgs, Playwright and Chromium. Proves risk R7 (ddgs on Python 3.14, engine blocking). Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; seam check: live engines are the criteria - not split).",
+    "M7a": {
+      "id": "M7a",
+      "title": "The search service answers a web search through ddgs with no account",
+      "outcome": "POST /v1/search on the search service returns UK/English results from ddgs run in a short-lived Python helper (one subprocess per search, JSON on stdout per I17), using a helper venv the ops tooling installs (Python, ddgs, Playwright, Chromium). Proves risk R7 (ddgs on Python 3.14). Split 2026-09-29 from M7 (\"The search service answers web searches with no account, falling back to a headless browser\", 3 criteria) at pickup: operational-complexity signals CONCURRENCY_LIFECYCLE (per-search helper subprocess spawned, killed on timeout; Chromium started on demand and closed) + IMPLEMENTATION_PLUS_LIVE_PROOF (live ddgs/engine proof) require a split, and MULTIPLE_OUTCOMES (ddgs answer, browser fallback, failure/timeout handling are independently demonstrable). Criteria conserved unchanged in wording: M7a-AC1 = M7-AC1, M7b-AC1 = M7-AC2, M7c-AC1 = M7-AC3. This part keeps IMPLEMENTATION_PLUS_LIVE_PROOF only (spawn-and-wait; no timeout kill or browser lifecycle); seam check: the live ddgs search is the criterion itself - not split further.",
       "architecture": "C9, C13, C14, C15",
-      "requirements": [
-        "FR20"
-      ],
-      "traces": "AC16 (browser fallback), FR24 (service time limit)",
+      "requirements": [],
+      "traces": "FR20 (ddgs path)",
       "status": "TODO",
       "review_cycles": 0,
       "review_override": null,
@@ -5171,19 +5169,110 @@
       },
       "criteria": [
         {
-          "id": "M7-AC1",
+          "id": "M7a-AC1",
           "text": "POST /v1/search {query} returns 200 with results [{title,url,snippet}] and backend ddgs, requested for region UK/English, using a helper venv created by an ops installer (Python, ddgs, Playwright, Chromium); no account, API key or payment is involved.",
           "status": "PENDING",
           "evidence": []
+        }
+      ],
+      "tasks": [],
+      "reviews": [],
+      "findings": [],
+      "validation": [],
+      "planned_validation": "Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/install-search-helper.sh && (cd search && bun test && bun run typecheck && bash scripts/search-proof.sh)`",
+      "follow_ups": [
+        "R7: if ddgs does not install on Python 3.14, pin a compatible Homebrew Python for the venv (architecture R7); results are best-effort by requirement."
+      ],
+      "complexity_signals": [
+        "CONCURRENCY_LIFECYCLE",
+        "IMPLEMENTATION_PLUS_LIVE_PROOF",
+        "MULTIPLE_OUTCOMES"
+      ],
+      "split_from": {
+        "milestone": "M7",
+        "original_criteria": {
+          "M7a-AC1": "M7-AC1"
         },
+        "signals": [
+          "CONCURRENCY_LIFECYCLE",
+          "IMPLEMENTATION_PLUS_LIVE_PROOF",
+          "MULTIPLE_OUTCOMES"
+        ],
+        "date": "2026-09-29"
+      }
+    },
+    "M7b": {
+      "id": "M7b",
+      "title": "When ddgs fails, a headless browser answers the search and is closed afterwards",
+      "outcome": "When ddgs errors or returns nothing, the search helper starts headless Chromium on demand via Playwright, performs the search on a search-engine results page, closes the browser, and the service returns results with backend browser. Second part of the M7 split (see M7a). Signals: IMPLEMENTATION_PLUS_LIVE_PROOF and the Chromium lifecycle (CONCURRENCY_LIFECYCLE) remain inside one criterion, which cannot be split further; the lifecycle is confined to one helper process and checked by process absence afterwards.",
+      "architecture": "C13, C14, C15",
+      "requirements": [
+        "FR20"
+      ],
+      "traces": "AC16 (browser fallback)",
+      "status": "TODO",
+      "review_cycles": 0,
+      "review_override": null,
+      "baseline": {
+        "commit": "",
+        "branch": ""
+      },
+      "as_built": {
+        "artifact": null,
+        "result": "PENDING"
+      },
+      "criteria": [
         {
-          "id": "M7-AC2",
+          "id": "M7b-AC1",
           "text": "With ddgs forced to fail or to return nothing, the same request returns results with backend browser, and no headless Chromium process remains afterwards.",
           "status": "PENDING",
           "evidence": []
+        }
+      ],
+      "tasks": [],
+      "reviews": [],
+      "findings": [],
+      "validation": [],
+      "planned_validation": "Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd search && bun test && bun run typecheck && bash scripts/search-proof.sh)` with ddgs forced to fail/return nothing, then `! pgrep -f 'chrom.*headless'`",
+      "follow_ups": [],
+      "complexity_signals": [
+        "CONCURRENCY_LIFECYCLE",
+        "IMPLEMENTATION_PLUS_LIVE_PROOF"
+      ],
+      "split_from": {
+        "milestone": "M7",
+        "original_criteria": {
+          "M7b-AC1": "M7-AC2"
         },
+        "signals": [
+          "CONCURRENCY_LIFECYCLE",
+          "IMPLEMENTATION_PLUS_LIVE_PROOF",
+          "MULTIPLE_OUTCOMES"
+        ],
+        "date": "2026-09-29"
+      }
+    },
+    "M7c": {
+      "id": "M7c",
+      "title": "A search that cannot be answered or runs too long ends with a clear error and its helper killed",
+      "outcome": "When both search backends fail the service returns 503 search_unavailable, and a search exceeding the service's time limit returns 504 timeout with its helper process (and any browser it started) killed. Third part of the M7 split (see M7a). Signal: CONCURRENCY_LIFECYCLE (timeout kill); proof uses forced failures and a forced slow helper locally, so no live-environment dependency.",
+      "architecture": "C13, C14",
+      "requirements": [],
+      "traces": "FR20 (unavailable), FR24 (service time limit)",
+      "status": "TODO",
+      "review_cycles": 0,
+      "review_override": null,
+      "baseline": {
+        "commit": "",
+        "branch": ""
+      },
+      "as_built": {
+        "artifact": null,
+        "result": "PENDING"
+      },
+      "criteria": [
         {
-          "id": "M7-AC3",
+          "id": "M7c-AC1",
           "text": "With both backends forced to fail, the service returns 503 search_unavailable; a search exceeding its time limit returns 504 timeout and its helper process is killed.",
           "status": "PENDING",
           "evidence": []
@@ -5193,13 +5282,23 @@
       "reviews": [],
       "findings": [],
       "validation": [],
-      "planned_validation": "cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/install-search-helper.sh && (cd search && bun test && bun run typecheck && bash scripts/search-proof.sh)",
-      "follow_ups": [
-        "R7: if ddgs does not install on Python 3.14, pin a compatible Homebrew Python for the venv (architecture R7); results are best-effort by requirement."
-      ],
+      "planned_validation": "Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2/search && bun test && bun run typecheck && bash scripts/search-proof.sh`",
+      "follow_ups": [],
       "complexity_signals": [
-        "IMPLEMENTATION_PLUS_LIVE_PROOF"
-      ]
+        "CONCURRENCY_LIFECYCLE"
+      ],
+      "split_from": {
+        "milestone": "M7",
+        "original_criteria": {
+          "M7c-AC1": "M7-AC3"
+        },
+        "signals": [
+          "CONCURRENCY_LIFECYCLE",
+          "IMPLEMENTATION_PLUS_LIVE_PROOF",
+          "MULTIPLE_OUTCOMES"
+        ],
+        "date": "2026-09-29"
+      }
     },
     "M8": {
       "id": "M8",
