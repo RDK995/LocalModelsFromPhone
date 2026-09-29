@@ -5031,8 +5031,31 @@
           "commit": "534f971"
         }
       ],
-      "reviews": [],
-      "findings": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "CHANGES_REQUIRED",
+          "scope": "SUBSTANTIVE",
+          "tier": "Top",
+          "reason_code": "MILESTONE_REVIEW",
+          "diff_range": "662d1901ad22979562feda4dc08ac68a6fdda028..6d57379",
+          "artifact": ".harness/reviews/M6-cycle1.md",
+          "review_log": ".harness/evidence/M6-review.log",
+          "pre_correction": "953d0e30d0e9caef8acda19021867b8ee1266d4c",
+          "correction_diff": "953d0e30d0e9caef8acda19021867b8ee1266d4c..HEAD",
+          "correction_files": [],
+          "files_outside_findings": "pending"
+        }
+      ],
+      "findings": [
+        {
+          "id": "M6-cycle1-F1",
+          "severity": "IMPORTANT",
+          "status": "OPEN",
+          "correction_task": "M6-C1",
+          "report": ".harness/reviews/M6-cycle1.md"
+        }
+      ],
       "validation": [
         {
           "command": "cd /Users/ryankenny/Projects/CodingHarnessv2/search && bun install && bun test && bun run typecheck && bash scripts/read-proof.sh && ! lsof -nP -iTCP:7790 -sTCP:LISTEN",

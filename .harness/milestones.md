@@ -187,7 +187,9 @@ Routing: T1 Top (SECURITY) attempt 4 PASS; T2 Mid attempt 3 PASS; T3 Mid attempt
 
 ### Review
 
-Pending.
+Cycle 1: CHANGES REQUIRED (SUBSTANTIVE), tier Top (opus) — .harness/reviews/M6-cycle1.md (F1 IMPORTANT: Defuddle async extractors make unguarded outbound requests via globalThis.fetch); M6-AC1..AC4 PASS; reviewer validation exit 0 — .harness/evidence/M6-review.log
+Pre-correction: 953d0e30d0e9caef8acda19021867b8ee1266d4c (6d57379 plus the committed review report and log; no code change)
+Corrections: in progress.
 
 ### Review Cycles
 
