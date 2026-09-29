@@ -5156,7 +5156,7 @@
       "architecture": "C9, C13, C14, C15",
       "requirements": [],
       "traces": "FR20 (ddgs path)",
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -5164,14 +5164,14 @@
         "branch": "m7a-search-ddgs"
       },
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M7a.md",
+        "result": "RECORDED \u2014 9/9 files attributed; components C9,C13,C14,C15; 3 edges; no claim mismatches"
       },
       "criteria": [
         {
           "id": "M7a-AC1",
           "text": "POST /v1/search {query} returns 200 with results [{title,url,snippet}] and backend ddgs, requested for region UK/English, using a helper venv created by an ops installer (Python, ddgs, Playwright, Chromium); no account, API key or payment is involved.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             ".harness/evidence/M7a-T3-verifier.log",
             ".harness/evidence/M7a-T1-verifier.log",
@@ -5283,7 +5283,27 @@
           "commit": "12b46c3"
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "PASS",
+          "scope": "FULL_MILESTONE",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "MILESTONE_REVIEW",
+          "diff_range": "46a0750f19e47ee9ee3b7f6e7ee085f6cfdd194c..da0a8e6",
+          "per_criterion": {
+            "M7a-AC1": "PASS"
+          },
+          "findings": {
+            "BLOCKER": 0,
+            "IMPORTANT": 0,
+            "OPTIONAL": 0
+          },
+          "artifact": null,
+          "review_log": ".harness/evidence/M7a-review.log"
+        }
+      ],
       "findings": [],
       "validation": [
         {

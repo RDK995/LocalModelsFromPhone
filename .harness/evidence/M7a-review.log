@@ -1,0 +1,48 @@
+search helper ready: python 3.14.7, ddgs 9.16.0, playwright 1.63.0
+........
+----------------------------------------------------------------------
+Ran 8 tests in 0.108s
+
+OK
+bun install v1.4.0 (1381054db)
+
+Checked 33 installs across 32 packages (no changes) [4.00ms]
+bun test v1.4.0 (1381054db)
+
+ 127 pass
+ 0 fail
+ 270 expect() calls
+Ran 127 tests across 5 files. [2.01s]
+$ tsc --noEmit
+
+==== M7a-AC1: helper venv (Python, ddgs, Playwright, Chromium) ====
+PASS: venv python present (/Users/ryankenny/Projects/CodingHarnessv2/search/helper/.venv/bin/python)
+      python: 3.14.7
+PASS: venv imports ddgs and playwright (ddgs 9.16.0 playwright 1.63.0)
+PASS: Playwright Chromium executable exists (/Users/ryankenny/Library/Caches/ms-playwright/chromium-1243/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing)
+
+==== service (minimal environment) ====
+      started search service with env -i HOME PATH only (pid 28561)
+PASS: service health -> 200
+
+==== M7a-AC1: POST /v1/search returns real ddgs results ====
+      attempt 1 query='Ada Lovelace' status=200 verdict=ok 5
+PASS: search 'Ada Lovelace' -> 200, backend ddgs, 5 valid results (attempt 1 of 3)
+      response (first 800 chars):
+        | {"results":[{"title":"Ada Lovelace","url":"https://en.wikipedia.org/wiki/Ada_Lovelace","snippet":"Augusta Ada King, Countess of Lovelace (née Byron; 10 December 1815 – 27 November 1852), also known as Ada Lovelace, was an English mathematician and writer chiefly known for work on Charles Babbage's proposed mechanical general-purpose computer, the analytical engine. She was the first to recognise the machine had applications beyond pure calculation. Lovelace is often considered the first computer programmer.Lovelace was the only legitimate child of poet Lord Byron and reformer Anne Isabella Milbanke. Lord Byron separated from his wife a month after Ada was born, and died when she was eight. Although often ill in childhood, Lovelace pursued her studies assiduously. She married William Kin
+      attempt 1 query='Ada Lovelace' max_results=3 status=200 verdict=ok 3
+PASS: max_results=3 -> 3 results (<= 3) (attempt 1 of 3)
+PASS: bad body {} -> 400
+
+==== M7a-AC1: region UK/English ====
+PASS: helper requests region uk-en (REGION = "uk-en"; region=REGION)
+PASS: helper unit tests (fake DDGS receives region uk-en): Ran 8 tests in 0.108s  OK
+
+==== M7a-AC1: no account, API key or payment ====
+      env/key reads found:
+        | /Users/ryankenny/Projects/CodingHarnessv2/search/src/index.ts:8:const port = process.env.SEARCH_PORT ? Number(process.env.SEARCH_PORT) : DEFAULT_PORT;
+PASS: no API key/token/env reads other than SEARCH_PORT; service ran under env -i HOME PATH
+
+==== result ====
+ALL CASES PASSED
+EXIT 0

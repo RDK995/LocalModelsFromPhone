@@ -170,7 +170,7 @@ Cycle 2: PASS, tier Mid (sonnet), correction-diff scope 953d0e3..f0de0a6, all cr
 
 ## M7a — The search service answers a web search through ddgs with no account
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -184,11 +184,11 @@ C9, C13, C14, C15
 
 ### As-Built
 
-Pending.
+.harness/as-built/M7a.md — RECORDED — 9/9 files attributed; components C9,C13,C14,C15; 3 edges; no claim mismatches
 
 ### Acceptance Criteria
 
-- [ ] **M7a-AC1**: POST /v1/search {query} returns 200 with results [{title,url,snippet}] and backend ddgs, requested for region UK/English, using a helper venv created by an ops installer (Python, ddgs, Playwright, Chromium); no account, API key or payment is involved.
+- [x] **M7a-AC1**: POST /v1/search {query} returns 200 with results [{title,url,snippet}] and backend ddgs, requested for region UK/English, using a helper venv created by an ops installer (Python, ddgs, Playwright, Chromium); no account, API key or payment is involved.
 
 ### Baseline
 
@@ -208,7 +208,7 @@ Routing: T1 Mid attempt 3 PASS; T2 Mid attempt 3 PASS; T3 Mid attempt 3 PASS.
 
 ### Review
 
-Pending.
+Cycle 1: PASS — reviewer tier Mid (sonnet), full milestone scope, diff 46a0750..da0a8e6. M7a-AC1 PASS. Findings: 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL. Reviewer re-ran milestone validation: exit 0 (installer, 8 helper unittests, bun test 127 pass, typecheck, search-proof.sh ALL CASES PASSED, nothing on 7790) — .harness/evidence/M7a-review.log. Reviewer judged keeping results with empty title/snippet acceptable.
 
 ### Review Cycles
 
