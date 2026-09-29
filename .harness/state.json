@@ -4870,7 +4870,7 @@
         "FR21"
       ],
       "traces": "AC15",
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -5018,21 +5018,36 @@
             "reason_code": "ORDINARY_IMPLEMENTATION",
             "detail": "live public-network proof must genuinely demonstrate each criterion (not easily verified)"
           },
-          "attempts": [],
-          "status": "TODO",
-          "commit": null
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "evidence": ".harness/evidence/M6-T3-verifier.log"
+            }
+          ],
+          "status": "ACCEPTED",
+          "commit": "534f971"
         }
       ],
       "reviews": [],
       "findings": [],
-      "validation": [],
+      "validation": [
+        {
+          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2/search && bun install && bun test && bun run typecheck && bash scripts/read-proof.sh && ! lsof -nP -iTCP:7790 -sTCP:LISTEN",
+          "note": "Needs public network (en.wikipedia.org, httpbin.org). read-proof.sh starts the service on 127.0.0.1:7790 only if nothing listens there and kills it via EXIT trap; also a temporary sentinel listener on a free loopback port. Takes ~30 s (one case waits 15 s for the timeout). Components confirmed exit 0 by verifiers: bun test/typecheck (115 pass, .harness/evidence/M6-T2-verifier.log), read-proof.sh 24 PASS (.harness/evidence/M6-T3-verifier.log)."
+        }
+      ],
       "planned_validation": "cd /Users/ryankenny/Projects/CodingHarnessv2/search && bun test && bun run typecheck && bash scripts/read-proof.sh",
       "follow_ups": [
         "R6: if Bun ignores the custom lookup, moving page fetching into C14 changes which component owns a responsibility - a Material deviation needing human agreement, not a silent workaround.",
         "R6 resolved 2026-09-29 (M6-T1): Bun 1.4.0 node:http(s) honours a custom lookup (test 'R6: Bun honours the custom lookup' in search/src/fetch/fetchPage.test.ts; removing lookup fails 25 tests). IP literals bypass lookup, so they are checked separately. No deviation needed.",
         "M6-T1 added gzip/deflate/br decompression (byte cap applied after decompression) beyond the packet, so real sites ignoring Accept-Encoding: identity still work; reviewer to confirm in scope.",
         "Redirect to a non-http(s) scheme is refused as blocked_destination (not bad_url), documented in fetchPage.ts.",
-        "M6-T2 returns an empty 499 on client abort (I16 does not specify a status); reviewer to confirm acceptable."
+        "M6-T2 returns an empty 499 on client abort (I16 does not specify a status); reviewer to confirm acceptable.",
+        "M6-T3: public loopback DNS names (localtest.me, 127.0.0.1.nip.io) resolve to 127.0.0.1 on 1.1.1.1 but return nothing from this Mac's system resolver (likely rebind protection), so the live proof uses foo.localhost (OS-resolved to 127.0.0.1/::1) for the 'hostname resolving to 127.0.0.1' case. Verifier confirmed the refusal is by the resolved-address check in the custom lookup (fetchPage.ts), not by name; the unit test 'refuses a hostname resolving to 127.0.0.1 ... with no connection made' (fetchPage.test.ts, r6-probe.invalid) covers a non-special name.",
+        "M6-T3: read-proof.sh depends on en.wikipedia.org and httpbin.org availability; page content drift could break the AC1 body-sentence/truncation assertions."
       ],
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"

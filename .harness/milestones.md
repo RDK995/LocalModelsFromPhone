@@ -145,7 +145,7 @@ Cycle 1: PASS, tier Mid (sonnet, MID_TIER_DIFF), full-milestone scope 52bc8248c7
 
 ## M6 — The search service reads a web page safely over loopback
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -176,11 +176,14 @@ Pending.
 
 - M6-T1 — search/ scaffold + SSRF-guarded fetcher (search/src/fetch/): Top (SECURITY), attempt 4, PASS. Verifier re-ran `bun install && bun test && bun run typecheck` in search/: exit 0, 102 pass; files within allowlist; tests not weakened; no external network in tests; R6 proof re-checked by mutation (removing `lookup:` → 25 fail) — .harness/evidence/M6-T1-verifier.log. R6 resolved: Bun honours the custom lookup. Commit a7166a0.
 
-Remaining (packets on disk): M6-T2 extraction + HTTP service (Mid, .harness/tasks/M6-T2.md), then M6-T3 live proof script (Mid, .harness/tasks/M6-T3.md).
+- M6-T2 — Defuddle-over-linkedom extraction (search/src/extract/) + Bun.serve 127.0.0.1:7790 POST /v1/read, GET /v1/health (search/src/http/, search/src/index.ts): Mid (ORDINARY_IMPLEMENTATION), attempt 3, PASS. Verifier re-ran `bun install && bun test && bun run typecheck`: exit 0, 115 pass / 0 fail; files within allowlist; fetch tests unchanged; tests use loopback only — .harness/evidence/M6-T2-verifier.log. Commit d8a72d5.
+- M6-T3 — search/scripts/read-proof.sh live proof: Mid (ORDINARY_IMPLEMENTATION), attempt 3, PASS. Verifier ran the packet command: exit 0, 24 PASS lines, nothing left on 7790 — .harness/evidence/M6-T3-verifier.log. Per criterion: AC1 Wikipedia Ada_Lovelace_Day 200 truncated:false, body sentence present, 3 boilerplate strings absent; World_War_II truncated:true ending with marker. AC2 127.0.0.1:7789, localhost, 100.100.100.100, 100.82.139.85, 192.168.1.1, [::1], foo.localhost → 400 blocked_destination; loopback sentinel received 0 requests (control request recorded). AC3 httpbin redirect-to 127.0.0.1:7789 and 100.100.100.100 → 400 blocked_destination; file:// and ftp:// → 400 bad_url. AC4 httpbin image/png → 415; httpbin drip delay=20 → 504 in 15.01 s. Commit 534f971.
+
+Routing: T1 Top (SECURITY) attempt 4 PASS; T2 Mid attempt 3 PASS; T3 Mid attempt 3 PASS.
 
 ### Validation
 
-Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2/search && bun test && bun run typecheck && bash scripts/read-proof.sh`
+`cd /Users/ryankenny/Projects/CodingHarnessv2/search && bun install && bun test && bun run typecheck && bash scripts/read-proof.sh && ! lsof -nP -iTCP:7790 -sTCP:LISTEN` — needs public network (en.wikipedia.org, httpbin.org); ~30 s; starts/kills its own service on 7790 only if free. Confirmed by verifiers: 115 tests pass + typecheck clean; read-proof 24 PASS.
 
 ### Review
 
@@ -196,6 +199,10 @@ Pending.
 - M6-T1 added gzip/deflate/br decompression (byte cap applied after decompression) beyond the packet, so real sites ignoring Accept-Encoding: identity still work; reviewer to confirm in scope.
 - Redirect to a non-http(s) scheme is refused as blocked_destination (not bad_url), documented in fetchPage.ts.
 - R6: if Bun ignores the custom lookup, moving page fetching into C14 changes which component owns a responsibility - a Material deviation needing human agreement, not a silent workaround.
+- M6-T2 returns an empty 499 on client abort (I16 does not specify a status); reviewer to confirm acceptable.
+- M6-T3: public loopback DNS names (localtest.me, 127.0.0.1.nip.io) resolve to 127.0.0.1 on 1.1.1.1 but not via this Mac's system resolver, so the live proof uses foo.localhost for the 'hostname resolving to 127.0.0.1' case. Verifier confirmed the refusal comes from the resolved-address check in the custom lookup, not a name rule; the unit test with r6-probe.invalid covers a non-special name.
+- M6-T3: read-proof.sh depends on en.wikipedia.org and httpbin.org; page drift could break AC1 assertions.
+- milestones.md is ~600 lines but nothing is archivable: M5c is the most recently settled milestone and the rest are TODO/active/BLOCKED.
 
 ## M7 — The search service answers web searches with no account, falling back to a headless browser
 
