@@ -283,6 +283,50 @@ Cycle 1: PASS, tier Mid (sonnet, MID_TIER_DIFF), full-milestone scope 69aed5333c
 - New feature requested by the human 2026-09-26, out of scope for current requirements: internet (web) search for the models, e.g. via Ollama's web search / tool calling. Needs roast-requirements (search provider and privacy, which models, how the app shows searching and sources) before any implementation.
 - Scenario 3 of error-messages-proof.sh (and model-failed-load-proof.sh) relies on a mismatched LoRA adapter failing to load; the M5b-T2 worker saw it load successfully once. A more deterministic failed-load induction would make both proofs less flaky.
 
+## M5c — PWA retirement
+
+Status: TODO
+
+### Outcome
+
+The old PWA's LaunchAgent and its Tailscale Serve /app handler are removed, leaving the harness's own / handler intact and the phoneToLocalModel repository untouched on disk. Third part of the M5 split (see M5a); runs last because FR17 requires this app's acceptance criteria to pass first.
+
+### Architecture
+
+C9
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M5-AC4**: After retirement, /app no longer resolves, the PWA's LaunchAgent is gone, and the harness's / handler still works.
+
+### Baseline
+
+Pending.
+
+### Evidence
+
+Pending.
+
+### Validation
+
+Pending.
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+- Reordered 2026-09-29 by the human: M5c runs before M5a while M5a still awaits reboot attempt 2 for M5-AC1 (human busy on the Mac). FR17's ordering ('after this app's acceptance criteria pass') is waived by the human for this milestone only, accepting the risk that there is no fallback PWA if reboot attempt 2 fails. M5a stays BLOCKED until the reboot evidence exists.
+
 ## M5a — Always-on server and bundle host
 
 Status: BLOCKED
@@ -353,47 +397,3 @@ Treat logging in at the unlock screen as part of the reboot (no change), then do
 - R3 still applies: the bundle host serves the working tree, so a mid-edit checkout reaches the phone after any restart.
 - Reboot attempt 1 (2026-09-28, boot 18:35:40 BST): FAIL. Human reported the app opened in Expo Go after the reboot, but boot-readiness-check.sh failed one check -- authenticated GET /v1/state over the tailnet -> 503 (not 200) because Ollama (C11) was not running: it had no login LaunchAgent and had only ever been started by hand. Evidence: .harness/evidence/M5a-AC1-reboot-attempt1-FAIL.log.
 - Fix approved by the human 2026-09-28: Ollama starts at login. `brew services start ollama` was blocked (Xcode license not accepted, needs sudo), so Homebrew's own plist was installed the same way brew services would: cp /opt/homebrew/opt/ollama/homebrew.mxcl.ollama.plist ~/Library/LaunchAgents/ && launchctl bootstrap gui/$UID (label homebrew.mxcl.ollama, RunAtLoad + KeepAlive, env OLLAMA_FLASH_ATTENTION=1, OLLAMA_KV_CACHE_TYPE=q8_0). Undo: launchctl bootout gui/$UID/homebrew.mxcl.ollama && rm the plist. Pre-reboot re-run of boot-readiness-check.sh: PASS: ALL CHECKS PASSED. M5-AC1 still needs reboot attempt 2 (same steps as above, including a model reply on the phone) with its log at .harness/evidence/M5a-AC1-reboot.log.
-
-## M5c — PWA retirement
-
-Status: TODO
-
-### Outcome
-
-The old PWA's LaunchAgent and its Tailscale Serve /app handler are removed, leaving the harness's own / handler intact and the phoneToLocalModel repository untouched on disk. Third part of the M5 split (see M5a); runs last because FR17 requires this app's acceptance criteria to pass first.
-
-### Architecture
-
-C9
-
-### As-Built
-
-Pending.
-
-### Acceptance Criteria
-
-- [ ] **M5-AC4**: After retirement, /app no longer resolves, the PWA's LaunchAgent is gone, and the harness's / handler still works.
-
-### Baseline
-
-Pending.
-
-### Evidence
-
-Pending.
-
-### Validation
-
-Pending.
-
-### Review
-
-Pending.
-
-### Review Cycles
-
-0
-
-### Follow-ups
-
-None.

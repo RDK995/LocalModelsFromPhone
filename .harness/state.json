@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M5a",
+  "current_milestone": "M5c",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -4707,6 +4707,42 @@
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
       ]
     },
+    "M5c": {
+      "id": "M5c",
+      "title": "PWA retirement",
+      "outcome": "The old PWA's LaunchAgent and its Tailscale Serve /app handler are removed, leaving the harness's own / handler intact and the phoneToLocalModel repository untouched on disk. Third part of the M5 split (see M5a); runs last because FR17 requires this app's acceptance criteria to pass first.",
+      "architecture": "C9",
+      "requirements": [
+        "FR17"
+      ],
+      "status": "TODO",
+      "review_cycles": 0,
+      "review_override": null,
+      "baseline": {
+        "commit": "",
+        "branch": ""
+      },
+      "as_built": {
+        "artifact": null,
+        "result": "PENDING"
+      },
+      "criteria": [
+        {
+          "id": "M5-AC4",
+          "text": "After retirement, /app no longer resolves, the PWA's LaunchAgent is gone, and the harness's / handler still works.",
+          "status": "PENDING",
+          "evidence": []
+        }
+      ],
+      "tasks": [],
+      "reviews": [],
+      "findings": [],
+      "validation": [],
+      "follow_ups": [
+        "Reordered 2026-09-29 by the human: M5c runs before M5a while M5a still awaits reboot attempt 2 for M5-AC1 (human busy on the Mac). FR17's ordering ('after this app's acceptance criteria pass') is waived by the human for this milestone only, accepting the risk that there is no fallback PWA if reboot attempt 2 fails. M5a stays BLOCKED until the reboot evidence exists."
+      ],
+      "split_from": "M5"
+    },
     "M5a": {
       "id": "M5a",
       "title": "Always-on server and bundle host",
@@ -4906,40 +4942,6 @@
         "remaining": "Human reboot + phone check + post-reboot readiness log. Decision resolved 2026-09-26 (human): typing the Mac password at the FileVault unlock screen counts as part of rebooting, not a manual step; no change to FileVault or architecture.",
         "recommended": "Treat logging in at the unlock screen as part of rebooting (no change), perform the reboot steps, and record the evidence; do not disable FileVault or move to system daemons (that would be a material architecture change)."
       }
-    },
-    "M5c": {
-      "id": "M5c",
-      "title": "PWA retirement",
-      "outcome": "The old PWA's LaunchAgent and its Tailscale Serve /app handler are removed, leaving the harness's own / handler intact and the phoneToLocalModel repository untouched on disk. Third part of the M5 split (see M5a); runs last because FR17 requires this app's acceptance criteria to pass first.",
-      "architecture": "C9",
-      "requirements": [
-        "FR17"
-      ],
-      "status": "TODO",
-      "review_cycles": 0,
-      "review_override": null,
-      "baseline": {
-        "commit": "",
-        "branch": ""
-      },
-      "as_built": {
-        "artifact": null,
-        "result": "PENDING"
-      },
-      "criteria": [
-        {
-          "id": "M5-AC4",
-          "text": "After retirement, /app no longer resolves, the PWA's LaunchAgent is gone, and the harness's / handler still works.",
-          "status": "PENDING",
-          "evidence": []
-        }
-      ],
-      "tasks": [],
-      "reviews": [],
-      "findings": [],
-      "validation": [],
-      "follow_ups": [],
-      "split_from": "M5"
     }
   }
 }
