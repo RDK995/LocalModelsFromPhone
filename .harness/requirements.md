@@ -12,6 +12,11 @@ It **replaces** the existing Phone Reasoning Surface PWA
 self-contained Mac-side server** built in this repository; the OpenWeight harness
 (`/Users/ryankenny/Projects/OpenCodeOpenWeightHarness`) and OpenCode are not in the request path.
 
+**Web search (FR18–FR25, added 2026-09-29):** per conversation, the owner can let the model search
+the web and read pages. All searching and page reading run on the Mac, free, with no account, API
+key or payment. The search capability is a separate loopback-only service so that OpenCode, which
+will join the harness later as its coding agent, can share it.
+
 ## Functional Requirements
 
 - [FR1] **Model list.** The app lists every model installed in Ollama (`GET /api/tags`) by its
@@ -68,6 +73,51 @@ self-contained Mac-side server** built in this repository; the OpenWeight harnes
 - [FR17] **Retire the PWA.** After this app's acceptance criteria pass, the PWA's LaunchAgent and
   its Tailscale Serve `/app` handler are removed, leaving the harness's own `/` handler intact. The
   `phoneToLocalModel` repository is left on disk untouched.
+- [FR18] **Web search switch.** Each conversation has a web-search switch, off by default and
+  persisted with the conversation. Only while it is on does the server offer the model the web
+  tools (FR19); while off, the reply makes no search or page request of any kind. Changing the
+  switch while a reply is in progress takes effect from the next prompt. The switch is disabled,
+  with an explanation, when the resident model lacks Ollama's `tools` capability (`/api/show`).
+- [FR19] **Model-driven search.** With the switch on, the server offers the model two tools via
+  Ollama tool calling: `web_search(query)` and `read_page(url)`. The model decides when to call
+  them; the server runs the tool loop to the model's final answer. At most 10 tool calls per
+  reply; after the cap the tools are withdrawn and the model must answer. When the switch is on,
+  the server tells the model the current date.
+- [FR20] **Search on the Mac, no accounts.** `web_search` runs on the Mac with no account, key or
+  payment: a multi-engine scraping library (`ddgs`) is primary; if it errors or returns zero
+  results, a headless real browser on the Mac (started on demand, closed afterwards) performs the
+  search. No hosted search or fetch API is used (not Ollama web search, Exa, Parallel, Tavily,
+  Jina, Brave or similar). Results are requested for region UK / English (never "all languages").
+  If both fail, the tool result tells the model search is unavailable, the model answers anyway,
+  and the app shows that search was unavailable.
+- [FR21] **Page reading on the Mac, safely.** `read_page` fetches the page on the Mac and returns
+  its main content as markdown (boilerplate removed), truncated to a fixed size limit and marked
+  as truncated when cut. Only `http`/`https`. It refuses any destination that resolves to
+  loopback, private (RFC 1918), link-local, CGNAT/tailnet (`100.64.0.0/10`, including
+  `100.100.100.100`), unspecified, multicast or the IPv6 equivalents (`::1`, `fc00::/7`,
+  `fe80::/10`, IPv4-mapped forms); every redirect hop is re-checked, and the address checked is
+  the one connected to (no DNS-rebinding gap). Byte and time limits apply; non-text content is
+  refused. Page text is passed to the model as untrusted data.
+- [FR22] **Steps and sources in the app.** While a reply is generated, the app shows each web
+  step as it happens (e.g. "Searching: <query>", "Reading: <domain>", and a failed or unavailable
+  step). When the answer is complete the steps collapse into an expandable section, like thinking
+  (FR10). Each answer that used the web ends with a list of sources — the pages read, or, if none
+  were read, the search results given to the model — each tappable to open in Safari.
+- [FR23] **Persistence, stop and resume.** Web steps and sources are saved with the reply in the
+  conversation. Full search results and page text are not persisted and are not re-sent with
+  later prompts; later prompts carry the prior answers and their source lists (the model may
+  re-read a page). FR9 and FR11 apply to web replies: a drop or backgrounding does not stop
+  searching on the Mac, the app resumes with steps and text with no gaps or duplicates, and Stop
+  cancels any in-flight search or page read. A reply that is searching counts as "a reply in
+  progress" for FR6 and for sending.
+- [FR24] **Time limits.** Each search and page read has a time limit; a step that exceeds it
+  fails, the model is told it failed, and the reply continues.
+- [FR25] **Separate local search service.** Search and page reading are provided by a separate
+  Mac-side service bound to loopback only, with a documented HTTP API, kept running by a per-user
+  LaunchAgent (as FR15). The phone never calls it directly; the FR12 server calls it. It has no
+  token (loopback-only is the boundary) and is not exposed via Tailscale Serve. It is designed so
+  OpenCode can later use it (e.g. via an MCP or custom-tool wrapper); integrating OpenCode is not
+  part of this work.
 
 ## Acceptance Criteria
 
@@ -93,6 +143,29 @@ All proven against the live Mac Studio and Ollama, not mocks.
     manual step on the Mac.
 12. **AC12** — After retirement, `/app` no longer resolves, the PWA LaunchAgent is gone, and the
     harness `/` handler still works.
+13. **AC13** — With the switch off, a chat reply sends no `tools` to Ollama and the search service
+    receives no request; the switch state survives force-quitting Expo Go. With a resident model
+    lacking the `tools` capability the switch is disabled (proven with a stubbed capability check
+    if no installed model lacks it).
+14. **AC14** — With the switch on, a prompt that asks for current information (e.g. today's news)
+    produces at least one search step shown live on the phone, a final answer, a source list whose
+    links open in Safari, and the steps collapse after completion. The model is given the current
+    date.
+15. **AC15** — `read_page` on a real article returns its main text as markdown; oversized pages
+    come back truncated and marked. It refuses `http://127.0.0.1:7789`, `http://localhost`, a
+    `100.x` tailnet address, a `192.168.x.x` address, `http://[::1]`, a non-http scheme, and a
+    public URL that redirects to any of these.
+16. **AC16** — With `ddgs` forced to fail or return nothing, the headless browser returns results;
+    with both forced to fail, the reply still completes and the app shows search was unavailable.
+    A step exceeding its time limit fails without hanging the reply.
+17. **AC17** — Killing the connection during a web reply and reconnecting yields the complete steps
+    and answer with no gaps or duplicates; Stop during a search ends it on the Mac. A reply is
+    capped at 10 tool calls.
+18. **AC18** — No hosted search/fetch API or key is configured or called (code/config inspection
+    plus an outbound check during AC14). Persisted conversations contain steps and sources but not
+    page text, and a follow-up prompt does not re-send page text.
+19. **AC19** — The search service answers on loopback, is not reachable from the tailnet or LAN,
+    restarts automatically after being killed, and its HTTP API is documented.
 
 ## Constraints
 
@@ -108,6 +181,14 @@ All proven against the live Mac Studio and Ollama, not mocks.
   store, error-message mapping, LaunchAgent and Tailscale Serve installers. From the harness:
   the token-file permission refusal. Copied code lives in this repository; neither source repo is
   modified.
+- Web search: free and no sign-up only — no payment, no card, no account, no API key. Search
+  queries reach public search engines directly (as a browser would), tied to no account.
+- The headless browser (e.g. Playwright + Chromium) is a one-time download of a few hundred MB
+  and runs only on demand. Python 3.14 is the available Python; `ddgs` compatibility with it is
+  unverified (research, 2026-09-29).
+- Scraping from one home IP is sometimes blocked by engines; results are best-effort.
+- Loaded models run with a large context window (e.g. `nemotron3:33b` at 131 072 tokens, checked
+  2026-09-29), so a reply's web material fits without special handling beyond FR21 truncation.
 
 ## Non-Goals
 
@@ -118,7 +199,9 @@ All proven against the live Mac Studio and Ollama, not mocks.
 - Downloading, deleting or configuring models.
 - More than one model resident at once from phone actions.
 - Tier/profile labels.
-- Images, voice, tool use.
+- Images, voice, and any tool use other than web search and page reading (FR18–FR25).
+- Hosted or paid search/fetch APIs, including free tiers that need sign-up.
+- Integrating OpenCode with the search service (future work; FR25 only keeps it possible).
 - Syncing conversations across devices.
 - QR-code pairing.
 
@@ -134,6 +217,16 @@ All proven against the live Mac Studio and Ollama, not mocks.
 - A load fails (e.g. out of memory): previous model is already unloaded; the app shows nothing
   loaded plus the failure reason.
 - Token changed on the Mac: `401` → password screen.
+- Search engines block the Mac: `ddgs` returns nothing → headless browser; both fail → "search
+  unavailable", the model answers anyway.
+- A page contains instructions aimed at the model (prompt injection): the tools are read-only, so
+  the worst case is a misleading answer; the source list lets the owner check.
+- The model asks to read a local, LAN or tailnet address, or a public URL redirects there:
+  refused (FR21).
+- The model keeps calling tools: capped at 10 calls per reply.
+- The switch is changed mid-reply: applies from the next prompt.
+- Swap/unload during a searching reply: FR6 confirmation.
+- A follow-up asks about a page read earlier: the model re-reads it (page text is not kept).
 
 ## Decisions / Clarifications
 
@@ -152,6 +245,23 @@ All proven against the live Mac Studio and Ollama, not mocks.
 - **Password pasted once via clipboard, no QR code** (human).
 - Stop keeps the partial reply (default chosen by Claude, not asked).
 - Thinking shown collapsed (default chosen by Claude, not asked).
+- **Web search added** (human, 2026-09-29): reverses the "no tool use" non-goal for web search
+  and page reading only.
+- **Pay nothing, sign up for nothing** (human): after research
+  (`.harness/research/Free web search for local models.md`, 2026-09-29) the human chose Mac-only search
+  with no accounts; hosted free tiers (Ollama, Exa, Tavily, etc.) rejected.
+- **Backup is a headless real browser** (human), chosen over Exa's keyless endpoint and over
+  Wikipedia/small-web indexes.
+- **Per-chat switch, off by default; the model decides when to search** (human).
+- **The model may read whole pages** (human).
+- **OpenCode will join the harness later** (human), so the search service is separate and
+  shareable (FR25). This updates the earlier "OpenCode not in the request path" for future work
+  only; this app's chats still do not go through OpenCode.
+- Defaults chosen by Claude, shown to the human and agreed (2026-09-29): current date given to
+  the model; page text not persisted or re-sent; UK/English results; a switch change applies from
+  the next prompt; browser started on demand; search service auto-starts, loopback-only, no
+  token; searching counts as a reply in progress; per-step time limits; 10 tool calls per reply;
+  sources = pages read, else search results.
 
 ## Open Questions
 
