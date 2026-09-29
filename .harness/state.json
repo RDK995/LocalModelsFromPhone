@@ -4979,9 +4979,17 @@
             "reason_code": "ORDINARY_IMPLEMENTATION",
             "detail": "new service wiring and extraction library integration; guard already built"
           },
-          "attempts": [],
-          "status": "TODO",
-          "commit": null
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "evidence": ".harness/evidence/M6-T2-verifier.log"
+            }
+          ],
+          "status": "ACCEPTED",
+          "commit": "d8a72d5"
         },
         {
           "id": "M6-T3",
@@ -5023,7 +5031,8 @@
         "R6: if Bun ignores the custom lookup, moving page fetching into C14 changes which component owns a responsibility - a Material deviation needing human agreement, not a silent workaround.",
         "R6 resolved 2026-09-29 (M6-T1): Bun 1.4.0 node:http(s) honours a custom lookup (test 'R6: Bun honours the custom lookup' in search/src/fetch/fetchPage.test.ts; removing lookup fails 25 tests). IP literals bypass lookup, so they are checked separately. No deviation needed.",
         "M6-T1 added gzip/deflate/br decompression (byte cap applied after decompression) beyond the packet, so real sites ignoring Accept-Encoding: identity still work; reviewer to confirm in scope.",
-        "Redirect to a non-http(s) scheme is refused as blocked_destination (not bad_url), documented in fetchPage.ts."
+        "Redirect to a non-http(s) scheme is refused as blocked_destination (not bad_url), documented in fetchPage.ts.",
+        "M6-T2 returns an empty 499 on client abort (I16 does not specify a status); reviewer to confirm acceptable."
       ],
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
