@@ -4870,7 +4870,7 @@
         "FR21"
       ],
       "traces": "AC15",
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 1,
       "review_override": null,
       "baseline": {
@@ -4878,33 +4878,41 @@
         "branch": "m6-search-read-page"
       },
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M6.md",
+        "result": "RECORDED - 14/14 files attributed; components C13, C15; 1 edge; claim mismatches NONE"
       },
       "criteria": [
         {
           "id": "M6-AC1",
           "text": "POST /v1/read on the search service (127.0.0.1:7790) with a real public article URL returns 200 with its main text as markdown (boilerplate removed) and truncated false; a page longer than the size limit comes back truncated true with a truncation marker.",
-          "status": "PENDING",
-          "evidence": []
+          "status": "PASS",
+          "evidence": [
+            "Cycle-2 review PASS (sonnet): live read of Ada_Lovelace_Day 200, truncated false, boilerplate absent; World_War_II truncated true \u2014 .harness/evidence/M6-review-c2.log"
+          ]
         },
         {
           "id": "M6-AC2",
           "text": "POST /v1/read refuses with 400 blocked_destination each of http://127.0.0.1:7789, http://localhost, a 100.x tailnet address, a 192.168.x.x address, http://[::1], and a hostname that resolves to 127.0.0.1; the check is made on the address actually connected to (no DNS-rebinding gap).",
-          "status": "PENDING",
-          "evidence": []
+          "status": "PASS",
+          "evidence": [
+            "Cycle-2 review PASS (sonnet): every listed destination 400 blocked_destination; sentinel listener received zero requests \u2014 .harness/evidence/M6-review-c2.log"
+          ]
         },
         {
           "id": "M6-AC3",
           "text": "A public URL that redirects to any blocked destination is refused (every redirect hop re-checked), and a non-http(s) scheme returns 400 bad_url.",
-          "status": "PENDING",
-          "evidence": []
+          "status": "PASS",
+          "evidence": [
+            "Cycle-2 review PASS (sonnet): both redirect-to-blocked cases 400 blocked_destination; file:// and ftp:// 400 bad_url \u2014 .harness/evidence/M6-review-c2.log"
+          ]
         },
         {
           "id": "M6-AC4",
           "text": "Non-text content returns 415 unsupported_content, and a fetch exceeding its time limit returns 504 timeout instead of hanging.",
-          "status": "PENDING",
-          "evidence": []
+          "status": "PASS",
+          "evidence": [
+            "Cycle-2 review PASS (sonnet): image/png 415; slow fetch 504 in 15.0 s \u2014 .harness/evidence/M6-review-c2.log"
+          ]
         }
       ],
       "tasks": [
@@ -5085,16 +5093,40 @@
             "artifact": ".harness/evidence/M6-C1-verifier.log",
             "note": "read-proof.sh (live) not re-run this cycle; the reviewer re-runs full milestone validation."
           }
+        },
+        {
+          "cycle": 2,
+          "verdict": "PASS",
+          "scope": "CORRECTION_DIFF",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "CORRECTION_REVIEW_MID",
+          "diff_range": "953d0e30d0e9caef8acda19021867b8ee1266d4c..f0de0a6",
+          "per_criterion": {
+            "M6-AC1": "PASS",
+            "M6-AC2": "PASS",
+            "M6-AC3": "PASS",
+            "M6-AC4": "PASS"
+          },
+          "findings": {
+            "BLOCKER": 0,
+            "IMPORTANT": 0,
+            "OPTIONAL": 0
+          },
+          "artifact": null,
+          "review_log": ".harness/evidence/M6-review-c2.log",
+          "note": "Full milestone validation re-run by reviewer, exit 0: bun test 118 pass, typecheck clean, read-proof.sh ALL CASES PASSED, port 7790 free. F1 confirmed fixed."
         }
       ],
       "findings": [
         {
           "id": "M6-cycle1-F1",
           "severity": "IMPORTANT",
-          "status": "CORRECTED",
+          "status": "RESOLVED",
           "correction_task": "M6-C1",
           "report": ".harness/reviews/M6-cycle1.md",
-          "commit": "524e79e"
+          "commit": "524e79e",
+          "resolved_by": "cycle 2 review PASS (sonnet), .harness/evidence/M6-review-c2.log"
         }
       ],
       "validation": [

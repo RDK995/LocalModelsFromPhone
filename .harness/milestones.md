@@ -145,7 +145,7 @@ Cycle 1: PASS, tier Mid (sonnet, MID_TIER_DIFF), full-milestone scope 52bc8248c7
 
 ## M6 — The search service reads a web page safely over loopback
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -159,14 +159,14 @@ C13, C15
 
 ### As-Built
 
-Pending.
+.harness/as-built/M6.md — RECORDED - 14/14 files attributed; components C13, C15; 1 edge; claim mismatches NONE
 
 ### Acceptance Criteria
 
-- [ ] **M6-AC1**: POST /v1/read on the search service (127.0.0.1:7790) with a real public article URL returns 200 with its main text as markdown (boilerplate removed) and truncated false; a page longer than the size limit comes back truncated true with a truncation marker.
-- [ ] **M6-AC2**: POST /v1/read refuses with 400 blocked_destination each of http://127.0.0.1:7789, http://localhost, a 100.x tailnet address, a 192.168.x.x address, http://[::1], and a hostname that resolves to 127.0.0.1; the check is made on the address actually connected to (no DNS-rebinding gap).
-- [ ] **M6-AC3**: A public URL that redirects to any blocked destination is refused (every redirect hop re-checked), and a non-http(s) scheme returns 400 bad_url.
-- [ ] **M6-AC4**: Non-text content returns 415 unsupported_content, and a fetch exceeding its time limit returns 504 timeout instead of hanging.
+- [x] **M6-AC1**: POST /v1/read on the search service (127.0.0.1:7790) with a real public article URL returns 200 with its main text as markdown (boilerplate removed) and truncated false; a page longer than the size limit comes back truncated true with a truncation marker.
+- [x] **M6-AC2**: POST /v1/read refuses with 400 blocked_destination each of http://127.0.0.1:7789, http://localhost, a 100.x tailnet address, a 192.168.x.x address, http://[::1], and a hostname that resolves to 127.0.0.1; the check is made on the address actually connected to (no DNS-rebinding gap).
+- [x] **M6-AC3**: A public URL that redirects to any blocked destination is refused (every redirect hop re-checked), and a non-http(s) scheme returns 400 bad_url.
+- [x] **M6-AC4**: Non-text content returns 415 unsupported_content, and a fetch exceeding its time limit returns 504 timeout instead of hanging.
 
 ### Baseline
 
@@ -194,6 +194,7 @@ Corrections (each verifier-confirmed, committed):
 Cycle-1 validation: `cd search && bun install && bun test && bun run typecheck` exit 0 (verifier). Live read-proof.sh not re-run this cycle; the reviewer re-runs full milestone validation.
 Correction diff: git diff 953d0e30d0e9caef8acda19021867b8ee1266d4c HEAD
 Files changed by corrections: search/src/extract/extract.ts; search/src/extract/extract.test.ts (plus .harness/ records). No file outside finding F1's scope.
+Cycle 2: PASS, tier Mid (sonnet), correction-diff scope 953d0e3..f0de0a6, all criteria re-graded — M6-AC1 PASS; M6-AC2 PASS; M6-AC3 PASS; M6-AC4 PASS; 0 BLOCKER / 0 IMPORTANT / 0 OPTIONAL. Reviewer re-ran full milestone validation, exit 0 (118 pass, typecheck clean, read-proof.sh ALL CASES PASSED, 7790 free) — .harness/evidence/M6-review-c2.log. No report written (PASS).
 
 ### Review Cycles
 
