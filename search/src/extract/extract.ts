@@ -21,6 +21,9 @@ export interface ExtractedPage {
   truncated: boolean;
 }
 
+/** Extraction must add no network path beyond the guarded fetcher (I18): Defuddle's async extractors would use fetch. */
+const noNetworkFetch = (() => Promise.reject(new Error("network access disabled during extraction"))) as unknown as typeof globalThis.fetch;
+
 export async function extractPage(input: ExtractInput): Promise<ExtractedPage> {
   let title = "";
   let markdown: string;
@@ -28,7 +31,11 @@ export async function extractPage(input: ExtractInput): Promise<ExtractedPage> {
     markdown = input.body;
   } else {
     const { document } = parseHTML(input.body);
-    const result = await Defuddle(document as unknown as Parameters<typeof Defuddle>[0], input.finalUrl, { markdown: true });
+    const result = await Defuddle(document as unknown as Parameters<typeof Defuddle>[0], input.finalUrl, {
+      markdown: true,
+      useAsync: false,
+      fetch: noNetworkFetch,
+    });
     title = result.title ?? "";
     markdown = result.content ?? "";
   }

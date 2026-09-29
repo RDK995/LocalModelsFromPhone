@@ -1,4 +1,4 @@
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect, afterEach } from "bun:test";
 import { extractPage, MAX_MARKDOWN_CHARS } from "./extract";
 
 const ARTICLE_HTML = `<!doctype html><html><head><title>Widget Guide</title></head><body>
@@ -47,5 +47,30 @@ describe("extractPage", () => {
     const long = await extractPage({ body: "x".repeat(50_000), contentType: "text/plain", finalUrl: "https://example.com/t.txt", bodyTruncated: false });
     expect(long.truncated).toBe(true);
     expect(long.markdown.startsWith("x".repeat(MAX_MARKDOWN_CHARS))).toBe(true);
+  });
+
+  describe("offline extraction", () => {
+    const realFetch = globalThis.fetch;
+    afterEach(() => {
+      globalThis.fetch = realFetch;
+    });
+
+    const urls = [
+      "https://www.dropbox.com/s/abc/status/123",
+      "https://x.com/someone/status/123",
+      "https://www.reddit.com/r/x/comments/abc/title/",
+    ];
+    for (const finalUrl of urls) {
+      it(`makes no network request of its own for ${finalUrl}`, async () => {
+        const calls: unknown[] = [];
+        globalThis.fetch = ((...args: unknown[]) => {
+          calls.push(args);
+          return Promise.reject(new Error("recorded, not forwarded"));
+        }) as unknown as typeof globalThis.fetch;
+        const r = await extractPage({ body: ARTICLE_HTML, contentType: "text/html", finalUrl, bodyTruncated: false });
+        expect(calls.length).toBe(0);
+        expect(r.markdown).toContain("Widgets are small reusable components");
+      });
+    }
   });
 });
