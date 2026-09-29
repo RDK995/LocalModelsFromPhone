@@ -4715,7 +4715,7 @@
       "requirements": [
         "FR17"
       ],
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -4731,7 +4731,10 @@
           "id": "M5-AC4",
           "text": "After retirement, /app no longer resolves, the PWA's LaunchAgent is gone, and the harness's / handler still works.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "Live (Mac Studio over tailnet): ops/scripts/retire-pwa.sh removed the :443 /app Serve handler and booted out + moved the PWA LaunchAgent plist; retire-pwa-proof.sh checks /app handler absent and /app not serving PWA content, LaunchAgent/plist gone, nothing on 7788, :443 / still -> http://127.0.0.1:7787, :8443 unchanged (401), phoneToLocalModel HEAD 5c86608 clean -- .harness/evidence/M5c-T1-verifier.log, .harness/evidence/M5c-T1-worker.log (pre-retirement capture)",
+            "Live end-to-end / routing: sentinel responder on 127.0.0.1:7787 only, https://<mac>/ returns 200 with exact random sentinel body through Tailscale Serve; /app returned the sentinel (not the PWA); nothing listens on 7787 afterwards -- exit 0, .harness/evidence/M5c-T2-verifier.log"
+          ]
         }
       ],
       "tasks": [
@@ -4802,16 +4805,31 @@
               "result": "FAIL",
               "evidence": ".harness/evidence/M5c-T2-attempt1-worker.log",
               "detail": "orchestrator diff read: new EXIT trap replaced the $WORK cleanup trap; sentinel random suffix empty (BSD od padding). Change reverted."
+            },
+            {
+              "attempt": 2,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "evidence": ".harness/evidence/M5c-T2-verifier.log"
             }
           ],
-          "status": "PENDING_ATTEMPT_2"
+          "status": "ACCEPTED",
+          "commit": "7a1098b"
         }
       ],
       "reviews": [],
       "findings": [],
-      "validation": [],
+      "validation": [
+        {
+          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2 && bash -n ops/scripts/retire-pwa.sh && bash -n ops/scripts/retire-pwa-proof.sh && bash ops/scripts/retire-pwa-proof.sh && ! lsof -nP -iTCP:7787 -sTCP:LISTEN",
+          "note": "Read-only against live config except a temporary sentinel HTTP responder on 127.0.0.1:7787, killed via EXIT trap (only started when nothing already listens on 7787). Takes seconds. Do not run retire-pwa.sh's undo."
+        }
+      ],
       "follow_ups": [
-        "Reordered 2026-09-29 by the human: M5c runs before M5a while M5a still awaits reboot attempt 2 for M5-AC1 (human busy on the Mac). FR17's ordering ('after this app's acceptance criteria pass') is waived by the human for this milestone only, accepting the risk that there is no fallback PWA if reboot attempt 2 fails. M5a stays BLOCKED until the reboot evidence exists."
+        "Reordered 2026-09-29 by the human: M5c runs before M5a while M5a still awaits reboot attempt 2 for M5-AC1 (human busy on the Mac). FR17's ordering ('after this app's acceptance criteria pass') is waived by the human for this milestone only, accepting the risk that there is no fallback PWA if reboot attempt 2 fails. M5a stays BLOCKED until the reboot evidence exists.",
+        "ops/scripts/verify-ops-install.sh does not list retire-pwa.sh / retire-pwa-proof.sh in required_scripts. Not needed for M5-AC4; left out of scope.",
+        "retire-pwa-proof.sh check_root_routing: the readiness poll is 50 curl --max-time 1 tries with no delay; connection-refused returns instantly, so the wait is bounded by count (well under a second), not ~50s. Passed twice live; could spuriously fail on a slow bun start. Consider a time-based bound."
       ],
       "split_from": "M5"
     },
