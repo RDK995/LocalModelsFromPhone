@@ -5156,12 +5156,12 @@
       "architecture": "C9, C13, C14, C15",
       "requirements": [],
       "traces": "FR20 (ddgs path)",
-      "status": "TODO",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
-        "commit": "",
-        "branch": ""
+        "commit": "46a0750f19e47ee9ee3b7f6e7ee085f6cfdd194c",
+        "branch": "m7a-search-ddgs"
       },
       "as_built": {
         "artifact": null,
@@ -5172,16 +5172,133 @@
           "id": "M7a-AC1",
           "text": "POST /v1/search {query} returns 200 with results [{title,url,snippet}] and backend ddgs, requested for region UK/English, using a helper venv created by an ops installer (Python, ddgs, Playwright, Chromium); no account, API key or payment is involved.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            ".harness/evidence/M7a-T3-verifier.log",
+            ".harness/evidence/M7a-T1-verifier.log",
+            ".harness/evidence/M7a-T2-verifier.log"
+          ]
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M7a-T1",
+          "scope": "C9 installer ops/scripts/install-search-helper.sh (Homebrew Python 3.14 venv, pinned ddgs 9.16.0 + playwright 1.63.0, Chromium) + C14 helper search/helper/search.py (ddgs region uk-en, I17 JSON, exit 0) + unittest",
+          "tests": "see .harness/tasks/M7a-T1.md Tests",
+          "requirements": [],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M7a-AC1"
+          ],
+          "paths": [
+            "ops/scripts/install-search-helper.sh",
+            "search/helper/",
+            ".gitignore"
+          ],
+          "depends_on": [],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "new installer + Python helper with stated JSON contract; live install proves R7"
+          },
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "evidence": ".harness/evidence/M7a-T1-verifier.log"
+            }
+          ],
+          "status": "ACCEPTED",
+          "commit": "b3692fb"
+        },
+        {
+          "id": "M7a-T2",
+          "scope": "C13 POST /v1/search: argv-array helper subprocess (I17), validation 400 bad_request, helper error/garbage/spawn failure -> 503 search_unavailable, client abort kills helper",
+          "tests": "cd /Users/ryankenny/Projects/CodingHarnessv2/search && bun install && bun test && bun run typecheck",
+          "requirements": [],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M7a-AC1"
+          ],
+          "paths": [
+            "search/src/search/",
+            "search/src/http/server.ts"
+          ],
+          "depends_on": [],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "new route + subprocess runner tested against fake helpers"
+          },
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "evidence": ".harness/evidence/M7a-T2-verifier.log"
+            }
+          ],
+          "status": "ACCEPTED",
+          "commit": "7070a2f"
+        },
+        {
+          "id": "M7a-T3",
+          "scope": "Live proof search/scripts/search-proof.sh: venv/Chromium present, service under env -i, real ddgs results, max_results, region uk-en, no key reads, 400 on {}",
+          "tests": "cd /Users/ryankenny/Projects/CodingHarnessv2/search && bash scripts/search-proof.sh && ! lsof -nP -iTCP:7790 -sTCP:LISTEN",
+          "requirements": [],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M7a-AC1"
+          ],
+          "paths": [
+            "search/scripts/search-proof.sh"
+          ],
+          "depends_on": [
+            "M7a-T1",
+            "M7a-T2"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "live-network proof against real ddgs"
+          },
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "evidence": ".harness/evidence/M7a-T3-verifier.log"
+            }
+          ],
+          "status": "ACCEPTED",
+          "commit": "12b46c3"
+        }
+      ],
       "reviews": [],
       "findings": [],
-      "validation": [],
+      "validation": [
+        {
+          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/install-search-helper.sh && search/helper/.venv/bin/python -m unittest discover -s search/helper -p 'test_*.py' && (cd search && bun install && bun test && bun run typecheck && bash scripts/search-proof.sh) && ! lsof -nP -iTCP:7790 -sTCP:LISTEN",
+          "note": "Needs public network (ddgs search engines). Installer is idempotent (reuses search/helper/.venv). search-proof.sh starts the service on 127.0.0.1:7790 only if free, under env -i HOME PATH, and kills it via EXIT trap. Components confirmed exit 0 by verifiers: installer+helper unittest (8 OK)+Chromium+live helper (.harness/evidence/M7a-T1-verifier.log); bun test 127 pass + typecheck (.harness/evidence/M7a-T2-verifier.log); search-proof.sh ALL CASES PASSED (.harness/evidence/M7a-T3-verifier.log)."
+        }
+      ],
       "planned_validation": "Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/install-search-helper.sh && (cd search && bun test && bun run typecheck && bash scripts/search-proof.sh)`",
       "follow_ups": [
-        "R7: if ddgs does not install on Python 3.14, pin a compatible Homebrew Python for the venv (architecture R7); results are best-effort by requirement."
+        "R7 resolved 2026-09-29 (M7a-T1): ddgs 9.16.0 and playwright 1.63.0 install and run on Homebrew Python 3.14.7; live ddgs search returned results. No deviation needed.",
+        "M7a-T2: helper {error} \u2192 503 search_unavailable is implemented now (I17 contract); M7c's both-backends-fail criterion builds on it. No search time limit / 504 yet (M7c).",
+        "M7a-T2: results missing a string title/snippet are kept with \"\" (entries without url dropped); reviewer to confirm acceptable.",
+        "M7a-T1: Playwright downloaded Chromium plus the headless-shell variant; M7b should use p.chromium.executable_path, not a hard-coded path.",
+        "M7a-T3: search-proof.sh depends on live ddgs results from a home IP (3 query attempts per case); engine blocking could make it flaky.",
+        "milestones.md is ~658 lines but nothing is archivable: M6 is the most recently settled milestone (M5c already archived); the rest are TODO/active/BLOCKED."
       ],
       "complexity_signals": [
         "CONCURRENCY_LIFECYCLE",

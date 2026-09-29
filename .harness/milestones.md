@@ -170,7 +170,7 @@ Cycle 2: PASS, tier Mid (sonnet), correction-diff scope 953d0e3..f0de0a6, all cr
 
 ## M7a — The search service answers a web search through ddgs with no account
 
-Status: TODO
+Status: REVIEW
 
 ### Outcome
 
@@ -192,13 +192,19 @@ Pending.
 
 ### Baseline
 
+46a0750f19e47ee9ee3b7f6e7ee085f6cfdd194c on m7a-search-ddgs
 
 ### Evidence
 
+- M7a-T1 — C9 installer ops/scripts/install-search-helper.sh (Homebrew Python 3.14 venv at search/helper/.venv, pinned ddgs 9.16.0 + playwright 1.63.0, Chromium) + C14 helper search/helper/search.py (ddgs region uk-en, I17 JSON, exit 0 always) + test_search.py: Mid (ORDINARY_IMPLEMENTATION), attempt 3, PASS. Verifier re-ran the packet command: exit 0; installer "search helper ready: python 3.14.7, ddgs 9.16.0, playwright 1.63.0"; 8 unittests OK; Chromium executable exists; live helper "Ada Lovelace" → 5 results backend ddgs; mutation region uk-en→all fails test_uses_uk_region_and_max; venv git-ignored; no key/token reads — .harness/evidence/M7a-T1-verifier.log. Commit b3692fb.
+- M7a-T2 — C13 POST /v1/search (search/src/search/runHelper.ts, search/src/http/server.ts): argv-array spawn (query with `; rm -rf /`, `$(whoami)` passed literally), 400 bad_request validation, helper error/garbage/non-zero/spawn failure → 503 search_unavailable, client abort kills helper: Mid (ORDINARY_IMPLEMENTATION), attempt 3, PASS. Verifier re-ran `bun install && bun test && bun run typecheck`: exit 0, 127 pass / 0 fail; server.test.ts unchanged; files within allowlist — .harness/evidence/M7a-T2-verifier.log. Commit 7070a2f.
+- M7a-T3 — search/scripts/search-proof.sh live proof: Mid (ORDINARY_IMPLEMENTATION), attempt 3, PASS. Verifier ran the packet command: exit 0, ALL CASES PASSED, nothing left on 7790 — .harness/evidence/M7a-T3-verifier.log. Per criterion M7a-AC1: venv python + ddgs 9.16.0 + playwright 1.63.0 + Chromium present (installer-created); service started under `env -i HOME PATH` (no key/account vars); POST /v1/search "Ada Lovelace" → 200, backend ddgs, 5 results with title/url/snippet; max_results 3 → 3; {} → 400; region uk-en asserted statically and by helper unit tests; only SEARCH_PORT env read. Commit 12b46c3.
+
+Routing: T1 Mid attempt 3 PASS; T2 Mid attempt 3 PASS; T3 Mid attempt 3 PASS.
 
 ### Validation
 
-Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/install-search-helper.sh && (cd search && bun test && bun run typecheck && bash scripts/search-proof.sh)`
+`cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/install-search-helper.sh && search/helper/.venv/bin/python -m unittest discover -s search/helper -p 'test_*.py' && (cd search && bun install && bun test && bun run typecheck && bash scripts/search-proof.sh) && ! lsof -nP -iTCP:7790 -sTCP:LISTEN` — needs public network (ddgs engines); installer idempotent; search-proof.sh starts/kills its own service on 7790 only if free. Confirmed by verifiers: installer + 8 helper unittests + Chromium + live helper; bun test 127 pass + typecheck; search-proof.sh ALL CASES PASSED.
 
 ### Review
 
@@ -210,7 +216,12 @@ Pending.
 
 ### Follow-ups
 
-- R7: if ddgs does not install on Python 3.14, pin a compatible Homebrew Python for the venv (architecture R7); results are best-effort by requirement.
+- R7 resolved 2026-09-29 (M7a-T1): ddgs 9.16.0 and playwright 1.63.0 install and run on Homebrew Python 3.14.7; live ddgs search returned results. No deviation needed.
+- M7a-T2: helper {error} → 503 search_unavailable is implemented now (I17 contract); M7c's both-backends-fail criterion builds on it. No search time limit / 504 yet (M7c).
+- M7a-T2: results missing a string title/snippet are kept with "" (entries without url dropped); reviewer to confirm acceptable.
+- M7a-T1: Playwright downloaded Chromium plus the headless-shell variant; M7b should use p.chromium.executable_path, not a hard-coded path.
+- M7a-T3: search-proof.sh depends on live ddgs results from a home IP (3 query attempts per case); engine blocking could make it flaky.
+- milestones.md is ~658 lines but nothing is archivable: M6 is the most recently settled milestone (M5c already archived); the rest are TODO/active/BLOCKED.
 
 ## M7b — When ddgs fails, a headless browser answers the search and is closed afterwards
 
