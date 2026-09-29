@@ -4715,7 +4715,7 @@
       "requirements": [
         "FR17"
       ],
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -4723,14 +4723,14 @@
         "branch": "m5c-pwa-retirement"
       },
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M5c.md",
+        "result": "RECORDED"
       },
       "criteria": [
         {
           "id": "M5-AC4",
           "text": "After retirement, /app no longer resolves, the PWA's LaunchAgent is gone, and the harness's / handler still works.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "Live (Mac Studio over tailnet): ops/scripts/retire-pwa.sh removed the :443 /app Serve handler and booted out + moved the PWA LaunchAgent plist; retire-pwa-proof.sh checks /app handler absent and /app not serving PWA content, LaunchAgent/plist gone, nothing on 7788, :443 / still -> http://127.0.0.1:7787, :8443 unchanged (401), phoneToLocalModel HEAD 5c86608 clean -- .harness/evidence/M5c-T1-verifier.log, .harness/evidence/M5c-T1-worker.log (pre-retirement capture)",
             "Live end-to-end / routing: sentinel responder on 127.0.0.1:7787 only, https://<mac>/ returns 200 with exact random sentinel body through Tailscale Serve; /app returned the sentinel (not the PWA); nothing listens on 7787 afterwards -- exit 0, .harness/evidence/M5c-T2-verifier.log"
@@ -4818,7 +4818,27 @@
           "commit": "7a1098b"
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "PASS",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "MID_TIER_DIFF",
+          "diff_range": "52bc8248c798fe91e1029cb27b7f28e60b881fbb..6a0c87a",
+          "artifact": null,
+          "review_log": null,
+          "per_criterion": {
+            "M5-AC4": "PASS"
+          },
+          "findings": {
+            "BLOCKER": 0,
+            "IMPORTANT": 0,
+            "OPTIONAL": 0
+          },
+          "notes": "Full-milestone scope. Reviewer re-ran the recorded validation live (bash -n on both scripts, retire-pwa-proof.sh, no listener on 7787 after): exit 0, 12 checks PASS, sentinel round-trip through Tailscale Serve / confirmed; phoneToLocalModel HEAD 5c86608 with clean tree. Matches C9/I14; no drift. No review log file written."
+        }
+      ],
       "findings": [],
       "validation": [
         {

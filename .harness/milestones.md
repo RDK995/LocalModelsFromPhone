@@ -134,7 +134,7 @@ Cycle 1: PASS, tier Mid (sonnet, MID_TIER_DIFF), full-milestone scope 69aed5333c
 
 ## M5c — PWA retirement
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -146,11 +146,11 @@ C9
 
 ### As-Built
 
-Pending.
+.harness/as-built/M5c.md — RECORDED: C9 observed, 2 of 2 files attributed, 2 edges, no claim mismatches
 
 ### Acceptance Criteria
 
-- [ ] **M5-AC4**: After retirement, /app no longer resolves, the PWA's LaunchAgent is gone, and the harness's / handler still works.
+- [x] **M5-AC4**: After retirement, /app no longer resolves, the PWA's LaunchAgent is gone, and the harness's / handler still works.
 
 ### Baseline
 
@@ -173,7 +173,7 @@ Read-only against live config, except a temporary sentinel HTTP responder on 127
 
 ### Review
 
-Pending.
+Cycle 1: PASS, tier Mid (sonnet, MID_TIER_DIFF), full-milestone scope 52bc8248c798fe91e1029cb27b7f28e60b881fbb..6a0c87a; M5-AC4 PASS; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL; no report file (PASS). Full-milestone scope. Reviewer re-ran the recorded validation live (bash -n on both scripts, retire-pwa-proof.sh, no listener on 7787 after): exit 0, 12 checks PASS, sentinel round-trip through Tailscale Serve / confirmed; phoneToLocalModel HEAD 5c86608 with clean tree. Matches C9/I14; no drift. No review log file written.
 
 ### Review Cycles
 
