@@ -145,7 +145,7 @@ Cycle 1: PASS, tier Mid (sonnet, MID_TIER_DIFF), full-milestone scope 52bc8248c7
 
 ## M6 — The search service reads a web page safely over loopback
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -170,9 +170,13 @@ Pending.
 
 ### Baseline
 
+662d1901ad22979562feda4dc08ac68a6fdda028 on m6-search-read-page
 
 ### Evidence
 
+- M6-T1 — search/ scaffold + SSRF-guarded fetcher (search/src/fetch/): Top (SECURITY), attempt 4, PASS. Verifier re-ran `bun install && bun test && bun run typecheck` in search/: exit 0, 102 pass; files within allowlist; tests not weakened; no external network in tests; R6 proof re-checked by mutation (removing `lookup:` → 25 fail) — .harness/evidence/M6-T1-verifier.log. R6 resolved: Bun honours the custom lookup.
+
+Remaining (packets on disk): M6-T2 extraction + HTTP service (Mid, .harness/tasks/M6-T2.md), then M6-T3 live proof script (Mid, .harness/tasks/M6-T3.md).
 
 ### Validation
 
@@ -188,6 +192,9 @@ Pending.
 
 ### Follow-ups
 
+- R6 resolved 2026-09-29 (M6-T1): Bun 1.4.0 node:http(s) honours a custom lookup (test 'R6: Bun honours the custom lookup' in search/src/fetch/fetchPage.test.ts; removing lookup fails 25 tests). IP literals bypass lookup, so they are checked separately. No deviation needed.
+- M6-T1 added gzip/deflate/br decompression (byte cap applied after decompression) beyond the packet, so real sites ignoring Accept-Encoding: identity still work; reviewer to confirm in scope.
+- Redirect to a non-http(s) scheme is refused as blocked_destination (not bad_url), documented in fetchPage.ts.
 - R6: if Bun ignores the custom lookup, moving page fetching into C14 changes which component owns a responsibility - a Material deviation needing human agreement, not a silent workaround.
 
 ## M7 — The search service answers web searches with no account, falling back to a headless browser

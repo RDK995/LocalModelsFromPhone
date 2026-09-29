@@ -4870,12 +4870,12 @@
         "FR21"
       ],
       "traces": "AC15",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
-        "commit": "",
-        "branch": ""
+        "commit": "662d1901ad22979562feda4dc08ac68a6fdda028",
+        "branch": "m6-search-read-page"
       },
       "as_built": {
         "artifact": null,
@@ -4907,13 +4907,123 @@
           "evidence": []
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M6-T1",
+          "scope": "search/ package scaffold + SSRF-guarded page fetcher (custom lookup, IP-literal check, manual redirects re-checked, 5 MiB/15 s/content-type caps, typed errors); R6 proof test",
+          "tests": "cd /Users/ryankenny/Projects/CodingHarnessv2/search && bun install && bun test && bun run typecheck",
+          "requirements": [
+            "FR21"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M6-AC2",
+            "M6-AC3",
+            "M6-AC4"
+          ],
+          "paths": [
+            "search/package.json",
+            "search/tsconfig.json",
+            "search/bun.lock",
+            "search/.gitignore",
+            "search/src/fetch/"
+          ],
+          "depends_on": [],
+          "routing": {
+            "tier": "Top",
+            "model": "opus",
+            "reason_code": "SECURITY",
+            "detail": "SSRF guard at connect time; also resolves architecture risk R6"
+          },
+          "attempts": [
+            {
+              "attempt": 4,
+              "tier": "Top",
+              "model": "opus",
+              "result": "PASS",
+              "evidence": ".harness/evidence/M6-T1-verifier.log"
+            }
+          ],
+          "status": "ACCEPTED",
+          "commit": null
+        },
+        {
+          "id": "M6-T2",
+          "scope": "Defuddle-over-linkedom extraction to markdown (40 000-char truncation + marker) and Bun.serve on 127.0.0.1:7790 with POST /v1/read + GET /v1/health per I16",
+          "tests": "cd /Users/ryankenny/Projects/CodingHarnessv2/search && bun install && bun test && bun run typecheck",
+          "requirements": [
+            "FR21"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M6-AC1",
+            "M6-AC2",
+            "M6-AC3",
+            "M6-AC4"
+          ],
+          "paths": [
+            "search/package.json",
+            "search/bun.lock",
+            "search/src/index.ts",
+            "search/src/http/",
+            "search/src/extract/"
+          ],
+          "depends_on": [
+            "M6-T1"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "new service wiring and extraction library integration; guard already built"
+          },
+          "attempts": [],
+          "status": "TODO",
+          "commit": null
+        },
+        {
+          "id": "M6-T3",
+          "scope": "search/scripts/read-proof.sh live proof of M6-AC1..AC4 against the real service and public web",
+          "tests": "cd /Users/ryankenny/Projects/CodingHarnessv2/search && bash -n scripts/read-proof.sh && bash scripts/read-proof.sh && ! lsof -nP -iTCP:7790 -sTCP:LISTEN",
+          "requirements": [
+            "FR21"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M6-AC1",
+            "M6-AC2",
+            "M6-AC3",
+            "M6-AC4"
+          ],
+          "paths": [
+            "search/scripts/read-proof.sh"
+          ],
+          "depends_on": [
+            "M6-T2"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "live public-network proof must genuinely demonstrate each criterion (not easily verified)"
+          },
+          "attempts": [],
+          "status": "TODO",
+          "commit": null
+        }
+      ],
       "reviews": [],
       "findings": [],
       "validation": [],
       "planned_validation": "cd /Users/ryankenny/Projects/CodingHarnessv2/search && bun test && bun run typecheck && bash scripts/read-proof.sh",
       "follow_ups": [
-        "R6: if Bun ignores the custom lookup, moving page fetching into C14 changes which component owns a responsibility - a Material deviation needing human agreement, not a silent workaround."
+        "R6: if Bun ignores the custom lookup, moving page fetching into C14 changes which component owns a responsibility - a Material deviation needing human agreement, not a silent workaround.",
+        "R6 resolved 2026-09-29 (M6-T1): Bun 1.4.0 node:http(s) honours a custom lookup (test 'R6: Bun honours the custom lookup' in search/src/fetch/fetchPage.test.ts; removing lookup fails 25 tests). IP literals bypass lookup, so they are checked separately. No deviation needed.",
+        "M6-T1 added gzip/deflate/br decompression (byte cap applied after decompression) beyond the packet, so real sites ignoring Accept-Encoding: identity still work; reviewer to confirm in scope.",
+        "Redirect to a non-http(s) scheme is refused as blocked_destination (not bad_url), documented in fetchPage.ts."
       ],
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
