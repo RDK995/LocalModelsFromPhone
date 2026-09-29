@@ -158,7 +158,16 @@ Pending.
 
 ### Evidence
 
-Pending.
+Handoff (CONTINUE) — accepted so far:
+- T1 — PWA retirement scripts + live run: Mid (routed Mid: live outward-facing change, not low risk), attempt 3, PASS; commit c4e3e33. Verifier re-ran `bash ops/scripts/retire-pwa.sh && bash ops/scripts/retire-pwa-proof.sh` exit 0 (idempotent "already retired" x4, 9 PASS) — .harness/evidence/M5c-T1-verifier.log; worker live run incl. pre-retirement capture (/app 200 with PWA HTML; / 502 because nothing listens on 127.0.0.1:7787) — .harness/evidence/M5c-T1-worker.log. :443 now has only "/" -> http://127.0.0.1:7787; :8443 "/" -> 7789 unchanged (401 on /v1/state); phoneToLocalModel HEAD 5c86608, clean.
+- Undo (printed by retire-pwa.sh; backups in ~/.phone-models/retired-pwa/):
+  `cp ~/.phone-models/retired-pwa/com.ryankenny.phone-pwa.plist ~/Library/LaunchAgents/com.ryankenny.phone-pwa.plist`
+  `launchctl bootstrap gui/501 ~/Library/LaunchAgents/com.ryankenny.phone-pwa.plist`
+  `tailscale serve --bg --https=443 --set-path=/app http://127.0.0.1:7788`
+
+Remaining:
+- T2 — end-to-end proof that :443 "/" still routes to 7787 (the harness on 7787 is not running, so / is 502 before and after; config-only proof is insufficient for "still works"). Packet .harness/tasks/M5c-T2.md. Cheap attempt 1 FAIL (EXIT trap clobbered $WORK cleanup; empty sentinel suffix), reverted; next is Cheap attempt 2 with the Previous Attempt block already in the packet. Attempt 2 could not be dispatched: the auto-mode safety classifier returned no verdict on 4 consecutive Agent calls.
+- Then: record milestone validation, set REVIEW.
 
 ### Validation
 

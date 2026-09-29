@@ -4734,7 +4734,79 @@
           "evidence": []
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M5c-T1",
+          "scope": "ops/scripts/retire-pwa.sh (backup, remove :443 /app Serve handler, bootout + move PWA LaunchAgent plist, idempotent, prints undo) and ops/scripts/retire-pwa-proof.sh (M5-AC4 checks); run live",
+          "tests": "cd /Users/ryankenny/Projects/CodingHarnessv2 && bash -n ops/scripts/retire-pwa.sh && bash -n ops/scripts/retire-pwa-proof.sh && bash ops/scripts/retire-pwa.sh && bash ops/scripts/retire-pwa-proof.sh",
+          "requirements": [
+            "FR17"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M5-AC4"
+          ],
+          "paths": [
+            "ops/scripts/retire-pwa.sh",
+            "ops/scripts/retire-pwa-proof.sh"
+          ],
+          "depends_on": [],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "live outward-facing change on the human's Mac; being wrong is expensive (not low risk); no structural risk"
+          },
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "evidence": ".harness/evidence/M5c-T1-verifier.log"
+            }
+          ],
+          "status": "ACCEPTED",
+          "commit": "c4e3e33"
+        },
+        {
+          "id": "M5c-T2",
+          "scope": "End-to-end proof that :443 / still routes to 127.0.0.1:7787 (sentinel round-trip when nothing listens) in retire-pwa-proof.sh",
+          "tests": "cd /Users/ryankenny/Projects/CodingHarnessv2 && bash -n ops/scripts/retire-pwa-proof.sh && bash ops/scripts/retire-pwa-proof.sh && ! lsof -nP -iTCP:7787 -sTCP:LISTEN",
+          "requirements": [
+            "FR17"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M5-AC4"
+          ],
+          "paths": [
+            "ops/scripts/retire-pwa-proof.sh"
+          ],
+          "depends_on": [
+            "M5c-T1"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "one added check in an existing proof script with a stated oracle; touches no live config"
+          },
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "FAIL",
+              "evidence": ".harness/evidence/M5c-T2-attempt1-worker.log",
+              "detail": "orchestrator diff read: new EXIT trap replaced the $WORK cleanup trap; sentinel random suffix empty (BSD od padding). Change reverted."
+            }
+          ],
+          "status": "PENDING_ATTEMPT_2"
+        }
+      ],
       "reviews": [],
       "findings": [],
       "validation": [],
