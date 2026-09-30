@@ -5347,7 +5347,7 @@
         "FR20"
       ],
       "traces": "AC16 (browser fallback)",
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 1,
       "review_override": null,
       "baseline": {
@@ -5355,18 +5355,19 @@
         "branch": "m7b-search-browser-fallback"
       },
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M7b.md",
+        "result": "RECORDED \u2014 C14 observed; C13, C15 context; 1 claim mismatch: C13 claimed but not observed (no changes in search/src/)"
       },
       "criteria": [
         {
           "id": "M7b-AC1",
           "text": "With ddgs forced to fail or to return nothing, the same request returns results with backend browser, and no headless Chromium process remains afterwards.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             ".harness/evidence/M7b-T2-verifier.log",
             ".harness/evidence/M7b-T3-verifier.log",
-            ".harness/evidence/M7b-T1-verifier.log"
+            ".harness/evidence/M7b-T1-verifier.log",
+            "Cycle-2 review PASS (sonnet): full validation exit 0 \u2014 .harness/evidence/M7b-review.log"
           ]
         }
       ],
@@ -5594,24 +5595,45 @@
             "artifact": ".harness/evidence/M7b-C2-verifier.log",
             "note": "live proofs and bun suites not re-run this cycle; the reviewer re-runs full milestone validation."
           }
+        },
+        {
+          "cycle": 2,
+          "verdict": "PASS",
+          "scope": "CORRECTION_DIFF",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "CORRECTION_REVIEW_CHEAP_FLOOR",
+          "diff_range": "b4faa0af6742599abc6998e40e24a0d18232adaa..d15883e",
+          "per_criterion": {
+            "M7b-AC1": "PASS"
+          },
+          "findings": {
+            "BLOCKER": 0,
+            "IMPORTANT": 0,
+            "OPTIONAL": 0
+          },
+          "artifact": null,
+          "review_log": ".harness/evidence/M7b-review.log"
         }
       ],
       "findings": [
         {
           "id": "M7b-cycle1-F1",
           "severity": "IMPORTANT",
-          "status": "CORRECTED",
+          "status": "RESOLVED",
           "correction_task": "M7b-C1",
           "report": ".harness/reviews/M7b-cycle1.md",
-          "commit": "4923d1f"
+          "commit": "4923d1f",
+          "resolved_by": "cycle 2 review PASS (sonnet), .harness/evidence/M7b-review.log"
         },
         {
           "id": "M7b-cycle1-F2",
           "severity": "OPTIONAL",
-          "status": "CORRECTED",
+          "status": "RESOLVED",
           "correction_task": "M7b-C2",
           "report": ".harness/reviews/M7b-cycle1.md",
-          "commit": "e5e215c"
+          "commit": "e5e215c",
+          "resolved_by": "cycle 2 review PASS (sonnet), .harness/evidence/M7b-review.log"
         }
       ],
       "validation": [

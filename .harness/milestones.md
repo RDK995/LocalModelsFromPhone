@@ -169,7 +169,7 @@ Cycle 1: PASS — reviewer tier Mid (sonnet), full milestone scope, diff 46a0750
 
 ## M7b — When ddgs fails, a headless browser answers the search and is closed afterwards
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -183,11 +183,11 @@ C13, C14, C15
 
 ### As-Built
 
-Pending.
+.harness/as-built/M7b.md — RECORDED; C14 observed, C13/C15 context; 1 claim mismatch: C13 claimed but not observed (no changes in search/src/)
 
 ### Acceptance Criteria
 
-- [ ] **M7b-AC1**: With ddgs forced to fail or to return nothing, the same request returns results with backend browser, and no headless Chromium process remains afterwards.
+- [x] **M7b-AC1**: With ddgs forced to fail or to return nothing, the same request returns results with backend browser, and no headless Chromium process remains afterwards.
 
 ### Baseline
 
@@ -214,6 +214,7 @@ Corrections (each verifier-confirmed, committed):
 Cycle-1 validation: `cd /Users/ryankenny/Projects/CodingHarnessv2 && search/helper/.venv/bin/python -m unittest discover -s search/helper -p 'test_*.py'` exit 0, 33 tests OK (verifier). Live fallback-proof.sh / search-proof.sh and bun suites not re-run this cycle (no TypeScript or script changed); the reviewer re-runs full milestone validation.
 Correction diff: git diff b4faa0af6742599abc6998e40e24a0d18232adaa HEAD
 Files changed by corrections: search/helper/search.py; search/helper/test_search.py (plus .harness/ records). No file outside the findings' scope: F1 names decode_bing_href in search.py and asks for a test; F2 names the test file.
+Cycle 2: PASS, tier Mid (sonnet, review floor; correction diff b4faa0a..d15883e, Cheap-routed M7b-C1/C2 only); M7b-AC1 PASS; 0 findings; reviewer full validation exit 0 — .harness/evidence/M7b-review.log
 
 ### Review Cycles
 
