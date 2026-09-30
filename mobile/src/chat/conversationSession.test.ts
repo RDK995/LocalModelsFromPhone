@@ -609,3 +609,108 @@ describe("sendInConversation: caller-supplied ids (M4a-T2)", () => {
     ]);
   });
 });
+
+describe("sendInConversation: web switch and web steps (M10)", () => {
+  function chatClient(
+    respond: () => Response,
+    bodies: Array<Record<string, unknown>>
+  ): APIClient {
+    const fetchMock = mock(async (url: string, init?: RequestInit) => {
+      if (url.endsWith("/v1/state")) return stateResponse({ name: "llama3" });
+      if (url.endsWith("/v1/chat")) {
+        bodies.push(JSON.parse(init!.body as string));
+        return respond();
+      }
+      throw new Error(`unexpected request: ${url}`);
+    });
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+    return client;
+  }
+
+  it("sends web:true when the stored switch is on", async () => {
+    const store = createConversationStore(createMemoryStorage());
+    const c = await store.create();
+    await store.setWebSearch(c.id, true);
+    const bodies: Array<Record<string, unknown>> = [];
+    const client = chatClient(() => completedChatResponse("ok", "llama3"), bodies);
+    await sendInConversation(client, store, c.id, "hi", newCallbacks().callbacks);
+    expect(bodies[0].web).toBe(true);
+  });
+
+  it("sends no web key when the switch is off or absent", async () => {
+    const storage = createMemoryStorage();
+    const store = createConversationStore(storage);
+    const off = await store.create();
+    const absent = await store.create();
+    await storage.setItem(
+      `phone-models:v1:conversation:${absent.id}`,
+      JSON.stringify({ id: absent.id, title: "t", created_at: "a", updated_at: "a", messages: [] })
+    );
+    const bodies: Array<Record<string, unknown>> = [];
+    const client = chatClient(() => completedChatResponse("ok", "llama3"), bodies);
+    await sendInConversation(client, store, off.id, "hi", newCallbacks().callbacks);
+    await sendInConversation(client, store, absent.id, "hi", newCallbacks().callbacks);
+    expect(bodies).toHaveLength(2);
+    expect("web" in bodies[0]).toBe(false);
+    expect("web" in bodies[1]).toBe(false);
+  });
+
+  it("takes a switch change made mid-reply from the next prompt, not the in-flight one", async () => {
+    const store = createConversationStore(createMemoryStorage());
+    const c = await store.create();
+    await store.setWebSearch(c.id, true);
+    const bodies: Array<Record<string, unknown>> = [];
+    const client = chatClient(() => completedChatResponse("ok", "llama3"), bodies);
+
+    let flipped: Promise<unknown> | null = null;
+    const cb = newCallbacks().callbacks;
+    await sendInConversation(client, store, c.id, "first", {
+      ...cb,
+      onEvent: (event) => {
+        if (event.type === "content" && !flipped) flipped = store.setWebSearch(c.id, false);
+      },
+    });
+    await flipped;
+    expect(bodies[0].web).toBe(true);
+
+    await sendInConversation(client, store, c.id, "second", newCallbacks().callbacks);
+    expect("web" in bodies[1]).toBe(false);
+
+    await store.setWebSearch(c.id, true);
+    await sendInConversation(client, store, c.id, "third", newCallbacks().callbacks);
+    expect(bodies[2].web).toBe(true);
+  });
+
+  it("persists the reply's steps (final statuses) and sources", async () => {
+    const store = createConversationStore(createMemoryStorage());
+    const c = await store.create();
+    await store.setWebSearch(c.id, true);
+    const bodies: Array<Record<string, unknown>> = [];
+    const client = chatClient(() => {
+      const s = controlledSseResponse("gen-web");
+      s.push('event: step\ndata: {"step_id":"s1","kind":"search","status":"started","query":"q"}\n\n');
+      s.push('event: step\ndata: {"step_id":"s1","kind":"search","status":"done","query":"q"}\n\n');
+      s.push('event: content\ndata: {"text":"answer"}\n\n');
+      s.push('event: sources\ndata: {"items":[{"title":"T","url":"https://t.test"}]}\n\n');
+      s.push(doneEvent("llama3"));
+      s.close();
+      return s.response;
+    }, bodies);
+    await sendInConversation(client, store, c.id, "hi", newCallbacks().callbacks);
+    const reply = (await store.get(c.id))!.messages[1];
+    expect(reply.steps).toEqual([{ step_id: "s1", kind: "search", status: "done", query: "q" }]);
+    expect(reply.sources).toEqual([{ title: "T", url: "https://t.test" }]);
+  });
+
+  it("stores no steps or sources keys for a plain reply", async () => {
+    const store = createConversationStore(createMemoryStorage());
+    const c = await store.create();
+    const bodies: Array<Record<string, unknown>> = [];
+    const client = chatClient(() => completedChatResponse("plain", "llama3"), bodies);
+    await sendInConversation(client, store, c.id, "hi", newCallbacks().callbacks);
+    const reply = (await store.get(c.id))!.messages[1];
+    expect("steps" in reply).toBe(false);
+    expect("sources" in reply).toBe(false);
+  });
+});

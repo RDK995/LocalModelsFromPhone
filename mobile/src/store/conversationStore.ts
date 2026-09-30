@@ -27,6 +27,7 @@
  * `rename`.
  */
 
+import type { SourcesEvent, StepEventData } from "@shared/api";
 import type { StoragePort } from "./storagePort";
 
 export type { StoragePort } from "./storagePort";
@@ -43,6 +44,10 @@ export interface Message {
   status: MessageStatus;
   generation_id?: string;
   last_seq?: number;
+  /** Web steps the reply showed (FR22); absent for replies that did not use the web. */
+  steps?: StepEventData[];
+  /** Sources list the reply ended with (FR22). */
+  sources?: SourcesEvent["items"];
 }
 
 export interface Conversation {
@@ -51,6 +56,8 @@ export interface Conversation {
   created_at: string;
   updated_at: string;
   messages: Message[];
+  /** Per-conversation web search switch (FR18); absent means off. */
+  web_search?: boolean;
 }
 
 export interface ConversationStoreOptions {
@@ -72,6 +79,7 @@ export interface ConversationStore {
     patch: Partial<Message>
   ): Promise<Conversation>;
   rename(conversationId: string, title: string): Promise<Conversation>;
+  setWebSearch(conversationId: string, on: boolean): Promise<Conversation>;
 }
 
 const DEFAULT_TITLE = "New chat";
@@ -95,6 +103,27 @@ function defaultNewId(): string {
 
 const MESSAGE_STATUSES: MessageStatus[] = ["complete", "stopped", "error", "streaming"];
 
+const STEP_KINDS = ["search", "read"];
+const STEP_STATUSES = ["started", "done", "failed", "unavailable"];
+
+function isValidStep(value: unknown): boolean {
+  if (value === null || typeof value !== "object") return false;
+  const v = value as Record<string, unknown>;
+  if (typeof v.step_id !== "string") return false;
+  if (!STEP_KINDS.includes(v.kind as string)) return false;
+  if (!STEP_STATUSES.includes(v.status as string)) return false;
+  if (v.query !== undefined && typeof v.query !== "string") return false;
+  if (v.url !== undefined && typeof v.url !== "string") return false;
+  if (v.detail !== undefined && typeof v.detail !== "string") return false;
+  return true;
+}
+
+function isValidSource(value: unknown): boolean {
+  if (value === null || typeof value !== "object") return false;
+  const v = value as Record<string, unknown>;
+  return typeof v.title === "string" && typeof v.url === "string";
+}
+
 function isValidMessage(value: unknown): value is Message {
   if (value === null || typeof value !== "object") return false;
   const v = value as Record<string, unknown>;
@@ -106,6 +135,12 @@ function isValidMessage(value: unknown): value is Message {
   if (v.model !== undefined && typeof v.model !== "string") return false;
   if (v.generation_id !== undefined && typeof v.generation_id !== "string") return false;
   if (v.last_seq !== undefined && typeof v.last_seq !== "number") return false;
+  if (v.steps !== undefined && !(Array.isArray(v.steps) && v.steps.every(isValidStep))) {
+    return false;
+  }
+  if (v.sources !== undefined && !(Array.isArray(v.sources) && v.sources.every(isValidSource))) {
+    return false;
+  }
   return true;
 }
 
@@ -117,6 +152,7 @@ function isValidConversation(value: unknown): value is Conversation {
   if (typeof v.created_at !== "string") return false;
   if (typeof v.updated_at !== "string") return false;
   if (!Array.isArray(v.messages)) return false;
+  if (v.web_search !== undefined && typeof v.web_search !== "boolean") return false;
   return v.messages.every(isValidMessage);
 }
 
@@ -198,6 +234,7 @@ export function createConversationStore(
         created_at: timestamp,
         updated_at: timestamp,
         messages: [],
+        web_search: false,
       };
 
       await writeConversation(conversation);
@@ -240,6 +277,14 @@ export function createConversationStore(
     async rename(conversationId: string, title: string): Promise<Conversation> {
       const conversation = await requireConversation(conversationId);
       conversation.title = title;
+      conversation.updated_at = now();
+      await writeConversation(conversation);
+      return conversation;
+    },
+
+    async setWebSearch(conversationId: string, on: boolean): Promise<Conversation> {
+      const conversation = await requireConversation(conversationId);
+      conversation.web_search = on;
       conversation.updated_at = now();
       await writeConversation(conversation);
       return conversation;

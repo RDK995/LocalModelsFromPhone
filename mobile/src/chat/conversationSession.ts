@@ -107,6 +107,9 @@ export async function sendInConversation(
     return;
   }
 
+  // Read once, here: a switch change during the reply applies from the next prompt (FR18).
+  const webSearch = conversation.web_search === true;
+
   const history: ChatRequest["messages"] = conversation.messages.map((m) => ({
     role: m.role,
     content: m.content,
@@ -137,6 +140,8 @@ export async function sendInConversation(
       content: accumulator.content,
       status,
       ...(accumulator.thinking ? { thinking: accumulator.thinking } : {}),
+      ...(accumulator.steps.length > 0 ? { steps: accumulator.steps } : {}),
+      ...(accumulator.sources.length > 0 ? { sources: accumulator.sources } : {}),
       ...(doneModel || sentModel ? { model: doneModel ?? sentModel ?? undefined } : {}),
     };
     pendingPersist = store.appendMessage(conversationId, message).then(() => undefined);
@@ -174,6 +179,7 @@ export async function sendInConversation(
       persistReply(doneStatus === "cancelled" ? "stopped" : "complete");
       pendingPersist = pendingPersist.then(() => callbacks.onComplete());
     },
+    web: webSearch,
     signal: callbacks.signal,
   };
 

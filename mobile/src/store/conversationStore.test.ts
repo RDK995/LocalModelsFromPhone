@@ -268,3 +268,113 @@ describe("conversation store", () => {
     await expect(store.list()).resolves.toEqual([]);
   });
 });
+
+describe("conversation store: web search switch and web steps (M10)", () => {
+  function newStore(storage: StoragePort = createMemoryStorage()) {
+    return createConversationStore(storage, {
+      now: fakeClock().now,
+      newId: fakeIdGenerator(),
+    });
+  }
+
+  const legacy = {
+    id: "old",
+    title: "Old",
+    created_at: "2024-01-01T00:00:00.000Z",
+    updated_at: "2024-01-01T00:00:00.000Z",
+    messages: [{ id: "m", role: "user", content: "hi", status: "complete" }],
+  };
+
+  async function seed(storage: StoragePort, value: unknown) {
+    await storage.setItem("phone-models:v1:conversation:old", JSON.stringify(value));
+  }
+
+  it("loads a conversation saved before the switch existed, with web search off", async () => {
+    const storage = createMemoryStorage();
+    await seed(storage, legacy);
+    const loaded = await newStore(storage).get("old");
+    expect(loaded).not.toBeNull();
+    expect(loaded!.web_search === true).toBe(false);
+    expect("web_search" in loaded!).toBe(false);
+  });
+
+  it("creates conversations with web search off", async () => {
+    const created = await newStore().create();
+    expect(created.web_search).toBe(false);
+  });
+
+  it("persists setWebSearch across a fresh store on the same storage, on and back off", async () => {
+    const storage = createMemoryStorage();
+    const store = newStore(storage);
+    const c = await store.create();
+
+    const on = await store.setWebSearch(c.id, true);
+    expect(on.web_search).toBe(true);
+    expect((await newStore(storage).get(c.id))!.web_search).toBe(true);
+
+    await store.setWebSearch(c.id, false);
+    expect((await newStore(storage).get(c.id))!.web_search).toBe(false);
+  });
+
+  it("bumps updated_at when the switch changes", async () => {
+    const store = newStore();
+    const c = await store.create();
+    const after = await store.setWebSearch(c.id, true);
+    expect(Date.parse(after.updated_at)).toBeGreaterThan(Date.parse(c.updated_at));
+  });
+
+  it("rejects setWebSearch for an unknown conversation", async () => {
+    await expect(newStore().setWebSearch("nope", true)).rejects.toThrow();
+  });
+
+  it("drops a conversation whose web_search is not a boolean", async () => {
+    const storage = createMemoryStorage();
+    await seed(storage, { ...legacy, web_search: "yes" });
+    expect(await newStore(storage).get("old")).toBeNull();
+  });
+
+  it("round-trips a message with steps and sources", async () => {
+    const storage = createMemoryStorage();
+    const store = newStore(storage);
+    const c = await store.create();
+    const message: Message = {
+      id: "a1",
+      role: "assistant",
+      content: "answer",
+      status: "complete",
+      steps: [
+        { step_id: "s1", kind: "search", status: "done", query: "q" },
+        { step_id: "s2", kind: "read", status: "failed", url: "https://x.test", detail: "boom" },
+      ],
+      sources: [{ title: "X", url: "https://x.test" }],
+    };
+    await store.appendMessage(c.id, message);
+    const loaded = await newStore(storage).get(c.id);
+    expect(loaded!.messages[0]).toEqual(message);
+  });
+
+  const badMessages: Array<[string, Record<string, unknown>]> = [
+    ["steps not an array", { steps: "x" }],
+    ["sources not an array", { sources: {} }],
+    ["step without step_id", { steps: [{ kind: "search", status: "done" }] }],
+    ["step with bad kind", { steps: [{ step_id: "s", kind: "fetch", status: "done" }] }],
+    ["step with bad status", { steps: [{ step_id: "s", kind: "search", status: "ok" }] }],
+    ["step with non-string query", { steps: [{ step_id: "s", kind: "search", status: "done", query: 1 }] }],
+    ["step with non-string url", { steps: [{ step_id: "s", kind: "read", status: "done", url: 1 }] }],
+    ["step with non-string detail", { steps: [{ step_id: "s", kind: "read", status: "done", detail: 1 }] }],
+    ["step that is null", { steps: [null] }],
+    ["source without url", { sources: [{ title: "t" }] }],
+    ["source without title", { sources: [{ url: "u" }] }],
+  ];
+
+  for (const [name, extra] of badMessages) {
+    it(`drops a conversation with a malformed message: ${name}`, async () => {
+      const storage = createMemoryStorage();
+      await seed(storage, {
+        ...legacy,
+        messages: [{ id: "a", role: "assistant", content: "c", status: "complete", ...extra }],
+      });
+      expect(await newStore(storage).get("old")).toBeNull();
+    });
+  }
+});
