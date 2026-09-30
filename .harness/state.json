@@ -5429,13 +5429,52 @@
           "attempts": [],
           "status": "IN_PROGRESS",
           "commit": null
+        },
+        {
+          "id": "M7b-T3",
+          "scope": "C14 helper: browser results never carry an empty title (pick_title innerText>textContent>aria-label>title attr, else drop row) + unittests",
+          "tests": "see .harness/tasks/M7b-T3.md Tests",
+          "requirements": [
+            "FR20"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M7b-AC1"
+          ],
+          "paths": [
+            "search/helper/search.py",
+            "search/helper/test_search.py"
+          ],
+          "depends_on": [
+            "M7b-T1"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "small change inside one scraping loop with a stated rule; unit test and live proof settle it. Raised by M7b-T2 live proof (empty Bing title)"
+          },
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "evidence": ".harness/evidence/M7b-T3-verifier.log"
+            }
+          ],
+          "status": "ACCEPTED",
+          "commit": null
         }
       ],
       "reviews": [],
       "findings": [],
       "validation": [],
       "planned_validation": "Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd search && bun test && bun run typecheck && bash scripts/search-proof.sh)` with ddgs forced to fail/return nothing, then `! pgrep -f 'chrom.*headless'`",
-      "follow_ups": [],
+      "follow_ups": [
+        "M7b-T3: no unit test drives the scraping loop to show an all-empty-title row is dropped; covered only by pick_title tests, the `if not title: continue` line, and the live fallback proof."
+      ],
       "complexity_signals": [
         "CONCURRENCY_LIFECYCLE",
         "IMPLEMENTATION_PLUS_LIVE_PROOF"

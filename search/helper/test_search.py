@@ -23,6 +23,38 @@ def fake_factory(hits=None, exc=None, calls=None):
     return FakeDDGS
 
 
+class PickTitleTests(unittest.TestCase):
+    def test_pick_title_uses_inner_text_when_present(self):
+        self.assertEqual(search.pick_title("Ada Lovelace", "different", "", ""), "Ada Lovelace")
+
+    def test_pick_title_strips_inner_text(self):
+        self.assertEqual(search.pick_title("  Ada Lovelace  ", "", "", ""), "Ada Lovelace")
+
+    def test_pick_title_falls_back_to_text_content(self):
+        self.assertEqual(search.pick_title("", "Ada Lovelace", "", ""), "Ada Lovelace")
+
+    def test_pick_title_collapses_whitespace_in_text_content(self):
+        self.assertEqual(search.pick_title("", "Ada  \n  Lovelace  ", "", ""), "Ada Lovelace")
+
+    def test_pick_title_falls_back_to_aria_label(self):
+        self.assertEqual(search.pick_title("", "", "Ada Lovelace", ""), "Ada Lovelace")
+
+    def test_pick_title_strips_aria_label(self):
+        self.assertEqual(search.pick_title("", "", "  Ada Lovelace  ", ""), "Ada Lovelace")
+
+    def test_pick_title_falls_back_to_title_attr(self):
+        self.assertEqual(search.pick_title("", "", "", "Ada Lovelace"), "Ada Lovelace")
+
+    def test_pick_title_strips_title_attr(self):
+        self.assertEqual(search.pick_title("", "", "", "  Ada Lovelace  "), "Ada Lovelace")
+
+    def test_pick_title_all_empty_returns_empty(self):
+        self.assertEqual(search.pick_title("", "", "", ""), "")
+
+    def test_pick_title_all_whitespace_returns_empty(self):
+        self.assertEqual(search.pick_title("   ", "  \n  ", "\t", "  "), "")
+
+
 class RunTests(unittest.TestCase):
     def test_uses_uk_region_and_max(self):
         calls = []

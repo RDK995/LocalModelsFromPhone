@@ -34,6 +34,24 @@ def _default_factory():
     return DDGS()
 
 
+def pick_title(inner_text, text_content, aria_label, title_attr):
+    """Pick the best title using fallback strategy: innerText, textContent, aria-label, title attr."""
+    # Try innerText first (stripped)
+    if inner_text and inner_text.strip():
+        return inner_text.strip()
+    # Try textContent (stripped with whitespace collapsed)
+    if text_content and text_content.strip():
+        return " ".join(text_content.split())
+    # Try aria-label (stripped)
+    if aria_label and aria_label.strip():
+        return aria_label.strip()
+    # Try title attribute (stripped)
+    if title_attr and title_attr.strip():
+        return title_attr.strip()
+    # All empty
+    return ""
+
+
 def decode_bing_href(href):
     """Return the real destination of a Bing result href, or None if it cannot be resolved."""
     try:
@@ -89,7 +107,14 @@ def browser_search(query, max_results, sync_playwright=None):
                     """() => Array.from(document.querySelectorAll('li.b_algo')).map(li => {
                         const a = li.querySelector('h2 a');
                         const p = li.querySelector('.b_caption p, p');
-                        return {title: a ? a.innerText : '', href: a ? a.href : '', snippet: p ? p.innerText : ''};
+                        return {
+                            innerText: a ? a.innerText : '',
+                            textContent: a ? a.textContent : '',
+                            ariaLabel: a ? a.getAttribute('aria-label') : '',
+                            titleAttr: a ? a.getAttribute('title') : '',
+                            href: a ? a.href : '',
+                            snippet: p ? p.innerText : ''
+                        };
                     })"""
                 )
                 results, seen = [], set()
@@ -98,8 +123,16 @@ def browser_search(query, max_results, sync_playwright=None):
                     if not real or real in seen:
                         continue
                     seen.add(real)
+                    title = pick_title(
+                        row.get("innerText") or "",
+                        row.get("textContent") or "",
+                        row.get("ariaLabel") or "",
+                        row.get("titleAttr") or ""
+                    )
+                    if not title:
+                        continue
                     results.append(
-                        {"title": (row.get("title") or "").strip(), "url": real, "snippet": (row.get("snippet") or "").strip()}
+                        {"title": title, "url": real, "snippet": (row.get("snippet") or "").strip()}
                     )
                     if len(results) >= max_results:
                         break
