@@ -324,7 +324,7 @@ Cycle 1: PASS (tier Mid, reviewer sonnet, reason ORDINARY_IMPLEMENTATION; diff f
 
 ## M10d — A web answer's sources start folded as "Sources (n)", each its own tappable entry
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -338,11 +338,11 @@ C1
 
 ### As-Built
 
-Pending.
+.harness/as-built/M10d.md — RECORDED — 5/5 files attributed (2 proof scripts are test harness); components C1; 1 edge; claim mismatches NONE
 
 ### Acceptance Criteria
 
-- [ ] **M10d-AC1**: A web answer's sources start collapsed as "Sources (n)", expand and collapse on tap, and each source is its own tappable entry (logo + title) opening in Safari - including a source set shaped like the 2026-09-30 phone screenshot in which several sources rendered glued into one link. Proven by unit tests, a Mac-side live proof, and the owner's phone screenshot.
+- [x] **M10d-AC1**: A web answer's sources start collapsed as "Sources (n)", expand and collapse on tap, and each source is its own tappable entry (logo + title) opening in Safari - including a source set shaped like the 2026-09-30 phone screenshot in which several sources rendered glued into one link. Proven by unit tests, a Mac-side live proof, and the owner's phone screenshot.
 
 ### Baseline
 
@@ -367,7 +367,7 @@ All not yet reviewed.
 
 ### Review
 
-Pending.
+Cycle 1: PASS (tier Mid, reviewer sonnet, reason ROUTED_MID; diff ba6d032..9753b23; per-criterion AC1 PASS; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL; reviewer evidence `.harness/evidence/M10d-review.log`).
 
 ### Review Cycles
 

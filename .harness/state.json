@@ -8943,7 +8943,7 @@
         "FR28"
       ],
       "traces": "AC22",
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -8951,14 +8951,15 @@
         "branch": "m10d-sources-folded"
       },
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M10d.md",
+        "result": "RECORDED",
+        "summary": ".harness/as-built/M10d.md — RECORDED — 5/5 files attributed (2 proof scripts are test harness); components C1; 1 edge; claim mismatches NONE"
       },
       "criteria": [
         {
           "id": "M10d-AC1",
           "text": "A web answer's sources start collapsed as \"Sources (n)\", expand and collapse on tap, and each source is its own tappable entry (logo + title) opening in Safari - including a source set shaped like the 2026-09-30 phone screenshot in which several sources rendered glued into one link. Proven by unit tests, a Mac-side live proof, and the owner's phone screenshot.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "Unit tests: mobile/src/ui/sourceListModel.test.ts (header 'Sources (n)', starts collapsed, toggle both ways, one entry per source with distinct keys and own url, screenshot-shaped 6-source fixture incl. www.wsj.com/wsj.com pair, empty title, newline title, long URL, identical-URL pair; empty list renders nothing; SourceList.tsx separate TouchableOpacity rows with SourceLogo + title calling onOpenSource(entry.url); useState(false), no storage; chat.tsx renders SourceList). T1 434938a, .harness/evidence/M10d-T1-verifier.log. Not reviewed.",
             "Mac-side live proof: mobile/scripts/sources-list-proof.sh, runs 2026-09-30 22:01 (worker, 10 sources, 9/9 hosts image; .harness/evidence/M10d-T2-worker.log) and 22:05 (verifier, 6 sources, 4/4 hosts image; .harness/evidence/M10d-T2-proof.log, -replies.json), both PASSED, model nemotron3:33b unchanged. T2 f00e328. Not reviewed.",
@@ -9110,7 +9111,22 @@
           "commit": "f00e328"
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "PASS",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "ROUTED_MID",
+          "diff_range": "ba6d032..9753b23",
+          "artifact": null,
+          "review_log": ".harness/evidence/M10d-review.log",
+          "findings": "0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL",
+          "per_criterion": {
+            "M10d-AC1": "PASS"
+          }
+        }
+      ],
       "findings": [],
       "validation": [
         {
