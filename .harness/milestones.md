@@ -271,7 +271,7 @@ Recommended decision:
 
 ## M10c2 — Links to a web answer's sources show the site's own logo and open in Safari
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -302,11 +302,16 @@ Tasks:
 - M10c2-T1 — sourceLinks.ts link-to-source matching   Cheap (haiku, BOUNDED_LOW_RISK), attempt 1, PASS — commit af84383; .harness/evidence/M10c2-T1-verifier.log (51 pass, typecheck, lint)
 - M10c2-T2 — siteIcon (C2) + iconCache (C3)            Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — commit 469b4b3; .harness/evidence/M10c2-T2-verifier.log (60 pass, typecheck, lint)
 - M10c2-T3 — inline logo rendering (C1)               Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — commit 03c1ffe; .harness/evidence/M10c2-T3-verifier.log (368 pass, typecheck, lint)
-- M10c2-T4 — live proof mobile/scripts/source-logo-proof.sh   Mid (sonnet, ORDINARY_IMPLEMENTATION) — in progress
+- M10c2-T4 — live proof mobile/scripts/source-logo-proof.sh   Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — commit 64c47d4; .harness/evidence/M10c2-T4-verifier.log (exit 0, checks 1-8 PASS); proof log .harness/evidence/M10c2-T4-proof.log. Wrapper also restarts com.harness.search (the running copy predated M10c1's icon route).
+
+M10c-AC1 evidence (Mac-side): live proof — siteIcon("github.com") through the Mac returns a data:image URI; the phone cache asks once then serves from memory and from storage; localhost and 100.100.100.100.nip.io (refused by the Mac) and example.com (no icon) give the globe; www./scheme/trailing-slash variants of a source match, https://www.msn.com/... and a non-source path stay plain, and a reply with no sources (non-web answer) stays plain; network observation: all 6 requests went to SERVER_URL/v1/icon?host=; inspection: no third-party logo service, fetch( only under mobile/src/api. Screen wiring (static checks, 368 pass): MarkdownText renders a source-matched link's text followed by SourceLogo, whose tap opens the source URL with Linking.openURL; other links are plain Text with no onPress.
+
 
 ### Validation
 
-Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/source-logo-proof.sh` (proof lives in mobile/scripts like the other phone proofs)
+`cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/source-logo-proof.sh` — reviewer runs once. Needs the Mac server, the token at ~/.phone-models/token and internet; restarts com.harness.server, com.harness.bundle-host and com.harness.search; loads no model. Task evidence: .harness/evidence/M10c2-T1..T4-verifier.log, .harness/evidence/M10c2-T4-proof.log.
+
+Owner's phone observation still owed (cannot be claimed Mac-side): in a web answer, a link to one of its sources shows the site's logo after its text; tapping the logo opens Safari at that page; the link text itself and a non-source link are not tappable; a site with no logo shows the globe; an older saved web chat gets logos too.
 
 ### Review
 
@@ -321,6 +326,9 @@ Pending.
 - Architecture deviation D-M10c-2 (the Mac fetches each site's icon: C13 GET /v1/icon behind C4 GET /v1/icon; the phone talks only to the Mac) is recorded as Material: yes and approved by the human on 2026-09-30; it supersedes D-M10c-1, which is withdrawn and must not be implemented.
 - A logo failing to load must never block or break the answer (FR27).
 - Split from M10c 2026-09-30 by human decision (Option A); depends on M10c1 (GET /v1/icon must exist).
+- Production LaunchAgent com.harness.search was found running code from before M10c1 (404 for every /v1/icon); M10c2-T4's proof now restarts it. Consider whether the deploy/restart path for com.harness.search should pick up new code automatically (ops, C9).
+- Architecture deviation D-M10c2-1 (Material: no): globe fallback is the system glyph U+1F310; the phone remembers "no logo" for the app session only.
+- milestones.md is still past 400 lines after archiving M10b; nothing else is archivable yet (M10c1 most recently settled, M5a BLOCKED, the rest TODO).
 
 ## M10d — A web answer's sources start folded as "Sources (n)", each its own tappable entry
 

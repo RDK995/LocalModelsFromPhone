@@ -7671,7 +7671,7 @@
         "FR27"
       ],
       "traces": "AC21",
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -7687,7 +7687,9 @@
           "id": "M10c-AC1",
           "text": "In a web answer, a link whose URL matches a saved source (including a www./trailing-slash/scheme variant) shows the site's logo after its text and tapping it opens that page in Safari; a link not among the sources (e.g. https://www.msn.com/...) and a link in a non-web answer are plain, non-tappable text with no logo; a site with no reachable logo shows the globe icon. No third-party logo service is called, and the phone contacts no website or logo service directly - logos arrive from the Mac (checked by inspection plus a network observation during the live proof); the Mac's icon fetch refuses local, LAN and tailnet destinations.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "Live: bash mobile/scripts/source-logo-proof.sh exit 0 (.harness/evidence/M10c2-T4-verifier.log): siteIcon(github.com) via the Mac -> data:image URI (958 bytes); phone cache 1 request then 0 (and 0 from a fresh cache over the same storage); localhost, 100.100.100.100.nip.io (refused by the Mac) and example.com (no icon) -> null -> globe; no token -> null; link rules: www./scheme/trailing-slash variants -> source, msn truncated and non-source path -> plain, no sources (non-web answer) -> plain; network observation: all 6 requests to SERVER_URL/v1/icon?host=; inspection: no third-party logo service, fetch( only under src/api. Unit/static: mobile 368 pass, typecheck, lint (M10c2-T3 verifier): MarkdownText renders a source-matched link as text + SourceLogo (tap -> Linking.openURL of the source), other links plain with no onPress. Owner phone observation owed (see Validation)."
+          ]
         }
       ],
       "tasks": [
@@ -7840,16 +7842,80 @@
             "M10c2-T2"
           ],
           "findings": []
+        },
+        {
+          "id": "M10c2-T4",
+          "scope": "live proof mobile/scripts/source-logo-proof.{sh,ts} against the real Mac server",
+          "packet": ".harness/tasks/M10c2-T4.md",
+          "paths": [
+            "mobile/scripts/source-logo-proof.sh",
+            "mobile/scripts/source-logo-proof.ts"
+          ],
+          "requirements": [
+            "FR27"
+          ],
+          "criteria": [
+            "M10c-AC1"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "live proof modelled on markdown-render-proof and web-switch-proof"
+          },
+          "tests": "cd mobile && bun run typecheck && bun run lint && bash scripts/source-logo-proof.sh",
+          "attempt_log": [
+            {
+              "role": "worker",
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "base": "03c1ffe",
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M10c2-T4-proof.log",
+              "note": "wrapper also restarts com.harness.search + readiness poll: running search service predated M10c1's icon route and 404'd every host"
+            },
+            {
+              "role": "verifier",
+              "attempt": 3,
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M10c2-T4-verifier.log",
+              "note": "exit 0 captured; checks 1-8 PASS; 6 requests all to SERVER_URL/v1/icon?host=; resident model unchanged; search restart judged not to weaken the proof"
+            }
+          ],
+          "attempts": 1,
+          "status": "ACCEPTED",
+          "commit": "64c47d4",
+          "constraints": [],
+          "depends_on": [
+            "M10c2-T3"
+          ],
+          "findings": []
         }
       ],
       "reviews": [],
       "findings": [],
-      "validation": [],
+      "validation": [
+        {
+          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/source-logo-proof.sh",
+          "note": "reviewer runs once; the proof restarts com.harness.server, com.harness.bundle-host and com.harness.search, needs the Mac server, the bearer token at ~/.phone-models/token and internet (github.com, example.com); loads no model. On-phone rendering and tap-to-Safari are owner-observed, not Mac-provable.",
+          "artifacts": [
+            ".harness/evidence/M10c2-T1-verifier.log",
+            ".harness/evidence/M10c2-T2-verifier.log",
+            ".harness/evidence/M10c2-T3-verifier.log",
+            ".harness/evidence/M10c2-T4-verifier.log",
+            ".harness/evidence/M10c2-T4-proof.log"
+          ]
+        }
+      ],
       "planned_validation": "cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/source-logo-proof.sh",
       "follow_ups": [
         "Architecture deviation D-M10c-2 (the Mac fetches each site's icon: C13 GET /v1/icon behind C4 GET /v1/icon; the phone talks only to the Mac) is recorded as Material: yes and approved by the human on 2026-09-30; it supersedes D-M10c-1, which is withdrawn and must not be implemented.",
         "A logo failing to load must never block or break the answer (FR27).",
-        "Split from M10c 2026-09-30 by human decision (Option A); depends on M10c1 (GET /v1/icon must exist)."
+        "Split from M10c 2026-09-30 by human decision (Option A); depends on M10c1 (GET /v1/icon must exist).",
+        "Production LaunchAgent com.harness.search was found running code from before M10c1 (served 404 for every /v1/icon); M10c2-T4's proof now restarts it. Consider whether the deploy/restart path for com.harness.search needs to pick up new code automatically (ops, C9).",
+        "Architecture deviation D-M10c2-1 (Material: no) recorded: globe fallback is the system glyph U+1F310; the phone's 'no logo' result is remembered for the app session only.",
+        "milestones.md is 570+ lines after archiving M10b; nothing else is archivable yet (M10c1 is the most recently settled, M5a is BLOCKED, the rest are TODO)."
       ],
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
