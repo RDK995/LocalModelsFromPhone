@@ -191,7 +191,7 @@ Cycle 1: PASS, tier Top (opus, DIFFICULT_CONCURRENCY from M7c-T1; whole mileston
 
 ## M8 — The search service is always on, loopback only, with a documented API
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -215,6 +215,7 @@ Pending.
 
 ### Baseline
 
+1057559a3dad47f2107e7e9b5817f6f822a0a6ad on m8-search-always-on-loopback
 
 ### Evidence
 

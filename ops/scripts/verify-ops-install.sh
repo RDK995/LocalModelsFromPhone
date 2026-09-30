@@ -13,6 +13,8 @@ echo "Verifying ops installation scripts..."
 required_scripts=(
   "install-server-agent.sh"
   "install-bundle-host-agent.sh"
+  "install-search-agent.sh"
+  "uninstall-search-agent.sh"
   "configure-tailscale-serve.sh"
   "install-pf-anchor.sh"
   "uninstall-pf-anchor.sh"
@@ -48,6 +50,7 @@ echo "Verifying LaunchAgent plist files..."
 required_plists=(
   "com.harness.server.plist"
   "com.harness.bundle-host.plist"
+  "com.harness.search.plist"
 )
 
 for plist in "${required_plists[@]}"; do
@@ -118,6 +121,21 @@ for value in "$REPO_ROOT/mobile" "expo" "start" "--no-dev" "--minify" "8081" \
     exit 1
   fi
 done
+
+# Search (C13): bun src/index.ts in search/, binds 127.0.0.1:7790 only, no token, no test-only overrides.
+if ! plist_has com.harness.search.plist "$REPO_ROOT/search" || \
+   ! plist_has com.harness.search.plist "src/index.ts"; then
+  echo "FAIL: com.harness.search.plist must run src/index.ts in $REPO_ROOT/search"
+  exit 1
+fi
+if [[ ! -f "$REPO_ROOT/search/src/index.ts" ]]; then
+  echo "FAIL: search entry point missing: $REPO_ROOT/search/src/index.ts"
+  exit 1
+fi
+if grep -qE "SEARCH_PORT|SEARCH_TIMEOUT_MS|SEARCH_HELPER_FORCE" "$SCRIPT_DIR/com.harness.search.plist"; then
+  echo "FAIL: com.harness.search.plist sets a test-only override"
+  exit 1
+fi
 
 echo "Verifying Tailscale Serve script..."
 

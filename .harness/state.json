@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M7c",
+  "current_milestone": "M8",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -5923,12 +5923,12 @@
         "FR25"
       ],
       "traces": "AC19",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
-        "commit": "",
-        "branch": ""
+        "commit": "1057559a3dad47f2107e7e9b5817f6f822a0a6ad",
+        "branch": "m8-search-always-on-loopback"
       },
       "as_built": {
         "artifact": null,

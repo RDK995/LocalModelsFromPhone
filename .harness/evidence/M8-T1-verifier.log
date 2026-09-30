@@ -1,0 +1,91 @@
+VERIFIER LOG FOR M8-T1
+======================
+Verification Date: 2026-09-30
+Task: M8-T1 — Add search LaunchAgent installation and verification
+
+COMMAND EXECUTED:
+cd /Users/ryankenny/Projects/CodingHarnessv2 && plutil -lint ops/scripts/com.harness.search.plist && bash ops/scripts/verify-ops-install.sh && (command -v shellcheck >/dev/null && shellcheck ops/scripts/install-search-agent.sh ops/scripts/uninstall-search-agent.sh || true) && test -x ops/scripts/install-search-agent.sh && test -x ops/scripts/uninstall-search-agent.sh
+
+EXIT STATUS:
+0
+
+TEST OUTPUT (KEY RESULTS):
+ops/scripts/com.harness.search.plist: OK
+Verifying ops installation scripts...
+Verifying LaunchAgent plist files...
+Verifying LaunchAgent plist contents...
+...
+All verification checks passed!
+
+FILES CHANGED (from git status):
+- ops/scripts/com.harness.search.plist (untracked, new)
+- ops/scripts/install-search-agent.sh (untracked, new)
+- ops/scripts/uninstall-search-agent.sh (untracked, new)
+- ops/scripts/verify-ops-install.sh (modified)
+
+EXECUTABLE PERMISSIONS:
+-rwxr-xr-x install-search-agent.sh
+-rwxr-xr-x uninstall-search-agent.sh
+
+LAUNCHD STATUS CHECK:
+launchctl print gui/$(id -u)/com.harness.search returned "Bad request. Could not find service 'com.harness.search'" — service not loaded (as required by constraint)
+
+ACCEPTANCE CRITERIA VALIDATION:
+
+1. com.harness.search.plist structure:
+   ✓ Label: com.harness.search
+   ✓ ProgramArguments: /opt/homebrew/bin/bun src/index.ts
+   ✓ WorkingDirectory: /Users/ryankenny/Projects/CodingHarnessv2/search
+   ✓ EnvironmentVariables PATH: /opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin
+   ✓ RunAtLoad: true
+   ✓ KeepAlive: true
+   ✓ ThrottleInterval: 10
+   ✓ StandardOutPath: /Users/ryankenny/Library/Logs/phone-models/search.log
+   ✓ StandardErrorPath: /Users/ryankenny/Library/Logs/phone-models/search.log
+   ✓ Umask: 63
+   ✓ ProcessType: Standard
+   ✓ Comment states: "Binds 127.0.0.1:7790 only (see search/src/index.ts). No token, no port/timeout overrides are set here; those are test-only."
+   ✓ No SEARCH_PORT, SEARCH_TIMEOUT_MS, SEARCH_HELPER_FORCE_* or token env vars
+
+2. plutil -lint passes:
+   ✓ Test output: "ops/scripts/com.harness.search.plist: OK"
+
+3. install-search-agent.sh structure:
+   ✓ Checks plist exists at $SCRIPT_DIR/$LABEL.plist (lines 20-23)
+   ✓ Checks bun executable at /opt/homebrew/bin/bun (lines 25-28)
+   ✓ Checks search/src/index.ts exists (lines 30-33)
+   ✓ Checks plist WorkingDirectory points at $REPO_ROOT/search (lines 35-38)
+   ✓ Warns (does not fail) if search/helper/.venv/bin/python missing (lines 40-43)
+   ✓ No token handling
+   ✓ Copies plist to ~/Library/LaunchAgents with chmod 644 (lines 45-50)
+   ✓ With --load: runs launchctl bootout then bootstrap (lines 54-57)
+
+4. uninstall-search-agent.sh structure:
+   ✓ Runs launchctl bootout gui/$(id -u)/com.harness.search with 2>/dev/null || true (line 10)
+   ✓ Removes plist from ~/Library/LaunchAgents if present (lines 12-14)
+   ✓ Exits 0 (line 16)
+
+5. verify-ops-install.sh updates:
+   ✓ Added "install-search-agent.sh" to required_scripts array (line 16)
+   ✓ Added "uninstall-search-agent.sh" to required_scripts array (line 17)
+   ✓ Added "com.harness.search.plist" to required_plists array (line 53)
+   ✓ Added validation logic (lines 125-138) matching pattern of server validation:
+     - Checks plist runs src/index.ts in search/ directory
+     - Checks search/src/index.ts entry point exists
+     - Checks no test-only SEARCH_* env vars are set in plist
+   ✓ verify-ops-install.sh passes
+
+6. Shellcheck:
+   ✓ Not available on system (test correctly handles with || true fallback)
+
+CONSTRAINT COMPLIANCE:
+✓ Did not run installer with --load
+✓ Did not touch launchd (service not loaded)
+✓ Service not loaded into launchd domain
+
+PATTERNS FOLLOWED:
+✓ com.harness.search.plist matches com.harness.server.plist pattern exactly
+✓ install-search-agent.sh follows install-server-agent.sh pattern
+✓ uninstall-search-agent.sh follows expected LaunchAgent uninstall pattern
+✓ verify-ops-install.sh validation follows existing patterns for server plist
+
