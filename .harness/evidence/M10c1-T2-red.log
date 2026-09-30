@@ -1,0 +1,168 @@
+bun test v1.4.0 (1381054db)
+
+src/web/tools.test.ts:
+303 |       fetch: fakeFetch((u) => {
+304 |         seenUrl = u;
+305 |         return new Response(png, { status: 200, headers: { "content-type": "image/png" } });
+306 |       }),
+307 |     });
+308 |     const r = await w.icon("example.com", sig());
+                            ^
+TypeError: createWebTools({
+      baseUrl: "http://search.test:1/",
+      fetch: fakeFetch((u) => {
+        seenUrl = u;
+        return new Response(png, { status: 200, headers: { "content-type": "image/png" } });
+      })
+    }).icon is not a function. (In 'createWebTools({
+      baseUrl: "http://search.test:1/",
+      fetch: fakeFetch((u) => {
+        seenUrl = u;
+        return new Response(png, { status: 200, headers: { "content-type": "image/png" } });
+      })
+    }).icon("example.com", sig())', 'createWebTools({
+      baseUrl: "http://search.test:1/",
+      fetch: fakeFetch((u) => {
+        seenUrl = u;
+        return new Response(png, { status: 200, headers: { "content-type": "image/png" } });
+      })
+    }).icon' is undefined)
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/web/tools.test.ts:308:23)
+(fail) createWebTools icon() > 200 image/* returns bytes + contentType and URL-encodes the host [0.52ms]
+321 |       fetch: fakeFetch((u) => {
+322 |         seenUrl = u;
+323 |         return json(404, { error: "no_icon" });
+324 |       }),
+325 |     });
+326 |     await w.icon("a b&c", sig());
+                  ^
+TypeError: createWebTools({
+      baseUrl: "http://s",
+      fetch: fakeFetch((u) => {
+        seenUrl = u;
+        return json(404, { error: "no_icon" });
+      })
+    }).icon is not a function. (In 'createWebTools({
+      baseUrl: "http://s",
+      fetch: fakeFetch((u) => {
+        seenUrl = u;
+        return json(404, { error: "no_icon" });
+      })
+    }).icon("a b&c", sig())', 'createWebTools({
+      baseUrl: "http://s",
+      fetch: fakeFetch((u) => {
+        seenUrl = u;
+        return json(404, { error: "no_icon" });
+      })
+    }).icon' is undefined)
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/web/tools.test.ts:326:13)
+(fail) createWebTools icon() > URL-encodes odd host characters [0.17ms]
+328 |   });
+329 | 
+330 |   it("404 no_icon, 400 blocked_destination and 400 bad_url are 'none'", async () => {
+331 |     for (const [status, error] of [[404, "no_icon"], [400, "blocked_destination"], [400, "bad_url"]] as const) {
+332 |       const w = createWebTools({ baseUrl: "http://s", fetch: fakeFetch(() => json(status, { error })) });
+333 |       expect(await w.icon("example.com", sig())).toEqual({ kind: "none" });
+                           ^
+TypeError: w.icon is not a function. (In 'w.icon("example.com", sig())', 'w.icon' is undefined)
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/web/tools.test.ts:333:22)
+(fail) createWebTools icon() > 404 no_icon, 400 blocked_destination and 400 bad_url are 'none' [0.29ms]
+337 |   it("200 with a non-image content type is unavailable", async () => {
+338 |     const w = createWebTools({
+339 |       baseUrl: "http://s",
+340 |       fetch: fakeFetch(() => new Response("<html>", { status: 200, headers: { "content-type": "text/html" } })),
+341 |     });
+342 |     expect(await w.icon("example.com", sig())).toEqual({ kind: "unavailable", timeout: false });
+                         ^
+TypeError: w.icon is not a function. (In 'w.icon("example.com", sig())', 'w.icon' is undefined)
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/web/tools.test.ts:342:20)
+(fail) createWebTools icon() > 200 with a non-image content type is unavailable [0.14ms]
+342 |     expect(await w.icon("example.com", sig())).toEqual({ kind: "unavailable", timeout: false });
+343 |   });
+344 | 
+345 |   it("5xx is unavailable (not a timeout); 504 timeout is unavailable with timeout", async () => {
+346 |     const w500 = createWebTools({ baseUrl: "http://s", fetch: fakeFetch(() => json(500, { error: "boom" })) });
+347 |     expect(await w500.icon("example.com", sig())).toEqual({ kind: "unavailable", timeout: false });
+                            ^
+TypeError: w500.icon is not a function. (In 'w500.icon("example.com", sig())', 'w500.icon' is undefined)
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/web/tools.test.ts:347:23)
+(fail) createWebTools icon() > 5xx is unavailable (not a timeout); 504 timeout is unavailable with timeout [0.17ms]
+352 |   it("network error is unavailable; client timeout is unavailable with timeout", async () => {
+353 |     const down = createWebTools({
+354 |       baseUrl: "http://s",
+355 |       fetch: (() => Promise.reject(new Error("ECONNREFUSED"))) as unknown as typeof fetch,
+356 |     });
+357 |     expect(await down.icon("example.com", sig())).toEqual({ kind: "unavailable", timeout: false });
+                            ^
+TypeError: down.icon is not a function. (In 'down.icon("example.com", sig())', 'down.icon' is undefined)
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/web/tools.test.ts:357:23)
+(fail) createWebTools icon() > network error is unavailable; client timeout is unavailable with timeout [0.16ms]
+369 | 
+370 |   it("caller abort rejects", async () => {
+371 |     const ac = new AbortController();
+372 |     ac.abort(new Error("stop"));
+373 |     const w = createWebTools({ baseUrl: "http://s", fetch: fakeFetch(() => json(404, {})) });
+374 |     await expect(w.icon("example.com", ac.signal)).rejects.toThrow("stop");
+                         ^
+TypeError: w.icon is not a function. (In 'w.icon("example.com", ac.signal)', 'w.icon' is undefined)
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/web/tools.test.ts:374:20)
+(fail) createWebTools icon() > caller abort rejects [0.14ms]
+
+src/http/server.test.ts:
+1660 |       hosts.push(host);
+1661 |       return { kind: "ok", bytes: png, contentType: "image/png" };
+1662 |     });
+1663 |     try {
+1664 |       const res = await get(server.port, "Example.COM");
+1665 |       expect(res.status).toBe(200);
+                                ^
+error: expect(received).toBe(expected)
+
+Expected: 200
+Received: 404
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/server.test.ts:1665:26)
+(fail) GET /v1/icon > 200 passes bytes and content-type through with Cache-Control [3.84ms]
+1675 |   it("404 no_icon when the site has none", async () => {
+1676 |     const server = start(async () => ({ kind: "none" }));
+1677 |     try {
+1678 |       const res = await get(server.port, "example.com");
+1679 |       expect(res.status).toBe(404);
+1680 |       expect(((await res.json()) as { error: string }).error).toBe("no_icon");
+                                ^
+SyntaxError: Failed to parse JSON
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/server.test.ts:1680:26)
+(fail) GET /v1/icon > 404 no_icon when the site has none [2.74ms]
+1692 |     ];
+1693 |     for (const [fn, status] of cases) {
+1694 |       const server = start(fn);
+1695 |       try {
+1696 |         const res = await get(server.port, "example.com");
+1697 |         expect(res.status).toBe(status);
+                                  ^
+error: expect(received).toBe(expected)
+
+Expected: 502
+Received: 404
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/server.test.ts:1697:28)
+(fail) GET /v1/icon > 502 / 504 icon_unavailable, and 502 when the icon function is absent or throws [3.41ms]
+1714 |         "localhost", "", "user@x.com", "-a.com", "a-.com", "a..com", "x.com.",
+1715 |         `${"a".repeat(64)}.com`, `${"a.".repeat(130)}com`, "ex ample.com", "exämple.com",
+1716 |       ];
+1717 |       for (const h of bad) {
+1718 |         const res = await get(server.port, h);
+1719 |         expect(res.status, JSON.stringify(h)).toBe(400);
+                                                     ^
+error: "http://x.com"
+
+Expected: 400
+Received: 404
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/server.test.ts:1719:47)
+(fail) GET /v1/icon > 400 bad_host for malformed hosts, without calling the icon function [3.86ms]
+
+ 62 pass
+ 11 fail
+ 380 expect() calls
+Ran 73 tests across 2 files. [1.53s]

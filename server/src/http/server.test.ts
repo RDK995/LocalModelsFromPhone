@@ -1630,3 +1630,99 @@ describe("Busy confirmation before a swap or unload (M2c)", () => {
     }
   });
 });
+
+describe("GET /v1/icon", () => {
+  const token = "test-token";
+  const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 9]);
+  const start = (icon?: (host: string, signal: AbortSignal) => Promise<any>) => {
+    const client = new FakeOllamaClient(completingChat(0));
+    setValidToken(token);
+    return createServer({ ollama: client, port: 0, icon });
+  };
+  const get = (port: number | undefined, host: string | null, auth: string | null = token) =>
+    fetch(`http://127.0.0.1:${port}/v1/icon${host === null ? "" : `?host=${encodeURIComponent(host)}`}`, {
+      headers: auth ? { Authorization: `Bearer ${auth}` } : {},
+    });
+
+  it("401 without or with a wrong token", async () => {
+    const server = start(async () => ({ kind: "ok", bytes: png, contentType: "image/png" }));
+    try {
+      expect((await get(server.port, "example.com", null)).status).toBe(401);
+      expect((await get(server.port, "example.com", "nope")).status).toBe(401);
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("200 passes bytes and content-type through with Cache-Control", async () => {
+    const hosts: string[] = [];
+    const server = start(async (host) => {
+      hosts.push(host);
+      return { kind: "ok", bytes: png, contentType: "image/png" };
+    });
+    try {
+      const res = await get(server.port, "Example.COM");
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-type")).toBe("image/png");
+      expect(res.headers.get("cache-control")).toBe("private, max-age=86400");
+      expect(Array.from(new Uint8Array(await res.arrayBuffer()))).toEqual(Array.from(png));
+      expect(hosts).toEqual(["example.com"]);
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("404 no_icon when the site has none", async () => {
+    const server = start(async () => ({ kind: "none" }));
+    try {
+      const res = await get(server.port, "example.com");
+      expect(res.status).toBe(404);
+      expect(((await res.json()) as { error: string }).error).toBe("no_icon");
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("502 / 504 icon_unavailable, and 502 when the icon function is absent or throws", async () => {
+    const cases: Array<[any, number]> = [
+      [async () => ({ kind: "unavailable", timeout: false }), 502],
+      [async () => ({ kind: "unavailable", timeout: true }), 504],
+      [async () => { throw new Error("x"); }, 502],
+      [undefined, 502],
+    ];
+    for (const [fn, status] of cases) {
+      const server = start(fn);
+      try {
+        const res = await get(server.port, "example.com");
+        expect(res.status).toBe(status);
+        expect(((await res.json()) as { error: string }).error).toBe("icon_unavailable");
+      } finally {
+        server.stop(true);
+      }
+    }
+  });
+
+  it("400 bad_host for malformed hosts, without calling the icon function", async () => {
+    let called = 0;
+    const server = start(async () => {
+      called++;
+      return { kind: "none" };
+    });
+    try {
+      const bad = [
+        "http://x.com", "x.com/path", "x.com:8080", "127.0.0.1", "[::1]", "::1",
+        "localhost", "", "user@x.com", "-a.com", "a-.com", "a..com", "x.com.",
+        `${"a".repeat(64)}.com`, `${"a.".repeat(130)}com`, "ex ample.com", "exämple.com",
+      ];
+      for (const h of bad) {
+        const res = await get(server.port, h);
+        expect(res.status, JSON.stringify(h)).toBe(400);
+        expect(((await res.json()) as { error: string }).error).toBe("bad_host");
+      }
+      expect((await get(server.port, null)).status).toBe(400);
+      expect(called).toBe(0);
+    } finally {
+      server.stop(true);
+    }
+  });
+});

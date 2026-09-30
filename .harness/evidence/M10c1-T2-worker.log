@@ -1,0 +1,16 @@
+bun test v1.4.0 (1381054db)
+
+ 160 pass
+ 0 fail
+ 701 expect() calls
+Ran 160 tests across 5 files. [2.15s]
+src/http/server.test.ts(1678,29): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/http/server.test.ts(1696,31): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/http/server.test.ts(1718,31): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/http/server.test.ts(1722,25): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+$ tsc --noEmit
+final: bun test 160 pass 0 fail; typecheck clean

@@ -1,0 +1,103 @@
+VERIFIER RUN: M10c1-T2 (Task verification)
+Date: 2026-09-30
+Repository: /Users/ryankenny/Projects/CodingHarnessv2
+
+==== COMMAND ====
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck
+
+==== TEST OUTPUT ====
+bun test v1.4.0 (1381054db)
+
+ 160 pass
+ 0 fail
+ 702 expect() calls
+Ran 160 tests across 5 files. [2.14s]
+$ tsc --noEmit
+
+Exit Status: 0
+
+==== FILES CHANGED (git status --porcelain) ====
+M server/src/http/server.test.ts
+ M server/src/http/server.ts
+ M server/src/index.ts
+ M server/src/web/tools.test.ts
+ M server/src/web/tools.ts
+?? .harness/evidence/M10c1-T2-red.log
+?? .harness/evidence/M10c1-T2-worker.log
+
+==== CHANGES VERIFICATION ====
+All modified files are in the "Files Allowed To Change" list.
+
+==== VERIFICATION CHECKLIST ====
+
+1. C12 icon() function in tools.ts (lines 190-212):
+   - Signature: icon(host: string, signal: AbortSignal): Promise<IconResult> ✓
+   - Returns IconResult discriminated type ✓
+   - {kind: "ok", bytes: Uint8Array, contentType: string} on 200 with image/* ✓
+   - {kind: "none"} for 404/400 blocked_destination/bad_url ✓
+   - {kind: "unavailable", timeout: boolean} for 5xx/timeout/network error ✓
+   - Hosts URL-encoded using encodeURIComponent (line 194) ✓
+   - Uses iconTimeoutMs (default 15000ms, line 68) ✓
+
+2. C4 GET /v1/icon route in server.ts (lines 409-441):
+   - Route added to route table ✓
+   - Behind bearer auth (verified by test at line 1647-1655) ✓
+   - Host validation before delegating (lines 386-393) ✓
+     - 1-253 chars length ✓
+     - At least 2 labels (one dot) ✓
+     - Labels [a-z0-9-] (1-63, no leading/trailing hyphen) ✓
+     - Not all-numeric (rejects IPv4) ✓
+     - Rejects IPv6 literals, schemes, paths, ports, userinfo ✓
+   - Returns 400 bad_host for invalid host (line 415) ✓
+   - Returns 200 with bytes, upstream content-type, Cache-Control header (lines 433-439) ✓
+   - Returns 404 no_icon (line 431) ✓
+   - Returns 502 or 504 icon_unavailable depending on timeout (lines 424-428) ✓
+
+3. Icon function wiring in index.ts:
+   - createWebTools() instance created (line 75) ✓
+   - Passed to GenerationManager (line 76) ✓
+   - icon function extracted and wired to createServer (line 77) ✓
+
+4. Tests (server/src/http/server.test.ts lines 1634-1728):
+   - 401 without/with wrong token (lines 1647-1655) ✓
+   - 200 bytes + content-type + Cache-Control (lines 1657-1673) ✓
+   - 404 no_icon (lines 1675-1684) ✓
+   - 502/504 icon_unavailable (lines 1686-1703) ✓
+   - 400 bad_host for 17+ malformed cases (lines 1705-1727) ✓
+
+5. C12 icon() tests (tools.test.ts lines 293-376):
+   - 200 image/* returns bytes + contentType (lines 299-315) ✓
+   - URL-encodes host characters (lines 317-328) ✓
+   - 404/400 returns {kind: "none"} (lines 330-335) ✓
+   - 200 non-image content-type is unavailable (lines 337-343) ✓
+   - 5xx and 504 scenarios (lines 345-350) ✓
+   - Network error and client timeout (lines 352-368) ✓
+   - Caller abort rejects (lines 370-375) ✓
+
+6. No tests weakened:
+   - All 160 tests pass ✓
+   - No skip/xfail/ignore markers added ✓
+   - No assertions removed or loosened ✓
+
+==== ACCEPTANCE CRITERIA EXERCISE ====
+
+C1 - C12 icon() method with IconResult discriminated return type:
+     - Demonstrated by: tools.ts lines 190-212 (implementation) and tools.test.ts lines 293-376 (tests)
+     - Covers: {kind: "ok", bytes, contentType}, {kind: "none"}, {kind: "unavailable", timeout}
+     - URL encoding: tools.test.ts line 327 test verifies encodeURIComponent behavior
+     - Default timeout: tools.ts line 68 sets iconTimeoutMs default to 15000ms
+
+C2 - C4 GET /v1/icon route with:
+     - Auth check: server.test.ts lines 1647-1655 verify 401 without/wrong token
+     - Host validation: server.test.ts lines 1705-1727 verify 400 bad_host for malformed hosts
+     - Responses: server.test.ts lines 1657-1703 verify all response codes and formats
+     - Cache-Control: server.test.ts line 1667 verifies "private, max-age=86400"
+
+C3 - Icon function wired in CreateServerOptions and index.ts:
+     - Demonstrated by: server.ts lines 50-51 (interface) and index.ts line 77 (wiring)
+
+C4 - Tests comprehensive with proper coverage:
+     - Red first: .harness/evidence/M10c1-T2-red.log exists (worker claimed)
+     - Tests pass: 160 pass, exit 0 ✓
+     - Typecheck: exit 0 ✓
+

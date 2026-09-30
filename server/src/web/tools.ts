@@ -34,7 +34,19 @@ export type WebToolsOptions = {
   fetch?: typeof fetch;
   /** Client timeout per request; must exceed the search service's own 25 s limit. */
   timeoutMs?: number;
+  /** Client timeout for icon requests (default 15 s). */
+  iconTimeoutMs?: number;
 };
+
+/**
+ * Outcome of `icon()`: `ok` with image bytes; `none` when the site has no icon,
+ * refuses, or is blocked (C13 404 no_icon / 400 blocked_destination|bad_url);
+ * `unavailable` for 5xx, timeout or network error (`timeout: true` maps to 504).
+ */
+export type IconResult =
+  | { kind: "ok"; bytes: Uint8Array; contentType: string }
+  | { kind: "none" }
+  | { kind: "unavailable"; timeout: boolean };
 
 const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const MONTHS = [
@@ -53,6 +65,7 @@ export function createWebTools(opts: WebToolsOptions = {}) {
   const baseUrl = (opts.baseUrl ?? "http://127.0.0.1:7790").replace(/\/+$/, "");
   const doFetch = opts.fetch ?? fetch;
   const timeoutMs = opts.timeoutMs ?? 30000;
+  const iconTimeoutMs = opts.iconTimeoutMs ?? 15000;
 
   const toolDefs: WebTool[] = [
     {
@@ -174,7 +187,33 @@ export function createWebTools(opts: WebToolsOptions = {}) {
     };
   }
 
+  async function icon(host: string, signal: AbortSignal): Promise<IconResult> {
+    signal.throwIfAborted();
+    const timeout = AbortSignal.timeout(iconTimeoutMs);
+    try {
+      const res = await doFetch(`${baseUrl}/v1/icon?host=${encodeURIComponent(host)}`, {
+        signal: AbortSignal.any([signal, timeout]),
+      });
+      if (res.status === 200) {
+        const contentType = res.headers.get("content-type") ?? "";
+        if (!contentType.toLowerCase().startsWith("image/")) {
+          await res.body?.cancel().catch(() => {});
+          return { kind: "unavailable", timeout: false };
+        }
+        return { kind: "ok", bytes: new Uint8Array(await res.arrayBuffer()), contentType };
+      }
+      await res.body?.cancel().catch(() => {});
+      if (res.status === 404 || res.status === 400) return { kind: "none" };
+      return { kind: "unavailable", timeout: res.status === 504 };
+    } catch (err) {
+      if (signal.aborted) throw signal.reason ?? err;
+      return { kind: "unavailable", timeout: timeout.aborted };
+    }
+  }
+
   return {
+    icon,
+
     tools(): WebTool[] {
       return structuredClone(toolDefs);
     },

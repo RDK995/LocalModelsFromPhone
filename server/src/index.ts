@@ -72,11 +72,9 @@ export function main(env: Record<string, string | undefined> = process.env): voi
   setValidToken(readTokenFile(tokenFile));
 
   const ollama = new OllamaClient(env.PHONE_MODELS_OLLAMA_URL || OLLAMA_URL);
-  const manager = new GenerationManager(
-    ollama,
-    createWebTools({ baseUrl: env.PHONE_MODELS_SEARCH_URL || SEARCH_URL })
-  );
-  const server = createServer({ ollama, manager, port });
+  const webTools = createWebTools({ baseUrl: env.PHONE_MODELS_SEARCH_URL || SEARCH_URL });
+  const manager = new GenerationManager(ollama, webTools);
+  const server = createServer({ ollama, manager, port, icon: webTools.icon });
 
   if (server.hostname !== LISTEN_HOST) {
     server.stop(true);

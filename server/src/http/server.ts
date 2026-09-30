@@ -20,6 +20,7 @@ import {
   OperationInProgressError,
   ConfirmationRequiredError,
 } from "../models/manager";
+import type { IconResult } from "../web/tools";
 import type {
   ErrorResponse,
   ChatRequest,
@@ -46,6 +47,8 @@ export interface CreateServerOptions {
   manager?: GenerationManager;
   models?: ModelManager;
   port?: number;
+  /** C12 icon lookup; when absent, /v1/icon answers 502 icon_unavailable. */
+  icon?: (host: string, signal: AbortSignal) => Promise<IconResult>;
 }
 
 interface AuthContext {
@@ -376,6 +379,20 @@ function parseResumeSeq(lastEventId: string | null): number {
 }
 
 /**
+ * True for a plain DNS hostname (lower-case): 1-253 chars, at least one dot,
+ * labels [a-z0-9-] of 1-63 chars without leading/trailing hyphen, not an IPv4
+ * literal. Scheme, path, port, userinfo and IPv6 literals fail the label rule.
+ */
+function isValidIconHost(host: string): boolean {
+  if (host.length < 1 || host.length > 253) return false;
+  const labels = host.split(".");
+  if (labels.length < 2) return false;
+  if (!labels.every((l) => /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/.test(l))) return false;
+  if (labels.every((l) => /^[0-9]+$/.test(l))) return false;
+  return true;
+}
+
+/**
  * Create the HTTP server
  */
 export function createServer({
@@ -383,11 +400,45 @@ export function createServer({
   manager,
   models,
   port = DEFAULT_PORT,
+  icon,
 }: CreateServerOptions): ReturnType<typeof Bun.serve> {
   const genManager = manager ?? new GenerationManager(ollama);
   const modelManager = models ?? new ModelManager(ollama, genManager);
 
   const routes: Route[] = [
+    {
+      method: "GET",
+      path: "/v1/icon",
+      handler: async (req) => {
+        const host = (new URL(req.url).searchParams.get("host") ?? "").toLowerCase();
+        if (!isValidIconHost(host)) {
+          return errorResponse("bad_host", "host must be a DNS hostname", 400);
+        }
+        let result: IconResult | undefined;
+        try {
+          result = icon ? await icon(host, req.signal) : undefined;
+        } catch {
+          result = undefined;
+        }
+        if (!result || result.kind === "unavailable") {
+          return errorResponse(
+            "icon_unavailable",
+            "Icon lookup is unavailable",
+            result?.kind === "unavailable" && result.timeout ? 504 : 502
+          );
+        }
+        if (result.kind === "none") {
+          return errorResponse("no_icon", "No icon for this site", 404);
+        }
+        return new Response(result.bytes, {
+          status: 200,
+          headers: {
+            "Content-Type": result.contentType,
+            "Cache-Control": "private, max-age=86400",
+          },
+        });
+      },
+    },
     {
       method: "GET",
       path: "/v1/state",

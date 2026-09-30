@@ -289,3 +289,88 @@ describe("createWebTools", () => {
     }
   });
 });
+
+describe("createWebTools icon()", () => {
+  const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 1, 2, 3]);
+  const fakeFetch = (impl: (url: string) => Promise<Response> | Response) =>
+    ((input: any) => Promise.resolve(impl(String(input)))) as unknown as typeof fetch;
+  const sig = () => new AbortController().signal;
+
+  it("200 image/* returns bytes + contentType and URL-encodes the host", async () => {
+    let seenUrl = "";
+    const w = createWebTools({
+      baseUrl: "http://search.test:1/",
+      fetch: fakeFetch((u) => {
+        seenUrl = u;
+        return new Response(png, { status: 200, headers: { "content-type": "image/png" } });
+      }),
+    });
+    const r = await w.icon("example.com", sig());
+    expect(seenUrl).toBe("http://search.test:1/v1/icon?host=example.com");
+    expect(r.kind).toBe("ok");
+    if (r.kind === "ok") {
+      expect(Array.from(r.bytes)).toEqual(Array.from(png));
+      expect(r.contentType).toBe("image/png");
+    }
+  });
+
+  it("URL-encodes odd host characters", async () => {
+    let seenUrl = "";
+    const w = createWebTools({
+      baseUrl: "http://s",
+      fetch: fakeFetch((u) => {
+        seenUrl = u;
+        return json(404, { error: "no_icon" });
+      }),
+    });
+    await w.icon("a b&c", sig());
+    expect(seenUrl).toBe("http://s/v1/icon?host=a%20b%26c");
+  });
+
+  it("404 no_icon, 400 blocked_destination and 400 bad_url are 'none'", async () => {
+    for (const [status, error] of [[404, "no_icon"], [400, "blocked_destination"], [400, "bad_url"]] as const) {
+      const w = createWebTools({ baseUrl: "http://s", fetch: fakeFetch(() => json(status, { error })) });
+      expect(await w.icon("example.com", sig())).toEqual({ kind: "none" });
+    }
+  });
+
+  it("200 with a non-image content type is unavailable", async () => {
+    const w = createWebTools({
+      baseUrl: "http://s",
+      fetch: fakeFetch(() => new Response("<html>", { status: 200, headers: { "content-type": "text/html" } })),
+    });
+    expect(await w.icon("example.com", sig())).toEqual({ kind: "unavailable", timeout: false });
+  });
+
+  it("5xx is unavailable (not a timeout); 504 timeout is unavailable with timeout", async () => {
+    const w500 = createWebTools({ baseUrl: "http://s", fetch: fakeFetch(() => json(500, { error: "boom" })) });
+    expect(await w500.icon("example.com", sig())).toEqual({ kind: "unavailable", timeout: false });
+    const w504 = createWebTools({ baseUrl: "http://s", fetch: fakeFetch(() => json(504, { error: "timeout" })) });
+    expect(await w504.icon("example.com", sig())).toEqual({ kind: "unavailable", timeout: true });
+  });
+
+  it("network error is unavailable; client timeout is unavailable with timeout", async () => {
+    const down = createWebTools({
+      baseUrl: "http://s",
+      fetch: (() => Promise.reject(new Error("ECONNREFUSED"))) as unknown as typeof fetch,
+    });
+    expect(await down.icon("example.com", sig())).toEqual({ kind: "unavailable", timeout: false });
+
+    const hang = createWebTools({
+      baseUrl: "http://s",
+      iconTimeoutMs: 20,
+      fetch: ((_u: any, init: any) =>
+        new Promise((_res, rej) =>
+          init.signal.addEventListener("abort", () => rej(new Error("aborted"))),
+        )) as unknown as typeof fetch,
+    });
+    expect(await hang.icon("example.com", sig())).toEqual({ kind: "unavailable", timeout: true });
+  });
+
+  it("caller abort rejects", async () => {
+    const ac = new AbortController();
+    ac.abort(new Error("stop"));
+    const w = createWebTools({ baseUrl: "http://s", fetch: fakeFetch(() => json(404, {})) });
+    await expect(w.icon("example.com", ac.signal)).rejects.toThrow("stop");
+  });
+});
