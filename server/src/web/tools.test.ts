@@ -61,6 +61,18 @@ describe("createWebTools", () => {
     expect(note).toContain("read_page");
   });
 
+  it("systemNote carries the FR30 guidance", () => {
+    const note = createWebTools().systemNote(new Date(2026, 8, 30, 12, 0, 0));
+    expect(note).toContain("broad or open-ended");
+    expect(note).toContain("more than one");
+    expect(note).toContain("exact date");
+    expect(note).toContain("three different websites");
+    expect(note).toContain("markdown link");
+    expect(note).toContain("copied exactly");
+    expect(note).toContain("tables");
+    expect(note).toContain("narrow");
+  });
+
   it("web_search 200: events, sources, result text and request body", async () => {
     const f = fakeSearch(() =>
       json(200, {

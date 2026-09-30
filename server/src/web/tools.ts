@@ -223,7 +223,13 @@ export function createWebTools(opts: WebToolsOptions = {}) {
       return (
         `Today's date is ${WEEKDAYS[now.getDay()]}, ${MONTHS[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()} (${iso}). ` +
         `You may use the web_search and read_page tools to get current information. ` +
-        `When you use them, cite the sources you relied on.`
+        `For a broad or open-ended question (for example "today's news trends"), search with more than one query, using different angles and wording. ` +
+        `Do not put the exact date into search queries. ` +
+        `Read pages from at least three different websites before you answer. ` +
+        `Cite the pages you relied on. Write every citation as a markdown link [text](url), including source cells inside tables, ` +
+        `where the url is the page's full URL copied exactly from the web_search or read_page results, never shortened, truncated or invented. ` +
+        `Only link pages that those tools returned. ` +
+        `A narrow factual question need not search more than it needs.`
       );
     },
 

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M10c3",
+  "current_milestone": "M10c4",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -8509,12 +8509,12 @@
         "FR30"
       ],
       "traces": "AC24",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
-        "commit": "",
-        "branch": ""
+        "commit": "f3576993fee872e8fe4bfffdc2b075eecb44596d",
+        "branch": "m10c4-several-sites"
       },
       "as_built": {
         "artifact": null,

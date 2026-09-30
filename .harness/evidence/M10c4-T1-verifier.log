@@ -1,0 +1,13 @@
+=== Git Info ===
+f357699 Requirements: fold 'always link sources' into FR30/AC24 and M10c4 criteria (human decision, pass bar 2 of 3 replies with 3+ linked sources)
+=== Test Command ===
+bun test && bun run typecheck
+=== Test Output ===
+bun test v1.4.0 (1381054db)
+
+ 162 pass
+ 0 fail
+ 713 expect() calls
+Ran 162 tests across 5 files. [2.07s]
+$ tsc --noEmit
+=== Exit Status: 0 ===
