@@ -5923,7 +5923,7 @@
         "FR25"
       ],
       "traces": "AC19",
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -5931,34 +5931,37 @@
         "branch": "m8-search-always-on-loopback"
       },
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M8.md",
+        "result": "RECORDED \u2014 C9, C13 observed; 3 edges; 6 of 6 files attributed; no claim mismatches"
       },
       "criteria": [
         {
           "id": "M8-AC1",
           "text": "The search service runs under the per-user LaunchAgent com.harness.search and answers GET /v1/health on 127.0.0.1:7790; killing its process makes launchd restart it and it answers again.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             ".harness/evidence/M8-T3-verifier.log",
-            ".harness/evidence/M8-T1-verifier.log"
+            ".harness/evidence/M8-T1-verifier.log",
+            "Cycle-1 review PASS (sonnet): full validation exit 0 \u2014 .harness/evidence/M8-review.log"
           ]
         },
         {
           "id": "M8-AC2",
           "text": "The service is not reachable on the Mac's tailnet address or LAN address, no Tailscale Serve mapping points at it, and it requires no token.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
-            ".harness/evidence/M8-T3-verifier.log"
+            ".harness/evidence/M8-T3-verifier.log",
+            "Cycle-1 review PASS (sonnet): full validation exit 0 \u2014 .harness/evidence/M8-review.log"
           ]
         },
         {
           "id": "M8-AC3",
           "text": "The HTTP API (search, read, health: requests, responses, errors) is documented in the repository, and each documented route answers as documented on loopback.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             ".harness/evidence/M8-T3-verifier.log",
-            ".harness/evidence/M8-T2-verifier.log"
+            ".harness/evidence/M8-T2-verifier.log",
+            "Cycle-1 review PASS (sonnet): full validation exit 0 \u2014 .harness/evidence/M8-review.log"
           ]
         }
       ],
@@ -6124,7 +6127,29 @@
           ]
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "PASS",
+          "scope": "WHOLE_MILESTONE",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "ORDINARY_IMPLEMENTATION",
+          "diff_range": "1057559a3dad47f2107e7e9b5817f6f822a0a6ad..9eb03d2",
+          "per_criterion": {
+            "M8-AC1": "PASS",
+            "M8-AC2": "PASS",
+            "M8-AC3": "PASS"
+          },
+          "findings": {
+            "BLOCKER": 0,
+            "IMPORTANT": 0,
+            "OPTIONAL": 0
+          },
+          "artifact": null,
+          "review_log": ".harness/evidence/M8-review.log"
+        }
+      ],
       "findings": [],
       "validation": [
         {

@@ -191,7 +191,7 @@ Cycle 1: PASS, tier Top (opus, DIFFICULT_CONCURRENCY from M7c-T1; whole mileston
 
 ## M8 — The search service is always on, loopback only, with a documented API
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -205,13 +205,13 @@ C9, C13
 
 ### As-Built
 
-Pending.
+.harness/as-built/M8.md — RECORDED: C9, C13 observed; 3 edges; 6 of 6 files attributed; no claim mismatches
 
 ### Acceptance Criteria
 
-- [ ] **M8-AC1**: The search service runs under the per-user LaunchAgent com.harness.search and answers GET /v1/health on 127.0.0.1:7790; killing its process makes launchd restart it and it answers again.
-- [ ] **M8-AC2**: The service is not reachable on the Mac's tailnet address or LAN address, no Tailscale Serve mapping points at it, and it requires no token.
-- [ ] **M8-AC3**: The HTTP API (search, read, health: requests, responses, errors) is documented in the repository, and each documented route answers as documented on loopback.
+- [x] **M8-AC1**: The search service runs under the per-user LaunchAgent com.harness.search and answers GET /v1/health on 127.0.0.1:7790; killing its process makes launchd restart it and it answers again.
+- [x] **M8-AC2**: The service is not reachable on the Mac's tailnet address or LAN address, no Tailscale Serve mapping points at it, and it requires no token.
+- [x] **M8-AC3**: The HTTP API (search, read, health: requests, responses, errors) is documented in the repository, and each documented route answers as documented on loopback.
 
 ### Baseline
 
@@ -232,7 +232,7 @@ Pending.
 
 ### Review
 
-Pending.
+Cycle 1: PASS — tier Mid (sonnet, ORDINARY_IMPLEMENTATION), whole milestone, diff 1057559..9eb03d2; M8-AC1 PASS, M8-AC2 PASS, M8-AC3 PASS; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL; validation exit 0 — .harness/evidence/M8-review.log
 
 ### Review Cycles
 
