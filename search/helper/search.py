@@ -69,7 +69,7 @@ def decode_bing_href(href):
         if p.scheme not in ("http", "https") or not p.hostname:
             return None
         h = p.hostname.lower()
-        if h == "bing.com" or h.endswith(".bing.com") or h.endswith(".microsoft.com"):
+        if h == "bing.com" or h.endswith(".bing.com"):
             return None
         return real
     except Exception:  # noqa: BLE001 - undecodable result is simply dropped

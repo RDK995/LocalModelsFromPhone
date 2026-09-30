@@ -1,0 +1,84 @@
+=== M7b-C1 Verification ===
+Date: 2026-09-30
+Repository: /Users/ryankenny/Projects/CodingHarnessv2
+Branch: m7b-search-browser-fallback
+HEAD: aef0db8
+
+=== VALIDATION TEST COMMAND ===
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2 && search/helper/.venv/bin/python -m unittest discover -s search/helper -p 'test_*.py'
+
+Output:
+...........................
+----------------------------------------------------------------------
+Ran 27 tests in 0.122s
+
+OK
+
+Exit Status: 0
+
+=== CHANGED FILES ===
+Modified:
+- search/helper/search.py
+- search/helper/test_search.py
+
+Changes in search.py (line 72):
+  Old: if h == "bing.com" or h.endswith(".bing.com") or h.endswith(".microsoft.com"):
+  New: if h == "bing.com" or h.endswith(".bing.com"):
+
+Changes in test_search.py:
+  Added: test_decode_bing_keeps_microsoft_hosts() with 16 lines
+  - Tests direct Microsoft URLs return unchanged
+  - Tests wrapped Bing redirect URLs decode back to original URLs
+  - Uses two URLs: https://support.microsoft.com/en-us/excel/functions/vlookup-function
+                    https://learn.microsoft.com/en-us/azure/
+
+=== RED CLAIM VERIFICATION ===
+Test: Run new test against old code (from HEAD)
+Command: python3 /private/tmp/.../test_red_claim.py
+
+Output:
+FAIL: test_decode_bing_keeps_microsoft_hosts (__main__.TestRedClaim.test_decode_bing_keeps_microsoft_hosts)
+AssertionError: None != 'https://support.microsoft.com/en-us/excel/functions/vlookup-function'
+
+Ran 1 test in 0.000s
+
+FAILED (failures=1)
+
+Exit Status: 1
+
+Result: RED claim confirmed - new test fails on old code with Microsoft URLs returning None.
+
+=== TEST COUNT VERIFICATION ===
+Tests in HEAD: 26
+Tests in current working tree: 27
+Expected increase: +1 (the new test_decode_bing_keeps_microsoft_hosts)
+Actual increase: +1 ✓
+
+=== ACCEPTANCE CRITERIA VERIFICATION ===
+
+Criterion 1: Remove .microsoft.com exclusion from decode_bing_href
+Status: SATISFIED
+Evidence: Line 72 in search/helper/search.py removed "or h.endswith(".microsoft.com")"
+bing.com and *.bing.com exclusions remain intact
+
+Criterion 2: Add unit test test_decode_bing_keeps_microsoft_hosts
+Status: SATISFIED
+Evidence: search/helper/test_search.py lines 161-176
+Tests both direct URLs and wrapped Bing redirects for two Microsoft domains
+
+Criterion 3: Red → Green verification
+Status: SATISFIED
+Evidence: New test fails on old code (AssertionError confirmed above)
+         New test passes with all 27 tests green
+
+Criterion 4: All existing tests pass unchanged
+Status: SATISFIED
+Evidence: All 27 tests pass with exit status 0
+         26 existing tests unmodified
+         1 new test added
+
+=== CONCLUSION ===
+All acceptance criteria have been met.
+All tests pass.
+No tests were weakened.
+Red → Green claim confirmed.

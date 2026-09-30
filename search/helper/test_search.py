@@ -158,6 +158,21 @@ class FallbackTests(unittest.TestCase):
         self.assertIsNone(search.decode_bing_href("https://www.bing.com/images/search?q=x"))
         self.assertIsNone(search.decode_bing_href("javascript:void(0)"))
 
+    def test_decode_bing_keeps_microsoft_hosts(self):
+        # Test direct Microsoft URLs are returned unchanged
+        microsoft_urls = [
+            "https://support.microsoft.com/en-us/excel/functions/vlookup-function",
+            "https://learn.microsoft.com/en-us/azure/"
+        ]
+        for url in microsoft_urls:
+            self.assertEqual(search.decode_bing_href(url), url)
+
+        # Test wrapped Microsoft URLs decode back to the original
+        for url in microsoft_urls:
+            token = "a1" + base64.urlsafe_b64encode(url.encode()).decode().rstrip("=")
+            href = f"https://www.bing.com/ck/a?!&&p=abc&u={token}&ntb=1"
+            self.assertEqual(search.decode_bing_href(href), url)
+
     def test_browser_closed_when_scrape_raises(self):
         events = []
 
