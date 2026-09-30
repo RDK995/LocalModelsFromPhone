@@ -75,3 +75,16 @@ Return:
 - Tests run
 - Test result
 - Unresolved issues
+
+Previous Attempt:
+- Attempt 3 (Mid, sonnet): wrote search/scripts/fallback-proof.sh (untracked, still in the working
+  tree). Its first live run failed only on an empty-title Bing result, since fixed in the helper by
+  M7b-T3 (commit 8c0bd3e). Independent re-run by the verifier: fallback-proof.sh ALL CASES PASSED.
+  FAILED because AC6 is not in the working tree: search/scripts/search-proof.sh is unmodified
+  (git shows no change), so search-proof.sh now fails
+  "FAIL: no API key/token/env reads (.../search/helper/search.py:149: forced = os.environ.get("SEARCH_HELPER_FORCE_DDGS"))".
+  The worker claimed search-proof.sh ALL CASES PASSED; that was not reproduced. The change may have
+  been lost after the attempt; the verifier's log is .harness/evidence/M7b-T2-verifier.log.
+- Escalated: Top tier (attempt 4). Keep fallback-proof.sh unless you find a defect in it; make the
+  AC6 change; run both scripts; confirm with `git diff --stat` that search-proof.sh is modified
+  before returning.

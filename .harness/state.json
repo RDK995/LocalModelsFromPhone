@@ -5426,7 +5426,16 @@
             "reason_code": "ORDINARY_IMPLEMENTATION",
             "detail": "live proof script with process-lifecycle assertion; follows the search-proof.sh pattern"
           },
-          "attempts": [],
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "FAIL",
+              "evidence": ".harness/evidence/M7b-T2-verifier.log",
+              "detail": "fallback-proof.sh passes after T3; search-proof.sh allow-list change (AC6) absent from tree, search-proof.sh fails its env-read check"
+            }
+          ],
           "status": "IN_PROGRESS",
           "commit": null
         },
