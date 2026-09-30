@@ -178,66 +178,7 @@ Each conversation on the phone has a web-search switch, off by default and saved
 
 Owns: FR18, FR22. Traces to: AC13, AC14.
 
-### Architecture
-
-C1, C2, C3
-
-### As-Built
-
-.harness/as-built/M10.md — RECORDED — 16/18 files attributed; components C1,C2,C3; 5 edges; claim mismatches NONE
-
-### Acceptance Criteria
-
-- [x] **M10-AC1**: Each conversation has a web-search switch, off by default (including for conversations created before this change), and its state survives force-quitting and reopening Expo Go.
-- [x] **M10-AC2**: The switch is disabled with an explanation when the resident model lacks the tools capability (proven with a stubbed capability check if no installed model lacks it), and changing it while a reply is in progress takes effect from the next prompt.
-- [x] **M10-AC3**: With the switch on, a prompt asking for today's news shows each web step live on the phone (e.g. Searching: <query>, Reading: <domain>), then the final answer, and the steps collapse into an expandable section after completion.
-- [x] **M10-AC4**: An answer that used the web ends with a source list whose links open in Safari.
-
-### Baseline
-
-e98f0601a4330343f9a1063ce48e154d60109d8a on m10-phone-web-switch
-
-### Evidence
-
-Task plan (packets in .harness/tasks/):
-- M10-T1 — C2 step/sources events, accumulator, web flag   Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — .harness/evidence/M10-T1-verifier.log (exit 0, 183 mobile pass, typecheck+lint 0; red M10-T1-red.log)
-- M10-T2 — C3 switch + steps/sources persisted, session    Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — commit 7f09b0b; .harness/evidence/M10-T2-verifier.log (first run exit 0, 204 pass; a later appended FAIL is the verifier re-running over in-progress T3 files after the commit, see state note); red M10-T2-red.log. Late worker quote-style fix committed separately.
-- M10-T3 — C1 view-model: labels, switch state             Cheap (haiku, BOUNDED_LOW_RISK), attempt 1, PASS — commit f9abe88; .harness/evidence/M10-T3-verifier.log (exit 0, 238 then 246 pass; late FAIL only for other tasks' files); red M10-T3-red.log
-- M10-T4 — C1 chat.tsx switch, steps, sources in Safari    Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — commit 1d5e438; .harness/evidence/M10-T4-verifier.log (exit 0, 246 pass, diff read against criteria 1-6); no unit oracle for the screen
-- M10-T5 — web-switch-proof.sh live proof                  Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — .harness/evidence/M10-T5-verifier.log (full command incl. live proof exit 0, all checks PASS, Mac restored); proof log M10-T5-proof.log
-
-Implementation complete (continuation 2): all five tasks accepted. Mac-side evidence for each criterion is in the live proof (M10-T5-proof.log): AC1 check 1 (switch off by default incl. legacy data, persists across a fresh store on the same files), check 2 (off sends no web); AC2 check 3 (disabled + explanation, stubbed stub-no-tools because all 5 installed models have tools) and check 4 (mid-reply flip takes effect next prompt); AC3/AC4 check 5 (live search step before the answer, sources with http(s) links, persisted steps/sources, collapsed toggle label). Owed by the owner on the phone: see Validation.
-
-### Validation
-
-`cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/web-switch-proof.sh` — exit 0 (M10-T5 verifier, .harness/evidence/M10-T5-verifier.log): 246 pass, lint clean, live proof all PASS.
-Fix cycle 1: same command exit 0 over fb76a0c (M10-C1 verifier, .harness/evidence/M10-C1-verifier.log): 248 pass, lint clean, live proof all PASS (.harness/evidence/M10-C1-proof.log).
-
-Owner's phone observation still owed (cannot be claimed Mac-side): (1) open a chat, see the "Web search" switch off; open an older chat, also off; (2) turn it on, force-quit Expo Go, reopen that chat, still on; (3) with web on, ask "What are today's top news headlines?", watch "Searching: ..." (and any "Reading: ...") lines appear live, then the answer; after it finishes the steps fold into "Show web steps (n)" which expands; (4) tap a source under "Sources" and it opens in Safari; (5) screenshot of (3)/(4).
-
-### Review
-
-Cycle 1: CHANGES REQUIRED — whole milestone (Scope SUBSTANTIVE), report .harness/reviews/M10-cycle1.md, validation re-run exit 0 (.harness/evidence/M10-review.log); M10-AC1 PASS, M10-AC2 PASS with caveat (finding 1), M10-AC3 PASS, M10-AC4 PASS (all on Mac evidence; phone observation owner-owed); 0 BLOCKER, 1 IMPORTANT, 1 OPTIONAL.
-- F1 (IMPORTANT): switch stuck on and still sending web for a no-tools model — correction task M10-C1.
-- F2 (OPTIONAL): capability checked only on focus; index keys for steps — not routed, recorded under Follow-ups.
-Fix cycle 1 Pre-correction: e14b57f9dc084c32a5b19f87c70f03a02b7f0dc6 (after committing the review records).
-Fix cycle 1 corrections: M10-C1 (F1) — Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS, commit fb76a0c. Verifier (.harness/evidence/M10-C1-verifier.log): `cd mobile && bun run typecheck && bun test && bun run lint` exit 0, 248 pass; live `bash scripts/web-switch-proof.sh` exit 0, all checks PASS, Mac restored (.harness/evidence/M10-C1-proof.log); Tests Weakened NO; red .harness/evidence/M10-C1-red.log. sendMessage now sends web:true only when the stored switch is on AND the resident is listed with tools:true in the send-time getState; the Switch shows webSwitchDisplayValue(stored, state) (off while unavailable) and the stored web_search is not rewritten.
-Correction diff: `git diff e14b57f9dc084c32a5b19f87c70f03a02b7f0dc6 HEAD`. Files changed (git diff --name-only): mobile/src/app/chat.tsx, mobile/src/chat/chatController.ts, mobile/src/chat/chatController.test.ts, mobile/src/chat/conversationSession.test.ts, mobile/src/ui/webSwitch.ts, mobile/src/ui/webSwitch.test.ts, plus .harness records (milestones.md, state.json, tasks/M10-C1.md, evidence/M10-C1-*.log, evidence/M10-T5-proof.log).
-Files changed that no finding named: mobile/src/chat/chatController.ts (the gate lives where getState already runs, not in the named conversationSession.ts), mobile/src/ui/webSwitch.ts (new webSwitchDisplayValue), and their tests; .harness/evidence/M10-T5-proof.log was rewritten by the live proof re-run (the script writes that log). server/src/generations/manager.ts (named) was not changed: the gate is client-side.
-Cycle 2: PASS — whole milestone (widened: the correction changed files no cycle-1 finding named), reviewer tier Mid (model sonnet, ORDINARY_IMPLEMENTATION), diff e98f060..d7704c0 with correction diff e14b57f..HEAD checked; validation re-run exit 0 (.harness/evidence/M10-cycle2-review.log); M10-AC1 PASS, M10-AC2 PASS, M10-AC3 PASS, M10-AC4 PASS (AC1/AC3/AC4 on Mac evidence); F1 confirmed resolved; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL.
-
-### Review Cycles
-
-1
-
-### Follow-ups
-
-- Size check at pickup: 4 criteria, one signal (IMPLEMENTATION_PLUS_LIVE_PROOF); seam check: the phone observation proves the same outcome - not split.
-- milestones.md stays above 400 lines after archiving M8: M9 (most recently settled), M10-M13 (open) and M5a (BLOCKED) are protected.
-- Subagent completion notifications arrived before some workers/verifiers had stopped; their late re-runs landed in the shared tree and appended to evidence logs. Consider waiting for each agent's final hand-back before starting the next task.
-- Review cycle 1 F2 (OPTIONAL, not routed): the capability check runs only on screen focus, so a model change while the chat is open is not seen until refocus (the send-time gate from M10-C1 now stops a wrong web request regardless); web steps use array index keys.
-- Owner phone check still owed (not provable Mac-side; reviewer graded AC1/AC3/AC4 on Mac evidence): switch visible and off by default incl. an older chat; on-state survives force-quitting Expo Go; a today's-news prompt shows live steps that fold into "Show web steps (n)"; a Sources link opens in Safari; screenshot.
-- The live proof's model made no read_page call, so a live "Reading: <domain>" step was not seen Mac-side (read labels are unit-tested).
+Detail: `.harness/archive/M10.md`
 
 ## M10b — Assistant answers show formatted text instead of raw markdown
 
@@ -297,7 +238,7 @@ Cycle 1: PASS — whole milestone, reviewer tier Mid (model sonnet, ORDINARY_IMP
 
 ## M10c — Links to a web answer's sources show the site's own logo and open in Safari
 
-Status: TODO
+Status: BLOCKED
 
 ### Outcome
 
@@ -331,6 +272,25 @@ Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingH
 
 Pending.
 
+Human Escalation (BLOCKED):
+
+Problem:
+Pickup size/shape check (2026-09-30): 1 criterion (size OK), shape OK (live proof through real entry points), but three operational-complexity signals: IMPLEMENTATION_PLUS_LIVE_PROOF (Mac + phone live proof with a network observation); PRODUCTION_FILES_GT_8 (about 11 expected production files: search/src/icon fetcher (new), search/src/http/server.ts, search/API.md, server C12 search client, server/src/http/server.ts, mobile/src/api/client.ts, mobile/src/api/expoFetchClient.ts, a new phone icon cache in mobile/src/store, source-URL matching in mobile/src/ui/markdown.ts, mobile/src/ui/MarkdownText.tsx, mobile/src/app/chat.tsx, plus scripts/source-logo-proof.sh); MULTIPLE_OUTCOMES (the Mac serving a site's logo through a token-protected, guarded, cached GET /v1/icon is demonstrable over HTTP on its own, independently of the phone rendering it). Two or more signals require a split, but the milestone has exactly one acceptance criterion (M10c-AC1) and the split rule requires every criterion to go unchanged into exactly one part with none added. A split therefore cannot be made without adding or rewording criteria, which is a re-cut and needs human agreement.
+
+Requirement/milestone affected:
+M10c / M10c-AC1 (FR27, AC21).
+
+Attempts made:
+1. Read M10c entry, FR27, AC21, Edge Cases and deviation D-M10c-2; counted criteria (1) and the six named signals from reconnaissance of search/, server/src and mobile/src.
+2. Looked for a criterion-conserving seam: M10c-AC1 is a single sentence spanning the phone rendering and the Mac's icon fetch; any part without it would have zero criteria (not independently reviewable), so no split conserves the criteria.
+3. No task routed and no branch work done: blocked before any task per the orchestrator rule; branch m10c-source-logos opened at 8e71dc9 for the record only; Baseline left blank because the milestone has not started.
+
+Remaining issue:
+Human decision between (A) re-cut into two milestones with one new criterion for the Mac half, or (B) run M10c as one milestone as written, accepting its size.
+
+Recommended decision:
+(A) Re-cut: M10c1 - 'The Mac serves a website's own logo through a token-protected route' (C4, C12, C13; search/API.md), with one new criterion: 'GET /v1/icon?host=<public site> on the server with the bearer token returns that site's own icon as image bytes (fetched by the search service from the site itself, no third-party logo service), a second request is served from the Mac cache without contacting the site, a host that is or redirects to a local, LAN or tailnet address is refused and returns no_icon, a site with no icon returns no_icon, and a request without the token is 401.' M10c2 - 'Links to a web answer's sources show the site's own logo and open in Safari' (C1, C2, C3), keeping M10c-AC1 unchanged. Each part then has one signal (IMPLEMENTATION_PLUS_LIVE_PROOF). (B) is workable but likely needs several handoffs and a long review.
+
 ### Review Cycles
 
 0
@@ -340,6 +300,8 @@ Pending.
 - Architecture deviation D-M10c-2 (the Mac fetches each site's icon: C13 GET /v1/icon behind C4 GET /v1/icon; the phone talks only to the Mac) is recorded as Material: yes and approved by the human on 2026-09-30; it supersedes D-M10c-1, which is withdrawn and must not be implemented.
 - A logo failing to load must never block or break the answer (FR27).
 - search/API.md must document the new GET /v1/icon route (FR25).
+- Pickup check 2026-09-30: signals IMPLEMENTATION_PLUS_LIVE_PROOF, PRODUCTION_FILES_GT_8, MULTIPLE_OUTCOMES require a split; one criterion cannot be split without a re-cut, so BLOCKED for a human decision (see Review).
+- Archived M10 to .harness/archive/M10.md (595 -> 536 lines). milestones.md stays above 400: M10b (most recently settled), M10c-M13 (open) and M5a (BLOCKED) are protected.
 
 ## M10d — A web answer's sources start folded as "Sources (n)", each its own tappable entry
 
