@@ -12,6 +12,7 @@ import {
   normaliseLinkUrl,
   matchSource,
   siteHost,
+  sourceByNumber,
 } from "./sourceLinks";
 
 describe("normaliseLinkUrl", () => {
@@ -289,5 +290,21 @@ describe("matchSource", () => {
     ];
     const result = matchSource("https://example.com/article", fragmentSources);
     expect(result).toEqual(fragmentSources[0]);
+  });
+});
+
+describe("sourceByNumber (FR31)", () => {
+  const list = [
+    { title: "A", url: "https://a.test", n: 1 },
+    { title: "B", url: "https://b.test" },
+    { title: "C", url: "https://c.test", n: 3 },
+  ];
+  it("returns the source with that number", () => {
+    expect(sourceByNumber(3, list)?.url).toBe("https://c.test");
+  });
+  it("is null for an unknown number, no numbers at all, or no sources", () => {
+    expect(sourceByNumber(2, list)).toBeNull();
+    expect(sourceByNumber(1, [{ title: "B", url: "https://b.test" }])).toBeNull();
+    expect(sourceByNumber(1, undefined)).toBeNull();
   });
 });

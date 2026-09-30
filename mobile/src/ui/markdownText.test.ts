@@ -154,3 +154,19 @@ describe("2-column grid has a definite width on the device (M10c3-C4)", () => {
     expect(chat).toMatch(/assistantMessage:\s*\{\s*alignSelf:\s*"flex-start",/);
   });
 });
+
+describe("numbered citations render as source logos (FR31, M10c4-T5)", () => {
+  const cite = md.slice(md.indexOf('case "cite"'), md.indexOf('case "link"'));
+  it("imports presentCitation", () => {
+    expect(md).toMatch(/import\s*\{[^}]*\bpresentCitation\b[^}]*\}\s*from\s*"\.\/inlineLink"/);
+  });
+  it("renders SourceLogo with the same props as a link and falls back to the raw mark", () => {
+    expect(cite).toContain("presentCitation(n, ctx.sources)");
+    expect(cite).toContain("<SourceLogo");
+    expect(cite).toContain("host={p.host}");
+    expect(cite).toContain("url={p.url}");
+    expect(cite).toContain("iconCache={ctx.iconCache}");
+    expect(cite).toContain("onOpen={ctx.onOpenSource}");
+    expect(cite).toContain("return node.raw");
+  });
+});

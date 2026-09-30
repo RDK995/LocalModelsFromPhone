@@ -10,7 +10,18 @@
 export type LinkSource = {
   title: string;
   url: string;
+  /** Reply-local citation number (FR31); present only for pages the model read. */
+  n?: number;
 };
+
+/** The source numbered n, or null (also null when no source has any number). */
+export function sourceByNumber(
+  n: number,
+  sources: LinkSource[] | undefined
+): LinkSource | null {
+  if (!sources) return null;
+  return sources.find((s) => s.n === n) ?? null;
+}
 
 /**
  * Regex to parse an HTTP(S) URL into scheme, authority, and rest (path/query).

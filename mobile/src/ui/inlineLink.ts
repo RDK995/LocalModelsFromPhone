@@ -3,7 +3,7 @@
  * react-native imports (bun loads this file).
  */
 
-import { matchSource, siteHost } from "./sourceLinks";
+import { matchSource, siteHost, sourceByNumber } from "./sourceLinks";
 import type { LinkSource } from "./sourceLinks";
 
 export type LinkPresentation =
@@ -16,6 +16,18 @@ export function presentLink(
   sources: LinkSource[] | undefined,
 ): LinkPresentation {
   const source = matchSource(url, sources);
+  if (!source) return { kind: "plain" };
+  const host = siteHost(source.url);
+  if (host === null) return { kind: "plain" };
+  return { kind: "source", url: source.url, host };
+}
+
+/** A citation number resolves to that saved source's exact URL (FR31), else plain. */
+export function presentCitation(
+  n: number,
+  sources: LinkSource[] | undefined,
+): LinkPresentation {
+  const source = sourceByNumber(n, sources);
   if (!source) return { kind: "plain" };
   const host = siteHost(source.url);
   if (host === null) return { kind: "plain" };

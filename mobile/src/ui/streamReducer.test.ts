@@ -47,6 +47,13 @@ describe("applyStreamEvent web steps and sources", () => {
     ]);
   });
 
+  it("keeps n on sources", () => {
+    const acc = applyStreamEvent(initialStreamAccumulator, {
+      type: "sources",
+      data: { items: [{ title: "A", url: "https://a", n: 1 }] },
+    });
+    expect(acc.sources).toEqual([{ title: "A", url: "https://a", n: 1 }]);
+  });
   it("replaces sources with the latest event's items", () => {
     const one = applyStreamEvent(initialStreamAccumulator, {
       type: "sources",

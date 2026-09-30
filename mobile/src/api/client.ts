@@ -997,9 +997,12 @@ export class APIClient {
                     typeof (i as { title?: unknown }).title === "string" &&
                     typeof (i as { url?: unknown }).url === "string"
                 )
-                .map((i: { title: string; url: string }) => ({
+                .map((i: { title: string; url: string; n?: unknown }) => ({
                   title: i.title,
                   url: i.url,
+                  ...(typeof i.n === "number" && Number.isInteger(i.n) && i.n > 0
+                    ? { n: i.n }
+                    : {}),
                 }))
             : [];
           return { type: "sources", data: { items } };

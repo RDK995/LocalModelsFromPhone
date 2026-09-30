@@ -554,6 +554,28 @@ describe("APIClient step and sources events", () => {
     });
   });
 
+  it("keeps a positive integer n on a source and drops any other n", async () => {
+    const { events } = await run(
+      [
+        "event: sources\ndata: {\"items\":[{\"title\":\"A\",\"url\":\"https://a\",\"n\":1},{\"title\":\"B\",\"url\":\"https://b\",\"n\":1.5},{\"title\":\"C\",\"url\":\"https://c\",\"n\":\"2\"},{\"title\":\"D\",\"url\":\"https://d\",\"n\":0},{\"title\":\"E\",\"url\":\"https://e\"}]}\n\n",
+        doneChunk,
+      ],
+      req
+    );
+    expect(events[0]).toEqual({
+      type: "sources",
+      data: {
+        items: [
+          { title: "A", url: "https://a", n: 1 },
+          { title: "B", url: "https://b" },
+          { title: "C", url: "https://c" },
+          { title: "D", url: "https://d" },
+          { title: "E", url: "https://e" },
+        ],
+      },
+    });
+  });
+
   it("drops a malformed step without breaking the stream", async () => {
     const { events, errored } = await run(
       [

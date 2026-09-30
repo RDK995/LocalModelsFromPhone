@@ -12,7 +12,7 @@ import { parseMarkdown } from "./markdown";
 import type { Block, Inline } from "./markdown";
 import { tableLayout } from "./tableLayout";
 import { gridWidth } from "./tableLayout";
-import { presentLink } from "./inlineLink";
+import { presentCitation, presentLink } from "./inlineLink";
 import type { LinkSource } from "./sourceLinks";
 import { SourceLogo } from "./SourceLogo";
 import type { IconCache } from "@/store/iconCache";
@@ -49,6 +49,26 @@ function renderInline(nodes: Inline[], ctx: LinkContext): React.ReactNode[] {
             {node.text}
           </Text>
         );
+      case "cite": {
+        const presented = node.numbers.map((n) => presentCitation(n, ctx.sources));
+        if (ctx.iconCache && ctx.onOpenSource) {
+          const logos: React.ReactNode[] = [];
+          for (const p of presented) {
+            if (p.kind !== "source") return node.raw;
+            logos.push(
+              <SourceLogo
+                key={logos.length}
+                host={p.host}
+                url={p.url}
+                iconCache={ctx.iconCache}
+                onOpen={ctx.onOpenSource}
+              />,
+            );
+          }
+          return <Text key={i}>{logos}</Text>;
+        }
+        return node.raw;
+      }
       case "link":
       {
         const presented = presentLink(node.url, ctx.sources);

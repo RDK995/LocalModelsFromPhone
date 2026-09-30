@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { presentLink, logoDisplay } from "./inlineLink";
+import { presentLink, presentCitation, logoDisplay } from "./inlineLink";
 
 const sources = [
   { title: "BBC", url: "https://www.bbc.com/news/abc" },
@@ -35,5 +35,27 @@ describe("logoDisplay", () => {
     expect(logoDisplay(undefined)).toEqual({ kind: "globe" });
     expect(logoDisplay("https://x.com/i.png")).toEqual({ kind: "globe" });
     expect(logoDisplay("data:text/html;base64,AAA")).toEqual({ kind: "globe" });
+  });
+});
+
+describe("presentCitation (FR31)", () => {
+  const numbered = [
+    { title: "BBC", url: "https://www.bbc.com/news/abc?x=1#f", n: 1 },
+    { title: "Odd", url: "not a url", n: 2 },
+    { title: "Saved only", url: "https://c.test/p" },
+  ];
+  it("resolves n to the exact saved url and host", () => {
+    expect(presentCitation(1, numbered)).toEqual({
+      kind: "source",
+      url: "https://www.bbc.com/news/abc?x=1#f",
+      host: "bbc.com",
+    });
+  });
+  it("is plain for an unknown number, an unusable host, or sources without numbers", () => {
+    expect(presentCitation(9, numbered)).toEqual({ kind: "plain" });
+    expect(presentCitation(2, numbered)).toEqual({ kind: "plain" });
+    expect(presentCitation(3, numbered)).toEqual({ kind: "plain" });
+    expect(presentCitation(1, [{ title: "Old", url: "https://a.test" }])).toEqual({ kind: "plain" });
+    expect(presentCitation(1, undefined)).toEqual({ kind: "plain" });
   });
 });

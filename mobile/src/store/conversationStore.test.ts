@@ -353,6 +353,26 @@ describe("conversation store: web search switch and web steps (M10)", () => {
     expect(loaded!.messages[0]).toEqual(message);
   });
 
+  it("a reopened reply keeps each source's n (same logos as live)", async () => {
+    const storage = createMemoryStorage();
+    const store = newStore(storage);
+    const c = await store.create();
+    const message: Message = {
+      id: "a2",
+      role: "assistant",
+      content: "fact [1][2]",
+      status: "complete",
+      sources: [
+        { title: "X", url: "https://x.test", n: 1 },
+        { title: "Y", url: "https://y.test", n: 2 },
+        { title: "Z", url: "https://z.test" },
+      ],
+    };
+    await store.appendMessage(c.id, message);
+    const loaded = await newStore(storage).get(c.id);
+    expect(loaded!.messages[0]?.sources).toEqual(message.sources);
+  });
+
   const badMessages: Array<[string, Record<string, unknown>]> = [
     ["steps not an array", { steps: "x" }],
     ["sources not an array", { sources: {} }],

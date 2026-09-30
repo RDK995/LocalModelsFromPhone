@@ -235,7 +235,7 @@ describe("false-positive guards", () => {
   test("stay literal", () => {
     expect(parseInline("5 * 3 = 15")).toEqual([t("5 * 3 = 15")]);
     expect(parseInline("snake_case_name")).toEqual([t("snake_case_name")]);
-    expect(parseInline("[1] note")).toEqual([t("[1] note")]);
+    expect(parseInline("[a] note")).toEqual([t("[a] note")]); // [1] is a numbered citation now (FR31)
     expect(parseMarkdown("#hashtag")).toEqual([para(t("#hashtag"))]);
     expect(parseInline("C:\\path")).toEqual([t("C:\\path")]);
   });
@@ -488,5 +488,36 @@ describe("owner phone table shapes (M10c3-C3)", () => {
     expect(last.map((b) => b.type)).toEqual(["paragraph", "table"]);
     expectFr29(onlyTable(`Here are today's trends:\n\n${TABLE4}`));
     expectFr29(onlyTable(`Intro line\n${TABLE3.replace(/ \|$/, "")}`));
+  });
+});
+
+describe("numbered citations (FR31, M10c4-T5)", () => {
+  const cite = (raw: string, ...numbers: number[]): Inline => ({ type: "cite", numbers, raw });
+  test("parses [n], adjacent marks, [1, 3], [1,3] and 【n】 forms", () => {
+    expect(parseInline("a [2] b")).toEqual([t("a "), cite("[2]", 2), t(" b")]);
+    expect(parseInline("[1][3]")).toEqual([cite("[1]", 1), cite("[3]", 3)]);
+    expect(parseInline("[1, 3]")).toEqual([cite("[1, 3]", 1, 3)]);
+    expect(parseInline("[1,3]")).toEqual([cite("[1,3]", 1, 3)]);
+    expect(parseInline("x【2】")).toEqual([t("x"), cite("【2】", 2)]);
+    expect(parseInline("【2†L1-L4】")).toEqual([cite("【2†L1-L4】", 2)]);
+    expect(parseInline("【3†source】")).toEqual([cite("【3†source】", 3)]);
+  });
+  test("keeps a markdown link a link", () => {
+    expect(parseInline("[2](https://x)")).toEqual([link("https://x", t("2"))]);
+  });
+  test("leaves inline code and code blocks alone", () => {
+    expect(parseInline("`[2]`")).toEqual([code("[2]")]);
+    expect(parseMarkdown("```\n[2]\n```")).toEqual([{ type: "codeBlock", language: null, text: "[2]" }]);
+  });
+  test("does not take non-digit brackets", () => {
+    expect(parseInline("[a]")).toEqual([t("[a]")]);
+    expect(parseInline("[1, x]")).toEqual([t("[1, x]")]);
+  });
+  test("a half-streamed [2 parses without throwing and shows as text", () => {
+    expect(() => parseInline("see [2")).not.toThrow();
+    expect(parseInline("see [2")).toEqual([t("see "), t("2")]);
+  });
+  test("visibleText shows a cite as its raw text", () => {
+    expect(visibleText(parseMarkdown("fact [1, 3]."))).toBe("fact [1, 3].");
   });
 });

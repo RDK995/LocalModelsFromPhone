@@ -12,7 +12,8 @@ export type Inline =
   | { type: "bold"; children: Inline[] }
   | { type: "italic"; children: Inline[] }
   | { type: "code"; text: string }
-  | { type: "link"; url: string; children: Inline[] };
+  | { type: "link"; url: string; children: Inline[] }
+  | { type: "cite"; numbers: number[]; raw: string };
 export interface ListItem { depth: number; children: Inline[] }
 export type Block =
   | { type: "paragraph"; children: Inline[] }
@@ -28,6 +29,9 @@ export type Block =
 const ESCAPABLE = "\\`*_#[]()<>|~+-.!{}";
 const MAX_DEPTH = 24;
 const AUTOLINK = /<(https?:\/\/[^\s<>]+)>/y;
+// FR31 numbered citations: [2], [1, 3] (not [2](url)), and 【2】 / 【2†L1-L4】 (leading digits).
+const CITE_BRACKET = /\[(\d+(?:\s*,\s*\d+)*)\](?!\()/y;
+const CITE_LENTICULAR = /【(\d+)[^】]*】/y;
 
 function isAlnum(ch: string | undefined): boolean {
   return ch !== undefined && /[\p{L}\p{N}]/u.test(ch);
@@ -194,6 +198,22 @@ function parseInlineImpl(s: string, streaming: boolean, depth: number): Inline[]
         }
       }
       continue;
+    }
+
+    if (c === "[" || c === "【") {
+      const re = c === "[" ? CITE_BRACKET : CITE_LENTICULAR;
+      re.lastIndex = i;
+      const cite = re.exec(s);
+      if (cite) {
+        flush();
+        out.push({
+          type: "cite",
+          numbers: (cite[1] as string).split(",").map((d) => Number(d.trim())),
+          raw: cite[0],
+        });
+        i += cite[0].length;
+        continue;
+      }
     }
 
     if (c === "[") {
@@ -519,7 +539,12 @@ export function parseMarkdown(source: string): Block[] {
 function inlineText(nodes: Inline[]): string {
   let s = "";
   for (const n of nodes) {
-    s += n.type === "text" || n.type === "code" ? n.text : inlineText(n.children);
+    s +=
+      n.type === "text" || n.type === "code"
+        ? n.text
+        : n.type === "cite"
+          ? n.raw
+          : inlineText(n.children);
   }
   return s;
 }
