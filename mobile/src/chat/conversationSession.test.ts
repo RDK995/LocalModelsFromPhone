@@ -689,10 +689,10 @@ describe("sendInConversation: web switch and web steps (M10)", () => {
     const bodies: Array<Record<string, unknown>> = [];
     const client = chatClient(() => {
       const s = controlledSseResponse("gen-web");
-      s.push('event: step\ndata: {"step_id":"s1","kind":"search","status":"started","query":"q"}\n\n');
-      s.push('event: step\ndata: {"step_id":"s1","kind":"search","status":"done","query":"q"}\n\n');
-      s.push('event: content\ndata: {"text":"answer"}\n\n');
-      s.push('event: sources\ndata: {"items":[{"title":"T","url":"https://t.test"}]}\n\n');
+      s.push("event: step\ndata: {\"step_id\":\"s1\",\"kind\":\"search\",\"status\":\"started\",\"query\":\"q\"}\n\n");
+      s.push("event: step\ndata: {\"step_id\":\"s1\",\"kind\":\"search\",\"status\":\"done\",\"query\":\"q\"}\n\n");
+      s.push("event: content\ndata: {\"text\":\"answer\"}\n\n");
+      s.push("event: sources\ndata: {\"items\":[{\"title\":\"T\",\"url\":\"https://t.test\"}]}\n\n");
       s.push(doneEvent("llama3"));
       s.close();
       return s.response;
