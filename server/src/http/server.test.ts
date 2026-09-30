@@ -1709,9 +1709,11 @@ describe("GET /v1/icon", () => {
       return { kind: "none" };
     });
     try {
+      // Spec correction: localhost is now valid (single-label DNS hostname).
+      // 2130706433 is all-numeric, so it stays rejected as an IPv4 literal.
       const bad = [
         "http://x.com", "x.com/path", "x.com:8080", "127.0.0.1", "[::1]", "::1",
-        "localhost", "", "user@x.com", "-a.com", "a-.com", "a..com", "x.com.",
+        "2130706433", "", "user@x.com", "-a.com", "a-.com", "a..com", "x.com.",
         `${"a".repeat(64)}.com`, `${"a.".repeat(130)}com`, "ex ample.com", "exämple.com",
       ];
       for (const h of bad) {
@@ -1721,6 +1723,22 @@ describe("GET /v1/icon", () => {
       }
       expect((await get(server.port, null)).status).toBe(400);
       expect(called).toBe(0);
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("404 no_icon for single-label hostname like localhost when icon returns {kind:none}", async () => {
+    const hosts: string[] = [];
+    const server = start(async (host) => {
+      hosts.push(host);
+      return { kind: "none" };
+    });
+    try {
+      const res = await get(server.port, "localhost");
+      expect(res.status).toBe(404);
+      expect(((await res.json()) as { error: string }).error).toBe("no_icon");
+      expect(hosts).toEqual(["localhost"]);
     } finally {
       server.stop(true);
     }

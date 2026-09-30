@@ -379,14 +379,14 @@ function parseResumeSeq(lastEventId: string | null): number {
 }
 
 /**
- * True for a plain DNS hostname (lower-case): 1-253 chars, at least one dot,
+ * True for a plain DNS hostname (lower-case): 1-253 chars, one or more labels,
  * labels [a-z0-9-] of 1-63 chars without leading/trailing hyphen, not an IPv4
  * literal. Scheme, path, port, userinfo and IPv6 literals fail the label rule.
  */
 function isValidIconHost(host: string): boolean {
   if (host.length < 1 || host.length > 253) return false;
   const labels = host.split(".");
-  if (labels.length < 2) return false;
+  if (labels.length < 1) return false;
   if (!labels.every((l) => /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/.test(l))) return false;
   if (labels.every((l) => /^[0-9]+$/.test(l))) return false;
   return true;
