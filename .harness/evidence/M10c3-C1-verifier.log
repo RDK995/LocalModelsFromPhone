@@ -1,0 +1,64 @@
+=== M10c3-C1 Verification ===
+Date: 2026-09-30
+Verifier: Claude Haiku 4.5
+
+Current commit: 929afbb (M10c3: review cycle 1 recorded; human decision on missing-separator rows)
+Diff range: 929afbb -- mobile/src/ui/markdown.test.ts (working tree)
+
+=== Test Command ===
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun test src/ui/markdown.test.ts && bun run typecheck && bun run lint
+
+=== Test Output ===
+bun test v1.4.0 (1381054db)
+
+ 34 pass
+ 0 fail
+ 1956 expect() calls
+Ran 34 tests across 1 file. [98.00ms]
+$ tsc --noEmit
+$ eslint src --max-warnings 0
+
+Exit Status: 0
+
+=== Files Changed ===
+git diff 929afbb -- (excluding .harness/):
+  mobile/src/ui/markdown.test.ts
+
+git status --porcelain (excluding .harness/):
+  M mobile/src/ui/markdown.test.ts
+
+=== Detailed Changes Verification ===
+
+Finding 1 (lines 134-154):
+- Test renamed to: "FR29: a row missing a column separator is padded, not re-split: it lines up and loses no text (human decision 2026-09-30)" ✓
+- Comment added (lines 134-136) with human decision date and padding/no-split behavior ✓
+- rows[1]?.[0] assertions with exact toEqual:
+  * Line 145: expect(rows[1]?.[0]).toEqual([bold(t("AI rules")), t(" — Governments draft laws.")]) ✓
+  * Line 147: expect(rows[1]?.[0]).toEqual([bold(t("AI rules")), t(" | Governments draft laws.")]) ✓
+- Pre-existing assertions intact:
+  * Row widths [3, 3] (line 140) ✓
+  * Reuters link at rows[1][1] (line 141) ✓
+  * rows[1][2] empty (line 142) ✓
+  * Padding test for 1-cell row (lines 150-153) ✓
+
+Finding 2 (lines 178-195):
+- Test retitled to: "FR29: every streamed prefix of a table parses with header-width rows" ✓
+- Removed chunks/streamed lines and tautological assertion ✓
+- Comment added (lines 192-193) referencing mobile/src/app/chat.tsx render path ✓
+- Every-prefix loop (lines 184-190) intact ✓
+- Final [3, 3, 3, 3] assertion (line 194) intact ✓
+
+=== Tests Weakened ===
+NO - Only the sanctioned tautological chunk/concat assertion was removed. All other test logic and assertions remain intact. Pre-existing assertions in both tests are unchanged.
+
+=== Acceptance Criteria Exercised ===
+1. "Assert rows[1]?.[0] holds WHOLE merged text": Test output shows 34 pass, exercised by toEqual assertions at lines 145 and 147
+2. "Rename test to state agreed behaviour": Test name changed to "FR29: a row missing a column separator is padded, not re-split: it lines up and loses no text (human decision 2026-09-30)" (line 137)
+3. "Add comment noting decision": Comment added at lines 134-136
+4. "Keep existing assertions unchanged": All row width, Reuters link, and empty cell assertions remain
+5. "Delete chunks/streamed lines": Removed (git diff shows deletion of 4 lines of chunk construction and streaming assertion)
+6. "Replace with comment about render path": Comment added at lines 192-193 referencing chat.tsx <MarkdownText> path
+7. "Keep every-prefix loop and final [3,3,3,3] assertion": Both remain unchanged (lines 184-190 and 194)
+
+=== Conclusion ===
+All acceptance criteria met. Tests pass. No files changed outside allowed list. No tests weakened.

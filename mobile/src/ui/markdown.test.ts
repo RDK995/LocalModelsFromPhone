@@ -130,12 +130,22 @@ describe("blocks", () => {
   // the whole row (each half the width) instead of sitting in the header's first two of three columns.
   // Well-formed model output (checked against the local model) parses correctly, so the fix is in the
   // parser: every body row now has exactly the header's cell count.
-  test("FR29: a body row with fewer cells than the header is padded, so cells stay under their headings", () => {
+
+  // Human decision 2026-09-30: when a body row is missing a column separator, it is padded, not re-split.
+  // The merged text stays together under its heading; a value may sit under the next heading with the
+  // last column empty. No dash/colon splitting heuristic.
+  test("FR29: a row missing a column separator is padded, not re-split: it lines up and loses no text (human decision 2026-09-30)", () => {
     for (const merged of ["**AI rules** — Governments draft laws.", "**AI rules** \\| Governments draft laws."]) {
       const rows = tableRows(`${TREND_HEAD}| ${merged} | [Reuters](https://reuters.com) |`);
       expect(rows.map((r) => r.length)).toEqual([3, 3]);
       expect(rows[1]?.[1]).toEqual([link("https://reuters.com", t("Reuters"))]);
       expect(rows[1]?.[2]).toEqual([]);
+      // Assert that the whole merged text is kept in the first cell, no text is lost
+      if (merged.includes("—")) {
+        expect(rows[1]?.[0]).toEqual([bold(t("AI rules")), t(" — Governments draft laws.")]);
+      } else {
+        expect(rows[1]?.[0]).toEqual([bold(t("AI rules")), t(" | Governments draft laws.")]);
+      }
     }
     expect(tableRows("| A | B | C |\n|---|---|---|\n| x |")).toEqual([
       [[t("A")], [t("B")], [t("C")]],
@@ -165,7 +175,7 @@ describe("blocks", () => {
     ]);
   });
 
-  test("FR29: every streamed prefix of a table parses with header-width rows, and the whole text parses the same however it arrived", () => {
+  test("FR29: every streamed prefix of a table parses with header-width rows", () => {
     const full =
       `Here you go:\n\n${TREND_HEAD}` +
       "| **AI rules** | Governments draft laws. | [Reuters](https://reuters.com) |\n" +
@@ -179,10 +189,8 @@ describe("blocks", () => {
         for (const row of b.rows) expect(row.length).toBe(width as number);
       }
     }
-    const chunks = full.match(/[\s\S]{1,7}/g) ?? [];
-    let streamed = "";
-    for (const c of chunks) streamed += c;
-    expect(parseMarkdown(streamed)).toEqual(parseMarkdown(full));
+    // Saved and live replies render identically because mobile/src/app/chat.tsx renders both
+    // through the same <MarkdownText text={item.content}> path, regardless of how the text arrived.
     expect(tableRows(full.slice(full.indexOf("| Trend"))).map((r) => r.length)).toEqual([3, 3, 3, 3]);
   });
 });
