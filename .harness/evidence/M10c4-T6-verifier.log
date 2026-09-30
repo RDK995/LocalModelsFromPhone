@@ -1,0 +1,96 @@
+VERIFICATION LOG FOR M10c4-T6
+=============================
+
+COMMAND RUN:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bash scripts/source-diversity-proof.sh --self-test
+
+EXIT STATUS: 0
+
+OUTPUT:
+ok   adjacent [1][3] -> resolved=2 unresolved=[]
+ok   list [1, 3] -> resolved=2 unresolved=[]
+ok   fullwidth 【2†L1-L4】 -> resolved=1 unresolved=[]
+ok   unknown [9] -> resolved=0 unresolved=["[9]"]
+ok   [2](url) is a link -> resolved=1 unresolved=[]
+ok   [2](url) unmatched link -> resolved=0 unresolved=["https://nope.com/"]
+ok   mark in backticks ignored -> resolved=1 unresolved=[]
+ok   FR27 link to unnumbered source -> resolved=2 unresolved=[]
+SELF-TEST PASS
+
+FILES CHANGED:
+- server/scripts/source-diversity-proof.sh (allowed)
+- .harness/evidence/M10c4-T6-run1-proof.log (new, allowed)
+- .harness/evidence/M10c4-T6-run1-replies.json (new, allowed)
+- .harness/evidence/M10c4-T2-proof.log (side effect - restored)
+- .harness/evidence/M10c4-T2-replies.json (side effect - restored)
+
+TESTS WEAKENED: NO
+
+INDEPENDENT RECOUNT OF AC2 (M10c4-T6-run1-replies.json):
+
+Reply 1: "What are today's news trends"
+- Distinct hosts: 4 (trends.google.com, bbc.co.uk, news.google.com, bbc.com)
+- Saved sources: 5
+- Sources with n: 2 (n=1: trends.google.com, n=2: bbc.co.uk)
+- Citation marks found: [1] × 3, [2] × 4
+- Resolved distinct sources: 2 (from n=1 and n=2)
+- Total resolved marks: 7
+- Unresolved: 0
+- Link pass: False (2 distinct resolved < 3)
+- Diversity pass: True (4 hosts >= 3)
+
+Reply 2: "What are the latest developments in artificial intelligence?"
+- Distinct hosts: 12
+- Saved sources: 15
+- Sources with n: 4 (n=1, n=2, n=3, n=4)
+- Citation marks found: 【3】× 1, 【2】× 1, 【4】× 1
+- Resolved distinct sources: 3 (n=2, n=3, n=4)
+- Total resolved marks: 3
+- Unresolved: 0
+- Link pass: True (3 distinct resolved >= 3 AND unresolved == 0)
+- Diversity pass: True (12 hosts >= 3)
+
+Reply 3: "What is happening in the world economy right now?"
+- Distinct hosts: 5 (spglobal.com, oecd.org, fitchratings.com, weforum.org, desapublications.un.org)
+- Saved sources: 5
+- Sources with n: 3 (n=1: spglobal.com, n=2: fitchratings.com, n=3: desapublications.un.org)
+- Citation marks found: 【1】× 2, 【2】× 1, 【3】× 1
+- Resolved distinct sources: 3 (n=1, n=2, n=3)
+- Total resolved marks: 4
+- Unresolved: 0
+- Link pass: True (3 distinct resolved >= 3 AND unresolved == 0)
+- Diversity pass: True (5 hosts >= 3)
+
+No other citation-like forms detected (no bare URLs, no (1), no ^1, no [^1], etc.)
+
+Summary:
+- Diversity passes: 3/3 (need >= 2) ✓
+- Link passes: 2/3 (need >= 2) ✓
+- Both conditions met: True ✓
+
+SCRIPT CHANGES VERIFICATION:
+- Prompts unchanged: Yes (same 3 prompts)
+- Diversity threshold unchanged: Yes (hosts.length >= 3)
+- Link pass threshold unchanged: Yes (cc.resolved >= 3 && cc.unresolved.length === 0)
+- Diversity counting logic unchanged: Yes (counts hosts >= 3)
+- Model name recorded: Yes (nemotron3:33b in proof log and JSON)
+- New counting logic: Correctly implements FR31 (number marks) and FR27 (markdown links)
+
+CRITERIA EXERCISED:
+- M10c4-AC2 (diversity bar): Demonstrated by proof log: "Diversity passes: 3/3 (need >=2)"
+- M10c4-AC2 (link bar): Demonstrated by proof log: "Link passes: 2/3 (need >=2)"
+- Number marks parsing: Demonstrated by self-test (8 checks) and reply citations
+- Markdown link counting: Demonstrated by self-test (check "[2](url) is a link" and "[2](url) unmatched link")
+- Unresolved tracking: Demonstrated by self-test (check "unknown [9]") and proof log (all replies show unresolved=0)
+- Model recording: Demonstrated in proof log (line 2: "Resident model with tools: nemotron3:33b")
+
+DISCREPANCIES WITH WORKER'S CLAIM: NONE
+- Worker claimed PASS; verification confirms all acceptance criteria are met.
+- Self-test exit 0: Confirmed (8 checks passed)
+- Live run exit 0: Confirmed by proof log result "PASS"
+- Model nemotron3:33b: Confirmed
+- Diversity 3/3: Confirmed
+- Link bar 2/3: Confirmed
+- All citation counts match: Confirmed
+
+RESULT: PASS

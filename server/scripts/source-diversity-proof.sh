@@ -1,13 +1,105 @@
 #!/bin/bash
 # Live proof for M10c4-AC2 (FR30 / AC24): broad web prompts yield replies whose saved
-# sources span >= 3 distinct websites, and whose markdown links match >= 3 saved sources
-# with no unmatched link. Goes through the server's real POST /v1/chat with web on.
+# sources span >= 3 distinct websites, and whose FR31 number marks / FR27 links resolve to >= 3 saved
+# sources with no unresolved citation. Goes through the server's real POST /v1/chat with web on.
 # Starts its OWN server from this working tree on a spare port (never touches 7789),
 # uses the RESIDENT tools-capable Ollama model (never loads, switches or evicts one).
 # The token is kept in a private 0600 temp file and is never printed or saved.
 # Output is tee'd to .harness/evidence/M10c4-T2-proof.log; raw replies to M10c4-T2-replies.json.
 
 set -u
+
+IFS= read -r -d '' COUNTING_JS <<'COUNTING_EOF'
+  // Mirrors mobile/src/ui/sourceLinks.ts normaliseLinkUrl / siteHost (FR27).
+  const URL_PATTERN = /^(https?):\/\/([^/?#]+)(.*)$/i;
+  const normalise = (url) => {
+    const m = url.trim().match(URL_PATTERN);
+    if (!m) return null;
+    let host = m[2].toLowerCase();
+    if (host.startsWith("www.")) host = host.slice(4);
+    if (!host) return null;
+    let rest = m[3];
+    const h = rest.indexOf("#");
+    if (h !== -1) rest = rest.slice(0, h);
+    const q = rest.indexOf("?");
+    if (q !== -1) {
+      const path = rest.slice(0, q);
+      rest = (path.endsWith("/") ? path.slice(0, -1) : path) + rest.slice(q);
+    } else if (rest.endsWith("/")) rest = rest.slice(0, -1);
+    return host + rest;
+  };
+  const siteHost = (url) => {
+    const m = url.trim().match(URL_PATTERN);
+    if (!m) return null;
+    let host = m[2].toLowerCase();
+    if (host.startsWith("www.")) host = host.slice(4);
+    const c = host.indexOf(":");
+    if (c !== -1) host = host.slice(0, c);
+    return host || null;
+  };
+  // FR31 + FR27 citation counting. Returns resolved distinct saved sources and unresolved items.
+  const countCitations = (text, sources) => {
+    const clean = text.replace(/```[\s\S]*?(```|$)/g, " ").replace(/`[^`\n]*`/g, " ");
+    const links = [];
+    const noLinks = clean.replace(/\[[^\]]*\]\(([^)\s]*)\)/g, (_m, url) => {
+      if (/^https?:\/\//i.test(url)) links.push(url);
+      return " ";
+    });
+    const byN = new Map();
+    for (const s of sources) if (typeof s.n === "number") byN.set(s.n, s);
+    const savedNorm = new Map();
+    for (const s of sources) { const k = normalise(s.url); if (k) savedNorm.set(k, s); }
+    const resolved = new Set(), unresolved = [];
+    let markCount = 0;
+    const nums = [];
+    for (const m of noLinks.matchAll(/\[(\d+(?:\s*,\s*\d+)*)\]|【(\d+)[^】]*】/g)) {
+      const list = m[1] ? m[1].split(",").map((x) => Number(x.trim())) : [Number(m[2])];
+      for (const n of list) nums.push({ n, at: m.index });
+    }
+    for (const { n } of nums) {
+      markCount++;
+      const src = byN.get(n);
+      if (src) resolved.add(src.url); else unresolved.push("[" + n + "]");
+    }
+    for (const l of links) {
+      const k = normalise(l);
+      const src = k ? savedNorm.get(k) : undefined;
+      if (src) resolved.add(src.url); else unresolved.push(l);
+    }
+    return { resolved: resolved.size, markCount, linkCount: links.length, unresolved };
+  };
+COUNTING_EOF
+IFS= read -r -d '' SELFTEST_JS <<'SELFTEST_EOF'
+  const sources = [
+    { title: "A", url: "https://a.com/x", n: 1 },
+    { title: "B", url: "https://www.b.com/y/", n: 2 },
+    { title: "C", url: "https://c.com/z", n: 3 },
+    { title: "D", url: "https://d.com/q" },
+  ];
+  let bad = 0;
+  const check = (name, text, resolved, unresolved) => {
+    const r = countCitations(text, sources);
+    const ok = r.resolved === resolved && r.unresolved.length === unresolved;
+    if (!ok) bad++;
+    console.log((ok ? "ok   " : "FAIL ") + name + " -> resolved=" + r.resolved + " unresolved=" + JSON.stringify(r.unresolved));
+  };
+  check("adjacent [1][3]", "Claim [1][3].", 2, 0);
+  check("list [1, 3]", "Claim [1, 3] and [1,3].", 2, 0);
+  check("fullwidth 【2†L1-L4】", "Claim 【2†L1-L4】.", 1, 0);
+  check("unknown [9]", "Claim [9].", 0, 1);
+  check("[2](url) is a link", "See [B](https://b.com/y) and [2](https://b.com/y).", 1, 0);
+  check("[2](url) unmatched link", "See [2](https://nope.com/).", 0, 1);
+  check("mark in backticks ignored", "Use `[9]` and ```\n[8]\n``` ok [3].", 1, 0);
+  check("FR27 link to unnumbered source", "[d](http://D.com/q/#f) [1]", 2, 0);
+  console.log(bad ? "SELF-TEST FAIL" : "SELF-TEST PASS");
+  process.exit(bad ? 1 : 0);
+SELFTEST_EOF
+
+if [[ "${1:-}" == "--self-test" ]]; then
+  BUN="${BUN:-$(command -v bun || echo /opt/homebrew/bin/bun)}"
+  exec "$BUN" -e "$COUNTING_JS
+$SELFTEST_JS"
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SERVER_DIR="$(dirname "$SCRIPT_DIR")"
@@ -93,38 +185,11 @@ for p in "${PROMPTS[@]}"; do
     -H "Content-Type: application/json" -d "$body" > "$WORK_DIR/reply$i.sse"
 done
 
-"$BUN" -e '
+"$BUN" -e "$COUNTING_JS"'
   import { readFileSync, writeFileSync } from "fs";
   const [model, outJson, ...rest] = process.argv.slice(1);
   const prompts = JSON.parse(rest.shift());
   const files = rest;
-  // Mirrors mobile/src/ui/sourceLinks.ts normaliseLinkUrl / siteHost (FR27).
-  const URL_PATTERN = /^(https?):\/\/([^/?#]+)(.*)$/i;
-  const normalise = (url) => {
-    const m = url.trim().match(URL_PATTERN);
-    if (!m) return null;
-    let host = m[2].toLowerCase();
-    if (host.startsWith("www.")) host = host.slice(4);
-    if (!host) return null;
-    let rest = m[3];
-    const h = rest.indexOf("#");
-    if (h !== -1) rest = rest.slice(0, h);
-    const q = rest.indexOf("?");
-    if (q !== -1) {
-      const path = rest.slice(0, q);
-      rest = (path.endsWith("/") ? path.slice(0, -1) : path) + rest.slice(q);
-    } else if (rest.endsWith("/")) rest = rest.slice(0, -1);
-    return host + rest;
-  };
-  const siteHost = (url) => {
-    const m = url.trim().match(URL_PATTERN);
-    if (!m) return null;
-    let host = m[2].toLowerCase();
-    if (host.startsWith("www.")) host = host.slice(4);
-    const c = host.indexOf(":");
-    if (c !== -1) host = host.slice(0, c);
-    return host || null;
-  };
   const records = [];
   let divPass = 0, linkPass = 0;
   files.forEach((f, idx) => {
@@ -138,20 +203,15 @@ done
     const text = events.filter((e) => e.ev === "content").map((e) => e.data?.text ?? "").join("");
     const sources = events.filter((e) => e.ev === "sources").flatMap((e) => e.data?.items ?? []);
     const hosts = [...new Set(sources.map((s) => siteHost(s.url)).filter(Boolean))];
-    const links = [...text.matchAll(/\[[^\]]*\]\((https?:\/\/[^\s)]+)\)/gi)].map((m) => m[1]);
-    const savedNorm = new Set(sources.map((s) => normalise(s.url)).filter(Boolean));
-    const matched = new Set(), unmatched = [];
-    for (const l of links) {
-      const n = normalise(l);
-      if (n && savedNorm.has(n)) matched.add(n); else unmatched.push(l);
-    }
+    const cc = countCitations(text, sources);
+    const withN = sources.filter((x) => typeof x.n === "number").length;
     const dPass = hosts.length >= 3;
-    const lPass = matched.size >= 3 && unmatched.length === 0;
+    const lPass = cc.resolved >= 3 && cc.unresolved.length === 0;
     if (dPass) divPass++;
     if (lPass) linkPass++;
     records.push({ prompt: prompts[idx], done: done?.data?.status ?? null, sources, reply: text,
-      distinctHosts: hosts, linksTotal: links.length, matchedDistinct: matched.size,
-      unmatchedCount: unmatched.length, unmatchedUrls: unmatched, diversityPass: dPass, linkPass: lPass });
+      distinctHosts: hosts, savedWithN: withN, resolvedDistinct: cc.resolved, resolvedMarks: cc.markCount,
+      linkCount: cc.linkCount, unresolvedCount: cc.unresolved.length, unresolved: cc.unresolved, diversityPass: dPass, linkPass: lPass });
   });
   writeFileSync(outJson, JSON.stringify({ model, records }, null, 2));
   console.log("");
@@ -159,7 +219,7 @@ done
   for (const r of records) {
     console.log(`- Prompt: ${r.prompt}`);
     console.log(`    status=${r.done} sources=${r.sources.length} distinct hosts=${r.distinctHosts.length} [${r.distinctHosts.join(", ")}]`);
-    console.log(`    links=${r.linksTotal} matched distinct saved sources=${r.matchedDistinct} unmatched=${r.unmatchedCount}${r.unmatchedCount ? " " + JSON.stringify(r.unmatchedUrls) : ""}`);
+    console.log(`    saved sources=${r.sources.length} with n=${r.savedWithN}; resolved distinct sources=${r.resolvedDistinct} (number marks=${r.resolvedMarks}, links=${r.linkCount}); unresolved=${r.unresolvedCount}${r.unresolvedCount ? " " + JSON.stringify(r.unresolved) : ""}`);
     console.log(`    diversity=${r.diversityPass ? "PASS" : "fail"} links=${r.linkPass ? "PASS" : "fail"}`);
   }
   console.log(`Diversity passes: ${divPass}/3 (need >=2)`);
