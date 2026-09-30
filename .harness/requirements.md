@@ -28,6 +28,12 @@ answered from a single website. These are built next, before M10d.
 **Numbered citations (FR31, added 2026-09-30):** the model could not copy URLs accurately enough to
 earn logos, so pages it reads are numbered and the app turns its `[n]` citations into logo links.
 
+**Answer layout fix (FR32, added 2026-09-30):** after M10d, with the always-on server restarted
+onto the M10c4 code, the owner's phone showed a web answer (a bulleted news list) drawn squeezed to
+about half the screen width, with its text running out of the bubble over "Sources (n)" and the
+model name. It was squeezed from the first streamed word and stayed broken after reopening the chat.
+A table answer three minutes later (22:35) rendered at full width with its row cards intact.
+
 ## Functional Requirements
 
 - [FR1] **Model list.** The app lists every model installed in Ollama (`GET /api/tags`) by its
@@ -190,6 +196,13 @@ earn logos, so pages it reads are numbered and the app turns its `[n]` citations
   text. While streaming, an incomplete mark (e.g. `[2`) shows as text until complete. Markdown links
   keep their FR27 behaviour. Each reply has its own numbering; numbers are never resolved against
   another reply's sources. Neither the server nor the app rewrites the model's text otherwise.
+- [FR32] **Answers fit their bubble.** Every assistant answer (web or not, streaming, finished,
+  or reopened from saved history, any FR26 content: paragraphs, bulleted/numbered lists, headings,
+  FR29 table cards, FR27/FR31 inline logos) is laid out at the full width available to the answer
+  bubble, and all of its text is inside the bubble: the FR28 "Sources (n)" header and the model
+  name always sit below the answer text and never overlap it or any other text. The cause of the
+  2026-09-30 22:32 squeezed/overflowing answer is diagnosed and covered by a test. No change to what
+  the model is told, to the server, or to the FR29 card layout beyond keeping it inside the bubble.
 
 ## Acceptance Criteria
 
@@ -273,6 +286,14 @@ All proven against the live Mac Studio and Ollama, not mocks.
     number, a mark in an old reply without numbered sources, and a mark inside code stay plain text;
     a half-streamed `[2` renders without error; a reopened saved reply resolves the same logos as the
     live one.
+
+26. **AC26** — A test reproduces an answer shaped like the 2026-09-30 22:32 phone screenshot
+    (`.harness/evidence/FR32-owner-phone-squeezed-2026-09-30-2232.png`: a web reply whose body is a
+    bulleted list of news items, with a Sources list) and shows, for the live-streaming and the
+    reopened-saved forms, that the answer takes the full bubble width and nothing overlaps the
+    answer text; existing FR26-FR31 rendering tests pass unchanged. Plus the owner's phone
+    screenshot of a new web answer (after the phone has loaded the new code) showing the answer
+    full width, entirely inside its bubble, with "Sources (n)" and the model name below it.
 
 ## Constraints
 
@@ -361,6 +382,8 @@ All proven against the live Mac Studio and Ollama, not mocks.
   is accepted (FR31).
 - A reply answered only from search headlines (no page read): no numbered citations and no inline
   logos; its Sources list still shows the search results (FR22, FR31).
+- A web answer whose text is a bulleted list, streaming or reopened: full bubble width, all text
+  inside the bubble, Sources header and model name below it (FR32).
 
 ## Decisions / Clarifications
 
@@ -463,6 +486,20 @@ All proven against the live Mac Studio and Ollama, not mocks.
   starting at 1; `[1][3]`, `[1, 3]` and `【n】` understood; the mark is replaced by the logo; unknown
   numbers and marks in old replies stay plain text; half-written marks show as text while streaming;
   numbers saved with the sources so reopen/resume match; FR27 link logos unchanged.
+- **Answer layout fix first; logos in place of written "Source: ..." deferred** (human,
+  2026-09-30, "Layout fix now, logos later"): FR32 is built next, ahead of M11. The owner's request
+  to show a logo instead of the model's written "Source: <name>" text is not a requirement yet: the
+  first screenshot showing it (22:13) came from an always-on server still running pre-M10c4 code
+  (started 13:32, before M10c4 T4 at 21:11; restarted 22:23), and the retest (22:32) opened no pages,
+  so there was nothing to number. After FR32 the owner retries a few questions; only if the model
+  still writes "Source: ..." in words for pages it opened is a logo swap planned. Chosen over adding
+  the name-to-logo swap now and over firmer "open pages" wording now.
+- **Recorded, not yet a requirement** (Claude, 2026-09-30): nothing restarts the always-on server
+  (com.harness.server) when server code changes, so a finished milestone can leave the phone on old
+  server code, as happened after M10c4. The 22:35 screenshot also showed `[2]`/`[3]`/`[4]` as plain
+  text in a "What's happening" card line with an empty "Source:" line, i.e. numbers with no read page
+  (2 web steps) in a row missing a cell separator, which is FR29/FR31 behaviour as specified. Owner
+  to decide separately whether either needs action.
 
 ## Open Questions
 
