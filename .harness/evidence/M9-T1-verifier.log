@@ -1,0 +1,107 @@
+=== M9-T1 Verification Run ===
+Date: 2026-09-30
+Repository: /Users/ryankenny/Projects/CodingHarnessv2
+Commit: d6a8512 (HEAD)
+
+=== Packet Tests Command ===
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/ollama src/generations src/models src/http && bunx tsc --noEmit -p . 2>&1 | grep -v 'src/web/' | grep 'error' ; test $? -eq 1
+Exit Status: 0
+
+Output:
+bun test v1.4.0 (1381054db)
+
+ 114 pass
+ 0 fail
+ 496 expect() calls
+Ran 114 tests across 4 files. [2.02s]
+
+(No type errors found - grep for 'error' excluding src/web/ returned nothing)
+
+=== Full Test Suite ===
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bunx tsc --noEmit -p .
+Exit Status: 0
+
+Output:
+bun test v1.4.0 (1381054db)
+
+ 128 pass
+ 0 fail
+ 564 expect() calls
+Ran 128 tests across 5 files. [2.19s]
+
+(No type errors - full typecheck passed)
+
+=== Files Changed ===
+M server/src/ollama/client.ts
+M server/src/ollama/client.test.ts
+
+Both files are within the allowed set.
+
+=== Test Analysis ===
+Packet tests: 114 pass (4 files: ollama, generations, models, http)
+Full suite: 128 pass (5 files: ollama, generations, models, http, web)
+New tests added: 5 tests in "OllamaClient chat tools" describe block
+
+
+=== Acceptance Criteria Verification ===
+
+AC1: Export types OllamaTool and OllamaToolCall
+- FOUND: OllamaTool exported at line 7-14 with structure:
+  { type: "function"; function: { name, description, parameters } }
+- FOUND: OllamaToolCall exported at line 17-22 with structure:
+  { function: { name, arguments } }
+
+AC2: Chat message type accepts new roles and optional fields
+- FOUND: OllamaChatRequest.messages now has:
+  role: "user" | "assistant" | "system" | "tool"
+  tool_calls?: OllamaToolCall[]
+  tool_name?: string
+
+AC3: chat() takes optional tools parameter, handles correctly
+- FOUND: chat() signature at line 254-258:
+  async *chat(request, signal?, tools?: OllamaTool[])
+- FOUND: Conditional tools inclusion at line 277-279:
+  if (tools && tools.length > 0) { body.tools = tools }
+- VERIFIED: No tools key when omitted or empty
+
+AC4: Streamed chunks expose tool_calls
+- FOUND: toolCalls property added to yielded result at lines 318-320, 335-337
+- Returns: OllamaChatResponse & { toolCalls?: OllamaToolCall[] }
+
+AC5: Test coverage
+- FOUND: Test "includes tools in body when passed and non-empty" (line 262)
+- FOUND: Test "omits tools key when tools omitted" (line 306)
+- FOUND: Test "omits tools key when tools is empty array" (line 345)
+- FOUND: Test "yields tool_calls from streamed message chunks" (line 384)
+- FOUND: Test "sends messages with role tool and tool_calls verbatim" (line 424)
+
+=== Test Strengthening Analysis ===
+
+No test weakening detected. Changes to client.test.ts:
+- drain helper moved from inner scope to top level (same function)
+- Added JSDoc comment to drain helper
+- Added 5 new comprehensive tests
+- All existing tests remain unchanged with no modifications to assertions
+
+=== Files Changed Analysis ===
+
+Files modified (allowed):
+- server/src/ollama/client.ts: ✓ In allowed list
+- server/src/ollama/client.test.ts: ✓ In allowed list
+
+Files outside allowed list: NONE
+
+=== Test Results Summary ===
+
+Packet tests (src/ollama, src/generations, src/models, src/http):
+  Command: cd server && bun test src/ollama src/generations src/models src/http && bunx tsc --noEmit -p . 2>&1 | grep -v 'src/web/' | grep 'error' ; test $? -eq 1
+  Result: 114 pass, 0 fail, 496 expect() calls
+  Exit: 0
+  TypeCheck: PASS (no error lines found outside src/web/)
+
+Full test suite (including src/web):
+  Command: cd server && bun test && bunx tsc --noEmit -p .
+  Result: 128 pass (14 additional from src/web), 0 fail, 564 expect() calls
+  Exit: 0
+  TypeCheck: PASS (no type errors)
+

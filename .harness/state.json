@@ -6217,7 +6217,7 @@
         {
           "id": "M9-T1",
           "scope": "C7: chat(model,messages,signal,tools?) sends tools only when non-empty, yields tool_calls; tool/assistant tool_call messages",
-          "tests": "see packet",
+          "tests": "cd server && bun test src/ollama src/generations src/models src/http && tsc gate outside src/web",
           "requirements": [
             "FR19"
           ],
@@ -6237,11 +6237,33 @@
             "reason_code": "BOUNDED_LOW_RISK",
             "detail": "additive typed change with existing fake-Ollama harness"
           },
-          "status": "IN_PROGRESS",
+          "status": "ACCEPTED",
           "attempts": 1,
           "packet": ".harness/tasks/M9-T1.md",
           "commit": null,
-          "attempt_log": []
+          "attempt_log": [
+            {
+              "attempt": 1,
+              "role": "worker",
+              "tier": "Cheap",
+              "model": "haiku",
+              "artifact": ".harness/evidence/M9-T1-worker.log",
+              "verdict": "PASS",
+              "base": "d6a8512",
+              "changed_files": [
+                "server/src/ollama/client.ts",
+                "server/src/ollama/client.test.ts"
+              ],
+              "note": "Red: .harness/evidence/M9-T1-red.log (5 fail); yielded chunks expose `toolCalls`"
+            },
+            {
+              "attempt": 1,
+              "role": "verifier",
+              "artifact": ".harness/evidence/M9-T1-verifier.log",
+              "verdict": "PASS",
+              "note": "exit 0, 114 pass; full suite 128 pass and full tsc clean; drain helper move not a weakening"
+            }
+          ]
         },
         {
           "id": "M9-T2",
@@ -6406,7 +6428,8 @@
       ],
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
-      ]
+      ],
+      "handoff": "CONTINUE after T1,T2 accepted. Next: write packet M9-T3 (AC1) and run it; then T4 (tool loop: use OllamaClient.chat 4th arg tools and yielded `toolCalls`; createWebTools from server/src/web/tools.ts; C6 aggregates `source` events into one `sources` SSE event before done, dedupe by url; system note from systemNote(new Date()) prepended only when web:true; tools omitted once 10 calls have run; a stub-Ollama test that keeps calling tools proves the cap); then T5 live proof server/scripts/web-chat-proof.sh."
     },
     "M10": {
       "id": "M10",

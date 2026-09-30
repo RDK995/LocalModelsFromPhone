@@ -3,6 +3,24 @@
  * Ollama is running at 127.0.0.1:11434
  */
 
+/** Tool definition for Ollama tool calling */
+export interface OllamaTool {
+  type: "function";
+  function: {
+    name: string;
+    description: string;
+    parameters: Record<string, unknown>;
+  };
+}
+
+/** Tool call returned by Ollama in a chat response */
+export interface OllamaToolCall {
+  function: {
+    name: string;
+    arguments: Record<string, unknown>;
+  };
+}
+
 export interface OllamaModel {
   name: string;
   modified_at: string;
@@ -46,8 +64,10 @@ export interface OllamaGenerateRequest {
 export interface OllamaChatRequest {
   model: string;
   messages: Array<{
-    role: "user" | "assistant";
+    role: "user" | "assistant" | "system" | "tool";
     content: string;
+    tool_calls?: OllamaToolCall[];
+    tool_name?: string;
   }>;
 }
 
@@ -62,6 +82,7 @@ export interface OllamaChatResponse {
     role: "assistant";
     content: string;
     thinking?: string;
+    tool_calls?: OllamaToolCall[];
   };
   done: boolean;
   total_duration: number;
@@ -224,29 +245,45 @@ export class OllamaClient {
 
   /**
    * Stream a chat completion. The /api/chat body is built explicitly as
-   * {model, messages:[{role, content}], keep_alive:-1, stream:true, think:true
-   * when the model supports it}: only model and messages come from the
+   * {model, messages:[{role, content, ...}], keep_alive:-1, stream:true, think:true
+   * when the model supports it, tools:[] when provided}: only model and messages come from the
    * caller, keep_alive:-1 keeps the resident model loaded indefinitely (FR4),
-   * and `think` is decided by the server from `/api/show` (I9) — the caller
-   * never requests it.
+   * `think` is decided by the server from `/api/show` (I9) — the caller
+   * never requests it, and `tools` is passed through when given and non-empty.
    */
   async *chat(
     request: OllamaChatRequest,
-    signal?: AbortSignal
-  ): AsyncGenerator<OllamaChatResponse, void, unknown> {
+    signal?: AbortSignal,
+    tools?: OllamaTool[]
+  ): AsyncGenerator<OllamaChatResponse & { toolCalls?: OllamaToolCall[] }, void, unknown> {
     const think = await this.supportsThinking(request.model);
+    const body: Record<string, unknown> = {
+      model: request.model,
+      messages: request.messages.map((m) => {
+        const msg: Record<string, unknown> = { role: m.role, content: m.content };
+        if (m.tool_calls !== undefined) {
+          msg.tool_calls = m.tool_calls;
+        }
+        if (m.tool_name !== undefined) {
+          msg.tool_name = m.tool_name;
+        }
+        return msg;
+      }),
+      keep_alive: -1,
+      stream: true,
+      ...(think ? { think: true } : {}),
+    };
+    // Only include tools if provided and non-empty
+    if (tools && tools.length > 0) {
+      body.tools = tools;
+    }
+
     const response = await fetch(`${this.baseUrl}/api/chat`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: request.model,
-        messages: request.messages.map((m) => ({ role: m.role, content: m.content })),
-        keep_alive: -1,
-        stream: true,
-        ...(think ? { think: true } : {}),
-      }),
+      body: JSON.stringify(body),
       signal,
     });
 
@@ -276,8 +313,13 @@ export class OllamaClient {
         for (const line of lines) {
           if (line.trim()) {
             try {
-              const json = JSON.parse(line);
-              yield json;
+              const json = JSON.parse(line) as OllamaChatResponse;
+              // Expose tool_calls from the message as toolCalls on the yielded object
+              const result: OllamaChatResponse & { toolCalls?: OllamaToolCall[] } = json;
+              if (json.message?.tool_calls) {
+                result.toolCalls = json.message.tool_calls;
+              }
+              yield result;
             } catch {
               // Skip malformed JSON lines
             }
@@ -288,8 +330,13 @@ export class OllamaClient {
       // Process any remaining data
       if (buffer.trim()) {
         try {
-          const json = JSON.parse(buffer);
-          yield json;
+          const json = JSON.parse(buffer) as OllamaChatResponse;
+          // Expose tool_calls from the message as toolCalls on the yielded object
+          const result: OllamaChatResponse & { toolCalls?: OllamaToolCall[] } = json;
+          if (json.message?.tool_calls) {
+            result.toolCalls = json.message.tool_calls;
+          }
+          yield result;
         } catch {
           // Skip malformed JSON
         }

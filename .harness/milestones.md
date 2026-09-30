@@ -235,11 +235,13 @@ Pending.
 ### Evidence
 
 Task plan (packets in .harness/tasks/):
-- M9-T1 — C7 chat tools + tool_calls              Cheap (haiku, BOUNDED_LOW_RISK) — in progress
+- M9-T1 — C7 chat tools + tool_calls              Cheap (haiku, BOUNDED_LOW_RISK), attempt 1, PASS — .harness/evidence/M9-T1-verifier.log (exit 0, 114 pass; full suite 128 pass, tsc clean; red M9-T1-red.log)
 - M9-T2 — C12 server/src/web/tools.ts             Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — .harness/evidence/M9-T2-verifier.log (exit 0, 14 pass; red M9-T2-red.log)
 - M9-T3 — C5+C4 tools capability, 409 gate (AC1)  Mid (sonnet, ORDINARY_IMPLEMENTATION) — planned
 - M9-T4 — C6+C4 tool loop, 10-call cap (AC3,AC4)  Mid (sonnet, ORDINARY_IMPLEMENTATION) — planned, after T1-T3
 - M9-T5 — web-chat-proof.sh live proof (AC1-AC3)  Mid (sonnet, ORDINARY_IMPLEMENTATION) — planned, after T4
+
+Handoff (CONTINUE): T1 and T2 accepted and committed. Remaining: T3 (packet not yet written), T4, T5. Notes for T4 are in state.json M9.handoff.
 
 ### Validation
 

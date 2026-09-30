@@ -123,6 +123,13 @@ describe("OllamaClient load/unload", () => {
   });
 });
 
+/** Helper to consume an async generator */
+async function drain(gen: AsyncGenerator<unknown, void, unknown>): Promise<void> {
+  for await (const _ of gen) {
+    // consume
+  }
+}
+
 describe("OllamaClient chat think capability", () => {
   const CHAT_LINE =
     JSON.stringify({
@@ -160,12 +167,6 @@ describe("OllamaClient chat think capability", () => {
       return new Response("not found", { status: 404 });
     });
     return { server, showBodies, chatBodies };
-  }
-
-  async function drain(gen: AsyncGenerator<unknown, void, unknown>): Promise<void> {
-    for await (const _ of gen) {
-      // consume
-    }
   }
 
   it("sends think:true when /api/show capabilities include 'thinking'", async () => {
@@ -251,6 +252,224 @@ describe("OllamaClient chat think capability", () => {
       expect(chatBodies.length).toBe(2);
       expect((chatBodies[0] as { think?: boolean }).think).toBe(true);
       expect((chatBodies[1] as { think?: boolean }).think).toBe(true);
+    } finally {
+      server.stop(true);
+    }
+  });
+});
+
+describe("OllamaClient chat tools", () => {
+  it("includes tools in body when passed and non-empty", async () => {
+    const bodies: unknown[] = [];
+    const server = fakeOllamaHttp(async (req) => {
+      const url = new URL(req.url);
+      if (url.pathname === "/api/chat") {
+        bodies.push(await req.json());
+        return new Response(
+          JSON.stringify({
+            model: "m",
+            created_at: "",
+            message: { role: "assistant", content: "" },
+            done: true,
+            total_duration: 0,
+            load_duration: 0,
+            prompt_eval_count: 0,
+            prompt_eval_duration: 0,
+            eval_count: 0,
+            eval_duration: 0,
+          }) + "\n",
+          { headers: { "Content-Type": "application/x-ndjson" } }
+        );
+      }
+      if (url.pathname === "/api/show") {
+        return new Response(JSON.stringify({ capabilities: [] }), {
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      return new Response("not found", { status: 404 });
+    });
+    try {
+      const client = new OllamaClient(`http://127.0.0.1:${server.port}`);
+      const tools = [
+        { type: "function" as const, function: { name: "search", description: "Search the web", parameters: {} } },
+      ];
+      await drain(
+        client.chat({ model: "m", messages: [{ role: "user", content: "hi" }] }, undefined, tools)
+      );
+      expect(bodies.length).toBe(1);
+      expect((bodies[0] as { tools?: unknown }).tools).toEqual(tools);
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("omits tools key when tools omitted", async () => {
+    const bodies: unknown[] = [];
+    const server = fakeOllamaHttp(async (req) => {
+      const url = new URL(req.url);
+      if (url.pathname === "/api/chat") {
+        bodies.push(await req.json());
+        return new Response(
+          JSON.stringify({
+            model: "m",
+            created_at: "",
+            message: { role: "assistant", content: "" },
+            done: true,
+            total_duration: 0,
+            load_duration: 0,
+            prompt_eval_count: 0,
+            prompt_eval_duration: 0,
+            eval_count: 0,
+            eval_duration: 0,
+          }) + "\n",
+          { headers: { "Content-Type": "application/x-ndjson" } }
+        );
+      }
+      if (url.pathname === "/api/show") {
+        return new Response(JSON.stringify({ capabilities: [] }), {
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      return new Response("not found", { status: 404 });
+    });
+    try {
+      const client = new OllamaClient(`http://127.0.0.1:${server.port}`);
+      await drain(client.chat({ model: "m", messages: [{ role: "user", content: "hi" }] }));
+      expect(bodies.length).toBe(1);
+      expect("tools" in (bodies[0] as Record<string, unknown>)).toBe(false);
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("omits tools key when tools is empty array", async () => {
+    const bodies: unknown[] = [];
+    const server = fakeOllamaHttp(async (req) => {
+      const url = new URL(req.url);
+      if (url.pathname === "/api/chat") {
+        bodies.push(await req.json());
+        return new Response(
+          JSON.stringify({
+            model: "m",
+            created_at: "",
+            message: { role: "assistant", content: "" },
+            done: true,
+            total_duration: 0,
+            load_duration: 0,
+            prompt_eval_count: 0,
+            prompt_eval_duration: 0,
+            eval_count: 0,
+            eval_duration: 0,
+          }) + "\n",
+          { headers: { "Content-Type": "application/x-ndjson" } }
+        );
+      }
+      if (url.pathname === "/api/show") {
+        return new Response(JSON.stringify({ capabilities: [] }), {
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      return new Response("not found", { status: 404 });
+    });
+    try {
+      const client = new OllamaClient(`http://127.0.0.1:${server.port}`);
+      await drain(client.chat({ model: "m", messages: [{ role: "user", content: "hi" }] }, undefined, []));
+      expect(bodies.length).toBe(1);
+      expect("tools" in (bodies[0] as Record<string, unknown>)).toBe(false);
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("yields tool_calls from streamed message chunks", async () => {
+    const server = fakeOllamaHttp(async (req) => {
+      const url = new URL(req.url);
+      if (url.pathname === "/api/chat") {
+        return new Response(
+          JSON.stringify({
+            model: "m",
+            created_at: "",
+            message: { role: "assistant", content: "", tool_calls: [{ function: { name: "search", arguments: { q: "test" } } }] },
+            done: false,
+            total_duration: 0,
+            load_duration: 0,
+            prompt_eval_count: 0,
+            prompt_eval_duration: 0,
+            eval_count: 0,
+            eval_duration: 0,
+          }) + "\n",
+          { headers: { "Content-Type": "application/x-ndjson" } }
+        );
+      }
+      if (url.pathname === "/api/show") {
+        return new Response(JSON.stringify({ capabilities: [] }), {
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      return new Response("not found", { status: 404 });
+    });
+    try {
+      const client = new OllamaClient(`http://127.0.0.1:${server.port}`);
+      const chunks: unknown[] = [];
+      for await (const chunk of client.chat({ model: "m", messages: [{ role: "user", content: "hi" }] })) {
+        chunks.push(chunk);
+      }
+      expect(chunks.length).toBe(1);
+      expect((chunks[0] as { toolCalls?: unknown }).toolCalls).toEqual([{ function: { name: "search", arguments: { q: "test" } } }]);
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("sends messages with role tool and tool_calls verbatim", async () => {
+    const bodies: unknown[] = [];
+    const server = fakeOllamaHttp(async (req) => {
+      const url = new URL(req.url);
+      if (url.pathname === "/api/chat") {
+        bodies.push(await req.json());
+        return new Response(
+          JSON.stringify({
+            model: "m",
+            created_at: "",
+            message: { role: "assistant", content: "" },
+            done: true,
+            total_duration: 0,
+            load_duration: 0,
+            prompt_eval_count: 0,
+            prompt_eval_duration: 0,
+            eval_count: 0,
+            eval_duration: 0,
+          }) + "\n",
+          { headers: { "Content-Type": "application/x-ndjson" } }
+        );
+      }
+      if (url.pathname === "/api/show") {
+        return new Response(JSON.stringify({ capabilities: [] }), {
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      return new Response("not found", { status: 404 });
+    });
+    try {
+      const client = new OllamaClient(`http://127.0.0.1:${server.port}`);
+      const toolResult = { role: "tool" as const, tool_name: "search", content: "found something" };
+      const assistantMsg = { role: "assistant" as const, content: "", tool_calls: [{ function: { name: "search", arguments: { q: "test" } } }] };
+      await drain(
+        client.chat({
+          model: "m",
+          messages: [
+            { role: "user", content: "hi" },
+            assistantMsg,
+            toolResult,
+          ],
+        })
+      );
+      expect(bodies.length).toBe(1);
+      expect((bodies[0] as { messages?: unknown[] }).messages).toEqual([
+        { role: "user", content: "hi" },
+        { role: "assistant", content: "", tool_calls: [{ function: { name: "search", arguments: { q: "test" } } }] },
+        { role: "tool", tool_name: "search", content: "found something" },
+      ]);
     } finally {
       server.stop(true);
     }

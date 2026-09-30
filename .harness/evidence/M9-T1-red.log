@@ -1,0 +1,92 @@
+bun test v1.4.0 (1381054db)
+
+src/ollama/client.test.ts:
+295 |       ];
+296 |       await drain(
+297 |         client.chat({ model: "m", messages: [{ role: "user", content: "hi" }] }, undefined, tools)
+298 |       );
+299 |       expect(bodies.length).toBe(1);
+300 |       expect((bodies[0] as { tools?: unknown }).tools).toEqual(tools);
+                                                             ^
+error: expect(received).toEqual(expected)
+
+- [
+-   {
+-     "function": {
+-       "description": "Search the web",
+-       "name": "search",
+-       "parameters": {},
+-     },
+-     "type": "function",
+-   },
+- ]
++ undefined
+
+- Expected  - 10
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/ollama/client.test.ts:300:56)
+(fail) OllamaClient chat tools > includes tools in body when passed and non-empty [1.20ms]
+413 |       const chunks: unknown[] = [];
+414 |       for await (const chunk of client.chat({ model: "m", messages: [{ role: "user", content: "hi" }] })) {
+415 |         chunks.push(chunk);
+416 |       }
+417 |       expect(chunks.length).toBe(1);
+418 |       expect((chunks[0] as { toolCalls?: unknown }).toolCalls).toEqual([{ function: { name: "search", arguments: { q: "test" } } }]);
+                                                                     ^
+error: expect(received).toEqual(expected)
+
+- [
+-   {
+-     "function": {
+-       "arguments": {
+-         "q": "test",
+-       },
+-       "name": "search",
+-     },
+-   },
+- ]
++ undefined
+
+- Expected  - 10
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/ollama/client.test.ts:418:64)
+(fail) OllamaClient chat tools > yields tool_calls from streamed message chunks [0.97ms]
+463 |             toolResult,
+464 |           ],
+465 |         })
+466 |       );
+467 |       expect(bodies.length).toBe(1);
+468 |       expect((bodies[0] as { messages?: unknown[] }).messages).toEqual([
+                                                                     ^
+error: expect(received).toEqual(expected)
+
+@@ -8,12 +8,2 @@
+      "role": "assistant",
+-     "tool_calls": [
+-       {
+-         "function": {
+-           "arguments": {
+-             "q": "test",
+-           },
+-           "name": "search",
+-         },
+-       },
+-     ],
+    },
+@@ -22,3 +12,2 @@
+      "role": "tool",
+-     "tool_name": "search",
+    },
+
+- Expected  - 11
++ Received  + 0
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/ollama/client.test.ts:468:64)
+(fail) OllamaClient chat tools > sends messages with role tool and tool_calls verbatim [0.92ms]
+
+ 18 pass
+ 3 fail
+ 33 expect() calls
+Ran 21 tests across 1 file. [18.00ms]
