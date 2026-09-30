@@ -1,6 +1,6 @@
 import { describe, it, expect } from "bun:test";
 import type { Inline } from "./markdown";
-import { tableLayout } from "./tableLayout";
+import { gridWidth, tableLayout } from "./tableLayout";
 
 const t = (text: string): Inline[] => [{ type: "text", text }];
 const bold = (text: string): Inline[] => [{ type: "bold", children: t(text) }];
@@ -60,5 +60,19 @@ describe("tableLayout", () => {
     if (c.kind !== "cards") throw new Error("cards expected");
     expect(c.cards[0]?.length).toBe(3);
     expect(c.cards[0]?.[2]?.value).toEqual([...t("3"), ...t(" | "), ...link]);
+  });
+});
+
+describe("gridWidth (M10c3-C4: a definite width for the 2-column grid)", () => {
+  it("is the assistant bubble's inner width: (window - 2*16 screen padding) * 85% - 2*12 bubble padding", () => {
+    expect(gridWidth(390)).toBe(Math.floor((390 - 32) * 0.85 - 24));
+    expect(gridWidth(390)).toBe(280);
+    expect(gridWidth(430)).toBe(Math.floor((430 - 32) * 0.85 - 24));
+  });
+  it("is a whole number, never negative, and grows with the window", () => {
+    expect(gridWidth(0)).toBe(0);
+    expect(gridWidth(10)).toBe(0);
+    expect(Number.isInteger(gridWidth(375))).toBe(true);
+    expect(gridWidth(430)).toBeGreaterThan(gridWidth(375));
   });
 });

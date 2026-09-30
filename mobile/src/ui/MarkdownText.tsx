@@ -6,11 +6,12 @@
  */
 
 import React, { useMemo } from "react";
-import { Platform, StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import type { StyleProp, TextStyle } from "react-native";
 import { parseMarkdown } from "./markdown";
 import type { Block, Inline } from "./markdown";
 import { tableLayout } from "./tableLayout";
+import { gridWidth } from "./tableLayout";
 import { presentLink } from "./inlineLink";
 import type { LinkSource } from "./sourceLinks";
 import { SourceLogo } from "./SourceLogo";
@@ -75,6 +76,7 @@ function renderBlock(
   i: number,
   style: StyleProp<TextStyle>,
   ctx: LinkContext,
+  tableWidth: number,
 ) {
   switch (block.type) {
     case "paragraph":
@@ -121,7 +123,7 @@ function renderBlock(
       const layout = tableLayout(block.rows);
       if (layout.kind === "grid") {
         return (
-          <View key={i} style={styles.list}>
+          <View key={i} style={[styles.list, styles.tableGrid, { width: tableWidth }]}>
             <View style={styles.tableRow}>
               {layout.header.map((cell, c) => (
                 <Text key={c} style={[style, styles.tableCell, styles.bold]}>
@@ -177,7 +179,8 @@ export function MarkdownText({
 }) {
   const ctx: LinkContext = { sources, iconCache, onOpenSource };
   const blocks = useMemo(() => parseMarkdown(text), [text]);
-  return <View>{blocks.map((block, i) => renderBlock(block, i, style, ctx))}</View>;
+  const tableWidth = gridWidth(useWindowDimensions().width);
+  return <View>{blocks.map((block, i) => renderBlock(block, i, style, ctx, tableWidth))}</View>;
 }
 
 const styles = StyleSheet.create({
@@ -197,6 +200,7 @@ const styles = StyleSheet.create({
   codeBlockText: { fontFamily: MONO, fontSize: 13, color: "#000" },
   quote: { borderLeftWidth: 3, borderLeftColor: "#ccc", paddingLeft: 8, marginTop: 4 },
   quoteText: { color: "#666" },
+  tableGrid: { maxWidth: "100%" },
   tableRow: { flexDirection: "row", marginTop: 2 },
   tableCard: {
     borderWidth: 1,

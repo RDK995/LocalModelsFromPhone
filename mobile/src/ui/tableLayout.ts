@@ -46,3 +46,21 @@ export function tableLayout(rows: Inline[][][]): TableLayout {
     ),
   };
 }
+
+/*
+ * Width of a 2-column grid on the phone (M10c3-C4). The assistant bubble in
+ * app/chat.tsx shrink-wraps its content (alignSelf "flex-start", maxWidth
+ * "85%"), and grid cells are flex: 1 (flexBasis 0), so a grid with no width of
+ * its own measures ~0 wide and the bubble collapses to a strip. Giving the grid
+ * the bubble's inner width makes the bubble open to its max width and the two
+ * cells split it equally. Mirrors chat.tsx: messagesContent padding 16,
+ * message maxWidth 85% and padding 12 (markdownText.test.ts pins those).
+ */
+const SCREEN_PADDING = 16;
+const BUBBLE_MAX_FRACTION = 0.85;
+const BUBBLE_PADDING = 12;
+
+export function gridWidth(windowWidth: number): number {
+  const inner = (windowWidth - 2 * SCREEN_PADDING) * BUBBLE_MAX_FRACTION - 2 * BUBBLE_PADDING;
+  return Math.max(0, Math.floor(inner));
+}

@@ -328,6 +328,8 @@ Cycle 2: report `.harness/reviews/M10c3-cycle2.md` (CHANGES REQUIRED, SUBSTANTIV
 Correction: C3 (F1) commit 341752c, Top/opus AMBIGUOUS, attempt 4 PASS, verifier PASS - tests reproduce the screenshot's table shapes and pin the single render path; diagnosis stale bundle, no product code changed (see Evidence). AC5 remains OWED from the owner (attempt 2 steps in Evidence).
 Correction diff `5ccf325..HEAD` files (outside .harness/): mobile/src/ui/markdown.test.ts, mobile/src/ui/markdownText.test.ts. Files not named by a cycle-2 finding: none (Finding 1 names no file; both test files serve its suggested correction (2)).
 
+Cycle 3 (named review override, cap 3): input `.harness/reviews/M10c3-cycle2.md` (BLOCKER on M10c3-AC5 still open) + `.harness/evidence/M10c3-AC5-owner-phone-2.log`, `-2.png`, `-2b.png`. Pre-correction: f1e924dc66fabdcd0bd5e4860afb80b00a2f5459
+
 Human Escalation (BLOCKED, 2026-09-30):
 
 Problem:

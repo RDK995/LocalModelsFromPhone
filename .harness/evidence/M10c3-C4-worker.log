@@ -1,0 +1,9 @@
+commit f1e924dc66fabdcd0bd5e4860afb80b00a2f5459 + uncommitted C4 diff
+$ tsc --noEmit
+bun test v1.4.0 (1381054db)
+
+ 396 pass
+ 0 fail
+ 11870 expect() calls
+Ran 396 tests across 26 files. [207.00ms]
+$ eslint src --max-warnings 0

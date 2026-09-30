@@ -121,3 +121,36 @@ describe("one table render path for streamed and saved replies (M10c3-C3)", () =
     expect(users).toEqual(["app/chat.tsx", "ui/MarkdownText.tsx", "ui/markdown.ts", "ui/tableLayout.ts"]);
   });
 });
+
+describe("2-column grid has a definite width on the device (M10c3-C4)", () => {
+  // The assistant bubble shrink-wraps (alignSelf flex-start, maxWidth 85%) and
+  // each grid cell is flex: 1 (flexBasis 0), so a grid without its own width
+  // measures ~0 wide and the bubble collapses to a strip. The grid must take a
+  // width from the window, not from its content.
+  const gridStart = md.indexOf("layout.kind === \"grid\"");
+  const cardsStart = md.indexOf("layout.cards.map");
+  const gridBranch = md.slice(gridStart, cardsStart);
+  it("MarkdownText reads the window width and derives the grid width from it", () => {
+    expect(md).toMatch(/import\s*\{[^}]*\buseWindowDimensions\b[^}]*\}\s*from\s*"react-native"/);
+    expect(md).toMatch(/import\s*\{[^}]*\bgridWidth\b[^}]*\}\s*from\s*"\.\/tableLayout"/);
+    expect(md).toContain("useWindowDimensions()");
+    expect(md).toContain("gridWidth(");
+  });
+  it("the grid container gets that width, bounded by the bubble, with no horizontal scroll", () => {
+    expect(gridStart).toBeGreaterThan(-1);
+    expect(gridBranch).toMatch(/style=\{\[styles\.list, styles\.tableGrid, \{ width: [A-Za-z.]+ \}\]\}/);
+    expect(md).toMatch(/tableGrid:\s*\{\s*maxWidth:\s*"100%"\s*\}/);
+    expect(md).not.toContain("ScrollView");
+    expect(md).not.toContain("horizontal");
+  });
+  it("cells still share the row equally (aligned columns) and wrap", () => {
+    expect(gridBranch).toContain("styles.tableCell");
+    expect(md).toMatch(/tableCell:\s*\{\s*flex:\s*1,\s*paddingRight:\s*8\s*\}/);
+    expect(gridBranch).not.toContain("numberOfLines");
+  });
+  it("gridWidth's constants match the chat bubble styles they mirror", () => {
+    expect(chat).toMatch(/messagesContent:\s*\{\s*padding:\s*16,\s*\}/);
+    expect(chat).toMatch(/message:\s*\{\s*marginBottom:\s*8,\s*padding:\s*12,\s*borderRadius:\s*8,\s*maxWidth:\s*"85%",\s*\}/);
+    expect(chat).toMatch(/assistantMessage:\s*\{\s*alignSelf:\s*"flex-start",/);
+  });
+});
