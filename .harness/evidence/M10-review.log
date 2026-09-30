@@ -1,3 +1,11 @@
+$ tsc --noEmit
+bun test v1.4.0 (1381054db)
+
+ 246 pass
+ 0 fail
+ 514 expect() calls
+Ran 246 tests across 20 files. [96.00ms]
+$ eslint src --max-warnings 0
 === Web Switch Live Proof ===
 
 Restarting LaunchAgents...
