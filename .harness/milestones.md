@@ -241,7 +241,7 @@ Cycle 2: PASS — whole milestone (widened: the correction changed files no cycl
 
 ## M10b — Assistant answers show formatted text instead of raw markdown
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -255,11 +255,11 @@ C1
 
 ### As-Built
 
-Pending.
+.harness/as-built/M10b.md — RECORDED — 5/7 files attributed; components C1; 0 edges; claim mismatches NONE
 
 ### Acceptance Criteria
 
-- [ ] **M10b-AC1**: An assistant answer containing bold, a heading, a list, inline code and a link renders with no raw markdown characters visible, both for a newly streamed reply and for a reply saved before this change; a reply mid-stream with unterminated markup renders without error.
+- [x] **M10b-AC1**: An assistant answer containing bold, a heading, a list, inline code and a link renders with no raw markdown characters visible, both for a newly streamed reply and for a reply saved before this change; a reply mid-stream with unterminated markup renders without error.
 
 ### Baseline
 
@@ -282,7 +282,7 @@ Owner's phone observation still owed (cannot be claimed Mac-side): ask for an an
 
 ### Review
 
-Pending.
+Cycle 1: PASS — whole milestone, reviewer tier Mid (model sonnet, ORDINARY_IMPLEMENTATION), diff 4e6039f..52544c3; validation re-run exit 0 incl. live proof (.harness/evidence/M10b-review.log); M10b-AC1 PASS (on Mac evidence; phone observation owner-owed, see Validation); 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL.
 
 ### Review Cycles
 

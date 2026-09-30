@@ -7142,7 +7142,7 @@
         "FR26"
       ],
       "traces": "AC20",
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -7150,19 +7150,20 @@
         "branch": "m10b-formatted-answers"
       },
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M10b.md",
+        "result": "RECORDED \u2014 5/7 files attributed; components C1; 0 edges; claim mismatches NONE"
       },
       "criteria": [
         {
           "id": "M10b-AC1",
           "text": "An assistant answer containing bold, a heading, a list, inline code and a link renders with no raw markdown characters visible, both for a newly streamed reply and for a reply saved before this change; a reply mid-stream with unterminated markup renders without error.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "Live proof check 1 (streamed reply via app modules and buildChatItems: heading, list, bold, code, link parsed; visible text has no **, __, ](, backtick, # line or raw URL) - .harness/evidence/M10b-T3-verifier.log",
             "Live proof check 2 (14 of 28 live prefixes ended inside unterminated markup; all parse without error and show no ** or ](; every prefix parses) - .harness/evidence/M10b-T3-verifier.log",
             "Live proof check 3 (pre-change saved conversation in existing persisted format loaded by a fresh store renders with no raw markdown) - .harness/evidence/M10b-T3-verifier.log",
-            "Screen wiring: chat.tsx renders assistant content (streaming and saved share the path) via MarkdownText; static tests in mobile/src/ui/markdownText.test.ts - .harness/evidence/M10b-T2-verifier.log"
+            "Screen wiring: chat.tsx renders assistant content (streaming and saved share the path) via MarkdownText; static tests in mobile/src/ui/markdownText.test.ts - .harness/evidence/M10b-T2-verifier.log",
+            "Review cycle 1 (sonnet): PASS, validation re-run exit 0 incl. live proof \u2014 .harness/evidence/M10b-review.log"
           ]
         }
       ],
@@ -7328,7 +7329,27 @@
           ]
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "PASS",
+          "scope": "WHOLE_MILESTONE",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "ORDINARY_IMPLEMENTATION",
+          "diff_range": "4e6039f5030b5fea0d13f1086f30c1cac2a08100..52544c3",
+          "per_criterion": {
+            "M10b-AC1": "PASS"
+          },
+          "findings": {
+            "BLOCKER": 0,
+            "IMPORTANT": 0,
+            "OPTIONAL": 0
+          },
+          "artifact": null,
+          "review_log": ".harness/evidence/M10b-review.log"
+        }
+      ],
       "findings": [],
       "validation": [
         {
