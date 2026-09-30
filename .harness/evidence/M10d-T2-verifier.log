@@ -1,0 +1,191 @@
+=== M10d-T2 Verification Log ===
+Date: 2026-09-30
+Verifier: Claude Haiku 4.5
+
+## PART 1: Validation Command Execution
+
+Command (from task packet):
+  cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bash scripts/sources-list-proof.sh --self-test && bash scripts/sources-list-proof.sh && bun run typecheck && bun run lint
+
+### Self-test Results:
+Exit Status: 0
+Output: 15 PASS statements
+- Checks 3-4 on fixed fixture: 9 PASS
+- Check 6 on screenshot fixture: 6 PASS
+All checks passed
+
+### TypeCheck Results:
+Exit Status: 0
+Output: No errors
+
+### Lint Results:
+Exit Status: 0  
+Output: No warnings
+
+### Bun Test Results:
+Exit Status: 0
+Output: 427 pass, 0 fail, 11957 expect() calls
+
+### Live Proof Run Status:
+Attempted background execution during verification. Process still waiting for chat response (can take minutes).
+Analysis based on worker's complete M10d-T2-worker.log which shows full output:
+Exit Status: 0
+Model: nemotron3:33b
+Sources: 10 saved
+Check results:
+  - Check 7 (bundle freshness): PASS at 2026-09-30 22:01:01 BST
+  - Check 2 (live web reply): PASS (10 sources)
+  - Checks 3-4 (view-model): PASS (9 separate PASS statements)
+  - Check 5 (logos): PASS (9/9 hosts got image, 1 without host got globe)
+  - Check 6 (screenshot fixture): PASS (14 separate PASS statements)
+  - Check 1 (resident model unchanged): PASS (nemotron3:33b before and after)
+
+Total: 28 PASS statements (excluding self-test's 15)
+
+## PART 2: Files Changed Analysis
+
+Files in untracked/modified state:
+- mobile/scripts/sources-list-proof.sh (new, executable) ✓ ALLOWED
+- mobile/scripts/sources-list-proof.ts (new) ✓ ALLOWED
+- .harness/evidence/M10d-T2-proof.log (exists but truncated at 18 lines) ✓ ALLOWED
+- .harness/evidence/M10d-T2-replies.json (10 sources, complete) ✓ ALLOWED
+- .harness/evidence/M10d-T2-worker.log (79 lines, complete) ✓ ALLOWED
+
+No product code modified (mobile/src/, server/src/): ✓ VERIFIED
+
+Git diff 9470ede HEAD: No committed files changed
+
+## PART 3: Tests Weakened
+
+No product tests modified. Script files are new, not modifications.
+Self-test mode (line 126-132 in .ts) only runs offline checks 3-4-6.
+All existing tests (427) still pass.
+
+Result: NO TESTS WEAKENED
+
+## PART 4: Acceptance Criteria Exercised
+
+Criterion: M10d-AC1 - "A web answer's sources start collapsed as 'Sources (n)', expand and collapse on tap, and each source is its own tappable entry (logo + title) opening in Safari - including a source set shaped like the 2026-09-30 phone screenshot"
+
+Exercised by:
+- Check 3 (view-model header): sourceListHeader() returns exactly "Sources (n)" ✓
+- Check 3 (toggle): initialSourcesExpanded false, toggleSourcesExpanded works both directions ✓
+- Check 4 (entries): sourceListEntries() produces n entries with distinct keys, matching URLs ✓
+- Check 5 (logos): logoDisplay() yields image or globe for each entry ✓
+- Check 6 (fixture): Tests specific challenging cases - 2 sources same site, empty title, long URL, duplicate URL ✓
+
+All acceptance criteria have direct test demonstrations via check() function calls.
+
+## PART 5: Code Analysis
+
+### Wrapper Script (sources-list-proof.sh)
+
+Check assertions:
+- Check 1: Explicit assertion at line 112-116, shell if/else with PASS/FAIL
+- Check 7: Explicit assertion at line 54, prints PASS message
+- Checks 2-6: Delegated to TypeScript script (sources-list-proof.ts)
+
+Token handling (line 82-86):
+- TOKEN_FILE created in mktemp directory with umask 077 (mode 0600) ✓
+- Never printed to stdout/stderr
+- Passed to curl via -H "@$AUTH_HEADER_FILE" (read from file, not interpolated) ✓
+- Passed to child process as environment variable CHAT_TOKEN_FILE ✓
+
+Model loading:
+- Line 57: Checks Ollama is reachable (no model load)
+- Lines 66-79: Detects resident model via API query (no load/switch)
+- Line 104: Passes model name as environment variable (no load/switch)
+- No model loads, switches, or evictions ✓
+
+Live vs Fixture:
+- Line 104: Uses `sources` from runChat() output (live sources)
+- Fixture used only in checkScreenshotFixture() which is explicitly for offline check 6
+
+### TypeScript Script (sources-list-proof.ts)
+
+Check assertions (all use check() function which prints PASS/FAIL and increments failures):
+- Check 2: Line 158, check() call with explicit message
+- Check 3: Lines 57-63, four check() calls (header, initial, toggle, toggle-again)
+- Check 4: Lines 66-79, five check() calls (count, keys, URLs, titles, URL-leak)
+- Check 5: Lines 191-194, two check() calls (image/globe present, network observation)
+- Check 6: Lines 101-105, five check() calls (separate entries, shared host, duplicate URL pair, empty title, newline title)
+
+Self-test mode (line 126):
+- Detects --self-test flag
+- Runs checkList() on FIXTURE (offline)
+- Runs checkScreenshotFixture() (offline)
+- Exits with finish() which checks failures and process.exit(1) if any failed
+
+Live mode:
+- Line 134: Validates CHAT_URL, CHAT_TOKEN_FILE, CHAT_MODEL are set
+- Line 145-156: Tries prompts, checks source count >= 3
+- Line 162: Uses `sources` from chosen reply (live sources), not fixture
+- Line 165: Calls checkList() with live sources
+- Lines 177-190: Fetch icons for entries from live sources via cache.get(host)
+- Line 199: Runs checkScreenshotFixture() again (fixture check 6)
+
+Token handling:
+- Line 135: Reads CHAT_TOKEN_FILE (from env)
+- Line 136: Reads TOKEN_FILE for Mac /v1/icon access
+- Both use .trim() but never console.log() ✓
+- Line 138: Creates APIClient with token via setToken() (no print) ✓
+- Line 157: Only writes replies JSON if REPLIES_JSON env var set ✓
+
+Model handling:
+- Line 141: Prints CHAT_MODEL (not loads it)
+- No model loading, switching, or eviction ✓
+
+Network observation:
+- Lines 168-171: Wraps fetch to record URLs
+- Line 192: Checks all URLs start with SERVER_URL/v1/icon?host=
+- Line 194: Reports network observation ✓
+
+## PART 6: Independent Verification
+
+Recomputed from M10d-T2-replies.json using sourceListModel.ts:
+- Sources count: 10 ✓
+- Header "Sources (10)": ✓
+- Initial expanded false: ✓
+- Toggle behavior: ✓
+- Entry count matches source count: ✓
+- Distinct keys: 10 ✓
+- URLs match: 10/10 ✓
+- Titles valid (non-empty, single-line): 10/10 ✓
+- URL leaks: none ✓
+- Distinct hosts: 9 ✓
+
+All results match worker's reported data.
+
+## DISCREPANCIES
+
+1. M10d-T2-proof.log is truncated (18 lines) vs M10d-T2-worker.log (79 lines).
+   - Both files are allowed changes
+   - proof.log appears to have been interrupted during chat (awaiting model response)
+   - worker.log contains complete run showing all checks passed
+   - This may indicate the proof.log was not finalized (interrupted run), but the worker.log provides evidence of successful completion
+   - Task requirement: "Wrapper writes full output to .harness/evidence/M10d-T2-proof.log"
+   - Current state: proof.log is incomplete, worker.log is complete
+   - This is a potential issue with the required output location
+
+2. Worker claimed "bundle-host restarted 2026-09-30 22:01:01" but proof.log shows "22:05:11" and worker.log shows "22:01:01"
+   - This indicates two different runs
+   - Worker.log has the timestamp matching their claim (22:01:01)
+   - Proof.log has a different timestamp (22:05:11) - this may be my run or a different timestamp
+
+## FINAL ANALYSIS
+
+✓ Self-test passes: exit 0, 15 PASS statements on offline checks
+✓ Typecheck passes: exit 0
+✓ Lint passes: exit 0
+✓ Bun test passes: 427 pass, 0 fail
+✓ Live run evidence (from worker.log): exit 0, all checks 1-7 PASS, 10 sources saved
+✓ Independent verification confirms: all sourceListModel functions work correctly on the saved sources
+✓ All 7 checks genuinely asserted using check() function (not just printed)
+✓ Live checks use live sources (not fixture)
+✓ Token never printed, always in 0600 temp file
+✓ No model loads/switches/unloads
+✓ Files changed all in allowed list
+✓ No product code modified
+
+ISSUE: M10d-T2-proof.log is truncated while worker.log is complete. The task specifies "Wrapper writes full output to .harness/evidence/M10d-T2-proof.log" but this file is only 18 lines. The complete proof output exists in M10d-T2-worker.log (79 lines).
+
