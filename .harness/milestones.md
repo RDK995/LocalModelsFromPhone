@@ -320,6 +320,8 @@ Corrections (all Cheap/haiku, BOUNDED_LOW_RISK, attempt 1 PASS, verifier PASS):
 - C2 (F3) commit 3d1d4e6 - tableLayout normaliseRow joins surplus with " | " like markdown.ts fitRow. `.harness/evidence/M10c3-C2-verifier.log`.
 Correction diff `949dd2d..HEAD` files (outside .harness/): mobile/src/ui/markdown.test.ts, mobile/src/ui/tableLayout.test.ts, mobile/src/ui/tableLayout.ts. Files not named by a cycle-1 finding: none.
 
+Cycle 2: report `.harness/reviews/M10c3-cycle2.md` (CHANGES REQUIRED, SUBSTANTIVE: 1 BLOCKER on M10c3-AC5 - owner phone observation attempt 1 FAIL, `.harness/evidence/M10c3-AC5-owner-phone-1.log/.png`). Pre-correction: 5ccf32573581424ec7c0a5a3a5969a248333edfd
+
 ### Review Cycles
 
 1

@@ -97,3 +97,27 @@ describe("MarkdownText renders tables through tableLayout (FR29)", () => {
     expect(md).toContain("renderInline(line.value, ctx)");
   });
 });
+
+describe("one table render path for streamed and saved replies (M10c3-C3)", () => {
+  it("chat.tsx renders every assistant reply through a single MarkdownText", () => {
+    expect(chat.match(/<MarkdownText\b/g)?.length).toBe(1);
+    expect(chat).toContain("buildChatItems(messages, pending)");
+  });
+  it("the table branch never lays out block.rows directly (the pre-FR29 per-row grid)", () => {
+    expect(md).not.toContain("block.rows.map");
+    expect(md.match(/tableLayout\(/g)?.length).toBe(1);
+  });
+  it("no other app or ui source renders markdown tables or calls parseMarkdown/tableLayout", () => {
+    const srcRoot = join(import.meta.dir, "..");
+    const walk = (dir: string): string[] =>
+      readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+        e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)],
+      );
+    const users = walk(srcRoot)
+      .filter((f) => /\.tsx?$/.test(f) && !f.endsWith(".test.ts"))
+      .filter((f) => /\b(parseMarkdown|tableLayout|MarkdownText)\b|tableRow|tableCard/.test(readFileSync(f, "utf-8")))
+      .map((f) => f.slice(srcRoot.length + 1))
+      .sort();
+    expect(users).toEqual(["app/chat.tsx", "ui/MarkdownText.tsx", "ui/markdown.ts", "ui/tableLayout.ts"]);
+  });
+});

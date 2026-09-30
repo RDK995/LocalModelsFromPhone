@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { parseInline, parseMarkdown, visibleText } from "@/ui/markdown";
 import type { Block, Inline } from "@/ui/markdown";
+import { tableLayout } from "@/ui/tableLayout";
 
 const t = (text: string): Inline => ({ type: "text", text });
 const bold = (...children: Inline[]): Inline => ({ type: "bold", children });
@@ -346,4 +347,146 @@ describe("prefix sweep", () => {
       }
     });
   }
+});
+
+// ---------------------------------------------------------------- owner phone shapes (M10c3-C3)
+// Shapes of the table in .harness/evidence/M10c3-AC5-owner-phone-1.png, driven through
+// parseMarkdown -> tableLayout (the only path MarkdownText uses). FR29: every body row has
+// exactly the header's cell count; 3+ columns -> "cards" (heading: value), 2 -> "grid".
+
+function tablesOf(src: string): Inline[][][][] {
+  return parseMarkdown(src).flatMap((b) => (b.type === "table" ? [b.rows] : []));
+}
+
+function onlyTable(src: string): Inline[][][] {
+  const tables = tablesOf(src);
+  expect(tables.length).toBe(1);
+  return tables[0] as Inline[][][];
+}
+
+function expectFr29(rows: Inline[][][]): void {
+  const width = (rows[0] as Inline[][]).length;
+  for (const row of rows) expect(row.length).toBe(width);
+  const layout = tableLayout(rows);
+  if (width >= 3) {
+    expect(layout.kind).toBe("cards");
+    if (layout.kind !== "cards") return;
+    expect(layout.cards.length).toBe(rows.length - 1);
+    for (const card of layout.cards) {
+      expect(card.length).toBe(width);
+      card.forEach((line, c) => expect(line.heading).toEqual((rows[0] as Inline[][])[c] as Inline[]));
+    }
+  } else {
+    expect(layout.kind).toBe("grid");
+    if (layout.kind !== "grid") return;
+    for (const row of layout.rows) expect(row.length).toBe(width);
+  }
+}
+
+const LONG =
+  "Eiffel Tower leadership resignation over gender-equality controversy; Burnham suggests UK could re-join the EU; Hurricane Polo brings rain threat to the U.S. Southwest";
+const ROW12_4 = "| 12 | **UN racism meeting** | France boycotts the meeting's agenda; the move highlights Europe's fraught approach to multilateral racism forums. | Le Monde |";
+const ROW13_4 = `| 13 | **Other notable stories** | ${LONG} | Open Chronicle |`;
+const TABLE4 = [
+  "| # | Trend | Description | Source |",
+  "|---|---|---|---|",
+  ROW12_4,
+  ROW13_4,
+].join("\n");
+const TABLE3 = [
+  "| # | Story | Source |",
+  "|---|---|---|",
+  "| 12 | **UN racism meeting** – France boycotts the meeting's agenda. | Le Monde |",
+  `| 13 | **Other notable stories** – ${LONG} | Open Chronicle |`,
+].join("\n");
+
+describe("owner phone table shapes (M10c3-C3)", () => {
+  test("case 1: 3- and 4-column screenshot tables -> cards, header-width rows, headings on every value", () => {
+    const r3 = onlyTable(TABLE3);
+    expect(r3.length).toBe(3);
+    expectFr29(r3);
+    const r4 = onlyTable(TABLE4);
+    expect(r4.length).toBe(3);
+    expectFr29(r4);
+    const l = tableLayout(r4);
+    if (l.kind !== "cards") throw new Error("cards expected");
+    expect(l.cards[1]?.map((p) => p.heading)).toEqual([[t("#")], [t("Trend")], [t("Description")], [t("Source")]]);
+    expect(l.cards[1]?.map((p) => p.value)).toEqual([
+      [t("13")],
+      [bold(t("Other notable stories"))],
+      [t(LONG)],
+      [t("Open Chronicle")],
+    ]);
+  });
+
+  test("case 1b: the screenshot's apparent mix (4-cell row, then a 3-cell last row) still gives 4 cells per card", () => {
+    const src = [
+      "| # | Trend | Description | Source |",
+      "|---|---|---|---|",
+      ROW12_4,
+      `| 13 | **Other notable stories** – ${LONG} | Open Chronicle |`,
+    ].join("\n");
+    const rows = onlyTable(src);
+    expectFr29(rows);
+    expect(rows[2]?.[3]).toEqual([]);
+    expect(rows[2]?.[2]).toEqual([t("Open Chronicle")]);
+  });
+
+  test("case 2: final row with no trailing newline and no trailing pipe", () => {
+    for (const table of [TABLE3, TABLE4]) {
+      const src = table.replace(/ \|$/, "");
+      expect(src.endsWith("Open Chronicle")).toBe(true);
+      const rows = onlyTable(src);
+      expectFr29(rows);
+      expect(rows).toEqual(onlyTable(table));
+    }
+  });
+
+  test("case 3: final row with a trailing pipe but no newline (same as with a newline)", () => {
+    for (const table of [TABLE3, TABLE4]) {
+      expect(table.endsWith("Open Chronicle |")).toBe(true);
+      const rows = onlyTable(table);
+      expectFr29(rows);
+      expect(rows).toEqual(onlyTable(`${table}\n`));
+    }
+  });
+
+  test("case 4: every mid-stream prefix keeps header-width rows and the same layout kind", () => {
+    for (const table of [TABLE3, TABLE4]) {
+      const sepEnd = table.indexOf("\n", table.indexOf("\n") + 1);
+      for (let n = sepEnd; n <= table.length; n++) {
+        const rows = onlyTable(table.slice(0, n));
+        expectFr29(rows);
+      }
+    }
+    const half = onlyTable(`${TABLE4.slice(0, TABLE4.lastIndexOf("\n"))}\n| 13 | **Other notable`);
+    expectFr29(half);
+    expect(half[2]).toEqual([[t("13")], [bold(t("Other notable"))], [], []]);
+  });
+
+  test("case 5: a body row with fewer cells is padded; one with more joins surplus into the last with \" | \"", () => {
+    const src = [
+      "| # | Trend | Description | Source |",
+      "|---|---|---|---|",
+      "| 1 | **a** |",
+      "| 2 | b | c | d | e | f |",
+    ].join("\n");
+    const rows = onlyTable(src);
+    expectFr29(rows);
+    expect(rows[1]).toEqual([[t("1")], [bold(t("a"))], [], []]);
+    expect(rows[2]).toEqual([[t("2")], [t("b")], [t("c")], [t("d | e | f")]]);
+    const two = onlyTable("| K | V |\n|---|---|\n| x |\n| y | z | w |");
+    expectFr29(two);
+    expect(two[2]).toEqual([[t("y")], [t("z | w")]]);
+  });
+
+  test("case 6: prose before and after, and a table as the very last thing in the message", () => {
+    const withProse = parseMarkdown(`Here are today's trends:\n\n${TABLE4}\n\nLet me know if you want more.`);
+    expect(withProse.map((b) => b.type)).toEqual(["paragraph", "table", "paragraph"]);
+    expectFr29(onlyTable(`Here are today's trends:\n\n${TABLE4}\n\nLet me know if you want more.`));
+    const last = parseMarkdown(`Here are today's trends:\n\n${TABLE4}`);
+    expect(last.map((b) => b.type)).toEqual(["paragraph", "table"]);
+    expectFr29(onlyTable(`Here are today's trends:\n\n${TABLE4}`));
+    expectFr29(onlyTable(`Intro line\n${TABLE3.replace(/ \|$/, "")}`));
+  });
 });
