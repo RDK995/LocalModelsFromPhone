@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M10c1",
+  "current_milestone": "M10c2",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -7671,12 +7671,12 @@
         "FR27"
       ],
       "traces": "AC21",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
-        "commit": "",
-        "branch": ""
+        "commit": "8f4428053ad71a5bd39d1641ef5c25266a9e84af",
+        "branch": "m10c2-source-link-logos"
       },
       "as_built": {
         "artifact": null,
@@ -7694,7 +7694,7 @@
       "reviews": [],
       "findings": [],
       "validation": [],
-      "planned_validation": "cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd mobile && bun run typecheck && bun test && bun run lint) && bash scripts/source-logo-proof.sh",
+      "planned_validation": "cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/source-logo-proof.sh",
       "follow_ups": [
         "Architecture deviation D-M10c-2 (the Mac fetches each site's icon: C13 GET /v1/icon behind C4 GET /v1/icon; the phone talks only to the Mac) is recorded as Material: yes and approved by the human on 2026-09-30; it supersedes D-M10c-1, which is withdrawn and must not be implemented.",
         "A logo failing to load must never block or break the answer (FR27).",

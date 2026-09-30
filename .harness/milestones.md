@@ -190,51 +190,7 @@ Every assistant answer on the phone - web or not, streaming or already saved - r
 
 Owns: FR26. Traces to: AC20.
 
-### Architecture
-
-C1
-
-### As-Built
-
-.harness/as-built/M10b.md — RECORDED — 5/7 files attributed; components C1; 0 edges; claim mismatches NONE
-
-### Acceptance Criteria
-
-- [x] **M10b-AC1**: An assistant answer containing bold, a heading, a list, inline code and a link renders with no raw markdown characters visible, both for a newly streamed reply and for a reply saved before this change; a reply mid-stream with unterminated markup renders without error.
-
-### Baseline
-
-4e6039f5030b5fea0d13f1086f30c1cac2a08100 on m10b-formatted-answers
-
-### Evidence
-
-Task plan (packets in .harness/tasks/):
-- M10b-T1 — C1 pure markdown parser, streaming-tolerant     Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — commit c69e1f3; .harness/evidence/M10b-T1-verifier.log (exit 0, 277 pass, typecheck+lint clean); red M10b-T1-red.log
-- M10b-T2 — C1 MarkdownText component, chat.tsx wiring      Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — commit daef384; .harness/evidence/M10b-T2-verifier.log (exit 0, 295 pass, typecheck+lint clean); red M10b-T2-red.log (15 fail). Resumed an interrupted attempt's untracked test file; kept all assertions. Rendering itself has no runtime oracle under bun (static tests only).
-- M10b-T3 — markdown-render-proof.sh live proof              Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — commit adcb7ec; .harness/evidence/M10b-T3-verifier.log (full command incl. live proof exit 0); proof log M10b-T3-proof.log; self-test failure M10b-T3-red.log
-
-M10b-AC1 evidence (Mac-side): live proof check 1 (streamed reply: heading, list, bold, code, link parsed; visible text has no **, __, ](, backtick, # line or raw URL), check 2 (14 of 28 live prefixes ended inside unterminated markup, all parse cleanly and show no ** or ](), check 3 (a conversation saved in the pre-change format, loaded by a fresh store, renders the same). Screen wiring: chat.tsx renders assistant content through MarkdownText for both streaming and saved replies (markdownText.test.ts).
-
-### Validation
-
-`cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/markdown-render-proof.sh` — exit 0 (M10b-T3 verifier over adcb7ec, .harness/evidence/M10b-T3-verifier.log): 295 pass, typecheck and lint clean, live proof all PASS, Mac resident model unchanged.
-
-Owner's phone observation still owed (cannot be claimed Mac-side): ask for an answer with a heading, bold, a list, inline code and a link; watch it stream with no raw markup; reopen an older saved chat and see its answers formatted; confirm links are plain non-tappable text and thinking stays plain.
-
-Owner's phone observation received 2026-09-30 (.harness/evidence/M10b-owner-phone.png, nemotron3:33b web answer on the phone): bulleted list and bold (inline and multi-line) render with no raw ** or list markers visible. Not shown in that screenshot: a heading, inline code, a code block, an inline link in the answer body, a pre-change saved chat, or thinking.
-
-### Review
-
-Cycle 1: PASS — whole milestone, reviewer tier Mid (model sonnet, ORDINARY_IMPLEMENTATION), diff 4e6039f..52544c3; validation re-run exit 0 incl. live proof (.harness/evidence/M10b-review.log); M10b-AC1 PASS (on Mac evidence; phone observation owner-owed, see Validation); 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL.
-
-### Review Cycles
-
-0
-
-### Follow-ups
-
-- The markdown renderer must be pure JavaScript and Expo Go-compatible (no native module; requirements Constraints). If it adds a new dependency, record that technology choice under Deviations in .harness/architecture.md before M10b completes.
-- Links render as plain, non-tappable text in M10b (FR27's rule for links that are not sources); M10c adds the logo for links matching the reply's sources.
+Detail: `.harness/archive/M10b.md`
 
 ## M10c1 — The Mac serves a website's own logo through a token-protected route
 
@@ -315,7 +271,7 @@ Recommended decision:
 
 ## M10c2 — Links to a web answer's sources show the site's own logo and open in Safari
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -338,13 +294,14 @@ Pending.
 
 ### Baseline
 
+8f4428053ad71a5bd39d1641ef5c25266a9e84af on m10c2-source-link-logos
 
 ### Evidence
 
 
 ### Validation
 
-Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd mobile && bun run typecheck && bun test && bun run lint) && bash scripts/source-logo-proof.sh`
+Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/source-logo-proof.sh` (proof lives in mobile/scripts like the other phone proofs)
 
 ### Review
 
