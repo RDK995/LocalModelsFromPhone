@@ -7006,7 +7006,30 @@
           ]
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "CHANGES REQUIRED",
+          "scope": "WHOLE_MILESTONE",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "ORDINARY_IMPLEMENTATION",
+          "diff_range": "e98f0601a4330343f9a1063ce48e154d60109d8a..399c373",
+          "per_criterion": {
+            "M10-AC1": "PASS",
+            "M10-AC2": "PASS",
+            "M10-AC3": "PASS",
+            "M10-AC4": "PASS"
+          },
+          "findings": {
+            "BLOCKER": 0,
+            "IMPORTANT": 1,
+            "OPTIONAL": 1
+          },
+          "artifact": ".harness/reviews/M10-cycle1.md",
+          "review_log": ".harness/evidence/M10-review.log"
+        }
+      ],
       "findings": [
         {
           "id": "M10-R1-F1",
