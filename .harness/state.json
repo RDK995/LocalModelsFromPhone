@@ -6176,7 +6176,7 @@
         "FR19"
       ],
       "traces": "AC13 (switch off), AC14 (server half), AC17 (10-call cap), FR18 (capability gate)",
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -6515,26 +6515,58 @@
             "reason_code": "ORDINARY_IMPLEMENTATION",
             "detail": "live-environment proof"
           },
-          "status": "PLANNED",
-          "attempts": 0,
+          "status": "ACCEPTED",
+          "attempts": 1,
           "packet": ".harness/tasks/M9-T5.md",
           "commit": null,
-          "attempt_log": []
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M9-T5-worker.log",
+              "verdict": "PASS",
+              "base": "6a5a77a",
+              "changed_files": [
+                "server/src/index.ts",
+                "server/scripts/web-chat-proof.sh",
+                "server/scripts/record-proxy.ts"
+              ],
+              "note": "Red: .harness/evidence/M9-T5-red.log (exit 127, script absent); worker did not capture exit status directly; live on nemotron3:33b, AC2 needed prompt attempt 2 (R8)"
+            },
+            {
+              "attempt": 3,
+              "role": "verifier",
+              "artifact": ".harness/evidence/M9-T5-verifier.log",
+              "verdict": "PASS",
+              "note": "full Tests command exit 0: 148 pass, tsc 0, live proof AC1/AC2/AC3 PASS (AC2 attempt 2: 4 steps, 1 sources, answer 114 chars); files within allowed; token absent from evidence; not weakened"
+            }
+          ]
         }
       ],
       "reviews": [],
       "findings": [],
-      "validation": [],
+      "validation": [
+        {
+          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck && bash scripts/web-chat-proof.sh",
+          "exit_status": 0,
+          "artifact": ".harness/evidence/M9-T5-verifier.log",
+          "note": "148 server tests pass, typecheck 0, web-chat-proof.sh AC1/AC2/AC3 PASS live; mobile tsc 0 in M9-T4-verifier.log"
+        }
+      ],
       "planned_validation": "cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck && bash scripts/web-chat-proof.sh",
       "follow_ups": [
         "R8: tool-calling quality varies by model; acceptance is proven on at least one installed model, others observed.",
         "Size check at pickup: 4 criteria; one signal IMPLEMENTATION_PLUS_LIVE_PROOF. Seam check: capability gate (AC1) considered as a separate slice; not split - it is ~2 files and the web flag it gates is the same /v1/chat change; five components are modules of one server process (one subsystem, plus the existing search service). ~7 production files, 5 tasks.",
-        "milestones.md is 507 lines after archiving M7c; M8 (most recently settled) and M5a (BLOCKED) may not be archived, so it stays above 400 until M8 is no longer most recent."
+        "milestones.md is 507 lines after archiving M7c; M8 (most recently settled) and M5a (BLOCKED) may not be archived, so it stays above 400 until M8 is no longer most recent.",
+        "The live proof depends on a tools-capable model already loaded in Ollama; nemotron3:33b ignored the first web prompt and called tools on the second (R8). The proof retries up to 3 prompts.",
+        "server/src/index.ts gained PHONE_MODELS_OLLAMA_URL and PHONE_MODELS_SEARCH_URL overrides (defaults unchanged) so the live proof can record outbound traffic through proxies."
       ],
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
       ],
-      "handoff": "Continuation 2: T4 accepted and committed; T5 packet written at .harness/tasks/M9-T5.md and dispatched (Mid, sonnet, attempt 3)."
+      "handoff": null
     },
     "M10": {
       "id": "M10",

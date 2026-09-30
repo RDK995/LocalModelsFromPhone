@@ -1,0 +1,2 @@
+bash: scripts/web-chat-proof.sh: No such file or directory
+exit 127

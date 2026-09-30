@@ -1,0 +1,2 @@
+{"method":"POST","path":"/v1/search","body":"{\"query\":\"latest stable version of Bun JavaScript runtime\",\"max_results\":5}"}
+{"method":"POST","path":"/v1/read","body":"{\"url\":\"https://github.com/oven-sh/bun/releases\"}"}

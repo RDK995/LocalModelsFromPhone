@@ -205,7 +205,7 @@ Cycle 1: PASS — tier Mid (sonnet, ORDINARY_IMPLEMENTATION), whole milestone, d
 
 ## M9 — The server answers a web-enabled chat by running the model's search tool loop
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -240,13 +240,13 @@ Task plan (packets in .harness/tasks/):
 - M9-T3 — C5+C4 tools capability, 409 gate (AC1)  Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, worker FAIL on mobile tsc only (12 Model fixtures outside allowed files: packet scoping gap) → repaired by T3b; verifier PASS on combined tree — .harness/evidence/M9-T3-verifier.log (exit 0, 138 server pass, server+mobile tsc 0; red M9-T3-red.log)
 - M9-T3b — mobile Model fixtures gain tools:false     Cheap (haiku, BOUNDED_LOW_RISK), attempt 1, PASS — verified with T3 (23 mobile tests pass; red M9-T3b-red.log)
 - M9-T4 — C6+C4 tool loop, 10-call cap (AC3,AC4)  Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — .harness/evidence/M9-T4-verifier.log (exit 0, 148 server pass, server+mobile tsc 0; red M9-T4-red.log; server.ts/index.ts unchanged)
-- M9-T5 — web-chat-proof.sh live proof (AC1-AC3)  Mid (sonnet, ORDINARY_IMPLEMENTATION) — planned, after T4
+- M9-T5 — web-chat-proof.sh live proof (AC1-AC3)  Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — .harness/evidence/M9-T5-verifier.log (full Tests exit 0: 148 pass, tsc 0, live AC1/AC2/AC3 PASS on nemotron3:33b; SSE M9-T5-sse.log, proxy logs M9-T5-ollama-proxy.jsonl / M9-T5-search-proxy.jsonl; red M9-T5-red.log)
 
-Continuation 2: T4 accepted and committed; T5 packet written (.harness/tasks/M9-T5.md) and dispatched.
+All tasks accepted (continuation 2 completed T4 and T5). Criteria are checked off only by the reviewer.
 
 ### Validation
 
-Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck && bash scripts/web-chat-proof.sh`
+`cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck && bash scripts/web-chat-proof.sh` — exit 0 (verifier run, .harness/evidence/M9-T5-verifier.log). Also `cd mobile && npx tsc --noEmit` exit 0 (.harness/evidence/M9-T4-verifier.log). The live proof needs Ollama with a tools-capable model already loaded and the search service on 127.0.0.1:7790.
 
 ### Review
 
@@ -261,6 +261,8 @@ Pending.
 - Size check at pickup: 4 criteria, one signal (IMPLEMENTATION_PLUS_LIVE_PROOF); seam check on the capability gate done, not split (see state.json follow_ups).
 - milestones.md stays above 400 lines after archiving M7c: M8 (most recently settled) and M5a (BLOCKED) are protected.
 - R8: tool-calling quality varies by model; acceptance is proven on at least one installed model, others observed.
+- Live proof relies on a tools-capable model already loaded in Ollama; nemotron3:33b called tools on the second of up to three prompts (R8).
+- server/src/index.ts gained PHONE_MODELS_OLLAMA_URL / PHONE_MODELS_SEARCH_URL overrides (defaults unchanged) for the proof's recording proxies.
 
 ## M10 — The phone has a per-chat web-search switch and shows steps and sources live
 

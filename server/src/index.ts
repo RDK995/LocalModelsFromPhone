@@ -9,16 +9,21 @@
  * Test-only overrides (never set these in the LaunchAgent):
  *   PHONE_MODELS_PORT        - listen port (loopback host is not overridable)
  *   PHONE_MODELS_TOKEN_FILE  - token file path
+ *   PHONE_MODELS_OLLAMA_URL  - Ollama base URL (default http://127.0.0.1:11434)
+ *   PHONE_MODELS_SEARCH_URL  - search service base URL (default http://127.0.0.1:7790)
  */
 
 import { readFileSync, statSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
+import { GenerationManager } from "./generations/manager";
 import { createServer, setValidToken } from "./http/server";
 import { OllamaClient } from "./ollama/client";
+import { createWebTools } from "./web/tools";
 
 const LISTEN_HOST = "127.0.0.1";
 const OLLAMA_URL = "http://127.0.0.1:11434";
+const SEARCH_URL = "http://127.0.0.1:7790";
 const DEFAULT_PORT = 7789;
 export const DEFAULT_TOKEN_FILE = join(homedir(), ".phone-models", "token");
 
@@ -66,7 +71,12 @@ export function main(env: Record<string, string | undefined> = process.env): voi
 
   setValidToken(readTokenFile(tokenFile));
 
-  const server = createServer({ ollama: new OllamaClient(OLLAMA_URL), port });
+  const ollama = new OllamaClient(env.PHONE_MODELS_OLLAMA_URL || OLLAMA_URL);
+  const manager = new GenerationManager(
+    ollama,
+    createWebTools({ baseUrl: env.PHONE_MODELS_SEARCH_URL || SEARCH_URL })
+  );
+  const server = createServer({ ollama, manager, port });
 
   if (server.hostname !== LISTEN_HOST) {
     server.stop(true);

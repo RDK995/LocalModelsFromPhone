@@ -1,0 +1,38 @@
+VERIFIER RUN for task M9-T5
+
+Current commit: 6a5a77a
+Working tree: M9 server web tool loop implementation with M9-T5 changes
+
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck && bash scripts/web-chat-proof.sh
+
+Exit Status: 0
+
+Output:
+
+bun test v1.4.0 (1381054db)
+
+ 148 pass
+ 0 fail
+ 635 expect() calls
+Ran 148 tests across 5 files. [2.11s]
+$ tsc --noEmit
+Preflight ok: bun, Ollama, search service
+Resident model with tools: nemotron3:33b
+Proof server on http://127.0.0.1:62843 (proxies: ollama 62841, search 62842)
+  nemotron3:33b: tools=true
+  qwen3.8:27b: tools=true
+  devstral:24b: tools=true
+  qwen3-coder:30b: tools=true
+  qwen3.6:27b: tools=true
+[0;32mPASS[0m: M9-AC1: GET /v1/state reports each model's tools capability matching /api/show
+NOTE: every installed model has tools, so the 409 tools_unsupported half of AC1 is proven by the unit tests in server/src/http/server.test.ts (M9-T3); it is not faked live.
+[0;32mPASS[0m: M9-AC3: web absent/false sends no tools, no date note, and the search service gets no request
+AC2 attempt 1 of 3 (large local model; may take minutes)...
+  model did not call a web tool on this attempt
+AC2 attempt 2 of 3 (large local model; may take minutes)...
+  steps=4 sources=1 answer_chars=114
+[0;32mPASS[0m: M9-AC2: web:true offered both tools with a dated system note; step, sources, content and done all live
+
+[0;32mAll M9 live proofs passed[0m
+
