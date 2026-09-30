@@ -59,3 +59,14 @@ export function webSwitchState(
     explanation: null,
   };
 }
+
+/**
+ * The value the switch displays. The stored preference is kept as is; the
+ * switch just shows off while web search is unavailable (FR18).
+ */
+export function webSwitchDisplayValue(
+  stored: boolean | undefined,
+  state: WebSwitchState | null | undefined
+): boolean {
+  return stored === true && state?.enabled === true;
+}

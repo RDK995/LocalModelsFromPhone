@@ -1,0 +1,47 @@
+bun test v1.4.0 (1381054db)
+
+src/ui/webSwitch.test.ts:
+
+# Unhandled error between tests
+-------------------------------
+SyntaxError: Export named 'webSwitchDisplayValue' not found in module '/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/webSwitch.ts'.
+-------------------------------
+
+
+src/chat/conversationSession.test.ts:
+652 |     await store.setWebSearch(c.id, true);
+653 |     const bodies: Array<Record<string, unknown>> = [];
+654 |     const client = chatClient(() => completedChatResponse("ok", "llama3"), bodies, false);
+655 |     await sendInConversation(client, store, c.id, "hi", newCallbacks().callbacks);
+656 |     expect(bodies).toHaveLength(1);
+657 |     expect("web" in bodies[0]).toBe(false);
+                                     ^
+error: expect(received).toBe(expected)
+
+Expected: false
+Received: true
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/chat/conversationSession.test.ts:657:32)
+(fail) sendInConversation: web switch and web steps (M10) > sends no web key when the switch is on but the resident lacks tools, and keeps the stored switch [0.26ms]
+
+src/chat/chatController.test.ts:
+192 |     expect("web" in (await bodyFor(false))).toBe(false);
+193 | 
+194 |     // Requested but the resident lacks tools, or is not in the model list:
+195 |     // no web key (FR18).
+196 |     const noTools = [{ name: "llama3", size_bytes: 1, tools: false }];
+197 |     expect("web" in (await bodyFor(true, noTools))).toBe(false);
+                                                          ^
+error: expect(received).toBe(expected)
+
+Expected: false
+Received: true
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/chat/chatController.test.ts:197:53)
+(fail) sendMessage (F2: model attribution) > sends web:true only when callbacks.web is true, else no web key [0.26ms]
+
+ 117 pass
+ 3 fail
+ 1 error
+ 230 expect() calls
+Ran 120 tests across 10 files. [24.00ms]

@@ -22,10 +22,13 @@ function unauthorizedResponse(): Response {
 
 const BASE_URL = "https://ryans-mac-studio.tailc3648a.ts.net:8443";
 
-function stateResponse(resident: { name: string } | null): Response {
+function stateResponse(
+  resident: { name: string } | null,
+  models: Array<{ name: string; size_bytes: number; tools: boolean }> = []
+): Response {
   return new Response(
     JSON.stringify({
-      models: [],
+      models,
       resident: resident ? { name: resident.name, loaded_by_server: true } : null,
       operation: { kind: "idle" },
       generation: null,
@@ -155,10 +158,17 @@ describe("sendMessage (F2: model attribution)", () => {
   });
 
   it("sends web:true only when callbacks.web is true, else no web key", async () => {
-    async function bodyFor(web?: boolean): Promise<Record<string, unknown>> {
+    async function bodyFor(
+      web?: boolean,
+      models: Array<{ name: string; size_bytes: number; tools: boolean }> = [
+        { name: "llama3", size_bytes: 1, tools: true },
+      ]
+    ): Promise<Record<string, unknown>> {
       let body = "";
       const fetchMock = mock(async (url: string, init?: RequestInit) => {
-        if (url.endsWith("/v1/state")) return stateResponse({ name: "llama3" });
+        if (url.endsWith("/v1/state")) {
+          return stateResponse({ name: "llama3" }, models);
+        }
         body = init?.body as string;
         const stream = controlledSseResponse("gen-1");
         stream.push(
@@ -180,6 +190,12 @@ describe("sendMessage (F2: model attribution)", () => {
     expect((await bodyFor(true)).web).toBe(true);
     expect("web" in (await bodyFor())).toBe(false);
     expect("web" in (await bodyFor(false))).toBe(false);
+
+    // Requested but the resident lacks tools, or is not in the model list:
+    // no web key (FR18).
+    const noTools = [{ name: "llama3", size_bytes: 1, tools: false }];
+    expect("web" in (await bodyFor(true, noTools))).toBe(false);
+    expect("web" in (await bodyFor(true, []))).toBe(false);
   });
 
   it("blocks sending and makes no /v1/chat request when no model is resident", async () => {

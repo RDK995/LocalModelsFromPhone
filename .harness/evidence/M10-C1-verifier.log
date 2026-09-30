@@ -1,0 +1,170 @@
+=== M10-C1 Verification ===
+
+Run Date: 2026-09-30
+Task: Correction for review finding 1 (web-search switch sends no tools when resident lacks tools capability)
+
+---
+COMMAND 1: typecheck
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck
+
+Exit Status: 0
+Output: (no errors)
+
+---
+COMMAND 2: bun test
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun test
+
+Exit Status: 0
+Output: 248 pass, 0 fail, 524 expect() calls
+Ran 248 tests across 20 files. [92.00ms]
+
+---
+COMMAND 3: lint
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run lint
+
+Exit Status: 0
+Output: (no errors or warnings)
+
+---
+COMMAND 4: Live Proof Script
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bash scripts/web-switch-proof.sh
+
+Exit Status: 0
+Output Summary:
+- Check 1: switch persistence (AC1): PASS (5/5 cases)
+- Check 2: switch off sends no web (AC1/FR18): PASS (5/5 cases)
+- Check 3: capability gate (AC2): PASS (enabled for tools model, disabled for no-tools model with explanation)
+- Check 4+5: live steps and sources; switch flipped mid-reply: PASS (15/15 cases)
+- Proof PASSED, Mac restored to its original state
+
+---
+FILES CHANGED (against base 7851076):
+
+Modified files (allowed):
+1. mobile/src/chat/chatController.ts (allowed)
+2. mobile/src/chat/chatController.test.ts (allowed)
+3. mobile/src/chat/conversationSession.test.ts (allowed)
+4. mobile/src/ui/webSwitch.ts (allowed)
+5. mobile/src/ui/webSwitch.test.ts (allowed)
+6. mobile/src/app/chat.tsx (allowed)
+
+Evidence files (allowed):
+7. .harness/evidence/M10-C1-red.log (allowed)
+8. .harness/evidence/M10-C1-worker.log (allowed)
+
+All files within Files Allowed To Change list.
+
+---
+ACCEPTANCE CRITERIA VERIFICATION:
+
+AC1: chatController.ts sendMessage sends web:true only when callbacks.web === true AND 
+resident model is found in state.models with tools === true
+
+Evidence:
+- chatController.ts lines 73-79: Checks residentHasTools by finding resident in state.models with tools === true
+- chatController.ts lines 100-102: Sends web: true only when both callbacks.web === true AND residentHasTools
+- chatController.ts lines 51-53: Doc comment updated to reflect this behavior
+- chatController.test.ts lines 160-199: Test "sends web:true only when callbacks.web is true, else no web key"
+  - Line 164: Default model stub lists tools: true (preserves original assertion meaning)
+  - Lines 190-192: Original assertions kept (web:true when requested, no web when not)
+  - Lines 196-198: NEW assertions for failure cases:
+    * Line 197: tools: false → no web key
+    * Line 198: resident not in models → no web key
+
+EXERCISED: chatController.test.ts test at line 160-199
+
+---
+AC2: webSwitch.ts gains webSwitchDisplayValue(stored, state) → boolean function
+
+Evidence:
+- webSwitch.ts lines 67-72: Function defined with correct signature
+- webSwitch.ts lines 63-66: Doc comment: "The stored preference is kept as is; the switch just shows off while web search is unavailable (FR18)."
+- webSwitch.ts line 71: Returns stored === true && state?.enabled === true
+- webSwitch.test.ts lines 151-157: Truth table test with all 5 required cases:
+  * (true, enabled) → true
+  * (true, disabled) → false
+  * (false, enabled) → false
+  * (undefined, enabled) → false
+  * (true, null) → false
+
+EXERCISED: webSwitch.test.ts test at lines 151-157
+
+---
+AC3: chat.tsx Switch uses webSwitchDisplayValue and does NOT rewrite stored web_search flag
+
+Evidence:
+- chat.tsx line 64: Import of webSwitchDisplayValue from webSwitch
+- chat.tsx line 317: Switch value={webSwitchDisplayValue(conversation?.web_search, webState)}
+- chat.tsx line 319: disabled={!webState?.enabled} (unchanged)
+- chat.tsx lines 148-157: handleWebSwitch only calls store.setWebSearch in response to user interaction
+- chat.tsx grep shows no other writes to web_search
+- conversationSession.test.ts lines 649-659: Test "sends no web key when the switch is on but the resident lacks tools, and keeps the stored switch"
+  - Line 658: Asserts stored web_search remains true after send
+
+EXERCISED: chat.tsx implementation and conversationSession.test.ts test at lines 649-659
+
+---
+AC4: Tests (Red first) with proper stubs and new cases
+
+Evidence:
+1. chatController.test.ts (lines 160-199):
+   - Existing test kept, all assertions preserved
+   - Stub model default changed to tools: true
+   - NEW: callbacks.web === true with tools: false → no web key (line 197)
+   - NEW: callbacks.web === true with resident not in models → no web key (line 198)
+
+2. conversationSession.test.ts (lines 616-736):
+   - Existing test "sends web:true when the stored switch is on" kept (lines 639-647)
+   - Stub: stateResponse lists llama3 with tools: true
+   - NEW: "sends no web key when the switch is on but the resident lacks tools, and keeps the stored switch" (lines 649-659)
+   - Existing tests "sends no web key when the switch is off or absent" kept (lines 661-677)
+   - Existing test "takes a switch change made mid-reply" kept (lines 679-703)
+   - Existing test "persists steps and sources" kept (lines 705-724)
+   - Existing test "stores no steps or sources for plain reply" kept (lines 726-735)
+
+3. webSwitch.test.ts (lines 147-158):
+   - webSwitchDisplayValue truth table test with all 5 cases (lines 151-157)
+
+EXERCISED: All three test files with required cases
+
+---
+TESTS NOT WEAKENED:
+
+Checked diffs for:
+- Deleted test functions: NONE FOUND
+- Deleted assertions within tests: NONE FOUND
+- Loosened comparisons: NONE FOUND
+- Added skip/xfail/ignore markers: NONE FOUND
+
+All existing test assertions remain as before; new assertions added for FR18 cases.
+
+---
+STORED WEB_SEARCH FLAG NEVER REWRITTEN BY SCREEN:
+
+Evidence:
+- chat.tsx only writes web_search through handleWebSwitch in response to user toggle
+- Switch is disabled when !webState?.enabled, preventing user interaction when unavailable
+- conversationSession.test.ts lines 649-659 confirms stored flag remains true even when send path elides web key (tools: false case)
+- No other code path in chat.tsx modifies conversation.web_search
+
+EXERCISED: conversationSession.test.ts test at lines 649-659
+
+---
+LIVE PROOF RESULTS:
+
+All checks passed:
+- AC1 (persistence): 5/5 PASS
+- AC1/FR18 (switch off no web): 5/5 PASS
+- AC2 (capability gate): 2/2 PASS
+- AC4/AC5 (steps, sources, mid-reply flip): 15/15 PASS
+Total: 27/27 checks passed
+Mac state restored after proof run
+
+---
+FINAL RESULT: PASS
+
+All validation commands passed.
+All changed files within allowed list.
+All existing tests remain unchanged (no assertions weakened or removed).
+All acceptance criteria demonstrated by code and tests.
+Live proof confirms send path and screen behavior correct.

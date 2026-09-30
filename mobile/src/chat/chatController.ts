@@ -47,7 +47,11 @@ export interface SendMessageCallbacks {
    * targeted if that field were ever missing.
    */
   onModelResolved?: (model: string) => void;
-  /** Ask the server for web tools (FR18); only `true` adds `web` to the body. */
+  /**
+   * A request for web tools (FR18). Honoured only when it is `true` and the
+   * resident model is listed with the `tools` capability in the state fetched
+   * at send time; otherwise the body carries no `web` key.
+   */
   web?: boolean;
   signal?: AbortSignal;
 }
@@ -66,9 +70,13 @@ export async function sendMessage(
   callbacks: SendMessageCallbacks
 ): Promise<void> {
   let resident: ChatRequest["model"] | null;
+  let residentHasTools = false;
   try {
     const state = await client.getState();
     resident = state.resident ? state.resident.name : null;
+    residentHasTools =
+      resident !== null &&
+      state.models.some((m) => m.name === resident && m.tools === true);
   } catch (error) {
     if (error instanceof UnauthorizedError) {
       callbacks.onUnauthorized();
@@ -89,7 +97,7 @@ export async function sendMessage(
 
   try {
     await client.chat(
-      callbacks.web === true
+      callbacks.web === true && residentHasTools
         ? { model: resident, messages, web: true }
         : { model: resident, messages },
       {

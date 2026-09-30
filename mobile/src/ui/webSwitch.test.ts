@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from "bun:test";
-import { webSwitchState } from "./webSwitch";
+import { webSwitchDisplayValue, webSwitchState } from "./webSwitch";
 import type { Model, ResidentModel } from "@shared/api";
 
 describe("webSwitchState", () => {
@@ -141,5 +141,18 @@ describe("webSwitchState", () => {
     expect(result.explanation).toBe(
       "neural-chat-7b can't use web search (it has no tools support)."
     );
+  });
+});
+
+describe("webSwitchDisplayValue", () => {
+  const enabled = { enabled: true, explanation: null };
+  const disabled = { enabled: false, explanation: "no tools" };
+
+  it("shows on only when stored on and the switch is available", () => {
+    expect(webSwitchDisplayValue(true, enabled)).toBe(true);
+    expect(webSwitchDisplayValue(true, disabled)).toBe(false);
+    expect(webSwitchDisplayValue(false, enabled)).toBe(false);
+    expect(webSwitchDisplayValue(undefined, enabled)).toBe(false);
+    expect(webSwitchDisplayValue(true, null)).toBe(false);
   });
 });

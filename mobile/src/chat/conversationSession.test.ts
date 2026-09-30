@@ -22,10 +22,13 @@ import {
 
 const BASE_URL = "https://ryans-mac-studio.tailc3648a.ts.net:8443";
 
-function stateResponse(resident: { name: string } | null): Response {
+function stateResponse(
+  resident: { name: string } | null,
+  models: Array<{ name: string; size_bytes: number; tools: boolean }> = []
+): Response {
   return new Response(
     JSON.stringify({
-      models: [],
+      models,
       resident: resident ? { name: resident.name, loaded_by_server: true } : null,
       operation: { kind: "idle" },
       generation: null,
@@ -613,10 +616,15 @@ describe("sendInConversation: caller-supplied ids (M4a-T2)", () => {
 describe("sendInConversation: web switch and web steps (M10)", () => {
   function chatClient(
     respond: () => Response,
-    bodies: Array<Record<string, unknown>>
+    bodies: Array<Record<string, unknown>>,
+    tools = true
   ): APIClient {
     const fetchMock = mock(async (url: string, init?: RequestInit) => {
-      if (url.endsWith("/v1/state")) return stateResponse({ name: "llama3" });
+      if (url.endsWith("/v1/state")) {
+        return stateResponse({ name: "llama3" }, [
+          { name: "llama3", size_bytes: 1, tools },
+        ]);
+      }
       if (url.endsWith("/v1/chat")) {
         bodies.push(JSON.parse(init!.body as string));
         return respond();
@@ -636,6 +644,18 @@ describe("sendInConversation: web switch and web steps (M10)", () => {
     const client = chatClient(() => completedChatResponse("ok", "llama3"), bodies);
     await sendInConversation(client, store, c.id, "hi", newCallbacks().callbacks);
     expect(bodies[0].web).toBe(true);
+  });
+
+  it("sends no web key when the switch is on but the resident lacks tools, and keeps the stored switch", async () => {
+    const store = createConversationStore(createMemoryStorage());
+    const c = await store.create();
+    await store.setWebSearch(c.id, true);
+    const bodies: Array<Record<string, unknown>> = [];
+    const client = chatClient(() => completedChatResponse("ok", "llama3"), bodies, false);
+    await sendInConversation(client, store, c.id, "hi", newCallbacks().callbacks);
+    expect(bodies).toHaveLength(1);
+    expect("web" in bodies[0]).toBe(false);
+    expect((await store.get(c.id))?.web_search).toBe(true);
   });
 
   it("sends no web key when the switch is off or absent", async () => {

@@ -61,7 +61,7 @@ import {
   sourceLabel,
 } from "@/ui/chatItems";
 import type { PendingTurn } from "@/ui/chatItems";
-import { webSwitchState } from "@/ui/webSwitch";
+import { webSwitchDisplayValue, webSwitchState } from "@/ui/webSwitch";
 import type { WebSwitchState } from "@/ui/webSwitch";
 import { createConversationStore } from "@/store/conversationStore";
 import type { Conversation } from "@/store/conversationStore";
@@ -314,7 +314,7 @@ export default function ChatScreen() {
               <View style={styles.webSwitchRow}>
                 <Text style={styles.webSwitchLabel}>Web search</Text>
                 <Switch
-                  value={conversation?.web_search === true}
+                  value={webSwitchDisplayValue(conversation?.web_search, webState)}
                   onValueChange={(value) => void handleWebSwitch(value)}
                   disabled={!webState?.enabled}
                 />
