@@ -271,7 +271,7 @@ Recommended decision:
 
 ## M10c2 — Links to a web answer's sources show the site's own logo and open in Safari
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -285,12 +285,12 @@ C1, C2, C3
 
 ### As-Built
 
-Pending.
+.harness/as-built/M10c2.md — RECORDED — 14/14 files attributed; components C1,C2,C3; 4 edges; claim mismatches NONE
 
 ### Acceptance Criteria
 
 
-- [ ] **M10c-AC1**: In a web answer, a link whose URL matches a saved source (including a www./trailing-slash/scheme variant) shows the site's logo after its text and tapping it opens that page in Safari; a link not among the sources (e.g. https://www.msn.com/...) and a link in a non-web answer are plain, non-tappable text with no logo; a site with no reachable logo shows the globe icon. No third-party logo service is called, and the phone contacts no website or logo service directly - logos arrive from the Mac (checked by inspection plus a network observation during the live proof); the Mac's icon fetch refuses local, LAN and tailnet destinations.
+- [x] **M10c-AC1**: In a web answer, a link whose URL matches a saved source (including a www./trailing-slash/scheme variant) shows the site's logo after its text and tapping it opens that page in Safari; a link not among the sources (e.g. https://www.msn.com/...) and a link in a non-web answer are plain, non-tappable text with no logo; a site with no reachable logo shows the globe icon. No third-party logo service is called, and the phone contacts no website or logo service directly - logos arrive from the Mac (checked by inspection plus a network observation during the live proof); the Mac's icon fetch refuses local, LAN and tailnet destinations.
 
 ### Baseline
 
@@ -315,7 +315,7 @@ Owner's phone observation still owed (cannot be claimed Mac-side): in a web answ
 
 ### Review
 
-Pending.
+Cycle 1: PASS — tier Mid, model sonnet, reason_code ORDINARY_IMPLEMENTATION (highest task tier in the diff: T2-T4 Mid), scope WHOLE_MILESTONE, diff 8f44280..c107138. Per-criterion: M10c-AC1 PASS. Findings: 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL. Reviewer re-ran milestone validation (typecheck, bun test, lint, source-logo-proof.sh), exit 0 — .harness/evidence/M10c2-review.log. No report written (PASS). Owner phone observation remains owed (see Validation).
 
 ### Review Cycles
 
