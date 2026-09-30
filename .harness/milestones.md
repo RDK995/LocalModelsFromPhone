@@ -330,17 +330,17 @@ Cycle 3: PASS — tier Top, model opus, reason_code NO_TEST_ORACLE (correction C
 
 ## M10c4 — Broad web questions draw on at least three different websites
 
-Status: BLOCKED
+Status: IN_PROGRESS
 
 ### Outcome
 
-With the web switch on, the instructions the server gives the model alongside the FR19 date note tell it that a broad or open-ended question is searched with more than one query, without the exact date in the query, reading pages from at least three different websites before answering and citing the pages it relied on - every citation written as a markdown link with the page's exact full URL from its tool results, table source cells included, so each cited source gets its logo - while a narrow question need not search more than it needs; the server does not check or re-prompt and the 10-call cap is unchanged. Proven live on the Mac: most broad prompts come back with sources from three or more sites, each cited as a link that gets a logo. Planned 2026-09-30 from the owner-reported follow-ups under M10c1 (human decision: built after M10c2, before M10d); separate from M10c3 (independent outcome). Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal); seam checked - the implementation is instruction text in C12 only, and splitting the live proof from it would leave a part with no real-entry-point criterion, so it stays one milestone.
+With the web switch on, the instructions the server gives the model alongside the FR19 date note tell it that a broad or open-ended question is searched with more than one query, without the exact date in the query, reading pages from at least three different websites before answering, and citing the pages it read by number, while a narrow question need not search more than it needs; the server does not check or re-prompt and the 10-call cap is unchanged. Each page the model reads in a reply gets a number (first-read order); the page text is labelled with it and the saved sources carry it, and the app shows a citation mark such as [2] as that page's logo opening its exact saved URL (FR31), deterministically, so a logo never depends on the model copying a URL. Proven live on the Mac: most broad prompts come back with sources from three or more sites, each cited so that it shows a logo. Planned 2026-09-30 from the owner-reported follow-ups under M10c1; FR31 added 2026-09-30 by human decision resolving this milestone's BLOCKED escalation (the planner may re-check size/shape: it now spans server and phone).
 
-Owns: FR30. Traces to: AC24.
+Owns: FR30, FR31. Traces to: AC24, AC25.
 
 ### Architecture
 
-C12
+C12, C6, C2, C3, C1
 
 ### As-Built
 
@@ -348,8 +348,10 @@ Pending.
 
 ### Acceptance Criteria
 
-- [ ] **M10c4-AC1**: Unit test: with web search on, the server's web instructions to the model (given alongside the FR19 date note) contain the FR30 guidance - for a broad or open-ended question search with more than one query, do not put the exact date into search queries, read pages from at least three different websites before answering, and cite the pages relied on, writing every citation (including source cells in tables) as a markdown link whose URL is copied exactly from the web_search/read_page results, never shortened or invented; a narrow factual question need not search more than it needs - and with web search off no such guidance is given; the existing 10-tool-call cap tests pass unchanged and the server adds no source-diversity or link check, rewrite or re-prompt.
-- [ ] **M10c4-AC2**: Live on the Mac with the owner's usual tools-capable model resident (named in the evidence) and the web switch on, through the server's chat route: of 3 broad prompts (including "What are today's news trends"), at least 2 produce replies whose saved sources span at least 3 distinct websites (host compared ignoring a leading www.); and, in the same run, at least 2 of the 3 replies each contain markdown links matching (FR27 rules: scheme, leading www. and trailing slash ignored) at least 3 distinct saved sources with no link that fails to match a saved source; the prompts, the per-reply distinct hosts, the per-reply matched/unmatched link counts and both pass counts are recorded.
+- [ ] **M10c4-AC1**: Unit test: with web search on, the server's web instructions to the model (given alongside the FR19 date note) contain the FR30 guidance - for a broad or open-ended question search with more than one query, do not put the exact date into search queries, read pages from at least three different websites before answering, and cite the pages it read by their number (e.g. [2], including source cells in tables) rather than by typing URLs; a narrow factual question need not search more than it needs - and with web search off no such guidance is given; the existing 10-tool-call cap tests pass unchanged and the server adds no source-diversity check or re-prompt.
+- [ ] **M10c4-AC2**: Live on the Mac with the owner's usual tools-capable model resident (named in the evidence) and the web switch on, through the server's chat route: of 3 broad prompts (including "What are today's news trends"), at least 2 produce replies whose saved sources span at least 3 distinct websites (host compared ignoring a leading www.); and, in the same run, at least 2 of the 3 replies each cite at least 3 distinct saved sources in a form that shows a logo (an FR31 number mark that resolves to a numbered saved source, or an FR27-matching link), with no citation mark or link that fails to resolve; the prompts, the per-reply distinct hosts, the per-reply resolved/unresolved citation counts and both pass counts are recorded.
+- [ ] **M10c4-AC3**: Unit tests (server): within one reply each distinct page read gets a number in first-read order (a re-read page keeps its number; a redirect is numbered by its final URL), the page text given to the model carries its number, search-result listings carry no bracketed numbers, and the saved sources event carries each read page's number.
+- [ ] **M10c4-AC4**: Unit tests (app): [n], [1][3], [1, 3] and 【n】 marks render as page n's logo (FR27 logo and fallback rules) opening its exact saved URL, with the mark not shown; an unknown number, a mark in a reply without numbered sources (a reply saved before this change), and a mark inside inline code or a code block stay plain text; a half-streamed [2 renders without error; a reopened saved reply resolves the same logos as the live one; FR27 link logos are unchanged.
 
 ### Baseline
 
@@ -380,6 +382,8 @@ The task ladder is exhausted. The remaining errors are the model not following f
 
 Recommended decision:
 Keep the diversity result and stop gating on exact links: amend M10c4-AC2 via roast-requirements so link counts are recorded but not a pass condition, apply the T3 wording (.harness/evidence/M10c4-T3-attempt4.patch) because it made the model search and read several sites, and rely on M10d's Sources list to give every source its logo. Alternatives: try a different tools-capable model the owner will keep resident; or change FR30 so the server may turn footnote citations into links (a requirements and design change).
+
+HUMAN DECISION 2026-09-30 (resolves the escalation above): cite by number (FR31, AC25 added; FR30, AC24 amended via roast-requirements); only pages the model opened are numbered. Link-count gating kept (same 2-of-3 shape) but counted over resolving number marks and matching links. The T3 wording patch (.harness/evidence/M10c4-T3-attempt4.patch) may be reused where it helps (it raised pages read to 8-10), minus its URL-copying wording. Status back to IN_PROGRESS.
 
 ### Validation
 

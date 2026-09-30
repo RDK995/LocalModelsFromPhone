@@ -25,6 +25,9 @@ the page, and the source list folded away at the bottom.
 reported, from phone screenshots, misaligned and cramped tables in answers and a broad web question
 answered from a single website. These are built next, before M10d.
 
+**Numbered citations (FR31, added 2026-09-30):** the model could not copy URLs accurately enough to
+earn logos, so pages it reads are numbered and the app turns its `[n]` citations into logo links.
+
 ## Functional Requirements
 
 - [FR1] **Model list.** The app lists every model installed in Ollama (`GET /api/tags`) by its
@@ -168,12 +171,25 @@ answered from a single website. These are built next, before M10d.
   question (e.g. "today's news trends") it should search with more than one query, not put the
   exact date into search queries, read pages from at least three different websites before
   answering, and cite the pages it relied on; a narrow factual question need not search more than
-  it needs. The same instructions tell it to write every citation as a markdown link whose URL is
-  the page's full URL copied exactly from its web_search/read_page results (never shortened,
-  truncated or invented), including source cells in tables, so each cited source gets its FR27 logo;
-  links only ever point at pages returned by its tools. This is guidance only: the server does not
-  check, rewrite or re-prompt the model's choices, the phone renderer is unchanged, and the FR19 cap
-  of 10 tool calls is unchanged.
+  it needs. The same instructions tell it to cite pages it read by their FR31 number (e.g. `[2]`),
+  including source cells in tables, rather than by typing URLs. The diversity guidance is guidance
+  only: the server does not check or re-prompt the model's choices, and the FR19 cap of 10 tool calls
+  is unchanged.
+- [FR31] **Numbered citations become logo links.** Within one web reply, each distinct page the
+  model reads with `read_page` gets a number, in first-read order starting at 1 (a page read twice
+  keeps its first number; distinct = the final URL after redirects, compared as FR27). The page
+  text given to the model is labelled with that number, and search-result listings do not use
+  bracketed numbers that could be mistaken for citations. Search results the model did not open
+  get no number. The reply's saved sources (FR22/FR23) carry each read page's number, so a saved,
+  reopened or resumed reply resolves numbers identically. In the answer, a citation mark `[n]`, a
+  group such as `[1][3]` or `[1, 3]`, or the `【n】` form (the number alone, or followed by extra
+  text inside the brackets) is shown as the logo of page n (FR27 logo rules and fallbacks), tapping
+  it opens that page's exact saved URL in Safari; the mark itself is not shown. A number with no
+  read page in that reply, a mark in a reply without numbered sources (including replies saved
+  before this change), or a mark inside inline code or a code block is shown as the original plain
+  text. While streaming, an incomplete mark (e.g. `[2`) shows as text until complete. Markdown links
+  keep their FR27 behaviour. Each reply has its own numbering; numbers are never resolved against
+  another reply's sources. Neither the server nor the app rewrites the model's text otherwise.
 
 ## Acceptance Criteria
 
@@ -246,9 +262,17 @@ All proven against the live Mac Studio and Ollama, not mocks.
     evidence) and the web switch on: of 3 broad prompts (including "What are today's news
     trends"), at least 2 produce replies whose saved sources span at least 3 distinct websites
     (host compared ignoring a leading `www.`). In the same run, at least 2 of the 3 replies each
-    contain markdown links matching (FR27 rules) at least 3 distinct saved sources, and none of their
-    links fails to match a saved source. The server's web instructions contain the FR30 guidance,
-    including the always-link wording (unit test).
+    cite at least 3 distinct saved sources in a form that shows a logo (an FR31 number mark that
+    resolves, or an FR27-matching link), and none of their citation marks or links fails to resolve
+    to a saved source. The server's web instructions contain the FR30 guidance, including the
+    cite-by-number wording (unit test).
+25. **AC25** — Unit tests: read pages get first-read numbers (a re-read page keeps its number, a
+    redirect resolves to the final URL), the page text given to the model carries its number, search
+    listings carry no bracketed numbers, and the saved sources carry the numbers. The app shows `[n]`,
+    `[1][3]`, `[1, 3]` and `【n】` marks as page n's logo opening its exact saved URL; an unknown
+    number, a mark in an old reply without numbered sources, and a mark inside code stay plain text;
+    a half-streamed `[2` renders without error; a reopened saved reply resolves the same logos as the
+    live one.
 
 ## Constraints
 
@@ -275,9 +299,9 @@ All proven against the live Mac Studio and Ollama, not mocks.
 - Markdown rendering must be pure JavaScript and Expo Go–compatible (no native module).
 - **The phone talks only to the Mac** (over the tailnet). The app makes no request to any website
   or third-party service; opening a page in Safari on the owner's tap is not the app's traffic.
-- Broad-question source diversity and always-linked citations are best-effort model guidance
-  (FR30); a single reply that uses fewer than three sites, or cites a source without a link, is not a
-  defect.
+- Broad-question source diversity and citing by number are best-effort model guidance (FR30); a
+  single reply that uses fewer than three sites, or leaves a fact uncited, is not a defect. Turning a
+  valid number into a logo (FR31) is deterministic and is not best-effort.
 
 ## Non-Goals
 
@@ -329,7 +353,14 @@ All proven against the live Mac Studio and Ollama, not mocks.
   separator is padded, not re-split, so a value may sit under the next heading (FR29).
 - A narrow web question need not read three sites (FR30).
 - The model still cites a source in plain words or with a shortened URL despite the guidance: shown
-  as plain text with no logo (FR27); the server does not repair it (FR30).
+  as plain text with no logo (FR27); nothing repairs it (FR30).
+- The model cites a number that no read page has (e.g. `[40]`), or cites in a reply where it read no
+  page: the mark stays plain text (FR31).
+- A page's own text contains footnotes like `[1]` that the model copies: resolved against this
+  reply's numbering like any other mark; a wrong-but-valid number shows the wrong page's logo, which
+  is accepted (FR31).
+- A reply answered only from search headlines (no page read): no numbered citations and no inline
+  logos; its Sources list still shows the search results (FR22, FR31).
 
 ## Decisions / Clarifications
 
@@ -416,6 +447,22 @@ All proven against the live Mac Studio and Ollama, not mocks.
   (flaky) and over 1+ link (does not show every source getting a logo). Proven from the saved reply
   text on the Mac; no extra phone observation (FR27 matching already proven in M10c2) (default chosen
   by Claude, shown to the human and agreed).
+- **Cite by number, the app supplies the address** (human, 2026-09-30, resolving the M10c4 BLOCKED
+  escalation): in 4 live runs nemotron3:33b cited with `[n]`/`【】` footnotes and mistyped long URLs,
+  so the link bar was 0/3 every time. The pages the model reads are now numbered and the app turns
+  `[n]` into that page's logo and exact saved URL (FR31). Chosen over dropping the link bar and over
+  trying another model. Supersedes, for linking only, "guidance only: no server check or rewrite, no
+  phone change" in the "Always link sources" entry above; source diversity stays guidance only. The
+  AC24 pass bar is unchanged in shape (2 of 3 replies, 3+ distinct sources shown with a logo, nothing
+  that fails to resolve).
+- **Only pages the model opened get numbers** (human, 2026-09-30): a logo always means the model
+  read that page; search headlines are not numbered; the Sources list contents are unchanged.
+  Chosen over numbering every search result shown (a logo could point at an unread page, and the
+  Sources list would have to grow).
+- Defaults chosen by Claude, shown to the human and agreed (2026-09-30): numbering per reply,
+  starting at 1; `[1][3]`, `[1, 3]` and `【n】` understood; the mark is replaced by the logo; unknown
+  numbers and marks in old replies stay plain text; half-written marks show as text while streaming;
+  numbers saved with the sources so reopen/resume match; FR27 link logos unchanged.
 
 ## Open Questions
 
