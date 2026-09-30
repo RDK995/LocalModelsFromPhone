@@ -221,7 +221,7 @@ Cycle 1: PASS — tier Mid (sonnet, ORDINARY_IMPLEMENTATION), whole milestone, d
 
 ## M10 — The phone has a per-chat web-search switch and shows steps and sources live
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -235,14 +235,14 @@ C1, C2, C3
 
 ### As-Built
 
-Pending.
+.harness/as-built/M10.md — RECORDED — 16/18 files attributed; components C1,C2,C3; 5 edges; claim mismatches NONE
 
 ### Acceptance Criteria
 
-- [ ] **M10-AC1**: Each conversation has a web-search switch, off by default (including for conversations created before this change), and its state survives force-quitting and reopening Expo Go.
-- [ ] **M10-AC2**: The switch is disabled with an explanation when the resident model lacks the tools capability (proven with a stubbed capability check if no installed model lacks it), and changing it while a reply is in progress takes effect from the next prompt.
-- [ ] **M10-AC3**: With the switch on, a prompt asking for today's news shows each web step live on the phone (e.g. Searching: <query>, Reading: <domain>), then the final answer, and the steps collapse into an expandable section after completion.
-- [ ] **M10-AC4**: An answer that used the web ends with a source list whose links open in Safari.
+- [x] **M10-AC1**: Each conversation has a web-search switch, off by default (including for conversations created before this change), and its state survives force-quitting and reopening Expo Go.
+- [x] **M10-AC2**: The switch is disabled with an explanation when the resident model lacks the tools capability (proven with a stubbed capability check if no installed model lacks it), and changing it while a reply is in progress takes effect from the next prompt.
+- [x] **M10-AC3**: With the switch on, a prompt asking for today's news shows each web step live on the phone (e.g. Searching: <query>, Reading: <domain>), then the final answer, and the steps collapse into an expandable section after completion.
+- [x] **M10-AC4**: An answer that used the web ends with a source list whose links open in Safari.
 
 ### Baseline
 
@@ -275,7 +275,7 @@ Fix cycle 1 Pre-correction: e14b57f9dc084c32a5b19f87c70f03a02b7f0dc6 (after comm
 Fix cycle 1 corrections: M10-C1 (F1) — Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS, commit fb76a0c. Verifier (.harness/evidence/M10-C1-verifier.log): `cd mobile && bun run typecheck && bun test && bun run lint` exit 0, 248 pass; live `bash scripts/web-switch-proof.sh` exit 0, all checks PASS, Mac restored (.harness/evidence/M10-C1-proof.log); Tests Weakened NO; red .harness/evidence/M10-C1-red.log. sendMessage now sends web:true only when the stored switch is on AND the resident is listed with tools:true in the send-time getState; the Switch shows webSwitchDisplayValue(stored, state) (off while unavailable) and the stored web_search is not rewritten.
 Correction diff: `git diff e14b57f9dc084c32a5b19f87c70f03a02b7f0dc6 HEAD`. Files changed (git diff --name-only): mobile/src/app/chat.tsx, mobile/src/chat/chatController.ts, mobile/src/chat/chatController.test.ts, mobile/src/chat/conversationSession.test.ts, mobile/src/ui/webSwitch.ts, mobile/src/ui/webSwitch.test.ts, plus .harness records (milestones.md, state.json, tasks/M10-C1.md, evidence/M10-C1-*.log, evidence/M10-T5-proof.log).
 Files changed that no finding named: mobile/src/chat/chatController.ts (the gate lives where getState already runs, not in the named conversationSession.ts), mobile/src/ui/webSwitch.ts (new webSwitchDisplayValue), and their tests; .harness/evidence/M10-T5-proof.log was rewritten by the live proof re-run (the script writes that log). server/src/generations/manager.ts (named) was not changed: the gate is client-side.
-
+Cycle 2: PASS — whole milestone (widened: the correction changed files no cycle-1 finding named), reviewer tier Mid (model sonnet, ORDINARY_IMPLEMENTATION), diff e98f060..d7704c0 with correction diff e14b57f..HEAD checked; validation re-run exit 0 (.harness/evidence/M10-cycle2-review.log); M10-AC1 PASS, M10-AC2 PASS, M10-AC3 PASS, M10-AC4 PASS (AC1/AC3/AC4 on Mac evidence); F1 confirmed resolved; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL.
 
 ### Review Cycles
 
@@ -287,6 +287,7 @@ Files changed that no finding named: mobile/src/chat/chatController.ts (the gate
 - milestones.md stays above 400 lines after archiving M8: M9 (most recently settled), M10-M13 (open) and M5a (BLOCKED) are protected.
 - Subagent completion notifications arrived before some workers/verifiers had stopped; their late re-runs landed in the shared tree and appended to evidence logs. Consider waiting for each agent's final hand-back before starting the next task.
 - Review cycle 1 F2 (OPTIONAL, not routed): the capability check runs only on screen focus, so a model change while the chat is open is not seen until refocus (the send-time gate from M10-C1 now stops a wrong web request regardless); web steps use array index keys.
+- Owner phone check still owed (not provable Mac-side; reviewer graded AC1/AC3/AC4 on Mac evidence): switch visible and off by default incl. an older chat; on-state survives force-quitting Expo Go; a today's-news prompt shows live steps that fold into "Show web steps (n)"; a Sources link opens in Safari; screenshot.
 - The live proof's model made no read_page call, so a live "Reading: <domain>" step was not seen Mac-side (read labels are unit-tested).
 
 ## M11 — Web replies are saved, resume after a drop, and keep page text out of later prompts

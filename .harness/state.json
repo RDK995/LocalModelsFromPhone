@@ -6609,7 +6609,7 @@
         "FR22"
       ],
       "traces": "AC13, AC14",
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 1,
       "review_override": null,
       "baseline": {
@@ -6617,33 +6617,41 @@
         "branch": "m10-phone-web-switch"
       },
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M10.md",
+        "result": "RECORDED \u2014 16/18 files attributed; components C1,C2,C3; 5 edges; claim mismatches NONE"
       },
       "criteria": [
         {
           "id": "M10-AC1",
           "text": "Each conversation has a web-search switch, off by default (including for conversations created before this change), and its state survives force-quitting and reopening Expo Go.",
-          "status": "PENDING",
-          "evidence": []
+          "status": "PASS",
+          "evidence": [
+            "Review cycle 2 (sonnet): PASS, validation re-run exit 0 \u2014 .harness/evidence/M10-cycle2-review.log"
+          ]
         },
         {
           "id": "M10-AC2",
           "text": "The switch is disabled with an explanation when the resident model lacks the tools capability (proven with a stubbed capability check if no installed model lacks it), and changing it while a reply is in progress takes effect from the next prompt.",
-          "status": "PENDING",
-          "evidence": []
+          "status": "PASS",
+          "evidence": [
+            "Review cycle 2 (sonnet): PASS, validation re-run exit 0 \u2014 .harness/evidence/M10-cycle2-review.log"
+          ]
         },
         {
           "id": "M10-AC3",
           "text": "With the switch on, a prompt asking for today's news shows each web step live on the phone (e.g. Searching: <query>, Reading: <domain>), then the final answer, and the steps collapse into an expandable section after completion.",
-          "status": "PENDING",
-          "evidence": []
+          "status": "PASS",
+          "evidence": [
+            "Review cycle 2 (sonnet): PASS, validation re-run exit 0 \u2014 .harness/evidence/M10-cycle2-review.log"
+          ]
         },
         {
           "id": "M10-AC4",
           "text": "An answer that used the web ends with a source list whose links open in Safari.",
-          "status": "PENDING",
-          "evidence": []
+          "status": "PASS",
+          "evidence": [
+            "Review cycle 2 (sonnet): PASS, validation re-run exit 0 \u2014 .harness/evidence/M10-cycle2-review.log"
+          ]
         }
       ],
       "tasks": [
@@ -7028,6 +7036,28 @@
           },
           "artifact": ".harness/reviews/M10-cycle1.md",
           "review_log": ".harness/evidence/M10-review.log"
+        },
+        {
+          "cycle": 2,
+          "verdict": "PASS",
+          "scope": "WHOLE_MILESTONE",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "ORDINARY_IMPLEMENTATION",
+          "diff_range": "e98f0601a4330343f9a1063ce48e154d60109d8a..d7704c0",
+          "per_criterion": {
+            "M10-AC1": "PASS",
+            "M10-AC2": "PASS",
+            "M10-AC3": "PASS",
+            "M10-AC4": "PASS"
+          },
+          "findings": {
+            "BLOCKER": 0,
+            "IMPORTANT": 0,
+            "OPTIONAL": 0
+          },
+          "artifact": null,
+          "review_log": ".harness/evidence/M10-cycle2-review.log"
         }
       ],
       "findings": [
