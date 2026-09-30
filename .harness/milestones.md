@@ -206,7 +206,8 @@ ad7570f5e0777549fb0f9b9607d4982575c4f4e6 on m7b-search-browser-fallback
 
 ### Review
 
-Pending.
+Cycle 1: CHANGES REQUIRED (SUBSTANTIVE), tier Top (opus) — .harness/reviews/M7b-cycle1.md (F1 IMPORTANT: decode_bing_href drops every *.microsoft.com result; F2 OPTIONAL: browser_search scraping loop has no unit test); M7b-AC1 PASS; reviewer validation exit 0 — .harness/evidence/M7b-review.log
+Pre-correction: b4faa0af6742599abc6998e40e24a0d18232adaa (9b708b6 plus the committed review report and log; no code change)
 
 ### Review Cycles
 
