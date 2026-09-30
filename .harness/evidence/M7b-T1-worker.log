@@ -1,0 +1,25 @@
+commit ad7570f5e0777549fb0f9b9607d4982575c4f4e6
+BEFORE
+(none above = none running)
+test_zero_results (test_search.RunTests.test_zero_results) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.121s
+
+OK
+== fail
+{"results": [{"title": "Ada Lovelace | Biography, Computer, Day, & Facts", "url": "https://www.britannica.com/biography/Ada-Lovelace", "snippet": "Ada Lovelace (born December 10, 1815, Piccadilly Terrace, Middlesex [now in \u2026"}, {"title": "Who was Ada Lovelace? - BBC Newsround", "url": "https://www.bbc.co.uk/newsround/49960544", "snippet": "13 Oct 2020\u00a0\u00b7 Ada Lovelace was a leading 19th century mathematician and daughter of the famous poet Lord Byron. She was born \u2026"}, {"title": "Ada Lovelace - History of Math and Technology", "url": "https://www.historymath.com/ada-lovelace/", "snippet": "Ada Lovelace\u2019s contributions to mathematics and the sciences are profound and enduring. As the world\u2019s \u2026"}, {"title": "Ada Lovelace \u2013 Complete Biography, History and \u2026", "url": "https://history-computer.com/people/ada-lovelace-complete-biography/", "snippet": "23 May 2025\u00a0\u00b7 Ada Lovelace was an English mathematician who wrote an algorithm for a computing \u2026"}, {"title": "", "url": "https://www.unesco.org/en/virtual-science-museum/women-science/ada-lovelace", "snippet": ""}], "backend": "browser"}
+exit 0
+== empty
+{"results": [{"title": "Ada Lovelace - Wikipedia", "url": "https://en.wikipedia.org/wiki/Ada_Lovelace", "snippet": "Augusta Ada King, Countess of Lovelace (n\u00e9e Byron; 10 December 1815 \u2013 27 November 1852), also known as Ada Lovelace, was \u2026"}, {"title": "Ada Lovelace | Biography, Computer, Day, & Facts | Britannica", "url": "https://www.britannica.com/biography/Ada-Lovelace", "snippet": "Ada Lovelace (born December 10, 1815, Piccadilly Terrace, Middlesex [now in London], England\u2014died November 27, 1852, \u2026"}, {"title": "Ada Lovelace C of E High School", "url": "https://adalovelace.org.uk/", "snippet": "Headteacher\u2019s Welcome \"We are a value centred school that is relentless in its approach to deliver the highest standards of \u2026"}, {"title": "Who was Ada Lovelace? - BBC Newsround", "url": "https://www.bbc.co.uk/newsround/49960544", "snippet": "13 Oct 2020\u00a0\u00b7 Ada Lovelace was a leading 19th century mathematician and daughter of the famous poet Lord Byron. She was born \u2026"}, {"title": "Ada Lovelace \u2013 Complete Biography, History and Inventions", "url": "https://history-computer.com/people/ada-lovelace-complete-biography/", "snippet": "23 May 2025\u00a0\u00b7 Ada Lovelace was an English mathematician who wrote an algorithm for a computing machine in the mid-1800s. She \u2026"}], "backend": "browser"}
+exit 0
+AFTER
+(pgrep done)
+bun test v1.4.0 (1381054db)
+
+ 127 pass
+ 0 fail
+ 270 expect() calls
+Ran 127 tests across 5 files. [2.05s]
+$ tsc --noEmit
+bun exit 0

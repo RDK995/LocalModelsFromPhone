@@ -5347,12 +5347,12 @@
         "FR20"
       ],
       "traces": "AC16 (browser fallback)",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
-        "commit": "",
-        "branch": ""
+        "commit": "ad7570f5e0777549fb0f9b9607d4982575c4f4e6",
+        "branch": "m7b-search-browser-fallback"
       },
       "as_built": {
         "artifact": null,
@@ -5366,7 +5366,71 @@
           "evidence": []
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M7b-T1",
+          "scope": "C14 helper search/helper/search.py: headless Chromium (Playwright) fallback when ddgs errors or returns zero results; backend browser; browser closed in finally; SEARCH_HELPER_FORCE_DDGS=fail|empty test hook; unittests + live helper run",
+          "tests": "see .harness/tasks/M7b-T1.md Tests",
+          "requirements": [
+            "FR20"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M7b-AC1"
+          ],
+          "paths": [
+            "search/helper/search.py",
+            "search/helper/test_search.py"
+          ],
+          "depends_on": [],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "new fallback path with a stated I17 contract; live SERP scraping and browser lifecycle are not low risk but not structural"
+          },
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "evidence": ".harness/evidence/M7b-T1-verifier.log"
+            }
+          ],
+          "status": "ACCEPTED",
+          "commit": null
+        },
+        {
+          "id": "M7b-T2",
+          "scope": "Live proof search/scripts/fallback-proof.sh: POST /v1/search through a service instance started with SEARCH_HELPER_FORCE_DDGS=fail and =empty; asserts backend browser, valid results, and no headless Chromium left afterwards",
+          "tests": "see .harness/tasks/M7b-T2.md Tests",
+          "requirements": [
+            "FR20"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M7b-AC1"
+          ],
+          "paths": [
+            "search/scripts/fallback-proof.sh"
+          ],
+          "depends_on": [
+            "M7b-T1"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "live proof script with process-lifecycle assertion; follows the search-proof.sh pattern"
+          },
+          "attempts": [],
+          "status": "IN_PROGRESS",
+          "commit": null
+        }
+      ],
       "reviews": [],
       "findings": [],
       "validation": [],

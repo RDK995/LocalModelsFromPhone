@@ -1,0 +1,54 @@
+# M7b-T1 Verifier Test Run
+# Commit: ad7570f5e0777549fb0f9b9607d4982575c4f4e6
+# Date: 2026-09-30
+
+## Command
+cd /Users/ryankenny/Projects/CodingHarnessv2 && search/helper/.venv/bin/python -m unittest discover -s search/helper -p 'test_*.py' -v && SEARCH_HELPER_FORCE_DDGS=fail search/helper/.venv/bin/python search/helper/search.py --query "Ada Lovelace" --max 5 && SEARCH_HELPER_FORCE_DDGS=empty search/helper/.venv/bin/python search/helper/search.py --query "Ada Lovelace" --max 5 && (cd search && bun test && bun run typecheck)
+
+## Exit Status
+0
+
+## Output - Python Unit Tests
+test_bad_max (test_search.CliTests.test_bad_max) ... ok
+test_blank_query (test_search.CliTests.test_blank_query) ... ok
+test_missing_query (test_search.CliTests.test_missing_query) ... ok
+test_browser_closed_when_scrape_raises (test_search.FallbackTests.test_browser_closed_when_scrape_raises) ... ok
+test_browser_empty_is_search_failed (test_search.FallbackTests.test_browser_empty_is_search_failed) ... ok
+test_browser_raises_reports_both (test_search.FallbackTests.test_browser_raises_reports_both) ... ok
+test_ddgs_empty_uses_browser (test_search.FallbackTests.test_ddgs_empty_uses_browser) ... ok
+test_ddgs_ok_skips_browser (test_search.FallbackTests.test_ddgs_ok_skips_browser) ... ok
+test_ddgs_raises_uses_browser (test_search.FallbackTests.test_ddgs_raises_uses_browser) ... ok
+test_decode_bing_redirect (test_search.FallbackTests.test_decode_bing_redirect) ... ok
+test_env_fail_and_empty_route_to_browser (test_search.FallbackTests.test_env_fail_and_empty_route_to_browser) ... ok
+test_exception_gives_search_failed (test_search.RunTests.test_exception_gives_search_failed) ... ok
+test_max_clamped (test_search.RunTests.test_max_clamped) ... ok
+test_normalises_hits_and_skips_missing_url (test_search.RunTests.test_normalises_hits_and_skips_missing_url) ... ok
+test_uses_uk_region_and_max (test_search.RunTests.test_uses_uk_region_and_max) ... ok
+test_zero_results (test_search.RunTests.test_zero_results) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.120s
+
+OK
+
+## Output - Live Run with SEARCH_HELPER_FORCE_DDGS=fail
+{"results": [{"title": "Ada Lovelace | Biography, Computer, Day, & Facts | Britannica", "url": "https://www.britannica.com/biography/Ada-Lovelace", "snippet": "Ada Lovelace (born December 10, 1815, Piccadilly Terrace, Middlesex [now in London], England—died November 27, 1852, …"}, {"title": "Who was Ada Lovelace? - BBC Newsround", "url": "https://www.bbc.co.uk/newsround/49960544", "snippet": "13 Oct 2020 · Ada Lovelace was a leading 19th century mathematician and daughter of the famous poet Lord Byron. She was born …"}, {"title": "Ada Lovelace - History of Math and Technology", "url": "https://www.historymath.com/ada-lovelace/", "snippet": "Ada Lovelace’s contributions to mathematics and the sciences are profound and enduring. As the world’s first computer programmer, …"}, {"title": "Ada Lovelace – Complete Biography, History and …", "url": "https://history-computer.com/people/ada-lovelace-complete-biography/", "snippet": "23 May 2025 · Ada Lovelace was an English mathematician who wrote an algorithm for a computing …"}, {"title": "", "url": "https://www.unesco.org/en/virtual-science-museum/women-science/ada-lovelace", "snippet": ""}], "backend": "browser"}
+
+## Output - Live Run with SEARCH_HELPER_FORCE_DDGS=empty
+{"results": [{"title": "Ada Lovelace | Biography, Computer, Day, & Facts", "url": "https://www.britannica.com/biography/Ada-Lovelace", "snippet": "Ada Lovelace (born December 10, 1815, Piccadilly Terrace, Middlesex [now in …"}, {"title": "Who was Ada Lovelace? - BBC Newsround", "url": "https://www.bbc.co.uk/newsround/49960544", "snippet": "13 Oct 2020 · Ada Lovelace was a leading 19th century mathematician and daughter of the famous poet Lord Byron. She was born …"}, {"title": "Ada Lovelace - History of Math and Technology", "url": "https://www.historymath.com/ada-lovelace/", "snippet": "Ada Lovelace’s contributions to mathematics and the sciences are profound and enduring. As the world’s …"}, {"title": "Ada Lovelace – Complete Biography, History and …", "url": "https://history-computer.com/people/ada-lovelace-complete-biography/", "snippet": "23 May 2025 · Ada Lovelace was an English mathematician who wrote an algorithm for a computing …"}, {"title": "", "url": "https://www.unesco.org/en/virtual-science-museum/women-science/ada-lovelace", "snippet": ""}], "backend": "browser"}
+
+## Output - BUN Tests
+bun test v1.4.0 (1381054db)
+
+ 127 pass
+ 0 fail
+ 270 expect() calls
+Ran 127 tests across 5 files. [2.06s]
+$ tsc --noEmit
+
+(tsc typecheck completed successfully)
+
+## Chromium Process Check
+Before tests: No chromium processes found
+After tests: No chromium processes found
+
