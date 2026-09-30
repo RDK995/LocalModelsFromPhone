@@ -1,0 +1,53 @@
+--- Setup: choosing a model ---
+Installed: nemotron3:33b, qwen3.8:27b, devstral:24b, qwen3-coder:30b, qwen3.6:27b
+Resident: nemotron3:33b
+Using model: nemotron3:33b
+
+--- Check 1: streamed reply formats without raw markdown (AC20) ---
+Attempt 1 of 3
+--- Attempt 1: raw reply ---
+## Project Setup
+
+This step is **essential** for getting started.
+
+- Initialize the repository
+- Add dependencies with `npm install`
+- Verify installation via [Example](https://example.com)
+--- Attempt 1: visible text ---
+Project Setup
+This step is essential for getting started.
+• Initialize the repository
+• Add dependencies with npm install
+• Verify installation via Example
+---
+PASS: Check 1: content events were captured (37 prefixes)
+PASS: Check 1: every streamed prefix parses without error (37 prefixes, 0 errors)
+PASS: Check 1: the stored reply, via buildChatItems, has a heading, a list, and bold, code and link inlines
+PASS: Check 1: visible text has no raw markdown characters
+
+--- Check 2: mid-stream unterminated markup ---
+Live prefixes that ended inside unterminated markup: 12 of 37
+PASS: Check 2: all 12 live unterminated prefixes parse and show no `**` or `](`
+
+--- Check 3: a reply saved before this change renders the same way ---
+PASS: Check 3: a fresh store over the file loads the saved conversation
+PASS: Check 3: the chat item carries the saved content unchanged
+--- Saved reply: raw reply ---
+# Title
+
+Some **bold** text with `code` and a [Docs](https://example.com/docs) link.
+
+- item one
+- item two
+
+--- Saved reply: visible text ---
+Title
+Some bold text with code and a Docs link.
+• item one
+• item two
+---
+PASS: Check 3: parsed blocks have a heading, a list, and bold, code and link inlines
+SELFTEST: check 3 uses the content rendered WITHOUT parsing
+FAIL: Check 3: visible text has no raw markdown characters (found `**`, `](`, a backtick, a line starting with `#`, the raw link url)
+
+1 check(s) FAILED.
