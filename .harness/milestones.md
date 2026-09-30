@@ -239,10 +239,10 @@ Task plan (packets in .harness/tasks/):
 - M9-T2 — C12 server/src/web/tools.ts             Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — .harness/evidence/M9-T2-verifier.log (exit 0, 14 pass; red M9-T2-red.log)
 - M9-T3 — C5+C4 tools capability, 409 gate (AC1)  Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, worker FAIL on mobile tsc only (12 Model fixtures outside allowed files: packet scoping gap) → repaired by T3b; verifier PASS on combined tree — .harness/evidence/M9-T3-verifier.log (exit 0, 138 server pass, server+mobile tsc 0; red M9-T3-red.log)
 - M9-T3b — mobile Model fixtures gain tools:false     Cheap (haiku, BOUNDED_LOW_RISK), attempt 1, PASS — verified with T3 (23 mobile tests pass; red M9-T3b-red.log)
-- M9-T4 — C6+C4 tool loop, 10-call cap (AC3,AC4)  Mid (sonnet, ORDINARY_IMPLEMENTATION) — planned, after T1-T3
+- M9-T4 — C6+C4 tool loop, 10-call cap (AC3,AC4)  Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — .harness/evidence/M9-T4-verifier.log (exit 0, 148 server pass, server+mobile tsc 0; red M9-T4-red.log; server.ts/index.ts unchanged)
 - M9-T5 — web-chat-proof.sh live proof (AC1-AC3)  Mid (sonnet, ORDINARY_IMPLEMENTATION) — planned, after T4
 
-Handoff (CONTINUE, continuation 1): T1, T2, T3, T3b accepted and committed. Remaining: T4 (packet written, not dispatched), T5 (packet not yet written). Notes in state.json M9.handoff.
+Continuation 2: T4 accepted and committed; T5 packet written (.harness/tasks/M9-T5.md) and dispatched.
 
 ### Validation
 

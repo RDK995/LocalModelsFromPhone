@@ -7,6 +7,7 @@ import type {
   OllamaPsResponse,
 } from "../ollama/client";
 import { OllamaClient } from "../ollama/client";
+import { GenerationManager } from "../generations/manager";
 
 type ChatImpl = (
   request: OllamaChatRequest,
@@ -453,6 +454,82 @@ describe("HTTP Server with Bearer Auth", () => {
       expect(res.status).toBe(200);
       expect(res.headers.get("Content-Type")).toBe("text/event-stream");
       await res.text();
+    } finally {
+      server.stop();
+    }
+  });
+
+  it("POST /v1/chat without web: fake Ollama sees no tools and web tools are never used (M9-AC3)", async () => {
+    const seenTools: unknown[] = [];
+    const client = new FakeOllamaClient(completingChat(1));
+    client.chat = ((request: OllamaChatRequest, signal?: AbortSignal, tools?: unknown) => {
+      seenTools.push(tools);
+      return completingChat(1)(request, signal);
+    }) as never;
+    let webCalls = 0;
+    const fakeWeb = {
+      tools: () => (webCalls++, []),
+      systemNote: () => (webCalls++, ""),
+      execute: async () => (webCalls++, { toolResult: "", events: [] }),
+    };
+    setValidToken("test-token");
+    const server = createServer({
+      ollama: client,
+      manager: new GenerationManager(client, fakeWeb),
+      port: 0,
+    });
+    try {
+      const res = await postChat(server.port, { model: "fake-model", messages: [{ role: "user", content: "hello" }] });
+      expect(res.status).toBe(200);
+      await res.text();
+      expect(seenTools).toEqual([undefined]);
+      expect(webCalls).toBe(0);
+    } finally {
+      server.stop();
+    }
+  });
+
+  it("POST /v1/chat web:true streams step and sources events before done", async () => {
+    const client = new FakeOllamaClient(completingChat(1));
+    client.showCapabilities = ["completion", "tools"];
+    let round = 0;
+    client.chat = ((_request: OllamaChatRequest, _signal?: AbortSignal, _tools?: unknown) => {
+      const r = round++;
+      return (async function* () {
+        if (r === 0) {
+          const calls = [{ function: { name: "web_search", arguments: { query: "q" } } }];
+          yield { ...chunk("", false), toolCalls: calls };
+          yield chunk("", true);
+        } else {
+          yield chunk("answer", false);
+          yield chunk("", true);
+        }
+      })();
+    }) as never;
+    const fakeWeb = {
+      tools: () => [],
+      systemNote: () => "note",
+      execute: async () => ({
+        toolResult: "res",
+        events: [
+          { type: "step" as const, data: { step_id: "s1", kind: "search" as const, status: "started" as const, query: "q" } },
+          { type: "step" as const, data: { step_id: "s1", kind: "search" as const, status: "done" as const, query: "q" } },
+          { type: "source" as const, data: { title: "T", url: "http://x" } },
+        ],
+      }),
+    };
+    setValidToken("test-token");
+    const server = createServer({
+      ollama: client,
+      manager: new GenerationManager(client, fakeWeb),
+      port: 0,
+    });
+    try {
+      const res = await postChat(server.port, webBody(true));
+      expect(res.status).toBe(200);
+      const events = parseSSE(await res.text());
+      expect(events.map((e) => e.event)).toEqual(["step", "step", "content", "sources", "done"]);
+      expect(JSON.parse(events[3].data)).toEqual({ items: [{ title: "T", url: "http://x" }] });
     } finally {
       server.stop();
     }

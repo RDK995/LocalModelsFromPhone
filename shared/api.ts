@@ -62,7 +62,7 @@ export interface OperationResponse {
   operation: Operation;
 }
 
-export type SSEEventType = "thinking" | "content" | "done" | "error";
+export type SSEEventType = "thinking" | "content" | "done" | "error" | "step" | "sources";
 
 export interface SSEEvent {
   id: string;
@@ -83,6 +83,19 @@ export interface DoneEvent {
   model: string;
   eval_count: number;
   tokens_per_second: number;
+}
+
+export interface StepEventData {
+  step_id: string;
+  kind: "search" | "read";
+  status: "started" | "done" | "failed" | "unavailable";
+  query?: string;
+  url?: string;
+  detail?: string;
+}
+
+export interface SourcesEvent {
+  items: Array<{ title: string; url: string }>;
 }
 
 export interface ErrorEvent {

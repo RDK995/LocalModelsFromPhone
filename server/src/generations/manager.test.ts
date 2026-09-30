@@ -1,6 +1,7 @@
 import { describe, it, expect } from "bun:test";
-import { GenerationManager, type OllamaChatClient } from "./manager";
-import type { OllamaChatResponse } from "../ollama/client";
+import { GenerationManager, type GenerationWebTools, type OllamaChatClient } from "./manager";
+import type { OllamaChatRequest, OllamaChatResponse, OllamaToolCall, OllamaTool } from "../ollama/client";
+import type { WebEvent, WebToolCall } from "../web/tools";
 import { OllamaClient } from "../ollama/client";
 
 describe("GenerationManager", () => {
@@ -203,5 +204,235 @@ describe("GenerationManager", () => {
     expect(JSON.parse(events[events.length - 1].data).status).toBe("cancelled");
     expect(manager.getActiveGeneration()).toBeNull();
     expect(manager.cancelActive()).toBe(false);
+  });
+
+  describe("web tool loop (M9)", () => {
+    const TOOLS: OllamaTool[] = [
+      { type: "function", function: { name: "web_search", description: "d", parameters: {} } },
+    ];
+
+    function call(name: string, args: Record<string, unknown> = { query: "q" }): OllamaToolCall {
+      return { function: { name, arguments: args } };
+    }
+
+    function callChunk(calls: OllamaToolCall[], content = ""): OllamaChatResponse & { toolCalls: OllamaToolCall[] } {
+      return {
+        ...doneChunk(content, false),
+        message: { role: "assistant", content, tool_calls: calls },
+        toolCalls: calls,
+      };
+    }
+
+    class FakeWebTools implements GenerationWebTools {
+      toolsCalls = 0;
+      noteCalls = 0;
+      executed: WebToolCall[] = [];
+      /** Overridable per test. */
+      onExecute: (c: WebToolCall, n: number, signal: AbortSignal) => Promise<{ toolResult: string; events: WebEvent[] }> =
+        async (_c, n) => ({
+          toolResult: `result-${n}`,
+          events: [
+            { type: "step", data: { step_id: `s${n}`, kind: "search", status: "started", query: "q" } },
+            { type: "step", data: { step_id: `s${n}`, kind: "search", status: "done", query: "q" } },
+            { type: "source", data: { title: `T${n}`, url: `http://x/${n}` } },
+          ],
+        });
+      tools(): OllamaTool[] {
+        this.toolsCalls++;
+        return TOOLS;
+      }
+      systemNote(_now: Date): string {
+        this.noteCalls++;
+        return "NOTE: today is a date";
+      }
+      execute(c: WebToolCall, signal: AbortSignal) {
+        this.executed.push(c);
+        return this.onExecute(c, this.executed.length, signal);
+      }
+      get totalCalls(): number {
+        return this.toolsCalls + this.noteCalls + this.executed.length;
+      }
+    }
+
+    type Seen = { request: OllamaChatRequest; tools: OllamaTool[] | undefined };
+
+    function scripted(
+      rounds: (round: number, tools: OllamaTool[] | undefined) => OllamaChatResponse[]
+    ): { client: OllamaChatClient; seen: Seen[] } {
+      const seen: Seen[] = [];
+      const client: OllamaChatClient = {
+        async *chat(request, _signal, tools) {
+          // Snapshot: the manager keeps appending to its messages array.
+          seen.push({ request: { ...request, messages: request.messages.map((m) => ({ ...m })) }, tools });
+          for (const c of rounds(seen.length - 1, tools)) yield c;
+        },
+      };
+      return { client, seen };
+    }
+
+    async function collect(manager: GenerationManager, id = "gen-1") {
+      const events = [];
+      for await (const e of manager.subscribe(id)) events.push(e);
+      return events;
+    }
+
+    const userMessages = [{ role: "user" as const, content: "hello" }];
+
+    it("web absent or false: no tools argument, no system message, web tools never called", async () => {
+      for (const web of [undefined, false]) {
+        const { client, seen } = scripted(() => [doneChunk("hi", false), doneChunk("", true)]);
+        const web_ = new FakeWebTools();
+        const manager = new GenerationManager(client, web_);
+        manager.startGeneration("gen-1", { model: "test", messages: userMessages, ...(web === undefined ? {} : { web }) });
+        const events = await collect(manager);
+
+        expect(seen).toHaveLength(1);
+        expect(seen[0].tools).toBeUndefined();
+        expect(seen[0].request).toEqual({ model: "test", messages: [{ role: "user", content: "hello" }] });
+        expect(web_.totalCalls).toBe(0);
+        expect(events.map((e) => e.type)).toEqual(["content", "done"]);
+      }
+    });
+
+    it("web:true, one search then an answer: note first, tools offered, step events, sources before done", async () => {
+      const { client, seen } = scripted((round) =>
+        round === 0
+          ? [callChunk([call("web_search")], "let me look"), doneChunk("", true)]
+          : [doneChunk("the answer", false), doneChunk("", true)]
+      );
+      const web_ = new FakeWebTools();
+      const manager = new GenerationManager(client, web_);
+      manager.startGeneration("gen-1", { model: "test", messages: userMessages, web: true });
+      const events = await collect(manager);
+
+      expect(seen).toHaveLength(2);
+      expect(seen[0].request.messages).toEqual([
+        { role: "system", content: "NOTE: today is a date" },
+        { role: "user", content: "hello" },
+      ]);
+      expect(seen[0].tools).toEqual(TOOLS);
+      const second = seen[1].request.messages;
+      expect(second[2]).toEqual({ role: "assistant", content: "let me look", tool_calls: [call("web_search")] });
+      expect(second[3]).toEqual({ role: "tool", tool_name: "web_search", content: "result-1" });
+
+      expect(events.map((e) => e.type)).toEqual(["content", "step", "step", "content", "sources", "done"]);
+      const steps = events.filter((e) => e.type === "step").map((e) => JSON.parse(e.data));
+      expect(steps[0].status).toBe("started");
+      expect(steps[1].status).toBe("done");
+      expect(steps[0].step_id).toBe(steps[1].step_id);
+      expect(JSON.parse(events[3].data)).toEqual({ text: "the answer" });
+      expect(JSON.parse(events[4].data)).toEqual({ items: [{ title: "T1", url: "http://x/1" }] });
+      expect(JSON.parse(events[5].data).status).toBe("complete");
+      expect(manager.getActiveGenId()).toBeNull();
+    });
+
+    it("caps a reply at 10 tool calls and withdraws the tools for the answer", async () => {
+      const { client, seen } = scripted((_round, tools) =>
+        tools ? [callChunk([call("web_search")]), doneChunk("", true)] : [doneChunk("final", false), doneChunk("", true)]
+      );
+      const web_ = new FakeWebTools();
+      const manager = new GenerationManager(client, web_);
+      manager.startGeneration("gen-1", { model: "test", messages: userMessages, web: true });
+      const events = await collect(manager);
+
+      expect(web_.executed).toHaveLength(10);
+      expect(seen).toHaveLength(11);
+      expect(seen[10].tools).toBeUndefined();
+      expect(seen.slice(0, 10).every((s) => s.tools !== undefined)).toBe(true);
+      const contents = events.filter((e) => e.type === "content").map((e) => JSON.parse(e.data).text);
+      expect(contents).toEqual(["final"]);
+      expect(events[events.length - 2].type).toBe("sources");
+      expect(JSON.parse(events[events.length - 1].data).status).toBe("complete");
+    });
+
+    it("executes only the calls within the budget in one round; the surplus gets the limit message", async () => {
+      const { client, seen } = scripted((round, tools) => {
+        if (round === 0) return [callChunk(Array.from({ length: 12 }, () => call("web_search"))), doneChunk("", true)];
+        return tools ? [doneChunk("x", false), doneChunk("", true)] : [doneChunk("final", false), doneChunk("", true)];
+      });
+      const web_ = new FakeWebTools();
+      const manager = new GenerationManager(client, web_);
+      manager.startGeneration("gen-1", { model: "test", messages: userMessages, web: true });
+      const events = await collect(manager);
+
+      expect(web_.executed).toHaveLength(10);
+      expect(events.filter((e) => e.type === "step")).toHaveLength(20);
+      const msgs = seen[1].request.messages;
+      const tools = msgs.filter((m) => m.role === "tool");
+      expect(tools).toHaveLength(12);
+      expect(tools[9].content).toBe("result-10");
+      expect(tools[10].content.toLowerCase()).toContain("limit");
+      expect(tools[11].content.toLowerCase()).toContain("limit");
+      expect(seen[1].tools).toBeUndefined();
+      expect(JSON.parse(events[events.length - 1].data).status).toBe("complete");
+    });
+
+    it("deduplicates sources by url in first-occurrence order", async () => {
+      const { client } = scripted((round) =>
+        round === 0
+          ? [callChunk([call("web_search"), call("web_search")]), doneChunk("", true)]
+          : [doneChunk("a", false), doneChunk("", true)]
+      );
+      const web_ = new FakeWebTools();
+      web_.onExecute = async (_c, n) => ({
+        toolResult: "r",
+        events: [
+          { type: "source", data: { title: "B", url: "http://b" } },
+          { type: "source", data: { title: n === 1 ? "A" : "A2", url: "http://a" } },
+          { type: "source", data: { title: "B again", url: "http://b" } },
+        ],
+      });
+      const manager = new GenerationManager(client, web_);
+      manager.startGeneration("gen-1", { model: "test", messages: userMessages, web: true });
+      const events = await collect(manager);
+      const sources = events.find((e) => e.type === "sources")!;
+      expect(JSON.parse(sources.data)).toEqual({
+        items: [
+          { title: "B", url: "http://b" },
+          { title: "A", url: "http://a" },
+        ],
+      });
+    });
+
+    it("web:true with no tool call emits no sources event", async () => {
+      const { client } = scripted(() => [doneChunk("plain", false), doneChunk("", true)]);
+      const manager = new GenerationManager(client, new FakeWebTools());
+      manager.startGeneration("gen-1", { model: "test", messages: userMessages, web: true });
+      const events = await collect(manager);
+      expect(events.map((e) => e.type)).toEqual(["content", "done"]);
+    });
+
+    it("cancel during execute ends in done cancelled and releases the slot", async () => {
+      const { client } = scripted(() => [callChunk([call("web_search")]), doneChunk("", true)]);
+      const web_ = new FakeWebTools();
+      let started!: () => void;
+      const executing = new Promise<void>((r) => (started = r));
+      web_.onExecute = (_c, _n, signal) =>
+        new Promise((_resolve, reject) => {
+          started();
+          signal.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")));
+        });
+      const manager = new GenerationManager(client, web_);
+      manager.startGeneration("gen-1", { model: "test", messages: userMessages, web: true });
+      await executing;
+      expect(manager.cancelGeneration("gen-1")).toBe(true);
+      const events = await collect(manager);
+
+      expect(events[events.length - 1].type).toBe("done");
+      expect(JSON.parse(events[events.length - 1].data).status).toBe("cancelled");
+      expect(manager.getActiveGenId()).toBeNull();
+    });
+
+    it("an execute failure that is not an abort ends in error with no sources", async () => {
+      const { client } = scripted(() => [callChunk([call("web_search")]), doneChunk("", true)]);
+      const web_ = new FakeWebTools();
+      web_.onExecute = async () => {
+        throw new Error("boom");
+      };
+      const manager = new GenerationManager(client, web_);
+      manager.startGeneration("gen-1", { model: "test", messages: userMessages, web: true });
+      const events = await collect(manager);
+      expect(events.map((e) => e.type)).toEqual(["error"]);
+    });
   });
 });

@@ -6429,7 +6429,7 @@
         {
           "id": "M9-T4",
           "scope": "C6+C4+index: tool loop in generation manager (system note, tools while <10 calls, step/sources SSE events), web flag threaded from /v1/chat",
-          "tests": "see packet",
+          "tests": "cd server && bun test && bun run typecheck && cd ../mobile && npx tsc --noEmit",
           "requirements": [
             "FR19"
           ],
@@ -6457,16 +6457,40 @@
             "reason_code": "ORDINARY_IMPLEMENTATION",
             "detail": "core loop, stub-testable"
           },
-          "status": "PLANNED",
-          "attempts": 0,
+          "status": "ACCEPTED",
+          "attempts": 1,
           "packet": ".harness/tasks/M9-T4.md",
           "commit": null,
-          "attempt_log": []
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M9-T4-worker.log",
+              "verdict": "PASS",
+              "base": "6391719",
+              "changed_files": [
+                "server/src/generations/manager.ts",
+                "server/src/generations/manager.test.ts",
+                "server/src/http/server.test.ts",
+                "shared/api.ts"
+              ],
+              "note": "Red: .harness/evidence/M9-T4-red.log (8 fail); server.ts/index.ts unchanged (SSE writer already generic; default manager uses real web tools); entered at Mid rung"
+            },
+            {
+              "attempt": 3,
+              "role": "verifier",
+              "artifact": ".harness/evidence/M9-T4-verifier.log",
+              "verdict": "PASS",
+              "note": "exit 0, 148 pass, server+mobile tsc 0; files within allowed; not weakened"
+            }
+          ]
         },
         {
           "id": "M9-T5",
           "scope": "server/scripts/web-chat-proof.sh live proof against resident model and search service",
-          "tests": "see packet",
+          "tests": "cd server && bun test && bun run typecheck && bash scripts/web-chat-proof.sh",
           "requirements": [
             "FR19"
           ],
@@ -6478,7 +6502,9 @@
             "M9-AC3"
           ],
           "paths": [
-            "server/scripts/web-chat-proof.sh"
+            "server/scripts/web-chat-proof.sh",
+            "server/scripts/record-proxy.ts",
+            "server/src/index.ts"
           ],
           "depends_on": [
             "M9-T4"
@@ -6508,7 +6534,7 @@
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
       ],
-      "handoff": "CONTINUE (continuation 1 handed off at turn ceiling) after T1,T2,T3,T3b accepted and committed (HEAD after this record commit). Next: dispatch M9-T4 from the already-written packet .harness/tasks/M9-T4.md (Mid, sonnet, attempt 3), verify, commit; then write packet M9-T5 (server/scripts/web-chat-proof.sh live proof against resident tools-capable model + search service on 127.0.0.1:7790: AC2 step/sources/answer over SSE, AC3 web-off run makes no search request, AC1 /v1/state tools field live; 409 path cites unit tests if every installed model has tools) and run it; then set REVIEW."
+      "handoff": "Continuation 2: T4 accepted and committed; T5 packet written at .harness/tasks/M9-T5.md and dispatched (Mid, sonnet, attempt 3)."
     },
     "M10": {
       "id": "M10",

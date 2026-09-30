@@ -9,13 +9,26 @@
  * the active slot is released.
  */
 
-import type { OllamaChatRequest, OllamaChatResponse } from "../ollama/client";
-import type { ChatRequest, ContentEvent, DoneEvent, ErrorEvent, ThinkingEvent } from "@shared/api";
+import type {
+  OllamaChatRequest,
+  OllamaChatResponse,
+  OllamaTool,
+  OllamaToolCall,
+} from "../ollama/client";
+import { createWebTools, type WebEvent, type WebToolCall } from "../web/tools";
+import type {
+  ChatRequest,
+  ContentEvent,
+  DoneEvent,
+  ErrorEvent,
+  SourcesEvent,
+  ThinkingEvent,
+} from "@shared/api";
 
 export interface GenerationEvent {
   seq: number;
   timestamp: number;
-  type: "thinking" | "content" | "done" | "error";
+  type: "thinking" | "content" | "done" | "error" | "step" | "sources";
   data: string;
 }
 
@@ -27,9 +40,23 @@ export interface GenerationEvent {
 export interface OllamaChatClient {
   chat(
     request: OllamaChatRequest,
-    signal?: AbortSignal
-  ): AsyncGenerator<OllamaChatResponse, void, unknown>;
+    signal?: AbortSignal,
+    tools?: OllamaTool[]
+  ): AsyncGenerator<OllamaChatResponse & { toolCalls?: OllamaToolCall[] }, void, unknown>;
 }
+
+/** The web tools (C12) the generation loop depends on; satisfied by createWebTools(). */
+export interface GenerationWebTools {
+  tools(): OllamaTool[];
+  systemNote(now: Date): string;
+  execute(
+    call: WebToolCall,
+    signal: AbortSignal
+  ): Promise<{ toolResult: string; events: WebEvent[] }>;
+}
+
+/** At most this many tool calls per reply (FR19). */
+const MAX_TOOL_CALLS = 10;
 
 /** How long a finished generation's log is kept for resume. */
 const LOG_RETENTION_MS = 10 * 60 * 1000;
@@ -53,8 +80,11 @@ export class GenerationManager {
   private generations: Map<string, GenerationRecord> = new Map();
   private ollamaClient: OllamaChatClient;
 
-  constructor(ollamaClient: OllamaChatClient) {
+  private webTools: GenerationWebTools;
+
+  constructor(ollamaClient: OllamaChatClient, webTools: GenerationWebTools = createWebTools()) {
     this.ollamaClient = ollamaClient;
+    this.webTools = webTools;
   }
 
   /**
@@ -83,7 +113,12 @@ export class GenerationManager {
       messages: request.messages.map((m) => ({ role: m.role, content: m.content })),
     };
 
-    void this.run(genId, record, chatRequest);
+    const web = request.web === true;
+    if (web) {
+      chatRequest.messages.unshift({ role: "system", content: this.webTools.systemNote(new Date()) });
+    }
+
+    void this.run(genId, record, chatRequest, web);
   }
 
   /**
@@ -92,7 +127,8 @@ export class GenerationManager {
   private async run(
     genId: string,
     record: GenerationRecord,
-    request: OllamaChatRequest
+    request: OllamaChatRequest,
+    web: boolean
   ): Promise<void> {
     const signal = record.abortController.signal;
     const startTime = Date.now();
@@ -106,31 +142,80 @@ export class GenerationManager {
       else signal.addEventListener("abort", () => resolve("aborted"), { once: true });
     });
 
-    let iterator: AsyncGenerator<OllamaChatResponse, void, unknown> | undefined;
+    let iterator: AsyncGenerator<OllamaChatResponse & { toolCalls?: OllamaToolCall[] }, void, unknown> | undefined;
+    let toolCallCount = 0;
+    const sources: SourcesEvent["items"] = [];
     try {
-      iterator = this.ollamaClient.chat(request, signal);
       let finalChunk: OllamaChatResponse | undefined;
 
       for (;;) {
-        const next = await Promise.race([iterator.next(), aborted]);
-        if (next === "aborted") {
-          throw new DOMException("Generation cancelled", "AbortError");
-        }
-        if (next.done) break;
+        const offered = web && toolCallCount < MAX_TOOL_CALLS;
+        iterator = offered
+          ? this.ollamaClient.chat(request, signal, this.webTools.tools())
+          : this.ollamaClient.chat(request, signal);
+        finalChunk = undefined;
+        const roundCalls: OllamaToolCall[] = [];
+        let roundContent = "";
 
-        const chunk = next.value;
-        if (chunk.message?.thinking) {
-          const thinking: ThinkingEvent = { text: chunk.message.thinking };
-          this.append(record, "thinking", JSON.stringify(thinking));
+        for (;;) {
+          const next = await Promise.race([iterator.next(), aborted]);
+          if (next === "aborted") {
+            throw new DOMException("Generation cancelled", "AbortError");
+          }
+          if (next.done) break;
+
+          const chunk = next.value;
+          if (chunk.message?.thinking) {
+            const thinking: ThinkingEvent = { text: chunk.message.thinking };
+            this.append(record, "thinking", JSON.stringify(thinking));
+          }
+          if (chunk.message?.content) {
+            contentChunks++;
+            roundContent += chunk.message.content;
+            const content: ContentEvent = { text: chunk.message.content };
+            this.append(record, "content", JSON.stringify(content));
+          }
+          if (chunk.toolCalls) roundCalls.push(...chunk.toolCalls);
+          if (chunk.done) {
+            finalChunk = chunk;
+            break;
+          }
         }
-        if (chunk.message?.content) {
-          contentChunks++;
-          const content: ContentEvent = { text: chunk.message.content };
-          this.append(record, "content", JSON.stringify(content));
-        }
-        if (chunk.done) {
-          finalChunk = chunk;
-          break;
+
+        if (!offered || roundCalls.length === 0) break;
+
+        // Stop this round's stream before running tools.
+        iterator.return(undefined).catch(() => {});
+        iterator = undefined;
+
+        request.messages.push({ role: "assistant", content: roundContent, tool_calls: roundCalls });
+        for (const toolCall of roundCalls) {
+          if (toolCallCount >= MAX_TOOL_CALLS) {
+            request.messages.push({
+              role: "tool",
+              tool_name: toolCall.function.name,
+              content:
+                "Tool-call limit reached: this call was not run. Answer from the information you already have.",
+            });
+            continue;
+          }
+          const outcome = await Promise.race([this.webTools.execute(toolCall, signal), aborted]);
+          if (outcome === "aborted") {
+            throw new DOMException("Generation cancelled", "AbortError");
+          }
+          toolCallCount++;
+          for (const event of outcome.events) {
+            if (event.type === "step") {
+              this.append(record, "step", JSON.stringify(event.data));
+            } else if (!sources.some((s) => s.url === event.data.url)) {
+              sources.push({ title: event.data.title, url: event.data.url });
+            }
+          }
+          request.messages.push({
+            role: "tool",
+            tool_name: toolCall.function.name,
+            content: outcome.toolResult,
+          });
         }
       }
 
@@ -171,6 +256,10 @@ export class GenerationManager {
     record.running = false;
     if (this.activeGenId === genId) {
       this.activeGenId = null;
+    }
+    if (toolCallCount > 0 && terminal.type === "done") {
+      const event: SourcesEvent = { items: sources };
+      this.append(record, "sources", JSON.stringify(event));
     }
     this.append(record, terminal.type, terminal.data);
 
