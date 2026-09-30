@@ -1,0 +1,26 @@
+TASK: M10c3-C2 (review cycle 1, Finding 3)
+
+GOAL: Make tableLayout's defensive surplus-cell join match the parser's: 
+join surplus cells into the last column with a `{ type: "text", text: " | " }` node 
+instead of `" "`, so there is one rule for surplus cells.
+
+RED PHASE:
+- Updated tableLayout.test.ts expectations: changed from t(" ") to t(" | ") at lines 58 and 62
+- Test ran and failed as expected (expected " | " but received " ")
+
+GREEN PHASE:
+- Changed normaliseRow in tableLayout.ts: joined surplus cells with { type: "text", text: " | " } instead of " "
+- Test ran and passed
+
+REFACTOR PHASE:
+- Added explanatory comment to normaliseRow explaining it matches the parser's behavior
+
+VALIDATION:
+$ cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun test src/ui/tableLayout.test.ts && bun run typecheck && bun run lint
+
+Results:
+- bun test: 5 pass, 0 fail, 18 expect() calls [4.00ms]
+- tsc --noEmit: no errors
+- eslint src --max-warnings 0: no errors
+
+All tests passed successfully.

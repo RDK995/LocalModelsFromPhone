@@ -13,7 +13,11 @@ export type TableLayout =
   | { kind: "grid"; header: Inline[][]; rows: Inline[][][] }
   | { kind: "cards"; cards: CardLine[][] };
 
-/** Exactly `columns` cells: missing ones empty, surplus appended to the last. */
+/**
+ * Exactly `columns` cells: missing ones empty, surplus appended to the last.
+ * parseMarkdown already yields header-width rows (fitRow in markdown.ts joins with " | "),
+ * so this path is defensive and joins the same way.
+ */
 function normaliseRow(row: Inline[][], columns: number): Inline[][] {
   const cells: Inline[][] = [];
   for (let c = 0; c < columns; c++) cells.push(row[c] ?? []);
@@ -21,7 +25,7 @@ function normaliseRow(row: Inline[][], columns: number): Inline[][] {
     for (let c = columns; c < row.length; c++) {
       cells[columns - 1] = [
         ...(cells[columns - 1] ?? []),
-        { type: "text", text: " " },
+        { type: "text", text: " | " },
         ...(row[c] ?? []),
       ];
     }

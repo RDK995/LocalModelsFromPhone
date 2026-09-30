@@ -1,0 +1,55 @@
+# M10c3-C2 Verification Log
+
+Date: 2026-09-30
+Task: M10c3-C2 (Correction cycle 1, Finding 3)
+Branch: m10c3-readable-tables
+Base Commit: 929afbb
+
+## Test Command
+
+Command run:
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun test src/ui/tableLayout.test.ts && bun run typecheck && bun run lint
+
+Exit Status: 0
+
+Output:
+bun test v1.4.0 (1381054db)
+
+ 5 pass
+ 0 fail
+ 18 expect() calls
+Ran 5 tests across 1 file. [4.00ms]
+$ tsc --noEmit
+$ eslint src --max-warnings 0
+
+## Files Changed
+
+git diff --name-only 929afbb (excluding .harness/):
+- mobile/src/ui/markdown.test.ts (concurrent task M10c3-C1, not C2)
+- mobile/src/ui/tableLayout.test.ts (ALLOWED)
+- mobile/src/ui/tableLayout.ts (ALLOWED)
+
+## Code Changes Verification
+
+### mobile/src/ui/tableLayout.ts
+
+Changed:
+1. Multi-line comment added to normaliseRow explaining defensive nature
+2. Line 28: changed `{ type: "text", text: " " }` to `{ type: "text", text: " | " }`
+
+### mobile/src/ui/tableLayout.test.ts
+
+Changed:
+1. Line 58: test expectation changed from `...t(" ")` to `...t(" | ")`
+2. Line 62: test expectation changed from `...t(" ")` to `...t(" | ")`
+
+## Validation
+
+All acceptance criteria met:
+1. normaliseRow joins surplus cells with " | " (line 28 of tableLayout.ts)
+2. Comment explains defensive nature and fitRow behavior (lines 17-19 of tableLayout.ts)
+3. Test expectations updated around lines 58 and 62 with " | " separator
+4. No other test logic changed - this is a correction, not a weakening
+5. All 5 tests pass
+6. typecheck passes
+7. lint passes (max-warnings 0)

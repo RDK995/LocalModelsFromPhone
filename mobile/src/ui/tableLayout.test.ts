@@ -55,10 +55,10 @@ describe("tableLayout", () => {
     const g = tableLayout([[t("A"), t("B")], [t("x"), t("y"), t("z")]]);
     if (g.kind !== "grid") throw new Error("grid expected");
     expect(g.rows[0]?.length).toBe(2);
-    expect(g.rows[0]?.[1]).toEqual([...t("y"), ...t(" "), ...t("z")]);
+    expect(g.rows[0]?.[1]).toEqual([...t("y"), ...t(" | "), ...t("z")]);
     const c = tableLayout([[t("A"), t("B"), t("C")], [t("1"), t("2"), t("3"), link]]);
     if (c.kind !== "cards") throw new Error("cards expected");
     expect(c.cards[0]?.length).toBe(3);
-    expect(c.cards[0]?.[2]?.value).toEqual([...t("3"), ...t(" "), ...link]);
+    expect(c.cards[0]?.[2]?.value).toEqual([...t("3"), ...t(" | "), ...link]);
   });
 });
