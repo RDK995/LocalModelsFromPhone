@@ -300,7 +300,7 @@ Cycle 1: PASS (tier Mid, reviewer sonnet, reason ROUTED_MID; diff ba6d032..9753b
 
 ## M10e — Every answer fits its bubble at full width, with "Sources (n)" and the model name below it
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -318,8 +318,8 @@ Pending.
 
 ### Acceptance Criteria
 
-- [ ] **M10e-AC1**: A test reproduces an answer shaped like the 2026-09-30 22:32 phone screenshot (a web reply whose body is a bulleted list of news items, with a Sources list) and shows, for both the live-streaming and the reopened-saved forms, that the answer takes the full bubble width and nothing overlaps the answer text, with "Sources (n)" and the model name below it; the diagnosed cause of the squeeze and overflow is recorded.
-- [ ] **M10e-AC2**: The existing FR26-FR31 rendering tests pass unchanged (none edited or weakened), and mobile typecheck, tests and lint pass.
+- [x] **M10e-AC1**: A test reproduces an answer shaped like the 2026-09-30 22:32 phone screenshot (a web reply whose body is a bulleted list of news items, with a Sources list) and shows, for both the live-streaming and the reopened-saved forms, that the answer takes the full bubble width and nothing overlaps the answer text, with "Sources (n)" and the model name below it; the diagnosed cause of the squeeze and overflow is recorded.
+- [x] **M10e-AC2**: The existing FR26-FR31 rendering tests pass unchanged (none edited or weakened), and mobile typecheck, tests and lint pass.
 - [ ] **M10e-AC3**: The owner's phone screenshot of a new web answer, taken after the phone has loaded the new code, shows the answer at full width, entirely inside its bubble, with "Sources (n)" and the model name below it.
 
 ### Baseline
@@ -328,10 +328,23 @@ Pending.
 
 ### Evidence
 
+Tasks (routing -> rungs):
+- T1 — diagnose + fix the squeezed list answer, computed-layout test (C1)   Top (AMBIGUOUS: undiagnosed layout bug, test oracle to design), attempt 4 PASS; verifier PASS (typecheck 0, 434 pass, lint 0, independent RED in a baseline worktree, files within allowed list, no test weakened) — commit 3240b95. .harness/evidence/M10e-T1-worker.log, M10e-T1-red.log, M10e-T1-verifier.log.
+- T2 — restart com.harness.bundle-host so the phone loads the fix   Cheap (BOUNDED_LOW_RISK), attempt 1 PASS; verifier PASS (running, started 22:48:53, 43 s after 3240b95, cwd mobile/, HTTP 200 on :8081). .harness/evidence/M10e-T2-bundle-host.log, M10e-T2-verifier.log.
+
+M10e-AC1:
+- Computed-layout test mobile/src/ui/answerLayout.test.ts (yoga-layout 3.2.1 devDependency, Errata.All, point scale 3, style values read from the real StyleSheet.create blocks in chat.tsx/MarkdownText.tsx/SourceList.tsx, items built with buildChatItems, 22:32 news-list answer with 5 sources and model nemotron3:33b on a 393pt phone): reopened-saved form and live-streaming form (partial list + indicator + sources) each assert bubble width = 85% of available width, answer fills the bubble, answer text bottom inside the bubble and above "Sources (n)", the indicator and the model label; plus first-words, one-line answer and user-bubble-stays-shrink-wrapped cases. RED on baseline 1b139be independently confirmed by verifier (exit 1, 3 pass 4 fail: saved text bottom 1136 > 369.17; streaming 611.33 > 258.83; first-words width 46 vs 306.85; one-line 108 vs 306.85); GREEN 7 pass. T1 3240b95. .harness/evidence/M10e-T1-red.log, M10e-T1-verifier.log. Not reviewed.
+- Diagnosed cause: the assistant bubble (mobile/src/app/chat.tsx styles.message maxWidth "85%" + assistantMessage alignSelf "flex-start", no width) shrink-wraps its content, and list item text is listText { flex: 1 } (mobile/src/ui/MarkdownText.tsx ~212), i.e. flexBasis 0, so the bubble measured only the 22pt bullets and took its width from the "Sources (n)" header (saved) or the bullet alone (46pt, first streamed words); under RN 0.86 Yoga YGErrataAll (StretchFlexBasis) the text then wrapped at the narrow width while the bubble height was sized for wider lines, so it ran out of the bubble over "Sources (n)" and the model name. Tables were unaffected because card text has no flex: 1. Fix: assistantMessage width "85%". Recorded in the chat.tsx comment above assistantMessage.
+
+M10e-AC2:
+- `cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint` exit 0: typecheck clean, 434 pass 0 fail across 28 files, lint clean; verifier confirmed no existing test file modified (only answerLayout.test.ts added). .harness/evidence/M10e-T1-verifier.log. Not reviewed.
+
+M10e-AC3:
+- OWED - owner phone screenshot. Bundle host com.harness.bundle-host restarted 2026-09-30 22:48:53 (43 s after commit 3240b95), running from mobile/ on m10e-answer-fits-bubble, HTTP 200 on :8081 (T2; .harness/evidence/M10e-T2-bundle-host.log, M10e-T2-verifier.log). Owner steps: (1) swipe Expo Go away so it fully quits; (2) reopen Expo Go and open the project (downloads the new bundle; if the old look persists, shake and tap Reload); (3) with Web search on, ask for today's top news as a bulleted list; (4) pass = the grey answer bubble is wide (about 85% of the screen) while streaming and when finished, every line of text is inside the bubble, "Sources (n)" is below the text inside the bubble and the model name below the bubble, nothing overlaps; (5) optionally reopen the chat and check again; save as .harness/evidence/M10e-AC3-owner-phone.png.
 
 ### Validation
 
-Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint`
+`cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint` — typecheck 0, 434 pass, lint 0 (verifier run). Artifact: .harness/evidence/M10e-T1-verifier.log. AC3 is the owner's phone screenshot (steps under Evidence), not a command.
 
 ### Review
 
@@ -343,7 +356,9 @@ Pending.
 
 ### Follow-ups
 
-None.
+- The comment above gridWidth in mobile/src/ui/tableLayout.ts and the comment near markdownText.test.ts:126 still say the assistant bubble shrink-wraps; now stale (bubble has a definite 85% width). The explicit gridWidth (282 <= inner 282.85) is now redundant but harmless. Outside T1's allowed files.
+- answerLayout.test.ts measures text with a fixed 0.5 x fontSize character width, not iOS text layout; it reproduces the mechanism, not exact device pixels. The owner screenshot (AC3) is the device proof.
+- Every assistant answer, even a one-word reply, is now a full 85%-wide bubble (intended by FR32; user bubbles unchanged).
 
 ## M11 — Web replies are saved, resume after a drop, and keep page text out of later prompts
 
