@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M10c4",
+  "current_milestone": "M10d",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -8943,12 +8943,12 @@
         "FR28"
       ],
       "traces": "AC22",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
-        "commit": "",
-        "branch": ""
+        "commit": "ba6d03256dcc55711a0f0385718fcfdc1546c8a5",
+        "branch": "m10d-sources-folded"
       },
       "as_built": {
         "artifact": null,
