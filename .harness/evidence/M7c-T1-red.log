@@ -1,0 +1,91 @@
+bun test v1.4.0 (1381054db)
+killed 1 dangling process
+
+src/search/timeout.test.ts:
+(fail) POST /v1/search time limit > helper over the limit -> 504 timeout promptly, helper and its descendants killed [5002.18ms]
+  ^ this test timed out after 5000ms.
+
+# Unhandled error between tests
+-------------------------------
+89 |     const s = serverWith({ command, timeoutMs: 500 });
+90 |     const started = Date.now();
+91 |     const pending = post(s, AbortSignal.timeout(5000)).catch((e: unknown) => e);
+92 |     const pids = await readPids(helperPidFile, childPidFile);
+93 |     const r = await pending;
+94 |     expect(r).toBeInstanceOf(Response);
+                   ^
+error: expect(received).toBeInstanceOf(expected)
+
+Expected constructor: [class Response]
+Received value: DOMException {
+  stack: "",
+  code: 23,
+  name: "TimeoutError",
+  message: "The operation timed out.",
+  INDEX_SIZE_ERR: 1,
+  DOMSTRING_SIZE_ERR: 2,
+  HIERARCHY_REQUEST_ERR: 3,
+  WRONG_DOCUMENT_ERR: 4,
+  INVALID_CHARACTER_ERR: 5,
+  NO_DATA_ALLOWED_ERR: 6,
+  NO_MODIFICATION_ALLOWED_ERR: 7,
+  NOT_FOUND_ERR: 8,
+  NOT_SUPPORTED_ERR: 9,
+  INUSE_ATTRIBUTE_ERR: 10,
+  INVALID_STATE_ERR: 11,
+  SYNTAX_ERR: 12,
+  INVALID_MODIFICATION_ERR: 13,
+  NAMESPACE_ERR: 14,
+  INVALID_ACCESS_ERR: 15,
+  VALIDATION_ERR: 16,
+  TYPE_MISMATCH_ERR: 17,
+  SECURITY_ERR: 18,
+  NETWORK_ERR: 19,
+  ABORT_ERR: 20,
+  URL_MISMATCH_ERR: 21,
+  QUOTA_EXCEEDED_ERR: 22,
+  TIMEOUT_ERR: 23,
+  INVALID_NODE_TYPE_ERR: 24,
+  DATA_CLONE_ERR: 25,
+  toString: [Function: toString],
+}
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/search/timeout.test.ts:94:15)
+-------------------------------
+
+70 |   return pids;
+71 | }
+72 | 
+73 | async function expectAllGone(pids: number[]) {
+74 |   for (let i = 0; i < 40 && pids.some(alive); i++) await Bun.sleep(50);
+75 |   for (const pid of pids) expect(alive(pid)).toBe(false);
+                                                  ^
+error: expect(received).toBe(expected)
+
+Expected: false
+Received: true
+
+      at expectAllGone (/Users/ryankenny/Projects/CodingHarnessv2/search/src/search/timeout.test.ts:75:46)
+      at async <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/search/timeout.test.ts:112:11)
+(fail) POST /v1/search time limit > client abort kills the helper and its descendants [2138.59ms]
+70 |   return pids;
+71 | }
+72 | 
+73 | async function expectAllGone(pids: number[]) {
+74 |   for (let i = 0; i < 40 && pids.some(alive); i++) await Bun.sleep(50);
+75 |   for (const pid of pids) expect(alive(pid)).toBe(false);
+                                                  ^
+error: expect(received).toBe(expected)
+
+Expected: false
+Received: true
+
+      at expectAllGone (/Users/ryankenny/Projects/CodingHarnessv2/search/src/search/timeout.test.ts:75:46)
+      at async <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/search/timeout.test.ts:143:11)
+(fail) POST /v1/search time limit > a helper that exits normally but leaves a descendant behind: the descendant is killed [2119.15ms]
+
+ 1 pass
+ 3 fail
+ 1 error
+ 14 expect() calls
+Ran 4 tests across 1 file. [9.60s]

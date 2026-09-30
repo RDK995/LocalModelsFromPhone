@@ -45,6 +45,7 @@ async function handleSearch(req: Request, helperOptions: HelperOptions): Promise
     return json(400, { error: "bad_request" });
   }
   const outcome = await runHelper(query, max, req.signal, helperOptions);
+  if (!outcome.ok && outcome.timeout) return json(504, { error: "timeout" });
   if (!outcome.ok) return json(503, { error: "search_unavailable", detail: outcome.detail });
   return json(200, { results: outcome.results, backend: outcome.backend });
 }
