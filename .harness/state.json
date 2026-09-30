@@ -8534,7 +8534,98 @@
           "evidence": []
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M10c4-T1",
+          "scope": "C12 systemNote: add FR30 guidance (3+ sites for broad questions, multiple queries, no exact date in queries, every citation an exact markdown link incl. table cells; narrow questions need not over-search)",
+          "packet": ".harness/tasks/M10c4-T1.md",
+          "paths": [
+            "server/src/web/tools.ts",
+            "server/src/web/tools.test.ts"
+          ],
+          "criteria": [
+            "M10c4-AC1"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "model-facing instruction wording plus unit tests; wording quality drives the live proof in T2"
+          },
+          "tests": "cd server && bun test && bun run typecheck",
+          "requirements": [
+            "FR30"
+          ],
+          "constraints": [],
+          "depends_on": [],
+          "findings": [],
+          "attempt_log": [
+            {
+              "role": "worker",
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "base": "f357699",
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M10c4-T1-worker.log",
+              "note": "162 pass; RED: new FR30 test failed on baseline text (21 pass 1 fail in tools.test.ts)"
+            },
+            {
+              "role": "verifier",
+              "attempt": 3,
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M10c4-T1-verifier.log",
+              "note": "exit 0, 162 pass, tsc clean, files allowed, tests not weakened; independent RED on baseline; web-off covered by manager.test.ts:281, cap test manager.test.ts:329 unchanged"
+            }
+          ],
+          "attempts": 1,
+          "status": "ACCEPTED",
+          "commit": "e3c3ae1",
+          "open_issue": "Live proof T2 attempt 3 shows the accepted wording does not reach the AC2 link bar (0/3): model mangled a host (reutersinstitute.ox.ac.uk), invented ibm.com URLs, and repeated one source. Next phase: a revised-guidance task (T3) with the T2 proof as its oracle."
+        },
+        {
+          "id": "M10c4-T2",
+          "scope": "server/scripts/source-diversity-proof.sh: live AC2 proof through POST /v1/chat with web on; 3 broad prompts; distinct hosts and FR27 link matching",
+          "packet": ".harness/tasks/M10c4-T2.md",
+          "paths": [
+            "server/scripts/source-diversity-proof.sh",
+            ".harness/evidence/M10c4-T2-proof.log",
+            ".harness/evidence/M10c4-T2-replies.json"
+          ],
+          "criteria": [
+            "M10c4-AC2"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "live proof script modelled on web-chat-proof.sh; counting logic plus a real run against a non-deterministic model"
+          },
+          "tests": "cd server && bash scripts/source-diversity-proof.sh",
+          "requirements": [
+            "FR30"
+          ],
+          "constraints": [],
+          "depends_on": [
+            "M10c4-T1"
+          ],
+          "findings": [],
+          "attempt_log": [
+            {
+              "role": "worker",
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "base": "e3c3ae1",
+              "verdict": "FAIL",
+              "artifact": ".harness/evidence/M10c4-T2-proof.log",
+              "note": "model nemotron3:33b; exit 1; diversity 3/3 PASS (hosts 4,5,5); links 0/3 (matched distinct 2,2,1; unmatched 1,2,0). Orchestrator read replies JSON: script counting looks correct; failure is model link fidelity (host variant, invented ibm.com URLs) and citing one source repeatedly. Script not yet verified or committed."
+            }
+          ],
+          "attempts": 1,
+          "status": "IN_PROGRESS"
+        }
+      ],
       "reviews": [],
       "findings": [],
       "validation": [],

@@ -357,6 +357,14 @@ f3576993fee872e8fe4bfffdc2b075eecb44596d on m10c4-several-sites
 
 ### Evidence
 
+Tasks (routing -> rungs):
+- T1 — FR30 guidance in systemNote (C12)   Mid (ORDINARY_IMPLEMENTATION), attempt 3 PASS; verifier PASS (exit 0, 162 pass, tsc clean, independent RED) — commit e3c3ae1. Artifacts: .harness/evidence/M10c4-T1-worker.log, M10c4-T1-verifier.log. M10c4-AC1 evidence: server/src/web/tools.test.ts "systemNote carries the FR30 guidance"; web off: manager.test.ts:281; 10-call cap test manager.test.ts:329 unchanged.
+- T2 — live proof script + run (AC2)        Mid (ORDINARY_IMPLEMENTATION), attempt 3 FAIL: nemotron3:33b, diversity 3/3, links 0/3 (need 2). .harness/evidence/M10c4-T2-proof.log, M10c4-T2-replies.json. Script server/scripts/source-diversity-proof.sh is in the tree, unverified and uncommitted.
+
+Remaining (handoff, turn budget reached):
+1. Verify and commit the proof script on its own (its counting matched the replies JSON on the orchestrator's read).
+2. New task T3: revise the systemNote link guidance (e.g. copy links only from the listed results, cite at least three different sources, one link per distinct source, never rewrite a host) keeping M10c4-AC1 assertions green; route Top (NO_TEST_ORACLE: only the non-deterministic live run judges it). Then re-run the proof.
+3. If the link bar still fails after the ladder, escalate: the resident model may not copy URLs faithfully enough for a 2-of-3 bar (human decision).
 
 ### Validation
 
