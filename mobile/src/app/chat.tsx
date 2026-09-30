@@ -67,6 +67,7 @@ import type { WebSwitchState } from "@/ui/webSwitch";
 import { createConversationStore } from "@/store/conversationStore";
 import type { Conversation } from "@/store/conversationStore";
 import { asyncStoragePort } from "@/store/asyncStorage";
+import { createIconCache } from "@/store/iconCache";
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -86,6 +87,16 @@ export default function ChatScreen() {
   const router = useRouter();
   const clientRef = useRef(createAPIClient());
   const storeRef = useRef(createConversationStore(asyncStoragePort));
+  // Site logos come from the Mac only. The token is set here too, so a logo
+  // requested before the mount effect has run does not get a 401.
+  const iconCacheRef = useRef(
+    createIconCache(asyncStoragePort, async (host) => {
+      const token = await getToken();
+      if (!token) return null;
+      clientRef.current.setToken(token);
+      return clientRef.current.siteIcon(host);
+    }),
+  );
 
   const loadConversation = useCallback(async () => {
     if (!id) {
@@ -401,7 +412,13 @@ export default function ChatScreen() {
                   >
                     {item.content.length > 0 &&
                       (item.role === "assistant" ? (
-                        <MarkdownText text={item.content} style={styles.messageText} />
+                        <MarkdownText
+                          text={item.content}
+                          style={styles.messageText}
+                          sources={item.sources}
+                          iconCache={iconCacheRef.current}
+                          onOpenSource={handleOpenSource}
+                        />
                       ) : (
                         <Text style={styles.messageText}>{item.content}</Text>
                       ))}

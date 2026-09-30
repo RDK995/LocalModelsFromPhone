@@ -1,6 +1,8 @@
 /**
  * Renders the tree from parseMarkdown as nested <Text> (FR26). Links are plain,
- * non-tappable text (FR27, this milestone). Pure JS, Expo Go compatible.
+ * non-tappable text (FR27); a link that matches one of the reply's saved
+ * sources is followed by that site's logo, and only the logo is tappable
+ * (see SourceLogo). Pure JS, Expo Go compatible.
  */
 
 import React, { useMemo } from "react";
@@ -8,11 +10,21 @@ import { Platform, StyleSheet, Text, View } from "react-native";
 import type { StyleProp, TextStyle } from "react-native";
 import { parseMarkdown } from "./markdown";
 import type { Block, Inline } from "./markdown";
+import { presentLink } from "./inlineLink";
+import type { LinkSource } from "./sourceLinks";
+import { SourceLogo } from "./SourceLogo";
+import type { IconCache } from "@/store/iconCache";
+
+type LinkContext = {
+  sources?: LinkSource[];
+  iconCache?: IconCache;
+  onOpenSource?: (url: string) => void;
+};
 
 const BASE_FONT_SIZE = 14;
 const MONO = Platform.select({ ios: "Menlo", default: "monospace" });
 
-function renderInline(nodes: Inline[]): React.ReactNode[] {
+function renderInline(nodes: Inline[], ctx: LinkContext): React.ReactNode[] {
   return nodes.map((node, i) => {
     switch (node.type) {
       case "text":
@@ -20,13 +32,13 @@ function renderInline(nodes: Inline[]): React.ReactNode[] {
       case "bold":
         return (
           <Text key={i} style={styles.bold}>
-            {renderInline(node.children)}
+            {renderInline(node.children, ctx)}
           </Text>
         );
       case "italic":
         return (
           <Text key={i} style={styles.italic}>
-            {renderInline(node.children)}
+            {renderInline(node.children, ctx)}
           </Text>
         );
       case "code":
@@ -36,24 +48,45 @@ function renderInline(nodes: Inline[]): React.ReactNode[] {
           </Text>
         );
       case "link":
-        return <Text key={i}>{renderInline(node.children)}</Text>;
+      {
+        const presented = presentLink(node.url, ctx.sources);
+        if (presented.kind === "source" && ctx.iconCache && ctx.onOpenSource) {
+          return (
+            <Text key={i}>
+              {renderInline(node.children, ctx)}{" "}
+              <SourceLogo
+                host={presented.host}
+                url={presented.url}
+                iconCache={ctx.iconCache}
+                onOpen={ctx.onOpenSource}
+              />
+            </Text>
+          );
+        }
+        return <Text key={i}>{renderInline(node.children, ctx)}</Text>;
+      }
     }
   });
 }
 
-function renderBlock(block: Block, i: number, style: StyleProp<TextStyle>) {
+function renderBlock(
+  block: Block,
+  i: number,
+  style: StyleProp<TextStyle>,
+  ctx: LinkContext,
+) {
   switch (block.type) {
     case "paragraph":
       return (
         <Text key={i} style={style}>
-          {renderInline(block.children)}
+          {renderInline(block.children, ctx)}
         </Text>
       );
     case "heading": {
       const size = BASE_FONT_SIZE + (block.level <= 3 ? (4 - block.level) * 2 : 0);
       return (
         <Text key={i} style={[style, styles.bold, { fontSize: size }]}>
-          {renderInline(block.children)}
+          {renderInline(block.children, ctx)}
         </Text>
       );
     }
@@ -65,7 +98,7 @@ function renderBlock(block: Block, i: number, style: StyleProp<TextStyle>) {
               <Text style={[style, styles.marker]}>
                 {block.ordered ? `${block.start + j}.` : "•"}
               </Text>
-              <Text style={[style, styles.listText]}>{renderInline(item.children)}</Text>
+              <Text style={[style, styles.listText]}>{renderInline(item.children, ctx)}</Text>
             </View>
           ))}
         </View>
@@ -80,7 +113,7 @@ function renderBlock(block: Block, i: number, style: StyleProp<TextStyle>) {
     case "quote":
       return (
         <View key={i} style={styles.quote}>
-          <Text style={[style, styles.quoteText]}>{renderInline(block.children)}</Text>
+          <Text style={[style, styles.quoteText]}>{renderInline(block.children, ctx)}</Text>
         </View>
       );
     case "table":
@@ -93,7 +126,7 @@ function renderBlock(block: Block, i: number, style: StyleProp<TextStyle>) {
                   key={c}
                   style={[style, styles.tableCell, r === 0 ? styles.bold : null]}
                 >
-                  {renderInline(cell)}
+                  {renderInline(cell, ctx)}
                 </Text>
               ))}
             </View>
@@ -108,12 +141,19 @@ function renderBlock(block: Block, i: number, style: StyleProp<TextStyle>) {
 export function MarkdownText({
   text,
   style,
+  sources,
+  iconCache,
+  onOpenSource,
 }: {
   text: string;
   style?: StyleProp<TextStyle>;
+  sources?: LinkSource[];
+  iconCache?: IconCache;
+  onOpenSource?: (url: string) => void;
 }) {
+  const ctx: LinkContext = { sources, iconCache, onOpenSource };
   const blocks = useMemo(() => parseMarkdown(text), [text]);
-  return <View>{blocks.map((block, i) => renderBlock(block, i, style))}</View>;
+  return <View>{blocks.map((block, i) => renderBlock(block, i, style, ctx))}</View>;
 }
 
 const styles = StyleSheet.create({

@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from "bun:test";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const chat = readFileSync(join(import.meta.dir, "..", "app", "chat.tsx"), "utf-8");
@@ -17,7 +17,7 @@ describe("chat.tsx uses MarkdownText for assistant replies", () => {
   });
   it("renders assistant content through it", () => {
     expect(chat).toContain(
-      "<MarkdownText text={item.content} style={styles.messageText} />"
+      "<MarkdownText\n                          text={item.content}\n                          style={styles.messageText}\n                          sources={item.sources}\n                          iconCache={iconCacheRef.current}\n                          onOpenSource={handleOpenSource}\n                        />"
     );
     expect(chat).toContain("item.role === \"assistant\"");
   });
@@ -47,5 +47,37 @@ describe("MarkdownText.tsx", () => {
     expect(md).not.toContain("onPress");
     expect(md).not.toContain("Linking");
     expect(md).not.toContain("accessibilityRole");
+  });
+});
+
+const logoPath = join(import.meta.dir, "SourceLogo.tsx");
+const logo = existsSync(logoPath) ? readFileSync(logoPath, "utf-8") : "";
+
+describe("source logos (FR27, M10c2-T3)", () => {
+  it("chat.tsx passes sources, iconCache and onOpenSource", () => {
+    expect(chat).toContain("sources={item.sources}");
+    expect(chat).toContain("iconCache={iconCacheRef.current}");
+    expect(chat).toContain("onOpenSource={handleOpenSource}");
+    expect(chat).toContain("createIconCache(asyncStoragePort");
+  });
+  it("MarkdownText uses presentLink and SourceLogo", () => {
+    expect(md).toMatch(/import\s*\{[^}]*\bpresentLink\b[^}]*\}\s*from\s*"\.\/inlineLink"/);
+    expect(md).toMatch(/import\s*\{\s*SourceLogo\s*\}\s*from\s*"\.\/SourceLogo"/);
+  });
+  it("SourceLogo uses logoDisplay and the icon cache, and never fetches", () => {
+    expect(logo).toContain("logoDisplay");
+    expect(logo).toContain("iconCache.get(");
+    expect(logo).toContain("iconCache.peek(");
+    expect(logo).not.toContain("fetch(");
+    expect(logo).not.toContain("http");
+  });
+  it("no ui or app file calls fetch( (baseline had none)", () => {
+    const dirs = [join(import.meta.dir), join(import.meta.dir, "..", "app")];
+    for (const dir of dirs) {
+      for (const f of readdirSync(dir)) {
+        if (!/\.tsx?$/.test(f) || f.endsWith(".test.ts")) continue;
+        expect(readFileSync(join(dir, f), "utf-8")).not.toContain("fetch(");
+      }
+    }
   });
 });

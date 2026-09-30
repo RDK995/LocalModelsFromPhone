@@ -7690,7 +7690,104 @@
           "evidence": []
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M10c2-T1",
+          "scope": "C1 helper: sourceLinks.ts normaliseLinkUrl/matchSource/siteHost",
+          "packet": ".harness/tasks/M10c2-T1.md",
+          "paths": [
+            "mobile/src/ui/sourceLinks.ts",
+            "mobile/src/ui/sourceLinks.test.ts"
+          ],
+          "requirements": [
+            "FR27"
+          ],
+          "criteria": [
+            "M10c-AC1"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "pure URL-matching functions with stated inputs and outputs"
+          },
+          "tests": "cd mobile && bun test src/ui/sourceLinks.test.ts && bun run typecheck && bun run lint",
+          "attempt_log": [
+            {
+              "role": "worker",
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "base": "d2bdb16",
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M10c2-T1-worker.log",
+              "note": "51 tests"
+            },
+            {
+              "role": "verifier",
+              "attempt": 1,
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M10c2-T1-verifier.log",
+              "note": "exit 0, 51 pass, typecheck and lint clean, tests not weakened"
+            }
+          ],
+          "attempts": 1,
+          "status": "ACCEPTED",
+          "commit": "af84383",
+          "constraints": [],
+          "depends_on": [],
+          "findings": []
+        },
+        {
+          "id": "M10c2-T2",
+          "scope": "C2 APIClient.siteIcon + C3 iconCache",
+          "packet": ".harness/tasks/M10c2-T2.md",
+          "paths": [
+            "mobile/src/api/client.ts",
+            "mobile/src/api/client.test.ts",
+            "mobile/src/store/iconCache.ts",
+            "mobile/src/store/iconCache.test.ts"
+          ],
+          "requirements": [
+            "FR27"
+          ],
+          "criteria": [
+            "M10c-AC1"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "client method plus persisted cache with in-flight de-duplication"
+          },
+          "tests": "cd mobile && bun test src/api/client.test.ts src/store/iconCache.test.ts && bun run typecheck && bun run lint",
+          "attempt_log": [
+            {
+              "role": "worker",
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "base": "d2bdb16",
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M10c2-T2-worker.log",
+              "note": "60 pass"
+            },
+            {
+              "role": "verifier",
+              "attempt": 3,
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M10c2-T2-verifier.log",
+              "note": "exit 0, 60 pass, typecheck and lint clean, tests not weakened"
+            }
+          ],
+          "attempts": 1,
+          "status": "ACCEPTED",
+          "commit": "469b4b3",
+          "constraints": [],
+          "depends_on": [],
+          "findings": []
+        }
+      ],
       "reviews": [],
       "findings": [],
       "validation": [],

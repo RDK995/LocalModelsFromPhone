@@ -476,3 +476,17 @@ fetches logos" over "globe icon only" (`.harness/requirements.md` FR27 and Decis
 only Mac component that already reaches arbitrary public sites under the FR21 guard, so icon
 fetching lives there rather than adding a second public-web client in C4-C7. Agreement: the human
 approved these architecture edits on 2026-09-30.
+
+### D-M10c2-1 — Globe fallback is the system globe glyph; phone "no logo" is remembered for the session only
+
+Milestone: M10c2
+Material: no
+Change: C1's fallback "bundled globe icon" (D-M10c-2) is rendered as the system globe glyph
+U+1F310 in a `<Text>` (`mobile/src/ui/SourceLogo.tsx`) rather than a bundled image asset. C3's icon
+cache (`mobile/src/store/iconCache.ts`) persists fetched logos per normalised host, but keeps a
+"none" result in memory only for the app session instead of persisting it, so a logo that failed
+because the Mac was briefly unreachable is retried on the next launch (the Mac's own negative cache
+still prevents re-fetching the site).
+Why: no new asset or dependency in Expo Go; `siteIcon` returns null for "no icon" and "Mac
+unreachable" alike, and persisting that would pin a globe permanently. No component boundary,
+technology or responsibility changes.
