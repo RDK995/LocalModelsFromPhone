@@ -207,6 +207,145 @@ class FallbackTests(unittest.TestCase):
             search.browser_search("q", 5, sync_playwright=lambda: PW())
         self.assertEqual(events, ["browser closed", "playwright stopped"])
 
+    def make_fake_pw_with_rows(self, evaluate_rows_per_call):
+        """
+        Factory to create a fake Playwright harness.
+        evaluate_rows_per_call: list of lists of row dicts
+                                Each element is a list of rows returned by one evaluate call
+        Returns: (PW class, events list, goto_count list)
+        """
+        events = []
+        goto_count = [0]
+        evaluate_call_index = [0]
+
+        class Page:
+            def set_default_timeout(self, ms):
+                pass
+
+            def goto(self, *a, **k):
+                goto_count[0] += 1
+
+            def wait_for_url(self, pattern, **k):
+                pass
+
+            def wait_for_selector(self, selector, **k):
+                pass
+
+            def evaluate(self, script):
+                idx = evaluate_call_index[0]
+                evaluate_call_index[0] += 1
+                if idx < len(evaluate_rows_per_call):
+                    return evaluate_rows_per_call[idx]
+                return []
+
+        class Ctx:
+            def new_page(self):
+                return Page()
+
+        class Browser:
+            def new_context(self, **k):
+                return Ctx()
+
+            def close(self):
+                events.append("browser closed")
+
+        class PW:
+            chromium = type("C", (), {"launch": staticmethod(lambda headless: Browser())})
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                events.append("playwright stopped")
+
+        return PW, events, goto_count
+
+    def test_scrape_duplicates_dropped(self):
+        # Two rows with the same href should result in one result
+        PW, events, goto_count = self.make_fake_pw_with_rows([
+            [
+                {"innerText": "Python", "textContent": "Python", "ariaLabel": "", "titleAttr": "", "href": "https://python.org", "snippet": "Official site"},
+                {"innerText": "Python", "textContent": "Python", "ariaLabel": "", "titleAttr": "", "href": "https://python.org", "snippet": "Duplicate"},
+            ]
+        ])
+        results = search.browser_search("python guide", 10, sync_playwright=lambda: PW())
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["url"], "https://python.org")
+        self.assertEqual(events, ["browser closed", "playwright stopped"])
+
+    def test_scrape_empty_title_row_dropped(self):
+        # Row with all empty title fields should be dropped
+        PW, events, goto_count = self.make_fake_pw_with_rows([
+            [
+                {"innerText": "", "textContent": "", "ariaLabel": "", "titleAttr": "", "href": "https://example.org", "snippet": "Snippet"},
+                {"innerText": "Good Result", "textContent": "Good Result", "ariaLabel": "", "titleAttr": "", "href": "https://good.org", "snippet": "Useful"},
+            ]
+        ])
+        results = search.browser_search("result guide", 10, sync_playwright=lambda: PW())
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["url"], "https://good.org")
+        self.assertEqual(events, ["browser closed", "playwright stopped"])
+
+    def test_scrape_bing_url_dropped(self):
+        # Rows with bing.com URLs should be dropped
+        PW, events, goto_count = self.make_fake_pw_with_rows([
+            [
+                {"innerText": "Bing Result", "textContent": "Bing Result", "ariaLabel": "", "titleAttr": "", "href": "https://www.bing.com/ck/a?u=a1aHR0cHM6Ly93d3cuYmluZy5jb20v&p=1", "snippet": ""},
+                {"innerText": "Good Result", "textContent": "Good Result", "ariaLabel": "", "titleAttr": "", "href": "https://example.org", "snippet": "Useful"},
+            ]
+        ])
+        results = search.browser_search("result guide", 10, sync_playwright=lambda: PW())
+        # The bing.com URLs should decode to bing.com and be dropped
+        # We expect only the good result
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["url"], "https://example.org")
+        self.assertEqual(events, ["browser closed", "playwright stopped"])
+
+    def test_scrape_results_capped_at_max_results(self):
+        # 10 rows but max_results=3 should return only 3
+        rows = [
+            {"innerText": f"Result {i}", "textContent": f"Result {i}", "ariaLabel": "", "titleAttr": "", "href": f"https://example{i}.org", "snippet": "result"}
+            for i in range(10)
+        ]
+        PW, events, goto_count = self.make_fake_pw_with_rows([rows])
+        results = search.browser_search("result guide", 3, sync_playwright=lambda: PW())
+        self.assertEqual(len(results), 3)
+        self.assertEqual(results[0]["url"], "https://example0.org")
+        self.assertEqual(results[1]["url"], "https://example1.org")
+        self.assertEqual(results[2]["url"], "https://example2.org")
+        self.assertEqual(events, ["browser closed", "playwright stopped"])
+
+    def test_scrape_relevance_guard_two_gotos(self):
+        # First page has no query words, second page does
+        # Should call goto exactly twice
+        PW, events, goto_count = self.make_fake_pw_with_rows([
+            [
+                {"innerText": "Unrelated", "textContent": "Unrelated", "ariaLabel": "", "titleAttr": "", "href": "https://unrelated.org", "snippet": "Not relevant"},
+            ],
+            [
+                {"innerText": "Python Guide", "textContent": "Python Guide", "ariaLabel": "", "titleAttr": "", "href": "https://python.org", "snippet": "python tutorial"},
+            ]
+        ])
+        results = search.browser_search("python guide", 10, sync_playwright=lambda: PW())
+        self.assertEqual(goto_count[0], 2)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["url"], "https://python.org")
+        self.assertEqual(events, ["browser closed", "playwright stopped"])
+
+    def test_scrape_relevance_guard_one_goto(self):
+        # First page already has query words
+        # Should call goto exactly once
+        PW, events, goto_count = self.make_fake_pw_with_rows([
+            [
+                {"innerText": "Python Guide", "textContent": "Python Guide", "ariaLabel": "", "titleAttr": "", "href": "https://python.org", "snippet": "python tutorial"},
+            ]
+        ])
+        results = search.browser_search("python guide", 10, sync_playwright=lambda: PW())
+        self.assertEqual(goto_count[0], 1)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["url"], "https://python.org")
+        self.assertEqual(events, ["browser closed", "playwright stopped"])
+
 
 class CliTests(unittest.TestCase):
     def run_cli(self, *args):
