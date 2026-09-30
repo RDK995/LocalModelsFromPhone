@@ -490,3 +490,23 @@ still prevents re-fetching the site).
 Why: no new asset or dependency in Expo Go; `siteIcon` returns null for "no icon" and "Mac
 unreachable" alike, and persisting that would pin a globe permanently. No component boundary,
 technology or responsibility changes.
+
+### D-M10c3-1 — FR29 readable tables are realised by C1
+
+Milestone: M10c3 (planned 2026-09-30)
+Material: no
+Change: Requirement Coverage addition FR29 -> C1. Table cell alignment and the two-column grid /
+three-or-more-column card layout live in C1's markdown parser and renderer (`mobile/src/ui/`),
+alongside FR26.
+Why: FR29 was added after this architecture was agreed; it is a rendering change inside C1's
+existing responsibility (chat view). No component boundary, technology or responsibility changes.
+
+### D-M10c4-1 — FR30 source-diversity guidance is realised by C12
+
+Milestone: M10c4 (planned 2026-09-30)
+Material: no
+Change: Requirement Coverage addition FR30 -> C12. The FR30 guidance is added to the web
+instructions C12 already gives the model with the current-date note (`server/src/web/`); C6's
+tool loop and its 10-call cap are unchanged, and no server-side check or re-prompt is added.
+Why: FR30 was added after this architecture was agreed; C12 already owns the model-facing web
+instructions (FR19 date note). No component boundary, technology or responsibility changes.

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M10c2",
+  "current_milestone": "M10c3",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -29,7 +29,9 @@
     "FR24": "M13",
     "FR26": "M10b",
     "FR27": "M10c2",
-    "FR28": "M10d"
+    "FR28": "M10d",
+    "FR29": "M10c3",
+    "FR30": "M10c4"
   },
   "milestones": {
     "M1": {
@@ -7942,6 +7944,117 @@
       ],
       "depends_on": [
         "M10c1"
+      ]
+    },
+    "M10c3": {
+      "id": "M10c3",
+      "title": "Tables in answers line up under their headings and stay readable at phone width",
+      "outcome": "Every markdown table in an assistant answer - web or not, streaming or already saved - shows each body cell under its own column heading (short rows padded, surplus cells joined into the last column, nothing dropped or shifted); a two-column table renders as a grid and a table of three or more columns as one card per body row with \"heading: value\" lines, so nothing is squeezed and nothing scrolls sideways. The cause of the 2026-09-30 misalignment is diagnosed and pinned by a test. Planned 2026-09-30 from the owner-reported follow-ups under M10c1 (human decision: built after M10c2, before M10d); separate from M10c4 because the two are independently demonstrable outcomes in different halves (phone renderer vs. server web instructions). Operational-complexity signals: none (one subsystem, C1 renderer; about two production files; no automated live proof).",
+      "architecture": "C1",
+      "requirements": [
+        "FR29"
+      ],
+      "traces": "AC23",
+      "status": "TODO",
+      "review_cycles": 0,
+      "review_override": null,
+      "baseline": {
+        "commit": "",
+        "branch": ""
+      },
+      "as_built": {
+        "artifact": null,
+        "result": "PENDING"
+      },
+      "criteria": [
+        {
+          "id": "M10c3-AC1",
+          "text": "Unit tests: a table shaped like the 2026-09-30 phone screenshot (trend, description, source columns) renders each value under its own heading, and the diagnosed cause of that misalignment (model output shape vs. the FR26 renderer) is covered by a test that fails on the pre-fix code.",
+          "status": "PENDING",
+          "evidence": []
+        },
+        {
+          "id": "M10c3-AC2",
+          "text": "Unit tests: a body row with fewer cells than the header row is padded with empty cells, and a body row with more cells keeps the surplus text joined into the last column; no text is dropped and no value moves to another column.",
+          "status": "PENDING",
+          "evidence": []
+        },
+        {
+          "id": "M10c3-AC3",
+          "text": "Unit tests: a two-column table renders as a grid, and a table of three or more columns renders as one card per body row listing \"heading: value\" per column on its own line; inline formatting and links inside cells render as in FR26/FR27.",
+          "status": "PENDING",
+          "evidence": []
+        },
+        {
+          "id": "M10c3-AC4",
+          "text": "Unit tests: a table still streaming (header only, or half a body row) renders without error, and a saved (reopened) reply's table renders the same way as a live one.",
+          "status": "PENDING",
+          "evidence": []
+        },
+        {
+          "id": "M10c3-AC5",
+          "text": "Owner's phone observation in Expo Go (recorded in evidence): an answer containing a three-or-more-column table shows one card per row with every value under its own heading, and a two-column table shows as an aligned grid, with no sideways scrolling.",
+          "status": "PENDING",
+          "evidence": []
+        }
+      ],
+      "tasks": [],
+      "reviews": [],
+      "findings": [],
+      "validation": [],
+      "planned_validation": "cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint",
+      "follow_ups": [
+        "Source: owner-reported table follow-up recorded under M10c1 (.harness/archive/M10c1.md, Follow-ups).",
+        "Architecture deviation D-M10c3-1 (Material: no) records the Requirement Coverage addition FR29 -> C1."
+      ],
+      "complexity_signals": []
+    },
+    "M10c4": {
+      "id": "M10c4",
+      "title": "Broad web questions draw on at least three different websites",
+      "outcome": "With the web switch on, the instructions the server gives the model alongside the FR19 date note tell it that a broad or open-ended question is searched with more than one query, without the exact date in the query, reading pages from at least three different websites before answering and citing the pages it relied on, while a narrow question need not search more than it needs; the server does not check or re-prompt and the 10-call cap is unchanged. Proven live on the Mac: most broad prompts come back with sources from three or more sites. Planned 2026-09-30 from the owner-reported follow-ups under M10c1 (human decision: built after M10c2, before M10d); separate from M10c3 (independent outcome). Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal); seam checked - the implementation is instruction text in C12 only, and splitting the live proof from it would leave a part with no real-entry-point criterion, so it stays one milestone.",
+      "architecture": "C12",
+      "requirements": [
+        "FR30"
+      ],
+      "traces": "AC24",
+      "status": "TODO",
+      "review_cycles": 0,
+      "review_override": null,
+      "baseline": {
+        "commit": "",
+        "branch": ""
+      },
+      "as_built": {
+        "artifact": null,
+        "result": "PENDING"
+      },
+      "criteria": [
+        {
+          "id": "M10c4-AC1",
+          "text": "Unit test: with web search on, the server's web instructions to the model (given alongside the FR19 date note) contain the FR30 guidance - for a broad or open-ended question search with more than one query, do not put the exact date into search queries, read pages from at least three different websites before answering, and cite the pages relied on; a narrow factual question need not search more than it needs - and with web search off no such guidance is given; the existing 10-tool-call cap tests pass unchanged and the server adds no source-diversity check or re-prompt.",
+          "status": "PENDING",
+          "evidence": []
+        },
+        {
+          "id": "M10c4-AC2",
+          "text": "Live on the Mac with the owner's usual tools-capable model resident (named in the evidence) and the web switch on, through the server's chat route: of 3 broad prompts (including \"What are today's news trends\"), at least 2 produce replies whose saved sources span at least 3 distinct websites (host compared ignoring a leading www.); the prompts, the per-reply distinct hosts and the pass count are recorded.",
+          "status": "PENDING",
+          "evidence": []
+        }
+      ],
+      "tasks": [],
+      "reviews": [],
+      "findings": [],
+      "validation": [],
+      "planned_validation": "cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck && bash scripts/source-diversity-proof.sh",
+      "follow_ups": [
+        "Source: owner-reported single-site follow-up recorded under M10c1 (.harness/archive/M10c1.md, Follow-ups).",
+        "Architecture deviation D-M10c4-1 (Material: no) records the Requirement Coverage addition FR30 -> C12.",
+        "The live proof loads a model and depends on the internet and a non-deterministic model; the pass bar is 2 of 3 by human decision."
+      ],
+      "complexity_signals": [
+        "IMPLEMENTATION_PLUS_LIVE_PROOF"
       ]
     },
     "M10d": {

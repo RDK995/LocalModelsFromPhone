@@ -202,72 +202,7 @@ The server exposes GET /v1/icon?host=<site> behind the bearer token (C4), which 
 
 Owns: none owned (FR27 owned by M10c2). Traces to: AC21 (Mac icon fetch and guard), FR27 (Mac half; FR27 owned by M10c2).
 
-### Architecture
-
-C4, C12, C13 (plus search/API.md)
-
-### As-Built
-
-.harness/as-built/M10c1.md — RECORDED — 13/14 files attributed; components C4,C12,C13; 3 edges; claim mismatches NONE
-
-### Acceptance Criteria
-
-- [x] **M10c1-AC1**: GET /v1/icon?host=<public site> on the server with the bearer token returns that site's own icon as image bytes (fetched by the search service from the site itself, no third-party logo service), a second request is served from the Mac cache without contacting the site, a host that is or redirects to a local, LAN or tailnet address is refused and returns no_icon, a site with no icon returns no_icon, and a request without the token is 401.
-
-### Baseline
-
-b8ec398b0bdaa3dff72bef6a6ba85d939b320e4d on m10c-source-logos (clean tree at pickup; branch already opened for M10c).
-
-### Evidence
-
-Pickup check 2026-09-30: 1 criterion (size OK); shape OK (HTTP entry point GET /v1/icon on the server); one signal IMPLEMENTATION_PLUS_LIVE_PROOF, seam already checked by the human split decision. Tasks: T1 C13 icon fetch/cache/route + API.md (Top, SECURITY); T2 C12 icon() + C4 GET /v1/icon (Mid); T3 live proof server/scripts/icon-route-proof.sh   Mid, attempt 3, worker FAIL on a product defect only (server 400 bad_host for bare `localhost`, from an over-strict T2 packet dot rule); fixed by T4; verifier re-run (no new rung, script unchanged) PASS, exit 0 — .harness/evidence/M10c1-T3-verifier.log; commit 37bb8fb. Live: github.com icon image/png + second request from cache (one fetch line); localhost, app.localhost, 100.100.100.100.nip.io -> 404 no_icon (blocked); example.com -> 404 no_icon (none); 401 without/wrong token; no third-party logo service in src. SKIP: localtest.me and 10.0.0.1.nip.io (wildcard DNS does not resolve on this network) — LAN and redirect-to-local refusal covered by search unit tests (T1).
-T4 C4 isValidIconHost accepts single-label hosts   Cheap, attempt 1, PASS; red .harness/evidence/M10c1-T4-red.log; verifier PASS (161 pass, typecheck clean) — .harness/evidence/M10c1-T4-verifier.log; commit 33496c5
-
-### Validation
-
-`cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd search && bun test) && (cd server && bun test && bun run typecheck) && bash server/scripts/icon-route-proof.sh` — reviewer runs once; needs internet; two wildcard-DNS cases SKIP where they do not resolve. Artifacts: .harness/evidence/M10c1-T1-verifier.log, M10c1-T2-verifier.log, M10c1-T4-verifier.log, M10c1-T3-verifier.log
-
-### Review
-
-Cycle 1: PASS — tier Top, model opus, reason_code SECURITY (T1 address-guard refactor and icon fetch), scope WHOLE_MILESTONE, diff b8ec398..14098de. Per-criterion: M10c1-AC1 PASS. Findings: 0 BLOCKER, 0 IMPORTANT, 2 OPTIONAL (recorded under Follow-ups). Reviewer re-ran milestone validation, exit 0 — .harness/evidence/M10c1-review.log. No report written (PASS).
-
-Split record (from M10c): Human decision 2026-09-30: the owner chose Option A (split exactly as proposed in the escalation record). M10c replaced by M10c1 (Mac half: C4, C12, C13, search/API.md; one new criterion M10c1-AC1 worded as proposed) and M10c2 (phone half: C1, C2, C3; keeps M10c-AC1 unchanged, depends on M10c1). Criteria conserved: original 1 (M10c-AC1) -> M10c2 unchanged; M10c1-AC1 added by the human's decision.
-
-Original M10c pickup escalation, preserved:
-
-Human Escalation (BLOCKED):
-
-Problem:
-Pickup size/shape check (2026-09-30): 1 criterion (size OK), shape OK (live proof through real entry points), but three operational-complexity signals: IMPLEMENTATION_PLUS_LIVE_PROOF (Mac + phone live proof with a network observation); PRODUCTION_FILES_GT_8 (about 11 expected production files: search/src/icon fetcher (new), search/src/http/server.ts, search/API.md, server C12 search client, server/src/http/server.ts, mobile/src/api/client.ts, mobile/src/api/expoFetchClient.ts, a new phone icon cache in mobile/src/store, source-URL matching in mobile/src/ui/markdown.ts, mobile/src/ui/MarkdownText.tsx, mobile/src/app/chat.tsx, plus scripts/source-logo-proof.sh); MULTIPLE_OUTCOMES (the Mac serving a site's logo through a token-protected, guarded, cached GET /v1/icon is demonstrable over HTTP on its own, independently of the phone rendering it). Two or more signals require a split, but the milestone has exactly one acceptance criterion (M10c-AC1) and the split rule requires every criterion to go unchanged into exactly one part with none added. A split therefore cannot be made without adding or rewording criteria, which is a re-cut and needs human agreement.
-
-Requirement/milestone affected:
-M10c / M10c-AC1 (FR27, AC21).
-
-Attempts made:
-1. Read M10c entry, FR27, AC21, Edge Cases and deviation D-M10c-2; counted criteria (1) and the six named signals from reconnaissance of search/, server/src and mobile/src.
-2. Looked for a criterion-conserving seam: M10c-AC1 is a single sentence spanning the phone rendering and the Mac's icon fetch; any part without it would have zero criteria (not independently reviewable), so no split conserves the criteria.
-3. No task routed and no branch work done: blocked before any task per the orchestrator rule; branch m10c-source-logos opened at 8e71dc9 for the record only; Baseline left blank because the milestone has not started.
-
-Remaining issue:
-Human decision between (A) re-cut into two milestones with one new criterion for the Mac half, or (B) run M10c as one milestone as written, accepting its size.
-
-Recommended decision:
-(A) Re-cut: M10c1 - 'The Mac serves a website's own logo through a token-protected route' (C4, C12, C13; search/API.md), with one new criterion: 'GET /v1/icon?host=<public site> on the server with the bearer token returns that site's own icon as image bytes (fetched by the search service from the site itself, no third-party logo service), a second request is served from the Mac cache without contacting the site, a host that is or redirects to a local, LAN or tailnet address is refused and returns no_icon, a site with no icon returns no_icon, and a request without the token is 401.' M10c2 - 'Links to a web answer's sources show the site's own logo and open in Safari' (C1, C2, C3), keeping M10c-AC1 unchanged. Each part then has one signal (IMPLEMENTATION_PLUS_LIVE_PROOF). (B) is workable but likely needs several handoffs and a long review.
-
-### Review Cycles
-
-0
-
-### Follow-ups
-
-- Architecture deviation D-M10c-2 (the Mac fetches each site's icon: C13 GET /v1/icon behind C4 GET /v1/icon; the phone talks only to the Mac) is recorded as Material: yes and approved by the human on 2026-09-30; it supersedes D-M10c-1, which is withdrawn and must not be implemented.
-- search/API.md must document the new GET /v1/icon route (FR25).
-- Split from M10c 2026-09-30 by human decision (Option A); original pickup escalation preserved under Review.
-- Archived M10 to .harness/archive/M10.md (595 -> 536 lines). milestones.md stays above 400: M10b (most recently settled), M10c-M13 (open) and M5a (BLOCKED) are protected.
-- Owner-reported 2026-09-30 (phone screenshot; outside M10c1 scope, not implemented): markdown tables in assistant answers render misaligned (body-row cells shift one column left: trend+description in column 1, source ref under 'What's happening', Source column empty) and a 3-column table is too cramped at phone width. Needs correct cell alignment plus a phone-friendly fallback for wide tables (e.g. stacked per-row layout). Cause (model output vs MarkdownText renderer, FR26/M10b) not yet diagnosed.
-- Owner-reported 2026-09-30 (phone screenshots; outside M10c1 scope, not implemented): a broad web-enabled prompt ('What are today's news trends') produced an answer drawn from one site: one web_search with the exact date in the query, one read_page of an AI-news round-up, and all ten cited sources were links from that page. Broad questions should draw on several distinct sites and cover the topic as asked. Cause (query shaping, single read, no source-diversity guidance in the M9 tool-loop prompt) not yet diagnosed.
-- Review cycle 1 OPTIONAL: server/src/web/tools.ts returns a three-way IconResult (ok / none / unavailable with timeout flag) where D-M10c-2 records C12 as `{bytes, contentType} | null`; the three-way shape is what D-M10c-2's own 502/504 passthrough needs. Amend the C12 line of D-M10c-2 in .harness/architecture.md so the record matches what was built.
-- Review cycle 1 OPTIONAL: server GET /v1/icon 200 response (server/src/http/server.ts) omits `X-Content-Type-Options: nosniff`, which the search service sets; add it as defence in depth for bytes from arbitrary websites.
+Detail: `.harness/archive/M10c1.md`
 
 ## M10c2 — Links to a web answer's sources show the site's own logo and open in Safari
 
@@ -329,6 +264,102 @@ Cycle 1: PASS — tier Mid, model sonnet, reason_code ORDINARY_IMPLEMENTATION (h
 - Production LaunchAgent com.harness.search was found running code from before M10c1 (404 for every /v1/icon); M10c2-T4's proof now restarts it. Consider whether the deploy/restart path for com.harness.search should pick up new code automatically (ops, C9).
 - Architecture deviation D-M10c2-1 (Material: no): globe fallback is the system glyph U+1F310; the phone remembers "no logo" for the app session only.
 - milestones.md is still past 400 lines after archiving M10b; nothing else is archivable yet (M10c1 most recently settled, M5a BLOCKED, the rest TODO).
+
+## M10c3 — Tables in answers line up under their headings and stay readable at phone width
+
+Status: TODO
+
+### Outcome
+
+Every markdown table in an assistant answer - web or not, streaming or already saved - shows each body cell under its own column heading (short rows padded, surplus cells joined into the last column, nothing dropped or shifted); a two-column table renders as a grid and a table of three or more columns as one card per body row with "heading: value" lines, so nothing is squeezed and nothing scrolls sideways. The cause of the 2026-09-30 misalignment is diagnosed and pinned by a test. Planned 2026-09-30 from the owner-reported follow-ups under M10c1 (human decision: built after M10c2, before M10d); separate from M10c4 because the two are independently demonstrable outcomes in different halves (phone renderer vs. server web instructions). Operational-complexity signals: none (one subsystem, C1 renderer; about two production files; no automated live proof).
+
+Owns: FR29. Traces to: AC23.
+
+### Architecture
+
+C1
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M10c3-AC1**: Unit tests: a table shaped like the 2026-09-30 phone screenshot (trend, description, source columns) renders each value under its own heading, and the diagnosed cause of that misalignment (model output shape vs. the FR26 renderer) is covered by a test that fails on the pre-fix code.
+- [ ] **M10c3-AC2**: Unit tests: a body row with fewer cells than the header row is padded with empty cells, and a body row with more cells keeps the surplus text joined into the last column; no text is dropped and no value moves to another column.
+- [ ] **M10c3-AC3**: Unit tests: a two-column table renders as a grid, and a table of three or more columns renders as one card per body row listing "heading: value" per column on its own line; inline formatting and links inside cells render as in FR26/FR27.
+- [ ] **M10c3-AC4**: Unit tests: a table still streaming (header only, or half a body row) renders without error, and a saved (reopened) reply's table renders the same way as a live one.
+- [ ] **M10c3-AC5**: Owner's phone observation in Expo Go (recorded in evidence): an answer containing a three-or-more-column table shows one card per row with every value under its own heading, and a two-column table shows as an aligned grid, with no sideways scrolling.
+
+### Baseline
+
+
+### Evidence
+
+
+### Validation
+
+Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint`
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+- Source: owner-reported table follow-up recorded under M10c1 (.harness/archive/M10c1.md, Follow-ups).
+- Architecture deviation D-M10c3-1 (Material: no) records the Requirement Coverage addition FR29 -> C1.
+
+## M10c4 — Broad web questions draw on at least three different websites
+
+Status: TODO
+
+### Outcome
+
+With the web switch on, the instructions the server gives the model alongside the FR19 date note tell it that a broad or open-ended question is searched with more than one query, without the exact date in the query, reading pages from at least three different websites before answering and citing the pages it relied on, while a narrow question need not search more than it needs; the server does not check or re-prompt and the 10-call cap is unchanged. Proven live on the Mac: most broad prompts come back with sources from three or more sites. Planned 2026-09-30 from the owner-reported follow-ups under M10c1 (human decision: built after M10c2, before M10d); separate from M10c3 (independent outcome). Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal); seam checked - the implementation is instruction text in C12 only, and splitting the live proof from it would leave a part with no real-entry-point criterion, so it stays one milestone.
+
+Owns: FR30. Traces to: AC24.
+
+### Architecture
+
+C12
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M10c4-AC1**: Unit test: with web search on, the server's web instructions to the model (given alongside the FR19 date note) contain the FR30 guidance - for a broad or open-ended question search with more than one query, do not put the exact date into search queries, read pages from at least three different websites before answering, and cite the pages relied on; a narrow factual question need not search more than it needs - and with web search off no such guidance is given; the existing 10-tool-call cap tests pass unchanged and the server adds no source-diversity check or re-prompt.
+- [ ] **M10c4-AC2**: Live on the Mac with the owner's usual tools-capable model resident (named in the evidence) and the web switch on, through the server's chat route: of 3 broad prompts (including "What are today's news trends"), at least 2 produce replies whose saved sources span at least 3 distinct websites (host compared ignoring a leading www.); the prompts, the per-reply distinct hosts and the pass count are recorded.
+
+### Baseline
+
+
+### Evidence
+
+
+### Validation
+
+Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck && bash scripts/source-diversity-proof.sh`
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+- Source: owner-reported single-site follow-up recorded under M10c1 (.harness/archive/M10c1.md, Follow-ups).
+- Architecture deviation D-M10c4-1 (Material: no) records the Requirement Coverage addition FR30 -> C12.
+- The live proof loads a model and depends on the internet and a non-deterministic model; the pass bar is 2 of 3 by human decision.
 
 ## M10d — A web answer's sources start folded as "Sources (n)", each its own tappable entry
 
