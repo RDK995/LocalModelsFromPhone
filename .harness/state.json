@@ -5348,7 +5348,7 @@
       ],
       "traces": "AC16 (browser fallback)",
       "status": "REVIEW",
-      "review_cycles": 0,
+      "review_cycles": 1,
       "review_override": null,
       "baseline": {
         "commit": "ad7570f5e0777549fb0f9b9607d4982575c4f4e6",
@@ -5487,10 +5487,133 @@
           ],
           "status": "ACCEPTED",
           "commit": "8c0bd3e"
+        },
+        {
+          "id": "M7b-C1",
+          "scope": "F1: decode_bing_href keeps *.microsoft.com results + test",
+          "tests": "see .harness/tasks/M7b-C1.md Tests",
+          "requirements": [
+            "FR20"
+          ],
+          "constraints": [],
+          "findings": [
+            "M7b-cycle1-F1"
+          ],
+          "criteria": [
+            "M7b-AC1"
+          ],
+          "paths": [
+            "search/helper/search.py",
+            "search/helper/test_search.py"
+          ],
+          "depends_on": [],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "small pure-function change / tests from stated assertions; offline unittest settles it"
+          },
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "evidence": ".harness/evidence/M7b-C1-verifier.log"
+            }
+          ],
+          "status": "ACCEPTED",
+          "commit": "4923d1f"
+        },
+        {
+          "id": "M7b-C2",
+          "scope": "F2: offline unit tests for the browser_search scraping loop",
+          "tests": "see .harness/tasks/M7b-C2.md Tests",
+          "requirements": [
+            "FR20"
+          ],
+          "constraints": [],
+          "findings": [
+            "M7b-cycle1-F2"
+          ],
+          "criteria": [
+            "M7b-AC1"
+          ],
+          "paths": [
+            "search/helper/test_search.py"
+          ],
+          "depends_on": [],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "small pure-function change / tests from stated assertions; offline unittest settles it"
+          },
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "evidence": ".harness/evidence/M7b-C2-verifier.log"
+            }
+          ],
+          "status": "ACCEPTED",
+          "commit": "e5e215c"
         }
       ],
-      "reviews": [],
-      "findings": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "CHANGES_REQUIRED",
+          "scope": "SUBSTANTIVE",
+          "tier": "Top",
+          "reason_code": "MILESTONE_REVIEW",
+          "diff_range": "ad7570f5e0777549fb0f9b9607d4982575c4f4e6..9b708b6",
+          "artifact": ".harness/reviews/M7b-cycle1.md",
+          "review_log": ".harness/evidence/M7b-review.log",
+          "per_criterion": {
+            "M7b-AC1": "PASS"
+          },
+          "findings": {
+            "BLOCKER": 0,
+            "IMPORTANT": 1,
+            "OPTIONAL": 1
+          },
+          "pre_correction": "b4faa0af6742599abc6998e40e24a0d18232adaa",
+          "correction_diff": "b4faa0af6742599abc6998e40e24a0d18232adaa..HEAD",
+          "correction_files": [
+            "search/helper/search.py",
+            "search/helper/test_search.py"
+          ],
+          "files_outside_findings": "none; search.py (decode_bing_href) is named by F1, test_search.py by F1 (new test) and F2. Plus .harness/ records.",
+          "cycle_validation": {
+            "command": "cd /Users/ryankenny/Projects/CodingHarnessv2 && search/helper/.venv/bin/python -m unittest discover -s search/helper -p 'test_*.py'",
+            "exit": 0,
+            "result": "33 tests OK",
+            "artifact": ".harness/evidence/M7b-C2-verifier.log",
+            "note": "live proofs and bun suites not re-run this cycle; the reviewer re-runs full milestone validation."
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "M7b-cycle1-F1",
+          "severity": "IMPORTANT",
+          "status": "CORRECTED",
+          "correction_task": "M7b-C1",
+          "report": ".harness/reviews/M7b-cycle1.md",
+          "commit": "4923d1f"
+        },
+        {
+          "id": "M7b-cycle1-F2",
+          "severity": "OPTIONAL",
+          "status": "CORRECTED",
+          "correction_task": "M7b-C2",
+          "report": ".harness/reviews/M7b-cycle1.md",
+          "commit": "e5e215c"
+        }
+      ],
       "validation": [
         {
           "command": "cd /Users/ryankenny/Projects/CodingHarnessv2 && search/helper/.venv/bin/python -m unittest discover -s search/helper -p 'test_*.py' && (cd search && bun test && bun run typecheck && bash scripts/fallback-proof.sh && bash scripts/search-proof.sh) && ! pgrep -f 'chrom.*headless'",
@@ -5499,7 +5622,7 @@
       ],
       "planned_validation": "Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd search && bun test && bun run typecheck && bash scripts/search-proof.sh)` with ddgs forced to fail/return nothing, then `! pgrep -f 'chrom.*headless'`",
       "follow_ups": [
-        "M7b-T3: no unit test drives the scraping loop to show an all-empty-title row is dropped; covered only by pick_title tests, the `if not title: continue` line, and the live fallback proof.",
+        "M7b-T3: (resolved in cycle 1 by M7b-C2 test_scrape_empty_title_row_dropped) no unit test drove the scraping loop to show an all-empty-title row is dropped.",
         "milestones.md is ~600 lines after archiving M6; nothing further is archivable (M7a is the most recently settled milestone; the rest are TODO/active/BLOCKED).",
         "M7c: when C13 kills the helper on timeout/abort mid-browser-search, Chromium children may outlive the killed helper (Playwright's finally will not run on SIGKILL). M7c's kill proof should also assert no headless Chromium remains.",
         "Browser fallback depends on Bing's live markup and behaviour from this IP (observed: unrelated result pages, empty title anchors, an rdr=1 redirect). search.py retries once with a query-word relevance guard; drift may break fallback-proof.sh.",

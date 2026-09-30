@@ -208,14 +208,20 @@ ad7570f5e0777549fb0f9b9607d4982575c4f4e6 on m7b-search-browser-fallback
 
 Cycle 1: CHANGES REQUIRED (SUBSTANTIVE), tier Top (opus) — .harness/reviews/M7b-cycle1.md (F1 IMPORTANT: decode_bing_href drops every *.microsoft.com result; F2 OPTIONAL: browser_search scraping loop has no unit test); M7b-AC1 PASS; reviewer validation exit 0 — .harness/evidence/M7b-review.log
 Pre-correction: b4faa0af6742599abc6998e40e24a0d18232adaa (9b708b6 plus the committed review report and log; no code change)
+Corrections (each verifier-confirmed, committed):
+- M7b-C1 F1 decode_bing_href keeps *.microsoft.com hosts (bing.com / *.bing.com exclusion kept; no other host rule added); new test_decode_bing_keeps_microsoft_hosts (support.microsoft.com and learn.microsoft.com, direct and Bing /ck/ wrapped) Red on the old code (verifier: AssertionError None != support.microsoft.com URL) then Green; 27 unittests OK — Cheap (BOUNDED_LOW_RISK), attempt 1 PASS — .harness/evidence/M7b-C1-verifier.log; 4923d1f
+- M7b-C2 F2 (OPTIONAL) six offline tests driving browser_search through a fake Playwright harness: dedup, empty-title drop, bing.com drop, max_results cap in order, relevance guard (exactly 2 gotos when first page irrelevant, exactly 1 when relevant), browser closed in each; tests only, search.py untouched; verifier broke dedup and relevance guard in scratch copies and the tests failed; 33 unittests OK — Cheap (BOUNDED_LOW_RISK), attempt 1 PASS — .harness/evidence/M7b-C2-verifier.log; e5e215c
+Cycle-1 validation: `cd /Users/ryankenny/Projects/CodingHarnessv2 && search/helper/.venv/bin/python -m unittest discover -s search/helper -p 'test_*.py'` exit 0, 33 tests OK (verifier). Live fallback-proof.sh / search-proof.sh and bun suites not re-run this cycle (no TypeScript or script changed); the reviewer re-runs full milestone validation.
+Correction diff: git diff b4faa0af6742599abc6998e40e24a0d18232adaa HEAD
+Files changed by corrections: search/helper/search.py; search/helper/test_search.py (plus .harness/ records). No file outside the findings' scope: F1 names decode_bing_href in search.py and asks for a test; F2 names the test file.
 
 ### Review Cycles
 
-0
+1
 
 ### Follow-ups
 
-- M7b-T3: no unit test drives the scraping loop to show an all-empty-title row is dropped; covered only by pick_title tests, the `if not title: continue` line, and the live fallback proof.
+- M7b-T3: (resolved in cycle 1 by M7b-C2 test_scrape_empty_title_row_dropped) no unit test drove the scraping loop to show an all-empty-title row is dropped.
 - milestones.md is ~600 lines after archiving M6; nothing further is archivable (M7a is the most recently settled milestone; the rest are TODO/active/BLOCKED).
 - M7c: when C13 kills the helper on timeout/abort mid-browser-search, Chromium children may outlive the killed helper (Playwright's finally will not run on SIGKILL). M7c's kill proof should also assert no headless Chromium remains.
 - Browser fallback depends on Bing's live markup and behaviour from this IP (observed: unrelated result pages, empty title anchors, an rdr=1 redirect). search.py retries once with a query-word relevance guard; drift may break fallback-proof.sh.
