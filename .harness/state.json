@@ -5347,7 +5347,7 @@
         "FR20"
       ],
       "traces": "AC16 (browser fallback)",
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -5363,7 +5363,11 @@
           "id": "M7b-AC1",
           "text": "With ddgs forced to fail or to return nothing, the same request returns results with backend browser, and no headless Chromium process remains afterwards.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            ".harness/evidence/M7b-T2-verifier.log",
+            ".harness/evidence/M7b-T3-verifier.log",
+            ".harness/evidence/M7b-T1-verifier.log"
+          ]
         }
       ],
       "tasks": [
@@ -5400,7 +5404,7 @@
             }
           ],
           "status": "ACCEPTED",
-          "commit": null
+          "commit": "3e57675"
         },
         {
           "id": "M7b-T2",
@@ -5434,10 +5438,18 @@
               "result": "FAIL",
               "evidence": ".harness/evidence/M7b-T2-verifier.log",
               "detail": "fallback-proof.sh passes after T3; search-proof.sh allow-list change (AC6) absent from tree, search-proof.sh fails its env-read check"
+            },
+            {
+              "attempt": 4,
+              "tier": "Top",
+              "model": "opus",
+              "result": "PASS",
+              "evidence": ".harness/evidence/M7b-T2-verifier.log",
+              "detail": "Escalated: tier. Made the missing search-proof.sh allow-list change; kept fallback-proof.sh"
             }
           ],
-          "status": "IN_PROGRESS",
-          "commit": null
+          "status": "ACCEPTED",
+          "commit": "f3235cb"
         },
         {
           "id": "M7b-T3",
@@ -5474,15 +5486,24 @@
             }
           ],
           "status": "ACCEPTED",
-          "commit": null
+          "commit": "8c0bd3e"
         }
       ],
       "reviews": [],
       "findings": [],
-      "validation": [],
+      "validation": [
+        {
+          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2 && search/helper/.venv/bin/python -m unittest discover -s search/helper -p 'test_*.py' && (cd search && bun test && bun run typecheck && bash scripts/fallback-proof.sh && bash scripts/search-proof.sh) && ! pgrep -f 'chrom.*headless'",
+          "note": "Needs public network (Bing via headless Chromium, ddgs engines). fallback-proof.sh starts its own service on 127.0.0.1:7791 (FALLBACK_PROOF_PORT) under env -i with SEARCH_HELPER_FORCE_DDGS=fail then =empty, POSTs /v1/search, asserts backend browser + valid results, and asserts no new headless Chromium PID after each request and after stopping the service. Components confirmed exit 0 by verifiers: helper unittest 16 OK + forced live runs + bun test 127 + typecheck (.harness/evidence/M7b-T1-verifier.log); 26 unittests + fallback-proof ALL CASES PASSED (.harness/evidence/M7b-T3-verifier.log); fallback-proof + search-proof ALL CASES PASSED, no headless chromium, 7791 free (.harness/evidence/M7b-T2-verifier.log)."
+        }
+      ],
       "planned_validation": "Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd search && bun test && bun run typecheck && bash scripts/search-proof.sh)` with ddgs forced to fail/return nothing, then `! pgrep -f 'chrom.*headless'`",
       "follow_ups": [
-        "M7b-T3: no unit test drives the scraping loop to show an all-empty-title row is dropped; covered only by pick_title tests, the `if not title: continue` line, and the live fallback proof."
+        "M7b-T3: no unit test drives the scraping loop to show an all-empty-title row is dropped; covered only by pick_title tests, the `if not title: continue` line, and the live fallback proof.",
+        "milestones.md is ~600 lines after archiving M6; nothing further is archivable (M7a is the most recently settled milestone; the rest are TODO/active/BLOCKED).",
+        "M7c: when C13 kills the helper on timeout/abort mid-browser-search, Chromium children may outlive the killed helper (Playwright's finally will not run on SIGKILL). M7c's kill proof should also assert no headless Chromium remains.",
+        "Browser fallback depends on Bing's live markup and behaviour from this IP (observed: unrelated result pages, empty title anchors, an rdr=1 redirect). search.py retries once with a query-word relevance guard; drift may break fallback-proof.sh.",
+        "Opening brief: the M7a validation command exited 1 at baseline ad7570f although every sub-suite reported passing; the final `! lsof -nP -iTCP:7790 -sTCP:LISTEN` is the likely cause (something listening on 7790). Not investigated in M7b."
       ],
       "complexity_signals": [
         "CONCURRENCY_LIFECYCLE",

@@ -169,7 +169,7 @@ Cycle 1: PASS — reviewer tier Mid (sonnet), full milestone scope, diff 46a0750
 
 ## M7b — When ddgs fails, a headless browser answers the search and is closed afterwards
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -195,10 +195,14 @@ ad7570f5e0777549fb0f9b9607d4982575c4f4e6 on m7b-search-browser-fallback
 
 ### Evidence
 
+- M7b-T1 search/helper/search.py headless Chromium (Playwright, Bing cc=GB setlang=en-GB, locale en-GB) fallback when ddgs raises or is empty; backend browser; browser closed in finally inside the Playwright with block; SEARCH_HELPER_FORCE_DDGS=fail|empty test hook — Mid (ORDINARY_IMPLEMENTATION), attempt 3 PASS; verifier PASS — .harness/evidence/M7b-T1-verifier.log. Commit 3e57675.
+- M7b-T2 live proof search/scripts/fallback-proof.sh (own service on 7791, forced fail and empty through POST /v1/search, no new headless Chromium after each request and after stop) + search-proof.sh env-read allow-list admits SEARCH_HELPER_FORCE_DDGS — Mid attempt 3 FAIL (first run hit an empty Bing title; allow-list change absent from tree, search-proof.sh failed) → Top attempt 4 PASS (Escalated: tier); verifier PASS — .harness/evidence/M7b-T2-verifier.log. Commit f3235cb.
+- M7b-T3 browser results never carry an empty title (pick_title innerText > textContent > aria-label > title attr, else row dropped) — Cheap (BOUNDED_LOW_RISK), attempt 1 PASS; verifier PASS incl. fallback-proof ALL CASES PASSED — .harness/evidence/M7b-T3-verifier.log. Commit 8c0bd3e. Raised by T2's live run.
+- M7b-AC1: fallback-proof.sh ALL CASES PASSED for modes fail and empty (HTTP 200, backend browser, 5 results with titles and external https urls; pre-existing headless Chromium <none>; no new headless Chromium after request or after service stop) — .harness/evidence/M7b-T2-verifier.log.
 
 ### Validation
 
-Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd search && bun test && bun run typecheck && bash scripts/search-proof.sh)` with ddgs forced to fail/return nothing, then `! pgrep -f 'chrom.*headless'`
+`cd /Users/ryankenny/Projects/CodingHarnessv2 && search/helper/.venv/bin/python -m unittest discover -s search/helper -p 'test_*.py' && (cd search && bun test && bun run typecheck && bash scripts/fallback-proof.sh && bash scripts/search-proof.sh) && ! pgrep -f 'chrom.*headless'` — reviewer runs once. Needs public network (Bing via headless Chromium, ddgs engines). fallback-proof.sh starts its own service on 127.0.0.1:7791 (FALLBACK_PROOF_PORT) under env -i with SEARCH_HELPER_FORCE_DDGS=fail then =empty, POSTs /v1/search, asserts backend browser + valid results, and asserts no new headless Chromium PID after each request and after stopping the service. Components confirmed exit 0 by verifiers: helper unittest 16 OK + forced live runs + bun test 127 + typecheck (.harness/evidence/M7b-T1-verifier.log); 26 unittests + fallback-proof ALL CASES PASSED (.harness/evidence/M7b-T3-verifier.log); fallback-proof + search-proof ALL CASES PASSED, no headless chromium, 7791 free (.harness/evidence/M7b-T2-verifier.log).
 
 ### Review
 
@@ -210,6 +214,11 @@ Pending.
 
 ### Follow-ups
 
+- M7b-T3: no unit test drives the scraping loop to show an all-empty-title row is dropped; covered only by pick_title tests, the `if not title: continue` line, and the live fallback proof.
+- milestones.md is ~600 lines after archiving M6; nothing further is archivable (M7a is the most recently settled milestone; the rest are TODO/active/BLOCKED).
+- M7c: when C13 kills the helper on timeout/abort mid-browser-search, Chromium children may outlive the killed helper (Playwright's finally will not run on SIGKILL). M7c's kill proof should also assert no headless Chromium remains.
+- Browser fallback depends on Bing's live markup and behaviour from this IP (observed: unrelated result pages, empty title anchors, an rdr=1 redirect). search.py retries once with a query-word relevance guard; drift may break fallback-proof.sh.
+- Opening brief: the M7a validation command exited 1 at baseline ad7570f although every sub-suite reported passing; the final `! lsof -nP -iTCP:7790 -sTCP:LISTEN` is the likely cause (something listening on 7790). Not investigated in M7b.
 
 ## M7c — A search that cannot be answered or runs too long ends with a clear error and its helper killed
 

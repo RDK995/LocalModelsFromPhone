@@ -393,3 +393,16 @@ plain-language wording (FR16) instead of parsing the `error` string.
 Why: the load/unload failure reason is otherwise free text; a typed code lets C2 tell "model no
 longer installed" from "model failed to load" and "Ollama down" reliably. Additive field; no
 component boundary, technology or responsibility changes.
+
+### D-M7b-1 — Test-only `SEARCH_HELPER_FORCE_DDGS` hook on the search helper
+
+Milestone: M7b
+Material: no
+Change: C14 (`search/helper/search.py`) reads an optional environment variable
+`SEARCH_HELPER_FORCE_DDGS` (`fail` | `empty`) that makes only the ddgs step behave as if it raised
+or returned nothing, so the browser fallback (I19) can be proven live through C13's real
+`POST /v1/search` (the helper inherits C13's environment). Unset in normal operation. The browser
+fallback uses Bing's results page (`cc=GB`, `setlang=en-GB`, locale en-GB).
+Why: AC16 requires ddgs to be *forced* to fail or return nothing; an env hook is the smallest seam
+that exercises the real entry point. Test hook alongside the existing `SEARCH_PORT`; no component
+boundary, technology or responsibility changes.
