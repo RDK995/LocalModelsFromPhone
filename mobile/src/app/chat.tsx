@@ -39,8 +39,10 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
+  Switch,
+  Linking,
 } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { getToken } from "@/api/secureStoreToken";
 import { createAPIClient } from "@/api/expoFetchClient";
 import { stopGeneration, UNAUTHORIZED_MESSAGE } from "@/chat/chatController";
@@ -54,8 +56,13 @@ import {
   buildChatItems,
   thinkingToggleLabel,
   toggleExpanded,
+  stepLabel,
+  stepsToggleLabel,
+  sourceLabel,
 } from "@/ui/chatItems";
 import type { PendingTurn } from "@/ui/chatItems";
+import { webSwitchState } from "@/ui/webSwitch";
+import type { WebSwitchState } from "@/ui/webSwitch";
 import { createConversationStore } from "@/store/conversationStore";
 import type { Conversation } from "@/store/conversationStore";
 import { asyncStoragePort } from "@/store/asyncStorage";
@@ -72,6 +79,8 @@ export default function ChatScreen() {
   );
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [blockedMessage, setBlockedMessage] = useState<string | null>(null);
+  // null until the first capability check settles (switch disabled, no text).
+  const [webState, setWebState] = useState<WebSwitchState | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const router = useRouter();
   const clientRef = useRef(createAPIClient());
@@ -105,6 +114,54 @@ export default function ChatScreen() {
 
     initializeClient();
   }, [router]);
+
+  // Capability gate for the web switch (FR18): fetch the state and decide
+  // whether the resident model has tools. Failures disable the switch
+  // quietly (no Alert) so the rest of the screen keeps working.
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      const refresh = async () => {
+        try {
+          const token = await getToken();
+          if (!token) {
+            return;
+          }
+          clientRef.current.setToken(token);
+          const state = await clientRef.current.getState();
+          if (!cancelled) {
+            setWebState(webSwitchState(state.models, state.resident));
+          }
+        } catch {
+          if (!cancelled) {
+            setWebState(webSwitchState(null, null));
+          }
+        }
+      };
+      void refresh();
+      return () => {
+        cancelled = true;
+      };
+    }, [])
+  );
+
+  const handleWebSwitch = async (value: boolean) => {
+    if (!id) {
+      return;
+    }
+    try {
+      const updated = await storeRef.current.setWebSearch(id, value);
+      setConversation(updated);
+    } catch (error) {
+      console.error("Failed to update web search switch:", error);
+    }
+  };
+
+  const handleOpenSource = (url: string) => {
+    Linking.openURL(url).catch((error) => {
+      console.error("Failed to open source:", error);
+    });
+  };
 
   useEffect(() => {
     loadConversation();
@@ -253,6 +310,22 @@ export default function ChatScreen() {
           </View>
         ) : (
           <>
+            <View style={styles.webSwitchContainer}>
+              <View style={styles.webSwitchRow}>
+                <Text style={styles.webSwitchLabel}>Web search</Text>
+                <Switch
+                  value={conversation?.web_search === true}
+                  onValueChange={(value) => void handleWebSwitch(value)}
+                  disabled={!webState?.enabled}
+                />
+              </View>
+              {webState && !webState.enabled && webState.explanation && (
+                <Text style={styles.webSwitchExplanation}>
+                  {webState.explanation}
+                </Text>
+              )}
+            </View>
+
             <ScrollView
               ref={scrollViewRef}
               style={styles.messagesContainer}
@@ -282,6 +355,41 @@ export default function ChatScreen() {
                       )}
                     </View>
                   )}
+                  {item.steps && (
+                    <View style={styles.stepsContainer}>
+                      {item.streaming ? (
+                        item.steps.map((step, index) => (
+                          <Text key={index} style={styles.stepText}>
+                            {stepLabel(step)}
+                          </Text>
+                        ))
+                      ) : (
+                        <>
+                          <TouchableOpacity
+                            accessibilityRole="button"
+                            onPress={() =>
+                              setExpandedKeys((prev) =>
+                                toggleExpanded(prev, `${item.key}:steps`)
+                              )
+                            }
+                          >
+                            <Text style={styles.thinkingToggleText}>
+                              {stepsToggleLabel(
+                                expandedKeys.has(`${item.key}:steps`),
+                                item.steps.length
+                              )}
+                            </Text>
+                          </TouchableOpacity>
+                          {expandedKeys.has(`${item.key}:steps`) &&
+                            item.steps.map((step, index) => (
+                              <Text key={index} style={styles.stepText}>
+                                {stepLabel(step)}
+                              </Text>
+                            ))}
+                        </>
+                      )}
+                    </View>
+                  )}
                   <View
                     style={[
                       styles.message,
@@ -295,6 +403,22 @@ export default function ChatScreen() {
                     )}
                     {item.streaming && (
                       <ActivityIndicator style={styles.loadingDots} />
+                    )}
+                    {item.sources && (
+                      <View style={styles.sourcesContainer}>
+                        <Text style={styles.sourcesHeading}>Sources</Text>
+                        {item.sources.map((source, index) => (
+                          <TouchableOpacity
+                            key={`${index}:${source.url}`}
+                            accessibilityRole="link"
+                            onPress={() => handleOpenSource(source.url)}
+                          >
+                            <Text style={styles.sourceText}>
+                              {sourceLabel(source)}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
                     )}
                   </View>
                   {item.role === "assistant" && item.model && (
@@ -449,6 +573,50 @@ const styles = StyleSheet.create({
     color: "#333",
     marginTop: 4,
     fontStyle: "italic",
+  },
+  webSwitchContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  webSwitchRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  webSwitchLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#000",
+  },
+  webSwitchExplanation: {
+    fontSize: 12,
+    color: "#999",
+    marginTop: 4,
+  },
+  stepsContainer: {
+    marginBottom: 4,
+  },
+  stepText: {
+    fontSize: 12,
+    color: "#888",
+    fontStyle: "italic",
+    marginTop: 2,
+  },
+  sourcesContainer: {
+    marginTop: 8,
+    gap: 4,
+  },
+  sourcesHeading: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: "#555",
+  },
+  sourceText: {
+    fontSize: 13,
+    color: "#007AFF",
+    textDecorationLine: "underline",
   },
   loadingDots: {
     marginTop: 8,
