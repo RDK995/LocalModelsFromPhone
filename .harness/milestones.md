@@ -238,7 +238,7 @@ Cycle 1: PASS — whole milestone, reviewer tier Mid (model sonnet, ORDINARY_IMP
 
 ## M10c1 — The Mac serves a website's own logo through a token-protected route
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -264,15 +264,12 @@ b8ec398b0bdaa3dff72bef6a6ba85d939b320e4d on m10c-source-logos (clean tree at pic
 
 ### Evidence
 
-Pickup check 2026-09-30: 1 criterion (size OK); shape OK (HTTP entry point GET /v1/icon on the server); one signal IMPLEMENTATION_PLUS_LIVE_PROOF, seam already checked by the human split decision. Tasks: T1 C13 icon fetch/cache/route + API.md (Top, SECURITY); T2 C12 icon() + C4 GET /v1/icon (Mid); T3 live proof server/scripts/icon-route-proof.sh (Mid).
-T1 C13 icon fetch/cache/route + API.md   Top (SECURITY), attempt 4, PASS; verifier PASS (159 pass, typecheck clean) — .harness/evidence/M10c1-T1-verifier.log; commit 4dcce03
-T2 C12 icon() + C4 GET /v1/icon          Mid, attempt 3, PASS; verifier PASS (160 pass, typecheck clean) — .harness/evidence/M10c1-T2-verifier.log; commit d0f5954
-T3 live proof server/scripts/icon-route-proof.sh   Mid, attempt 3, FAIL on a product defect only (server returns 400 bad_host for bare `localhost`, from an over-strict T2 packet dot rule; the AC needs 404 no_icon). Script uncommitted in the tree; re-verify after T4 (no new rung — the script is not at fault). Live so far: github.com icon PNG ok + second request from cache (one fetch line); app.localhost and 100.100.100.100.nip.io -> no_icon (blocked); example.com -> no_icon (none); 401 without/wrong token; LAN via 10.0.0.1.nip.io and localtest.me SKIP (do not resolve on this network) — LAN/redirect cases covered by search unit tests. Log: .harness/evidence/M10c1-T3-proof.log
-REMAINING (handoff at turn budget): dispatch T4 (packet .harness/tasks/M10c1-T4.md, Cheap), verify + commit; then verifier re-runs T3 (`bash server/scripts/icon-route-proof.sh`) and commit the script + evidence; record milestone validation; set REVIEW.
+Pickup check 2026-09-30: 1 criterion (size OK); shape OK (HTTP entry point GET /v1/icon on the server); one signal IMPLEMENTATION_PLUS_LIVE_PROOF, seam already checked by the human split decision. Tasks: T1 C13 icon fetch/cache/route + API.md (Top, SECURITY); T2 C12 icon() + C4 GET /v1/icon (Mid); T3 live proof server/scripts/icon-route-proof.sh   Mid, attempt 3, worker FAIL on a product defect only (server 400 bad_host for bare `localhost`, from an over-strict T2 packet dot rule); fixed by T4; verifier re-run (no new rung, script unchanged) PASS, exit 0 — .harness/evidence/M10c1-T3-verifier.log; commit 37bb8fb. Live: github.com icon image/png + second request from cache (one fetch line); localhost, app.localhost, 100.100.100.100.nip.io -> 404 no_icon (blocked); example.com -> 404 no_icon (none); 401 without/wrong token; no third-party logo service in src. SKIP: localtest.me and 10.0.0.1.nip.io (wildcard DNS does not resolve on this network) — LAN and redirect-to-local refusal covered by search unit tests (T1).
+T4 C4 isValidIconHost accepts single-label hosts   Cheap, attempt 1, PASS; red .harness/evidence/M10c1-T4-red.log; verifier PASS (161 pass, typecheck clean) — .harness/evidence/M10c1-T4-verifier.log; commit 33496c5
 
 ### Validation
 
-Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd search && bun test) && (cd server && bun test && bun run typecheck) && bash server/scripts/icon-route-proof.sh` (proof lives at server/scripts/, confirmed during implementation)
+`cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd search && bun test) && (cd server && bun test && bun run typecheck) && bash server/scripts/icon-route-proof.sh` — reviewer runs once; needs internet; two wildcard-DNS cases SKIP where they do not resolve. Artifacts: .harness/evidence/M10c1-T1-verifier.log, M10c1-T2-verifier.log, M10c1-T4-verifier.log, M10c1-T3-verifier.log
 
 ### Review
 
