@@ -358,7 +358,7 @@ Tasks (routing -> rungs):
 M10d-AC1:
 - Unit tests: mobile/src/ui/sourceListModel.test.ts (header, collapsed start, toggle both ways, one entry per source, screenshot-shaped 6-source fixture: www.wsj.com/wsj.com pair, empty title, newline title, long URL, identical-URL pair; empty list; SourceList.tsx rows and chat.tsx wiring by source text).
 - Mac-side live proof: sources-list-proof.sh PASSED twice (above); bundle host restarted 22:05:11 so the phone loads the new code.
-- OWED (human) — the owner's phone screenshot. Steps: (1) on the iPhone swipe Expo Go away so it fully quits, reopen it and open the project (downloads the new bundle); (2) in a chat with Web search on, ask "What are today's top technology news stories?"; (3) pass = under the answer a single line "Sources (n)" with nothing listed; screenshot it; (4) tap it - pass = n separate rows, each a site logo (or globe) then a page title, none run together; screenshot it; (5) tap one row - pass = that page opens in Safari; (6) tap the header again - the list folds; leave the chat and reopen it - pass = folded again. Save as .harness/evidence/M10d-AC1-owner-phone.png and -expanded.png.
+- Owner phone screenshots (provided 2026-09-30 22:13-22:14, owner reports "Source list looks good"): .harness/evidence/M10d-AC1-owner-phone.png (answer ending in a folded "Sources (21) ▼" line, nothing listed) and .harness/evidence/M10d-AC1-owner-phone-expanded.png ("Sources (21) ▲" open, separate rows each a site logo or globe then a page title, none run together). Owner-reported steps 5-6 (Safari open, re-folded after reopen) are not separately pictured.
 All not yet reviewed.
 
 ### Validation
@@ -377,7 +377,7 @@ Pending.
 
 - Reuses M10c's site-logo component (FR27 logo and globe fallback); two sources on the same site each get their own entry with the same logo.
 - Lint regression from M10c4 T5 (markdownText.test.ts:159) fixed here as T3; M10c4's validation did not run lint.
-- Owner phone screenshot for M10d-AC1 is owed (human step; see Evidence).
+- Owner request 2026-09-30 (NOT in scope, needs /harness:roast-requirements): in the answer body, show the cited site's logo inline instead of the model's written "Source: <name>" text. In the owner's screenshot the model (nemotron3:33b) wrote "Source: Open Chronicle (French edition)" in prose rather than FR31 [n] citation marks, so no inline logos appeared.
 - Inside a Sources row the SourceLogo is itself a pressable Text opening the same URL as the row; harmless duplicate tap target.
 
 ## M11 — Web replies are saved, resume after a drop, and keep page text out of later prompts

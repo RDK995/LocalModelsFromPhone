@@ -8962,7 +8962,7 @@
           "evidence": [
             "Unit tests: mobile/src/ui/sourceListModel.test.ts (header 'Sources (n)', starts collapsed, toggle both ways, one entry per source with distinct keys and own url, screenshot-shaped 6-source fixture incl. www.wsj.com/wsj.com pair, empty title, newline title, long URL, identical-URL pair; empty list renders nothing; SourceList.tsx separate TouchableOpacity rows with SourceLogo + title calling onOpenSource(entry.url); useState(false), no storage; chat.tsx renders SourceList). T1 434938a, .harness/evidence/M10d-T1-verifier.log. Not reviewed.",
             "Mac-side live proof: mobile/scripts/sources-list-proof.sh, runs 2026-09-30 22:01 (worker, 10 sources, 9/9 hosts image; .harness/evidence/M10d-T2-worker.log) and 22:05 (verifier, 6 sources, 4/4 hosts image; .harness/evidence/M10d-T2-proof.log, -replies.json), both PASSED, model nemotron3:33b unchanged. T2 f00e328. Not reviewed.",
-            "OWED (human): the owner's phone screenshot. Steps recorded under Evidence in milestones.md; save as .harness/evidence/M10d-AC1-owner-phone.png (collapsed) and -expanded.png."
+            "Owner phone screenshots (provided 2026-09-30 22:13-22:14, owner reports \"Source list looks good\"): .harness/evidence/M10d-AC1-owner-phone.png (answer ending in a folded \"Sources (21) ▼\" line, nothing listed) and .harness/evidence/M10d-AC1-owner-phone-expanded.png (\"Sources (21) ▲\" open, separate rows each a site logo or globe then a page title, none run together). Owner-reported steps 5-6 (Safari open, re-folded after reopen) are not separately pictured."
           ]
         }
       ],
@@ -9130,8 +9130,8 @@
       "follow_ups": [
         "Reuses M10c's site-logo component (FR27 logo and globe fallback); two sources on the same site each get their own entry with the same logo.",
         "Lint regression from M10c4 T5 (markdownText.test.ts:159 single quotes) fixed here as T3; M10c4's validation command did not include lint.",
-        "Owner phone screenshot for M10d-AC1 is owed (human step; see Evidence).",
-        "Inside a Sources row the SourceLogo is itself a pressable Text opening the same URL as the row; harmless duplicate tap target."
+        "Inside a Sources row the SourceLogo is itself a pressable Text opening the same URL as the row; harmless duplicate tap target.",
+        "Owner request 2026-09-30 (NOT in scope, needs /harness:roast-requirements): in the answer body, show the cited site's logo inline instead of the model's written \"Source: <name>\" text. In the owner's screenshot the model (nemotron3:33b) wrote \"Source: Open Chronicle (French edition)\" in prose rather than FR31 [n] citation marks, so no inline logos appeared."
       ],
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
