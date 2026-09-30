@@ -7955,7 +7955,7 @@
         "FR29"
       ],
       "traces": "AC23",
-      "status": "REVIEW",
+      "status": "BLOCKED",
       "review_cycles": 2,
       "review_override": null,
       "baseline": {
@@ -8007,7 +8007,8 @@
           "text": "Owner's phone observation in Expo Go (recorded in evidence): an answer containing a three-or-more-column table shows one card per row with every value under its own heading, and a two-column table shows as an aligned grid, with no sideways scrolling.",
           "status": "PENDING",
           "evidence": [
-            "Attempt 1 FAIL (.harness/evidence/M10c3-AC5-owner-phone-1.log/.png): diagnosed as stale JavaScript on the phone (Expo Go session from before 30fa036; bundle host is --no-dev, no fast refresh). Served bundle verified current (.harness/evidence/M10c3-C3-bundle-host.log). OWED: owner attempt 2 after a full Expo Go reload."
+            "Attempt 1 FAIL (.harness/evidence/M10c3-AC5-owner-phone-1.log/.png): diagnosed as stale JavaScript on the phone (Expo Go session from before 30fa036; bundle host is --no-dev, no fast refresh). Served bundle verified current (.harness/evidence/M10c3-C3-bundle-host.log). OWED: owner attempt 2 after a full Expo Go reload.",
+            "Attempt 2 FAIL (.harness/evidence/M10c3-AC5-owner-phone-2.log, -2.png, -2b.png; 2026-09-30 after full Expo Go quit/reopen): 3+-column cards PASS; 2-column grid FAIL - bubble collapses to a narrow strip, cells clipped to ~2 letters. Escalated (cap spent)."
           ]
         }
       ],
@@ -8325,9 +8326,24 @@
         "Decided (human, 2026-09-30, review cycle 1 Finding 1): a row the model wrote without a column separator (e.g. \"trend \u2014 description | source\" under a 3-column header) is padded, not re-split - it lines up and loses no text, but the source may sit under the 2nd heading with the last column empty. No dash/colon/full-width-pipe splitting heuristic (rejected). FR29, AC23 and M10c3-AC1 amended to say so.",
         "Surplus-cell join separator differs: parser joins with \" | \" (markdown.ts fitRow), tableLayout defensive path joins with \" \" text node; the parser path is the one reached in practice.",
         "milestones.md is 615+ lines; archiving not possible this phase: only settled unarchived milestone is M10c2 (most recently settled, protected).",
-        "M10c3-AC5 attempt 2 owed from the owner after fully closing and reopening Expo Go (steps in milestones.md Evidence). If it fails again after a confirmed fresh load, the review cap (2 cycles) is spent: escalate with the raw markdown of that answer."
+        "M10c3-AC5 attempt 2 owed from the owner after fully closing and reopening Expo Go (steps in milestones.md Evidence). If it fails again after a confirmed fresh load, the review cap (2 cycles) is spent: escalate with the raw markdown of that answer.",
+        "Escalated 2026-09-30 (review/fix cap spent): AC5 attempt 2 showed a real 2-column grid defect on the device. Owner remarks from attempt 2 outside M10c3: 'some have logos some don't' (rows whose source is plain text, not a link) and 'all data is from one place' (FR30 / M10c4)."
       ],
-      "complexity_signals": []
+      "complexity_signals": [],
+      "blocked": {
+        "problem": "The review/fix cap (2 cycles) is spent and the cycle-2 BLOCKER on M10c3-AC5 is still open. Owner phone observation attempt 2 (2026-09-30 17:29-17:31, Expo Go after a full quit/reopen, .harness/evidence/M10c3-AC5-owner-phone-2.log, -2.png, -2b.png): the 3+-column card layout PASSES, but a 2-column table FAILS - the assistant bubble collapses to a narrow strip at the left and each cell shows only ~2 clipped letters (header \"FC\", rows \"AR\", \"BY\", ...). This is a new, real rendering defect in the 2-column grid path on the device (AC3's grid branch passes unit tests but not on the phone); the cycle-2 stale-bundle diagnosis explained attempt 1, not this. Not diagnosed: the escalation routes nothing.",
+        "affected": "M10c3 / M10c3-AC5 (owner phone observation), with M10c3-AC3's two-column grid branch implicated (FR29, AC23; component C1, mobile/src/ui/tableLayout.ts + MarkdownText.tsx).",
+        "attempts": [
+          "T1 (Top/opus, attempt 4 PASS, 3a4688c) and T2 (Mid/sonnet, attempt 3 PASS, 30fa036): row normalisation and grid/card layout; unit tests and verifier PASS.",
+          "Review cycle 1 (.harness/reviews/M10c3-cycle1.md): 1 IMPORTANT + 2 OPTIONAL corrected (C1 59ac6e7, C2 3d1d4e6), human decision 'Line up, accept the gap'.",
+          "AC5 owner attempt 1 FAIL (.harness/evidence/M10c3-AC5-owner-phone-1.log/.png) -> review cycle 2 BLOCKER.",
+          "Review cycle 2 correction C3 (Top/opus, attempt 4 PASS, 341752c): diagnosed attempt 1 as stale JavaScript on the phone; tests pin the screenshot shapes and the single render path; no product code changed.",
+          "AC5 owner attempt 2 after a confirmed fresh load (f24e271 records it): 3+-column cards PASS; 2-column grid FAIL (bubble collapses, cells clipped to ~2 letters). Raw markdown of the 2-column answer was not captured."
+        ],
+        "remaining": "The 2-column grid is unreadable on the device. Unit tests do not catch it (they check the layout choice and wiring, not on-device widths), so a fix needs a device-faithful check plus owner re-observation. M10c3-AC1, AC2, AC4 and the 3+-column half of AC5 are unaffected.",
+        "recommended": "Authorise one further bounded fix cycle scoped to the 2-column grid on the device only: diagnose and fix the collapsed bubble/clipped cells (e.g. grid width sizing inside the chat bubble), add a test that would have failed on this shape where one can be written, then owner re-observation of a 2-column table (AC5 attempt 3) and a fresh review. Alternative: render 2-column tables as cards too (amend FR29/AC23, M10c3-AC3 and M10c3-AC5 to drop the grid), which reuses the layout already proven on the phone. Not recommended: accepting AC5 as-is.",
+        "date": "2026-09-30"
+      }
     },
     "M10c4": {
       "id": "M10c4",
@@ -8371,7 +8387,8 @@
       "follow_ups": [
         "Source: owner-reported single-site follow-up recorded under M10c1 (.harness/archive/M10c1.md, Follow-ups).",
         "Architecture deviation D-M10c4-1 (Material: no) records the Requirement Coverage addition FR30 -> C12.",
-        "The live proof loads a model and depends on the internet and a non-deterministic model; the pass bar is 2 of 3 by human decision."
+        "The live proof loads a model and depends on the internet and a non-deterministic model; the pass bar is 2 of 3 by human decision.",
+        "PENDING HUMAN REQUEST (2026-09-30, owner's verbatim choice: \"Fold it into the next piece\"): fold \"tell the model to always link its sources, so every source gets a logo\" into M10c4. Needs FR30 / AC24 (and M10c4 criteria) amended in .harness/requirements.md via the requirements process before M10c4 starts; not yet in any requirement or criterion."
       ],
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"

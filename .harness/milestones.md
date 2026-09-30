@@ -267,7 +267,7 @@ Cycle 1: PASS — tier Mid, model sonnet, reason_code ORDINARY_IMPLEMENTATION (h
 
 ## M10c3 — Tables in answers line up under their headings and stay readable at phone width
 
-Status: REVIEW
+Status: BLOCKED
 
 ### Outcome
 
@@ -307,6 +307,7 @@ d4a4e67e5da0803bfb3874ded201202ba7c2dd04 on m10c3-readable-tables
 - M10c3-AC5: OWED — owner phone observation in Expo Go; cannot be claimed Mac-side.
 - C3 (review cycle 2, Finding 1) — diagnose the owner's AC5 failure   Top (opus, AMBIGUOUS: cause undiagnosed, no oracle), attempt 4, PASS — commit 341752c. Worker `.harness/evidence/M10c3-C3-worker.log`, verifier `.harness/evidence/M10c3-C3-verifier.log` (exit 0, 390 pass; files within allowed; tests not weakened; new tests fail 7 on pre-milestone markdown.ts f8bae28, re-run independently).
 - Cycle-2 diagnosis: NO CODE DEFECT; the phone ran stale JavaScript. HEAD cannot produce the screenshot (3+ columns always become cards; every row padded to header width; one MarkdownText -> tableLayout path for streamed and saved replies, chat.tsx:415, MarkdownText.tsx:121). The pre-milestone renderer (per-row flex:1 cells, no padding) reproduces it exactly, including the "snap": a half-streamed row has fewer, wider cells until it reaches the header's count, and a final row written with fewer cells never does. The bundle host (LaunchAgent com.harness.bundle-host, `expo start --no-dev --minify`, cwd mobile/ of this checkout) started 13:32, before 30fa036 (14:28), and has no fast refresh in production mode; the bundle it serves now contains the card layout (`.harness/evidence/M10c3-C3-bundle-host.log`). So an Expo Go session opened earlier kept the old code.
+- M10c3-AC5 attempt 2 FAIL (`.harness/evidence/M10c3-AC5-owner-phone-2.log`, `-2.png`, `-2b.png`; after full Expo Go quit/reopen): 3+-column cards PASS; 2-column grid FAIL - bubble collapses to a narrow strip, cells clipped to ~2 letters. Escalated.
 - M10c3-AC5: attempt 1 FAIL (stale bundle, above). OWED — owner attempt 2. Steps: (1) on the iPhone, swipe Expo Go away in the app switcher so it fully quits; (2) reopen Expo Go and open the project from the list (it downloads the bundle again); if the old look persists, shake the phone and tap Reload; (3) optional Mac-side belt-and-braces if still old: `launchctl kickstart -k gui/$(id -u)/com.harness.bundle-host`, wait ~30 s, repeat (1)-(2); (4) with Web search on, ask for today's news trends as a table with 3+ columns and, separately, a 2-column table (e.g. "a two-column table of country and capital"); (5) pass = 3+-column table shows one card per row with "heading: value" lines, 2-column table is an aligned grid, nothing scrolls sideways — record as `.harness/evidence/M10c3-AC5-owner-phone-2.log/.png`. If it still shows the old grid after a confirmed fresh load, capture the answer's raw text.
 
 
@@ -327,6 +328,27 @@ Cycle 2: report `.harness/reviews/M10c3-cycle2.md` (CHANGES REQUIRED, SUBSTANTIV
 Correction: C3 (F1) commit 341752c, Top/opus AMBIGUOUS, attempt 4 PASS, verifier PASS - tests reproduce the screenshot's table shapes and pin the single render path; diagnosis stale bundle, no product code changed (see Evidence). AC5 remains OWED from the owner (attempt 2 steps in Evidence).
 Correction diff `5ccf325..HEAD` files (outside .harness/): mobile/src/ui/markdown.test.ts, mobile/src/ui/markdownText.test.ts. Files not named by a cycle-2 finding: none (Finding 1 names no file; both test files serve its suggested correction (2)).
 
+Human Escalation (BLOCKED, 2026-09-30):
+
+Problem:
+The review/fix cap (2 cycles) is spent and the cycle-2 BLOCKER on M10c3-AC5 is still open. Owner phone observation attempt 2 (2026-09-30 17:29-17:31, Expo Go after a full quit/reopen, .harness/evidence/M10c3-AC5-owner-phone-2.log, -2.png, -2b.png): the 3+-column card layout PASSES, but a 2-column table FAILS - the assistant bubble collapses to a narrow strip at the left and each cell shows only ~2 clipped letters (header "FC", rows "AR", "BY", ...). This is a new, real rendering defect in the 2-column grid path on the device (AC3's grid branch passes unit tests but not on the phone); the cycle-2 stale-bundle diagnosis explained attempt 1, not this. Not diagnosed: the escalation routes nothing.
+
+Requirement/milestone affected:
+M10c3 / M10c3-AC5 (owner phone observation), with M10c3-AC3's two-column grid branch implicated (FR29, AC23; component C1, mobile/src/ui/tableLayout.ts + MarkdownText.tsx).
+
+Attempts made:
+1. T1 (Top/opus, attempt 4 PASS, 3a4688c) and T2 (Mid/sonnet, attempt 3 PASS, 30fa036): row normalisation and grid/card layout; unit tests and verifier PASS.
+2. Review cycle 1 (.harness/reviews/M10c3-cycle1.md): 1 IMPORTANT + 2 OPTIONAL corrected (C1 59ac6e7, C2 3d1d4e6), human decision 'Line up, accept the gap'.
+3. AC5 owner attempt 1 FAIL (.harness/evidence/M10c3-AC5-owner-phone-1.log/.png) -> review cycle 2 BLOCKER.
+4. Review cycle 2 correction C3 (Top/opus, attempt 4 PASS, 341752c): diagnosed attempt 1 as stale JavaScript on the phone; tests pin the screenshot shapes and the single render path; no product code changed.
+5. AC5 owner attempt 2 after a confirmed fresh load (f24e271 records it): 3+-column cards PASS; 2-column grid FAIL (bubble collapses, cells clipped to ~2 letters). Raw markdown of the 2-column answer was not captured.
+
+Remaining issue:
+The 2-column grid is unreadable on the device. Unit tests do not catch it (they check the layout choice and wiring, not on-device widths), so a fix needs a device-faithful check plus owner re-observation. M10c3-AC1, AC2, AC4 and the 3+-column half of AC5 are unaffected.
+
+Recommended decision:
+Authorise one further bounded fix cycle scoped to the 2-column grid on the device only: diagnose and fix the collapsed bubble/clipped cells (e.g. grid width sizing inside the chat bubble), add a test that would have failed on this shape where one can be written, then owner re-observation of a 2-column table (AC5 attempt 3) and a fresh review. Alternative: render 2-column tables as cards too (amend FR29/AC23, M10c3-AC3 and M10c3-AC5 to drop the grid), which reuses the layout already proven on the phone. Not recommended: accepting AC5 as-is.
+
 ### Review Cycles
 
 2
@@ -340,6 +362,7 @@ Correction diff `5ccf325..HEAD` files (outside .harness/): mobile/src/ui/markdow
 - Surplus-cell join differs between parser (" | ", markdown.ts fitRow) and tableLayout's defensive path (" " text node); only the parser path is reached in practice.
 - milestones.md exceeds 400 lines; nothing archivable this phase (M10c2 is the most recently settled milestone and protected; the rest are open).
 - M10c3-AC5 attempt 2 owed from the owner after fully closing and reopening Expo Go (steps in Evidence). The 2-cycle review cap is now spent: if the next review still fails AC5 after a confirmed fresh load, the milestone escalates to the human with the raw markdown of that answer.
+- Escalated 2026-09-30 (review/fix cap spent): AC5 attempt 2 showed a real 2-column grid defect on the device. Owner remarks from attempt 2 outside M10c3: 'some have logos some don't' (rows whose source is plain text, not a link) and 'all data is from one place' (FR30 / M10c4).
 
 ## M10c4 — Broad web questions draw on at least three different websites
 
@@ -387,6 +410,7 @@ Pending.
 - Source: owner-reported single-site follow-up recorded under M10c1 (.harness/archive/M10c1.md, Follow-ups).
 - Architecture deviation D-M10c4-1 (Material: no) records the Requirement Coverage addition FR30 -> C12.
 - The live proof loads a model and depends on the internet and a non-deterministic model; the pass bar is 2 of 3 by human decision.
+- PENDING HUMAN REQUEST (2026-09-30, owner's verbatim choice: "Fold it into the next piece"): fold "tell the model to always link its sources, so every source gets a logo" into M10c4. Needs FR30 / AC24 (and M10c4 criteria) amended in .harness/requirements.md via the requirements process before M10c4 starts; not yet in any requirement or criterion.
 
 ## M10d — A web answer's sources start folded as "Sources (n)", each its own tappable entry
 
