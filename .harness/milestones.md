@@ -267,7 +267,7 @@ Cycle 1: PASS — tier Mid, model sonnet, reason_code ORDINARY_IMPLEMENTATION (h
 
 ## M10c3 — Tables in answers line up under their headings and stay readable at phone width
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -281,15 +281,15 @@ C1
 
 ### As-Built
 
-Pending.
+.harness/as-built/M10c3.md — RECORDED — 6/6 files attributed; components C1; 0 edges; claim mismatches NONE
 
 ### Acceptance Criteria
 
-- [ ] **M10c3-AC1**: Unit tests: a table shaped like the 2026-09-30 phone screenshot (trend, description, source columns) renders each value under its own heading when each value has its own cell; a body row missing a column separator (e.g. trend and description written into one cell) is padded, not re-split - its cells line up with the header and no text is lost, though a value may then sit under the next heading with the last column empty (accepted, human decision 2026-09-30); and the diagnosed cause of that misalignment (model output shape vs. the FR26 renderer) is covered by a test that fails on the pre-fix code.
-- [ ] **M10c3-AC2**: Unit tests: a body row with fewer cells than the header row is padded with empty cells, and a body row with more cells keeps the surplus text joined into the last column; no text is dropped and no value moves to another column.
-- [ ] **M10c3-AC3**: Unit tests: a two-column table renders as a grid, and a table of three or more columns renders as one card per body row listing "heading: value" per column on its own line; inline formatting and links inside cells render as in FR26/FR27.
-- [ ] **M10c3-AC4**: Unit tests: a table still streaming (header only, or half a body row) renders without error, and a saved (reopened) reply's table renders the same way as a live one.
-- [ ] **M10c3-AC5**: Owner's phone observation in Expo Go (recorded in evidence): an answer containing a three-or-more-column table shows one card per row with every value under its own heading, and a two-column table shows as an aligned grid, with no sideways scrolling.
+- [x] **M10c3-AC1**: Unit tests: a table shaped like the 2026-09-30 phone screenshot (trend, description, source columns) renders each value under its own heading when each value has its own cell; a body row missing a column separator (e.g. trend and description written into one cell) is padded, not re-split - its cells line up with the header and no text is lost, though a value may then sit under the next heading with the last column empty (accepted, human decision 2026-09-30); and the diagnosed cause of that misalignment (model output shape vs. the FR26 renderer) is covered by a test that fails on the pre-fix code.
+- [x] **M10c3-AC2**: Unit tests: a body row with fewer cells than the header row is padded with empty cells, and a body row with more cells keeps the surplus text joined into the last column; no text is dropped and no value moves to another column.
+- [x] **M10c3-AC3**: Unit tests: a two-column table renders as a grid, and a table of three or more columns renders as one card per body row listing "heading: value" per column on its own line; inline formatting and links inside cells render as in FR26/FR27.
+- [x] **M10c3-AC4**: Unit tests: a table still streaming (header only, or half a body row) renders without error, and a saved (reopened) reply's table renders the same way as a live one.
+- [x] **M10c3-AC5**: Owner's phone observation in Expo Go (recorded in evidence): an answer containing a three-or-more-column table shows one card per row with every value under its own heading, and a two-column table shows as an aligned grid, with no sideways scrolling.
 
 ### Baseline
 
@@ -358,6 +358,8 @@ Authorise one further bounded fix cycle scoped to the 2-column grid on the devic
 
 Human decision 2026-09-30 (owner, verbatim choice "One more fix round (Recommended)", chosen over "Use cards for all tables"): authorise ONE further bounded fix cycle (fix cycle 3) limited to the 2-column grid rendering on the device (collapsed bubble, clipped cells), with a test that fails first where one can be written, then owner phone re-observation of AC5 (attempt 3, capturing the 2-column answer's raw text), then ONE further fresh review (cycle 3). Named review override: the cap for M10c3 is raised from 2 to 3 cycles for this purpose only; if cycle 3 does not pass, escalate again. Input to fix cycle 3: .harness/reviews/M10c3-cycle2.md plus .harness/evidence/M10c3-AC5-owner-phone-2.log/.png/-2b.png.
 
+Cycle 3: PASS — tier Top, model opus, reason_code NO_TEST_ORACLE (correction C4 routed to opus), scope correction diff f1e924d..118f539 grading all criteria, under the named human review override (cap 3). Per-criterion: M10c3-AC1 PASS, AC2 PASS, AC3 PASS, AC4 PASS, AC5 PASS (owner phone attempt 3, .harness/evidence/M10c3-AC5-owner-phone-3.log/-3.png/-3b.png). Findings: 0 BLOCKER, 0 IMPORTANT, 2 OPTIONAL (recorded under Follow-ups). Reviewer re-ran milestone validation, exit 0 (396 pass) — .harness/evidence/M10c3-review-cycle3.log. No report written (PASS).
+
 ### Review Cycles
 
 3
@@ -372,6 +374,8 @@ Human decision 2026-09-30 (owner, verbatim choice "One more fix round (Recommend
 - milestones.md exceeds 400 lines; nothing archivable this phase (M10c2 is the most recently settled milestone and protected; the rest are open).
 - M10c3-AC5 attempt 2 owed from the owner after fully closing and reopening Expo Go (steps in Evidence). The 2-cycle review cap is now spent: if the next review still fails AC5 after a confirmed fresh load, the milestone escalates to the human with the raw markdown of that answer.
 - Escalated 2026-09-30 (review/fix cap spent): AC5 attempt 2 showed a real 2-column grid defect on the device. Owner remarks from attempt 2 outside M10c3: 'some have logos some don't' (rows whose source is plain text, not a link) and 'all data is from one place' (FR30 / M10c4).
+- Review cycle 3 OPTIONAL: MarkdownText.tsx:13-14 imports tableLayout and gridWidth from ./tableLayout on two lines; merge into one import.
+- Review cycle 3 OPTIONAL: gridWidth (tableLayout.ts:59-66) copies the chat bubble's padding 16 / maxWidth 85% / padding 12 from chat.tsx; guarded by a regex test in markdownText.test.ts; optionally share the constants later.
 
 ## M10c4 — Broad web questions draw on at least three different websites
 

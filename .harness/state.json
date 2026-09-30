@@ -7955,7 +7955,7 @@
         "FR29"
       ],
       "traces": "AC23",
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 3,
       "review_override": {
         "by": "human",
@@ -7969,14 +7969,15 @@
         "branch": "m10c3-readable-tables"
       },
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M10c3.md",
+        "result": "RECORDED",
+        "summary": ".harness/as-built/M10c3.md \u2014 RECORDED \u2014 6/6 files attributed; components C1; 0 edges; claim mismatches NONE"
       },
       "criteria": [
         {
           "id": "M10c3-AC1",
           "text": "Unit tests: a table shaped like the 2026-09-30 phone screenshot (trend, description, source columns) renders each value under its own heading when each value has its own cell; a body row missing a column separator (e.g. trend and description written into one cell) is padded, not re-split - its cells line up with the header and no text is lost, though a value may then sit under the next heading with the last column empty (accepted, human decision 2026-09-30); and the diagnosed cause of that misalignment (model output shape vs. the FR26 renderer) is covered by a test that fails on the pre-fix code.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "mobile/src/ui/markdown.test.ts FR29 screenshot-shaped table test and pinning test (short row padded); fails on baseline f8bae28 per .harness/evidence/M10c3-T1-verifier.log",
             "Cycle 1 correction C1 (commit 59ac6e7): markdown.test.ts \"FR29: a row missing a column separator is padded, not re-split: it lines up and loses no text (human decision 2026-09-30)\" asserts rows[1][0] holds the whole merged trend+description, source at rows[1][1], empty rows[1][2] (.harness/evidence/M10c3-C1-verifier.log)"
@@ -7985,7 +7986,7 @@
         {
           "id": "M10c3-AC2",
           "text": "Unit tests: a body row with fewer cells than the header row is padded with empty cells, and a body row with more cells keeps the surplus text joined into the last column; no text is dropped and no value moves to another column.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "mobile/src/ui/markdown.test.ts FR29 short-row padding and surplus-join tests (.harness/evidence/M10c3-T1-verifier.log); tableLayout.test.ts defensive short/long rows (.harness/evidence/M10c3-T2-verifier.log)",
             "Cycle 1 correction C2 (commit 3d1d4e6): tableLayout normaliseRow surplus join now \" | \", matching markdown.ts fitRow (.harness/evidence/M10c3-C2-verifier.log)"
@@ -7994,7 +7995,7 @@
         {
           "id": "M10c3-AC3",
           "text": "Unit tests: a two-column table renders as a grid, and a table of three or more columns renders as one card per body row listing \"heading: value\" per column on its own line; inline formatting and links inside cells render as in FR26/FR27.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "mobile/src/ui/tableLayout.test.ts grid/cards/Inline pass-through; markdownText.test.ts static wiring checks (.harness/evidence/M10c3-T2-verifier.log)",
             "Fix cycle 3 C4: tableLayout.test.ts gridWidth tests; markdownText.test.ts 'M10c3-C4' grid definite-width wiring; red .harness/evidence/M10c3-C4-red.log; verifier .harness/evidence/M10c3-C4-verifier.log"
@@ -8003,7 +8004,7 @@
         {
           "id": "M10c3-AC4",
           "text": "Unit tests: a table still streaming (header only, or half a body row) renders without error, and a saved (reopened) reply's table renders the same way as a live one.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "markdown.test.ts streaming and every-prefix/chunked-equals-whole tests (.harness/evidence/M10c3-T1-verifier.log); tableLayout.test.ts header-only (.harness/evidence/M10c3-T2-verifier.log)",
             "Cycle 1 correction C1: tautological chunked-equals-whole assertion removed; saved = live rests on the single MarkdownText render path in mobile/src/app/chat.tsx"
@@ -8012,7 +8013,7 @@
         {
           "id": "M10c3-AC5",
           "text": "Owner's phone observation in Expo Go (recorded in evidence): an answer containing a three-or-more-column table shows one card per row with every value under its own heading, and a two-column table shows as an aligned grid, with no sideways scrolling.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "Attempt 1 FAIL (.harness/evidence/M10c3-AC5-owner-phone-1.log/.png): diagnosed as stale JavaScript on the phone (Expo Go session from before 30fa036; bundle host is --no-dev, no fast refresh). Served bundle verified current (.harness/evidence/M10c3-C3-bundle-host.log). OWED: owner attempt 2 after a full Expo Go reload.",
             "Attempt 2 FAIL (.harness/evidence/M10c3-AC5-owner-phone-2.log, -2.png, -2b.png; 2026-09-30 after full Expo Go quit/reopen): 3+-column cards PASS; 2-column grid FAIL - bubble collapses to a narrow strip, cells clipped to ~2 letters. Escalated (cap spent).",
@@ -8421,7 +8422,7 @@
         },
         {
           "cycle": 3,
-          "verdict": "PENDING",
+          "verdict": "PASS",
           "scope": "2-column grid on the device only (named human review override, cap 3)",
           "input": ".harness/reviews/M10c3-cycle2.md + .harness/evidence/M10c3-AC5-owner-phone-2.log/-2.png/-2b.png",
           "pre_correction": "f1e924dc66fabdcd0bd5e4860afb80b00a2f5459",
@@ -8433,11 +8434,25 @@
             "mobile/src/ui/tableLayout.ts"
           ],
           "files_outside_findings": "none; cycle-2 F1 (AC5) names no file; the human override names MarkdownText.tsx/tableLayout.ts and a red-first test; markdownText.test.ts/tableLayout.test.ts are those tests. chat.tsx not changed.",
-          "diff_range": "f1e924d..dc74468",
-          "tier": "Mid",
-          "model": "sonnet",
-          "reason_code": "ORDINARY_IMPLEMENTATION",
-          "tier_note": "planned routing for the scoped cycle-3 re-review (small, test-backed renderer change; AC5 is owner-observed); the skill may raise it"
+          "diff_range": "f1e924d..118f539",
+          "tier": "Top",
+          "model": "opus",
+          "reason_code": "NO_TEST_ORACLE",
+          "tier_note": "cycle-3 reviewer invoked at Top/opus: correction C4 was routed to opus (NO_TEST_ORACLE)",
+          "evidence": ".harness/evidence/M10c3-review-cycle3.log",
+          "per_criterion": {
+            "M10c3-AC1": "PASS",
+            "M10c3-AC2": "PASS",
+            "M10c3-AC3": "PASS",
+            "M10c3-AC4": "PASS",
+            "M10c3-AC5": "PASS"
+          },
+          "findings": {
+            "BLOCKER": 0,
+            "IMPORTANT": 0,
+            "OPTIONAL": 2
+          },
+          "report": null
         }
       ],
       "findings": [],
@@ -8464,7 +8479,9 @@
         "Surplus-cell join separator differs: parser joins with \" | \" (markdown.ts fitRow), tableLayout defensive path joins with \" \" text node; the parser path is the one reached in practice.",
         "milestones.md is 615+ lines; archiving not possible this phase: only settled unarchived milestone is M10c2 (most recently settled, protected).",
         "M10c3-AC5 attempt 2 owed from the owner after fully closing and reopening Expo Go (steps in milestones.md Evidence). If it fails again after a confirmed fresh load, the review cap (2 cycles) is spent: escalate with the raw markdown of that answer.",
-        "Escalated 2026-09-30 (review/fix cap spent): AC5 attempt 2 showed a real 2-column grid defect on the device. Owner remarks from attempt 2 outside M10c3: 'some have logos some don't' (rows whose source is plain text, not a link) and 'all data is from one place' (FR30 / M10c4)."
+        "Escalated 2026-09-30 (review/fix cap spent): AC5 attempt 2 showed a real 2-column grid defect on the device. Owner remarks from attempt 2 outside M10c3: 'some have logos some don't' (rows whose source is plain text, not a link) and 'all data is from one place' (FR30 / M10c4).",
+        "Review cycle 3 OPTIONAL: MarkdownText.tsx:13-14 imports tableLayout and gridWidth from ./tableLayout on two lines; merge into one import.",
+        "Review cycle 3 OPTIONAL: gridWidth (tableLayout.ts:59-66) copies the chat bubble's padding 16 / maxWidth 85% / padding 12 from chat.tsx; guarded by a regex test in markdownText.test.ts; optionally share the constants later."
       ],
       "complexity_signals": [],
       "blocked": {
