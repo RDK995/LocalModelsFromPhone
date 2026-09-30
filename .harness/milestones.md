@@ -285,7 +285,7 @@ Pending.
 
 ### Acceptance Criteria
 
-- [ ] **M10c3-AC1**: Unit tests: a table shaped like the 2026-09-30 phone screenshot (trend, description, source columns) renders each value under its own heading, and the diagnosed cause of that misalignment (model output shape vs. the FR26 renderer) is covered by a test that fails on the pre-fix code.
+- [ ] **M10c3-AC1**: Unit tests: a table shaped like the 2026-09-30 phone screenshot (trend, description, source columns) renders each value under its own heading when each value has its own cell; a body row missing a column separator (e.g. trend and description written into one cell) is padded, not re-split - its cells line up with the header and no text is lost, though a value may then sit under the next heading with the last column empty (accepted, human decision 2026-09-30); and the diagnosed cause of that misalignment (model output shape vs. the FR26 renderer) is covered by a test that fails on the pre-fix code.
 - [ ] **M10c3-AC2**: Unit tests: a body row with fewer cells than the header row is padded with empty cells, and a body row with more cells keeps the surplus text joined into the last column; no text is dropped and no value moves to another column.
 - [ ] **M10c3-AC3**: Unit tests: a two-column table renders as a grid, and a table of three or more columns renders as one card per body row listing "heading: value" per column on its own line; inline formatting and links inside cells render as in FR26/FR27.
 - [ ] **M10c3-AC4**: Unit tests: a table still streaming (header only, or half a body row) renders without error, and a saved (reopened) reply's table renders the same way as a live one.
@@ -313,7 +313,7 @@ Milestone command (reviewer to run; task-level runs passed per verifier logs abo
 
 ### Review
 
-Pending.
+Cycle 1: report `.harness/reviews/M10c3-cycle1.md` (CHANGES REQUIRED, SUBSTANTIVE: 1 IMPORTANT, 2 OPTIONAL; reviewer evidence `.harness/evidence/M10c3-review.log`). Pre-correction: 949dd2dd21745b1946e56d09d1d9465ce18da27b
 
 ### Review Cycles
 
@@ -324,7 +324,7 @@ Pending.
 - Source: owner-reported table follow-up recorded under M10c1 (.harness/archive/M10c1.md, Follow-ups).
 - Architecture deviation D-M10c3-1 (Material: no) records the Requirement Coverage addition FR29 -> C1.
 - M10c3-AC5 owed: owner phone observation in Expo Go (3+-column table as one card per row, 2-column table as aligned grid, no sideways scrolling).
-- A value the model wrote without a column separator (e.g. "trend — description | source" under a 3-column header) cannot be put back under its own heading: the row is padded so columns stay aligned, but the source sits under the 2nd heading and the last is empty. Splitting on dashes, colons or full-width pipes would be guessing; owner decision.
+- Decided (human, 2026-09-30, review cycle 1 Finding 1): a row the model wrote without a column separator (e.g. "trend — description | source" under a 3-column header) is padded, not re-split - it lines up and loses no text, but the source may sit under the 2nd heading with the last column empty. No dash/colon/full-width-pipe splitting heuristic (rejected). FR29, AC23 and M10c3-AC1 amended to say so.
 - Surplus-cell join differs between parser (" | ", markdown.ts fitRow) and tableLayout's defensive path (" " text node); only the parser path is reached in practice.
 - milestones.md exceeds 400 lines; nothing archivable this phase (M10c2 is the most recently settled milestone and protected; the rest are open).
 

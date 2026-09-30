@@ -1,0 +1,8 @@
+$ tsc --noEmit
+bun test v1.4.0 (1381054db)
+
+ 380 pass
+ 0 fail
+ 2653 expect() calls
+Ran 380 tests across 26 files. [200.00ms]
+$ eslint src --max-warnings 0

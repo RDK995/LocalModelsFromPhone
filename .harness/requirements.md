@@ -160,6 +160,9 @@ answered from a single website. These are built next, before M10d.
   sideways scrolling is needed. Inline formatting and links in cells follow FR26/FR27. A table
   still streaming (header only, half a row) renders without error. The cause of the 2026-09-30
   misalignment (model output shape vs. the FR26 renderer) is diagnosed and covered by a test.
+  A row missing a column separator (two values the model wrote into one cell) is padded, not
+  re-split: it lines up with the header and loses no text, but a value may sit under the next
+  heading with the last column empty; no dash/colon splitting heuristic (human decision, 2026-09-30).
 - [FR30] **Several sites for broad questions.** With the web switch on, the instructions the
   server gives the model (alongside the FR19 date note) tell it that for a broad or open-ended
   question (e.g. "today's news trends") it should search with more than one query, not put the
@@ -230,7 +233,8 @@ All proven against the live Mac Studio and Ollama, not mocks.
     set shaped like the 2026-09-30 phone screenshot in which several sources rendered glued into one
     link. Proven by unit tests, a Mac-side live proof, and the owner's phone screenshot.
 23. **AC23** — Unit tests: a table shaped like the 2026-09-30 phone screenshot (trend, description,
-    source columns) renders each value under its own heading; a row with missing cells and a row
+    source columns) renders each value under its own heading when each value has its own cell (a
+    row missing a separator is padded, not re-split, and loses no text); a row with missing cells and a row
     with extra cells lose no text and shift nothing; a 2-column table renders as a grid and a
     3+-column table as one card per row with "heading: value" lines; a half-streamed table renders
     without error; a saved reply's table renders the same way. Plus the owner's phone observation.
@@ -314,7 +318,8 @@ All proven against the live Mac Studio and Ollama, not mocks.
 - A reply is still streaming with half-written markup (e.g. an open `**` or `[text](`): shown
   without error and re-rendered as more text arrives (FR26).
 - Two sources share a site: each is its own entry with the same logo (FR28).
-- A table row with the wrong number of cells: padded or surplus kept, never shifted (FR29).
+- A table row with the wrong number of cells: padded or surplus kept, never shifted; a row missing a
+  separator is padded, not re-split, so a value may sit under the next heading (FR29).
 - A narrow web question need not read three sites (FR30).
 
 ## Decisions / Clarifications
@@ -384,6 +389,11 @@ All proven against the live Mac Studio and Ollama, not mocks.
 - **Small review follow-ups left out** (human): the `X-Content-Type-Options: nosniff` header on
   the server's GET /v1/icon, amending D-M10c-2's C12 line in architecture.md, and auto-restarting
   com.harness.search on new code stay recorded as follow-ups, not part of FR29–FR30.
+- **Missing-separator rows: line up, accept the gap** (human, 2026-09-30, M10c3 review cycle 1
+  Finding 1): when the model leaves out a column divider in a table row, the row is padded to the
+  header's width, not re-split. Rows always line up and no text is lost, but a value may sit under
+  the wrong heading with a blank last column. Chosen over splitting a short row on a dash or colon
+  (a guessing heuristic). FR29, AC23 and M10c3-AC1 amended accordingly.
 - Defaults chosen by Claude, shown to the human and agreed (2026-09-30): surplus cells are joined
   into the last column; tables apply to saved replies too; sites compared ignoring `www.`; the
   test uses the owner's usual model.

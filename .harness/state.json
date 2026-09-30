@@ -7969,7 +7969,7 @@
       "criteria": [
         {
           "id": "M10c3-AC1",
-          "text": "Unit tests: a table shaped like the 2026-09-30 phone screenshot (trend, description, source columns) renders each value under its own heading, and the diagnosed cause of that misalignment (model output shape vs. the FR26 renderer) is covered by a test that fails on the pre-fix code.",
+          "text": "Unit tests: a table shaped like the 2026-09-30 phone screenshot (trend, description, source columns) renders each value under its own heading when each value has its own cell; a body row missing a column separator (e.g. trend and description written into one cell) is padded, not re-split - its cells line up with the header and no text is lost, though a value may then sit under the next heading with the last column empty (accepted, human decision 2026-09-30); and the diagnosed cause of that misalignment (model output shape vs. the FR26 renderer) is covered by a test that fails on the pre-fix code.",
           "status": "PENDING",
           "evidence": [
             "mobile/src/ui/markdown.test.ts FR29 screenshot-shaped table test and pinning test (short row padded); fails on baseline f8bae28 per .harness/evidence/M10c3-T1-verifier.log"
@@ -8107,7 +8107,22 @@
           "commit": "30fa036"
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "CHANGES_REQUIRED",
+          "scope": "SUBSTANTIVE",
+          "tier": "Top",
+          "reason_code": "AMBIGUOUS",
+          "diff_range": "d4a4e67..949dd2d",
+          "artifact": ".harness/reviews/M10c3-cycle1.md",
+          "review_log": ".harness/evidence/M10c3-review.log",
+          "pre_correction": "949dd2dd21745b1946e56d09d1d9465ce18da27b",
+          "correction_diff": "949dd2dd21745b1946e56d09d1d9465ce18da27b..HEAD",
+          "correction_files": [],
+          "files_outside_findings": "pending"
+        }
+      ],
       "findings": [],
       "validation": [
         {
@@ -8125,7 +8140,7 @@
         "Source: owner-reported table follow-up recorded under M10c1 (.harness/archive/M10c1.md, Follow-ups).",
         "Architecture deviation D-M10c3-1 (Material: no) records the Requirement Coverage addition FR29 -> C1.",
         "M10c3-AC5 owed: owner phone observation in Expo Go (3+-column table as one card per row, 2-column table as aligned grid, no sideways scrolling) cannot be claimed Mac-side.",
-        "Parser cannot restore a value the model wrote without a column separator (e.g. \"trend \u2014 description | source\" under a 3-column header): row is padded so columns stay aligned, but source sits under the 2nd heading and the last is empty. Splitting on dashes/colons/full-width pipes would be guessing; product decision left to owner.",
+        "Decided (human, 2026-09-30, review cycle 1 Finding 1): a row the model wrote without a column separator (e.g. \"trend \u2014 description | source\" under a 3-column header) is padded, not re-split - it lines up and loses no text, but the source may sit under the 2nd heading with the last column empty. No dash/colon/full-width-pipe splitting heuristic (rejected). FR29, AC23 and M10c3-AC1 amended to say so.",
         "Surplus-cell join separator differs: parser joins with \" | \" (markdown.ts fitRow), tableLayout defensive path joins with \" \" text node; the parser path is the one reached in practice.",
         "milestones.md is 615+ lines; archiving not possible this phase: only settled unarchived milestone is M10c2 (most recently settled, protected)."
       ],
