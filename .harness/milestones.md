@@ -301,8 +301,8 @@ Pending.
 Tasks:
 - M10c2-T1 — sourceLinks.ts link-to-source matching   Cheap (haiku, BOUNDED_LOW_RISK), attempt 1, PASS — commit af84383; .harness/evidence/M10c2-T1-verifier.log (51 pass, typecheck, lint)
 - M10c2-T2 — siteIcon (C2) + iconCache (C3)            Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — commit 469b4b3; .harness/evidence/M10c2-T2-verifier.log (60 pass, typecheck, lint)
-- M10c2-T3 — inline logo rendering (C1)               Mid (sonnet, ORDINARY_IMPLEMENTATION) — in progress
-- M10c2-T4 — live proof mobile/scripts/source-logo-proof.sh   Mid (sonnet, ORDINARY_IMPLEMENTATION) — pending
+- M10c2-T3 — inline logo rendering (C1)               Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — commit 03c1ffe; .harness/evidence/M10c2-T3-verifier.log (368 pass, typecheck, lint)
+- M10c2-T4 — live proof mobile/scripts/source-logo-proof.sh   Mid (sonnet, ORDINARY_IMPLEMENTATION) — in progress
 
 ### Validation
 

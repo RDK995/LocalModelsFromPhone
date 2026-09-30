@@ -1,4 +1,4 @@
-PASS: AC1 isolation: search on 127.0.0.1:54045 (temp cache dir), server on http://127.0.0.1:54046 (random 0600 token file, not printed); production 7789/7790 untouched
+PASS: AC1 isolation: search on 127.0.0.1:54919 (temp cache dir), server on http://127.0.0.1:54920 (random 0600 token file, not printed); production 7789/7790 untouched
 Using github.com as the public site with an icon
 PASS: AC2: github.com -> 200, content-type image/png, 958 bytes with matching image magic, exactly one 'icon fetch host=github.com result=ok' in the search log
 PASS: AC3: second request -> 200, byte-identical body, still exactly one 'icon fetch' line for github.com (served from cache); 1 cache file(s) in the temp cache dir
