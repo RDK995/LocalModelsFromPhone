@@ -259,6 +259,20 @@ export class ConfirmationRequiredError extends ServerError {
   }
 }
 
+const B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+/** Base64 without `Buffer`/`btoa` (neither is guaranteed in React Native). */
+function bytesToBase64(bytes: Uint8Array): string {
+  let out = "";
+  for (let i = 0; i < bytes.length; i += 3) {
+    const n = (bytes[i] << 16) | ((bytes[i + 1] ?? 0) << 8) | (bytes[i + 2] ?? 0);
+    out += B64[(n >> 18) & 63] + B64[(n >> 12) & 63];
+    out += i + 1 < bytes.length ? B64[(n >> 6) & 63] : "=";
+    out += i + 2 < bytes.length ? B64[n & 63] : "=";
+  }
+  return out;
+}
+
 export class APIClient {
   private baseUrl: string;
   private token: string = "";
@@ -392,6 +406,26 @@ export class APIClient {
     }
 
     return response.json();
+  }
+
+  /**
+   * Ask the Mac for a site's logo (FR27) as a data URI. Only ever contacts
+   * `this.baseUrl`. Returns null on any failure; never throws.
+   */
+  async siteIcon(host: string): Promise<string | null> {
+    try {
+      const response = await this.fetchImpl(
+        `${this.baseUrl}/v1/icon?host=${encodeURIComponent(host)}`,
+        { method: "GET", headers: this.getHeaders() },
+      );
+      if (response.status !== 200) return null;
+      const type = (response.headers.get("content-type") ?? "").split(";")[0].trim();
+      if (!type.toLowerCase().startsWith("image/")) return null;
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      return `data:${type};base64,${bytesToBase64(bytes)}`;
+    } catch {
+      return null;
+    }
   }
 
   async loadModel(request: LoadRequest): Promise<OperationResponse> {

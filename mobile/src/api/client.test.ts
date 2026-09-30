@@ -2170,3 +2170,79 @@ describe("APIClient cancellation (Stop)", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("APIClient.siteIcon", () => {
+  function imageResponse(bytes: number[], type = "image/png", status = 200) {
+    return new Response(new Uint8Array(bytes), {
+      status,
+      headers: { "Content-Type": type },
+    });
+  }
+
+  it("returns a data URI with exact base64 for known bytes and sends auth to baseUrl only", async () => {
+    let seenUrl = "";
+    let seenAuth: string | undefined;
+    const fetchMock = mock(async (url: string, init?: RequestInit) => {
+      seenUrl = url;
+      seenAuth = (init?.headers as Record<string, string>).Authorization;
+      return imageResponse([0x89, 0x50, 0x4e, 0x47, 0x0d]);
+    });
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("tok");
+    const result = await client.siteIcon("en.wikipedia.org");
+    // 89 50 4e 47 0d -> iVBORw0= (5 bytes, one pad)
+    expect(result).toBe("data:image/png;base64,iVBORw0=");
+    expect(seenUrl).toBe(`${BASE_URL}/v1/icon?host=en.wikipedia.org`);
+    expect(seenAuth).toBe("Bearer tok");
+  });
+
+  it("encodes 1-, 2- and 3-byte inputs correctly", async () => {
+    const cases: Array<[number[], string]> = [
+      [[0x4d], "TQ=="],
+      [[0x4d, 0x61], "TWE="],
+      [[0x4d, 0x61, 0x6e], "TWFu"],
+    ];
+    for (const [bytes, b64] of cases) {
+      const fetchMock = mock(async () => imageResponse(bytes, "image/x-icon"));
+      const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+      expect(await client.siteIcon("a.com")).toBe(`data:image/x-icon;base64,${b64}`);
+    }
+  });
+
+  it("returns null for 404 no_icon", async () => {
+    const fetchMock = mock(async () => jsonResponse({ error: "no_icon" }, 404));
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    expect(await client.siteIcon("a.com")).toBeNull();
+  });
+
+  it("returns null for 502", async () => {
+    const fetchMock = mock(async () => jsonResponse({ error: "icon_unavailable" }, 502));
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    expect(await client.siteIcon("a.com")).toBeNull();
+  });
+
+  it("returns null when fetch rejects", async () => {
+    const fetchMock = mock(async () => {
+      throw new TypeError("Network request failed");
+    });
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    expect(await client.siteIcon("a.com")).toBeNull();
+  });
+
+  it("returns null for a non-image content type", async () => {
+    const fetchMock = mock(async () => imageResponse([1, 2, 3], "text/html"));
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    expect(await client.siteIcon("a.com")).toBeNull();
+  });
+
+  it("url-encodes the host", async () => {
+    let seenUrl = "";
+    const fetchMock = mock(async (url: string) => {
+      seenUrl = url;
+      return jsonResponse({}, 404);
+    });
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    await client.siteIcon("a b&c");
+    expect(seenUrl).toBe(`${BASE_URL}/v1/icon?host=a%20b%26c`);
+  });
+});

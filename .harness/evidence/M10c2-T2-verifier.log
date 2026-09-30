@@ -1,0 +1,125 @@
+=== VERIFICATION LOG FOR M10c2-T2 ===
+
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun test src/api/client.test.ts src/store/iconCache.test.ts && bun run typecheck && bun run lint
+
+Exit Status:
+0
+
+Output:
+bun test v1.4.0 (1381054db)
+
+ 60 pass
+ 0 fail
+ 189 expect() calls
+Ran 60 tests across 2 files. [71.00ms]
+$ tsc --noEmit
+$ eslint src --max-warnings 0
+
+=== FILES CHANGED ===
+
+Modified (uncommitted):
+- mobile/src/api/client.ts (allowed)
+- mobile/src/api/client.test.ts (allowed)
+
+New (uncommitted):
+- mobile/src/store/iconCache.ts (allowed)
+- mobile/src/store/iconCache.test.ts (allowed)
+
+All changes are within the allowed file list.
+
+=== TEST VERIFICATION ===
+
+Test file: mobile/src/api/client.test.ts
+Lines 2174-2248: siteIcon tests
+- "returns a data URI with exact base64 for known bytes and sends auth to baseUrl only" ✓
+- "encodes 1-, 2- and 3-byte inputs correctly" ✓ (tests bytesToBase64 with exact base64 values)
+- "returns null for 404 no_icon" ✓
+- "returns null for 502" ✓
+- "returns null when fetch rejects" ✓
+- "returns null for a non-image content type" ✓
+- "url-encodes the host" ✓
+
+Test file: mobile/src/store/iconCache.test.ts
+Lines 9-79: iconCache tests
+- "fetches once then serves from memory" ✓
+- "serves a persisted value to a fresh cache without fetching" ✓
+- "keeps null in memory only, not persisted" ✓
+- "shares one in-flight fetch between concurrent gets" ✓
+- "resolves null when storage throws" ✓
+- "resolves null when fetch throws" ✓
+
+=== ACCEPTANCE CRITERIA COVERAGE ===
+
+AC1: APIClient.siteIcon(host: string): Promise<string | null>
+- ✓ GET request: client.test.ts line 2195 verifies URL is `${baseUrl}/v1/icon?host=...`
+- ✓ bearer header: client.test.ts line 2196 verifies "Bearer tok" sent
+- ✓ 200 with image/* content type: client.test.ts line 2194 returns data URI with base64
+- ✓ exact base64 encoding: client.test.ts line 2194 (iVBORw0= for [0x89, 0x50, 0x4e, 0x47, 0x0d])
+- ✓ no Buffer/btoa requirement: bytesToBase64 function (lines 265-274 in client.ts) is pure algorithm
+- ✓ baseUrl only: client.test.ts line 2195 verified
+- ✓ non-200 status returns null: client.test.ts line 2215 (404), line 2221 (502)
+- ✓ non-image content type returns null: client.test.ts line 2235
+- ✓ fetch error returns null: client.test.ts line 2229
+- ✓ never throws: wraps in try/catch returning null on any error
+
+AC2: createIconCache(storage, fetchIcon) returning { get(host), peek(host) }
+- ✓ peek returns synchronously: iconCache.test.ts line 12, 15, 35 (immediate returns)
+- ✓ get from memory: iconCache.test.ts line 13-14 (fetches once, then serves from memory)
+- ✓ get from storage: iconCache.test.ts line 19-27 (persisted value served to fresh cache)
+- ✓ concurrent gets share one fetch: iconCache.test.ts line 44-58 (p1 and p2 share one call)
+- ✓ null not persisted: iconCache.test.ts line 37 (iconCache:a.com is null after null fetch)
+- ✓ storage/fetch errors resolve to null: iconCache.test.ts lines 60-79
+
+AC3: Tests with specific cases
+- ✓ 200 png -> data URI: client.test.ts line 2182-2197
+- ✓ auth header sent: client.test.ts line 2196
+- ✓ URL is baseUrl + /v1/icon?host=...: client.test.ts line 2195
+- ✓ 404 no_icon -> null: client.test.ts line 2212-2216
+- ✓ 502 -> null: client.test.ts line 2218-2222
+- ✓ fetch rejects -> null: client.test.ts line 2224-2230
+- ✓ non-image content-type -> null: client.test.ts line 2232-2236
+- ✓ fetch once then memory hit: iconCache.test.ts line 9-17
+- ✓ persisted value on fresh cache: iconCache.test.ts line 19-27
+- ✓ null not persisted: iconCache.test.ts line 29-42
+- ✓ concurrent gets share one fetch: iconCache.test.ts line 44-58
+- ✓ storage error -> null: iconCache.test.ts line 60-72
+- ✓ fetch error -> null: iconCache.test.ts line 74-79
+
+=== CODE VERIFICATION ===
+
+siteIcon method (client.ts lines 415-429):
+- Signature: async siteIcon(host: string): Promise<string | null> ✓
+- URL: `${this.baseUrl}/v1/icon?host=${encodeURIComponent(host)}` ✓
+- Headers: this.getHeaders() (includes bearer auth) ✓
+- Status check: if (response.status !== 200) return null ✓
+- Content-Type check: type.toLowerCase().startsWith("image/") ✓
+- arrayBuffer() read: await response.arrayBuffer() ✓
+- data URI format: data:<type>;base64,<b64> ✓
+- Never throws: try/catch returning null on error ✓
+- baseUrl only: hardcoded URL construction confirmed ✓
+
+bytesToBase64 function (client.ts lines 265-274):
+- No Buffer usage ✓
+- Pure algorithm implementation ✓
+- Handles 1, 2, 3 byte inputs (verified by test cases) ✓
+
+iconCache implementation (iconCache.ts):
+- Exports createIconCache function ✓
+- Returns { get, peek } object ✓
+- peek: synchronous memory lookup ✓
+- get: memory -> storage -> fetchIcon flow ✓
+- In-flight deduplication: inFlight map (line 22, 51-54) ✓
+- Null not persisted: conditional on line 33-37 (if (fetched)) ✓
+- Errors resolve to null: try/catch on line 40 ✓
+- Comment on null not persisting: lines 34-36 ✓
+
+=== TESTS NOT WEAKENED ===
+
+All tests pass with new criteria:
+- siteIcon tests all properly assert on behavior
+- iconCache tests all properly assert on behavior
+- No skip, xfail, or ignore markers
+- No assertions replaced with weaker ones
+- All 60 tests passing
+
