@@ -241,7 +241,7 @@ Cycle 2: PASS — whole milestone (widened: the correction changed files no cycl
 
 ## M10b — Assistant answers show formatted text instead of raw markdown
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -267,10 +267,18 @@ Pending.
 
 ### Evidence
 
+Task plan (packets in .harness/tasks/):
+- M10b-T1 — C1 pure markdown parser, streaming-tolerant     Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — commit c69e1f3; .harness/evidence/M10b-T1-verifier.log (exit 0, 277 pass, typecheck+lint clean); red M10b-T1-red.log
+- M10b-T2 — C1 MarkdownText component, chat.tsx wiring      Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — commit daef384; .harness/evidence/M10b-T2-verifier.log (exit 0, 295 pass, typecheck+lint clean); red M10b-T2-red.log (15 fail). Resumed an interrupted attempt's untracked test file; kept all assertions. Rendering itself has no runtime oracle under bun (static tests only).
+- M10b-T3 — markdown-render-proof.sh live proof              Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — commit adcb7ec; .harness/evidence/M10b-T3-verifier.log (full command incl. live proof exit 0); proof log M10b-T3-proof.log; self-test failure M10b-T3-red.log
+
+M10b-AC1 evidence (Mac-side): live proof check 1 (streamed reply: heading, list, bold, code, link parsed; visible text has no **, __, ](, backtick, # line or raw URL), check 2 (14 of 28 live prefixes ended inside unterminated markup, all parse cleanly and show no ** or ](), check 3 (a conversation saved in the pre-change format, loaded by a fresh store, renders the same). Screen wiring: chat.tsx renders assistant content through MarkdownText for both streaming and saved replies (markdownText.test.ts).
 
 ### Validation
 
-Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/markdown-render-proof.sh`
+`cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/markdown-render-proof.sh` — exit 0 (M10b-T3 verifier over adcb7ec, .harness/evidence/M10b-T3-verifier.log): 295 pass, typecheck and lint clean, live proof all PASS, Mac resident model unchanged.
+
+Owner's phone observation still owed (cannot be claimed Mac-side): ask for an answer with a heading, bold, a list, inline code and a link; watch it stream with no raw markup; reopen an older saved chat and see its answers formatted; confirm links are plain non-tappable text and thinking stays plain.
 
 ### Review
 

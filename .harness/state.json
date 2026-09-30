@@ -7142,7 +7142,7 @@
         "FR26"
       ],
       "traces": "AC20",
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -7158,7 +7158,12 @@
           "id": "M10b-AC1",
           "text": "An assistant answer containing bold, a heading, a list, inline code and a link renders with no raw markdown characters visible, both for a newly streamed reply and for a reply saved before this change; a reply mid-stream with unterminated markup renders without error.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "Live proof check 1 (streamed reply via app modules and buildChatItems: heading, list, bold, code, link parsed; visible text has no **, __, ](, backtick, # line or raw URL) - .harness/evidence/M10b-T3-verifier.log",
+            "Live proof check 2 (14 of 28 live prefixes ended inside unterminated markup; all parse without error and show no ** or ](; every prefix parses) - .harness/evidence/M10b-T3-verifier.log",
+            "Live proof check 3 (pre-change saved conversation in existing persisted format loaded by a fresh store renders with no raw markdown) - .harness/evidence/M10b-T3-verifier.log",
+            "Screen wiring: chat.tsx renders assistant content (streaming and saved share the path) via MarkdownText; static tests in mobile/src/ui/markdownText.test.ts - .harness/evidence/M10b-T2-verifier.log"
+          ]
         }
       ],
       "tasks": [
@@ -7242,7 +7247,7 @@
           "status": "ACCEPTED",
           "attempts": 1,
           "packet": ".harness/tasks/M10b-T2.md",
-          "commit": "",
+          "commit": "daef384",
           "attempt_log": [
             {
               "attempt": 3,
@@ -7267,11 +7272,72 @@
               "note": "exit 0, 295 pass, typecheck+lint clean; files within allowed; not weakened; no discrepancies"
             }
           ]
+        },
+        {
+          "id": "M10b-T3",
+          "scope": "live proof markdown-render-proof.{sh,ts}: streamed, mid-stream and pre-change saved replies render with no raw markdown",
+          "tests": "cd mobile && bun run typecheck && bun test && bun run lint && bash scripts/markdown-render-proof.sh",
+          "requirements": [
+            "FR26"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M10b-AC1"
+          ],
+          "paths": [
+            "mobile/scripts/markdown-render-proof.sh",
+            "mobile/scripts/markdown-render-proof.ts"
+          ],
+          "depends_on": [
+            "M10b-T1",
+            "M10b-T2"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "live proof modelled on web-switch-proof against real server and Ollama"
+          },
+          "status": "ACCEPTED",
+          "attempts": 1,
+          "packet": ".harness/tasks/M10b-T3.md",
+          "commit": "adcb7ec",
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M10b-T3-worker.log",
+              "verdict": "PASS",
+              "base": "daef384",
+              "changed_files": [
+                "mobile/scripts/markdown-render-proof.sh",
+                "mobile/scripts/markdown-render-proof.ts"
+              ],
+              "note": "self-test MARKDOWN_PROOF_SELFTEST_FAIL=1 exits 1 (.harness/evidence/M10b-T3-red.log); proof log M10b-T3-proof.log"
+            },
+            {
+              "attempt": 3,
+              "role": "verifier",
+              "artifact": ".harness/evidence/M10b-T3-verifier.log",
+              "verdict": "PASS",
+              "note": "full command incl. live proof exit 0, 295 pass; 28 prefixes 0 parse errors, 14 unterminated clean; check 3 uses existing persisted key/shape; self-test re-run exits 1; token not printed; nemotron3:33b resident before and after"
+            }
+          ]
         }
       ],
       "reviews": [],
       "findings": [],
-      "validation": [],
+      "validation": [
+        {
+          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/markdown-render-proof.sh",
+          "exit_status": 0,
+          "artifact": ".harness/evidence/M10b-T3-verifier.log",
+          "note": "run by the M10b-T3 verifier over the final code tree (adcb7ec): 295 pass, typecheck and lint clean, live proof all PASS, Mac resident model unchanged. On-device visual rendering is owed by the owner and cannot be claimed Mac-side."
+        }
+      ],
       "planned_validation": "cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/markdown-render-proof.sh",
       "follow_ups": [
         "The markdown renderer must be pure JavaScript and Expo Go-compatible (no native module; requirements Constraints). If it adds a new dependency, record that technology choice under Deviations in .harness/architecture.md before M10b completes.",
