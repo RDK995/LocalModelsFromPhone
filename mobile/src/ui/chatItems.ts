@@ -19,6 +19,7 @@
 
 import type { Message } from "@/store/conversationStore";
 import type { StreamAccumulator } from "@/ui/streamReducer";
+import type { StepEventData } from "@shared/api";
 
 export interface PendingTurn {
   userMessageId: string;
@@ -35,6 +36,8 @@ export interface ChatItem {
   content: string;
   thinking?: string;
   model?: string;
+  steps?: StepEventData[];
+  sources?: Array<{ title: string; url: string }>;
   streaming: boolean;
 }
 
@@ -55,6 +58,8 @@ export function buildChatItems(
     content: m.content,
     ...(m.thinking ? { thinking: m.thinking } : {}),
     ...(m.model ? { model: m.model } : {}),
+    ...(m.steps && m.steps.length > 0 ? { steps: m.steps } : {}),
+    ...(m.sources && m.sources.length > 0 ? { sources: m.sources } : {}),
     streaming: false,
   }));
 
@@ -76,6 +81,12 @@ export function buildChatItems(
         role: "assistant",
         content: pending.accumulator.content,
         ...(pending.accumulator.thinking ? { thinking: pending.accumulator.thinking } : {}),
+        ...(pending.accumulator.steps && pending.accumulator.steps.length > 0
+          ? { steps: pending.accumulator.steps }
+          : {}),
+        ...(pending.accumulator.sources && pending.accumulator.sources.length > 0
+          ? { sources: pending.accumulator.sources }
+          : {}),
         streaming: true,
       });
     }
@@ -105,4 +116,61 @@ export function toggleExpanded(
     next.add(key);
   }
   return next;
+}
+
+/** Label for a single web step event, formatted for display. */
+export function stepLabel(step: StepEventData): string {
+  const { kind, status, query, url } = step;
+
+  if (status === "unavailable") {
+    return kind === "search" ? "Search unavailable" : "Reading unavailable";
+  }
+
+  let base: string;
+  if (kind === "search") {
+    base = query ? `Searching: ${query}` : "Searching";
+  } else {
+    // kind === "read"
+    let domain: string;
+    if (url) {
+      try {
+        domain = new URL(url).hostname;
+        // Strip leading www.
+        if (domain.startsWith("www.")) {
+          domain = domain.substring(4);
+        }
+      } catch {
+        domain = url;
+      }
+    } else {
+      domain = "";
+    }
+    base = domain ? `Reading: ${domain}` : "Reading";
+  }
+
+  return status === "failed" ? `${base} (failed)` : base;
+}
+
+/** Label for the web steps toggle button, by its current state. */
+export function stepsToggleLabel(expanded: boolean, count: number): string {
+  return expanded ? "Hide web steps" : `Show web steps (${count})`;
+}
+
+/** Label for a web source, preferring title over URL hostname. */
+export function sourceLabel(source: { title: string; url: string }): string {
+  const trimmedTitle = source.title.trim();
+  if (trimmedTitle) {
+    return trimmedTitle;
+  }
+
+  try {
+    let hostname = new URL(source.url).hostname;
+    // Strip leading www.
+    if (hostname.startsWith("www.")) {
+      hostname = hostname.substring(4);
+    }
+    return hostname;
+  } catch {
+    return source.url;
+  }
 }

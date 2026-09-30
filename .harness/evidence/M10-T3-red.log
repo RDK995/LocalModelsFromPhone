@@ -1,0 +1,23 @@
+bun test v1.4.0 (1381054db)
+
+src/ui/chatItems.test.ts:
+
+# Unhandled error between tests
+-------------------------------
+SyntaxError: Export named 'stepLabel' not found in module '/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/chatItems.ts'.
+-------------------------------
+
+
+src/ui/webSwitch.test.ts:
+
+# Unhandled error between tests
+-------------------------------
+error: Cannot find module './webSwitch' from '/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/webSwitch.test.ts'
+-------------------------------
+
+
+ 42 pass
+ 2 fail
+ 2 errors
+ 81 expect() calls
+Ran 44 tests across 8 files. [8.00ms]

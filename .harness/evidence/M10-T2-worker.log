@@ -1,18 +1,8 @@
+$ tsc --noEmit
 bun test v1.4.0 (1381054db)
 
  206 pass
  0 fail
  460 expect() calls
-Ran 206 tests across 19 files. [97.00ms]
+Ran 206 tests across 19 files. [101.00ms]
 $ eslint src --max-warnings 0
-
-/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/chat/conversationSession.test.ts
-  692:14  error  Strings must use doublequote  quotes
-  693:14  error  Strings must use doublequote  quotes
-  694:14  error  Strings must use doublequote  quotes
-  695:14  error  Strings must use doublequote  quotes
-
-✖ 4 problems (4 errors, 0 warnings)
-  4 errors and 0 warnings potentially fixable with the `--fix` option.
-
-error: script "lint" exited with code 1

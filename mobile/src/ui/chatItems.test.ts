@@ -10,9 +10,13 @@ import {
   buildChatItems,
   thinkingToggleLabel,
   toggleExpanded,
+  stepLabel,
+  stepsToggleLabel,
+  sourceLabel,
   type PendingTurn,
 } from "./chatItems";
 import type { Message } from "@/store/conversationStore";
+import type { StepEventData } from "@shared/api";
 import { initialStreamAccumulator } from "@/ui/streamReducer";
 
 function userMessage(id: string, content: string): Message {
@@ -209,5 +213,292 @@ describe("toggleExpanded", () => {
   it("leaves other keys untouched", () => {
     const result = toggleExpanded(new Set(["a1", "a2"]), "a2");
     expect(result).toEqual(new Set(["a1"]));
+  });
+});
+
+describe("buildChatItems: web steps and sources", () => {
+  function pendingTurn(overrides: Partial<PendingTurn> = {}): PendingTurn {
+    return {
+      userMessageId: "u1",
+      prompt: "hi",
+      assistantMessageId: "a1",
+      accumulator: initialStreamAccumulator,
+      blocked: false,
+      ...overrides,
+    };
+  }
+
+  it("includes steps and sources from pending accumulator when non-empty", () => {
+    const steps: StepEventData[] = [
+      {
+        step_id: "s1",
+        kind: "search",
+        status: "done",
+        query: "test",
+      },
+    ];
+    const sources = [{ title: "Example", url: "https://example.com" }];
+
+    const items = buildChatItems(
+      [],
+      pendingTurn({
+        accumulator: { content: "test", thinking: "", steps, sources },
+      })
+    );
+
+    expect(items[1]).toHaveProperty("steps", steps);
+    expect(items[1]).toHaveProperty("sources", sources);
+  });
+
+  it("omits steps from pending assistant item when empty", () => {
+    const items = buildChatItems(
+      [],
+      pendingTurn({
+        accumulator: { content: "test", thinking: "", steps: [], sources: [] },
+      })
+    );
+
+    expect(items[1]).not.toHaveProperty("steps");
+  });
+
+  it("omits sources from pending assistant item when empty", () => {
+    const items = buildChatItems(
+      [],
+      pendingTurn({
+        accumulator: { content: "test", thinking: "", steps: [], sources: [] },
+      })
+    );
+
+    expect(items[1]).not.toHaveProperty("sources");
+  });
+
+  it("includes steps and sources from persisted message when non-empty", () => {
+    const steps: StepEventData[] = [
+      {
+        step_id: "s1",
+        kind: "search",
+        status: "done",
+        query: "test",
+      },
+    ];
+    const sources = [{ title: "Example", url: "https://example.com" }];
+    const persisted = [
+      assistantMessage("a1", "hello", { steps, sources }),
+    ];
+
+    const items = buildChatItems(persisted, null);
+
+    expect(items[0]).toHaveProperty("steps", steps);
+    expect(items[0]).toHaveProperty("sources", sources);
+  });
+
+  it("omits steps and sources from persisted message when not present", () => {
+    const persisted = [assistantMessage("a1", "hello", {})];
+
+    const items = buildChatItems(persisted, null);
+
+    expect(items[0]).not.toHaveProperty("steps");
+    expect(items[0]).not.toHaveProperty("sources");
+  });
+
+  it("omits steps and sources from persisted message when empty arrays", () => {
+    const persisted = [
+      assistantMessage("a1", "hello", { steps: [], sources: [] }),
+    ];
+
+    const items = buildChatItems(persisted, null);
+
+    expect(items[0]).not.toHaveProperty("steps");
+    expect(items[0]).not.toHaveProperty("sources");
+  });
+});
+
+describe("stepLabel", () => {
+  it("formats search started as 'Searching: <query>'", () => {
+    const step: StepEventData = {
+      step_id: "s1",
+      kind: "search",
+      status: "started",
+      query: "test query",
+    };
+    expect(stepLabel(step)).toBe("Searching: test query");
+  });
+
+  it("formats search done as 'Searching: <query>'", () => {
+    const step: StepEventData = {
+      step_id: "s1",
+      kind: "search",
+      status: "done",
+      query: "test query",
+    };
+    expect(stepLabel(step)).toBe("Searching: test query");
+  });
+
+  it("formats search with missing query as 'Searching'", () => {
+    const step: StepEventData = {
+      step_id: "s1",
+      kind: "search",
+      status: "done",
+    };
+    expect(stepLabel(step)).toBe("Searching");
+  });
+
+  it("appends ' (failed)' to failed search", () => {
+    const step: StepEventData = {
+      step_id: "s1",
+      kind: "search",
+      status: "failed",
+      query: "test query",
+    };
+    expect(stepLabel(step)).toBe("Searching: test query (failed)");
+  });
+
+  it("returns 'Search unavailable' for unavailable search", () => {
+    const step: StepEventData = {
+      step_id: "s1",
+      kind: "search",
+      status: "unavailable",
+    };
+    expect(stepLabel(step)).toBe("Search unavailable");
+  });
+
+  it("formats read started as 'Reading: <hostname>'", () => {
+    const step: StepEventData = {
+      step_id: "s1",
+      kind: "read",
+      status: "started",
+      url: "https://www.example.com/path",
+    };
+    expect(stepLabel(step)).toBe("Reading: example.com");
+  });
+
+  it("formats read done as 'Reading: <hostname>'", () => {
+    const step: StepEventData = {
+      step_id: "s1",
+      kind: "read",
+      status: "done",
+      url: "https://www.example.com",
+    };
+    expect(stepLabel(step)).toBe("Reading: example.com");
+  });
+
+  it("strips www. from hostname", () => {
+    const step: StepEventData = {
+      step_id: "s1",
+      kind: "read",
+      status: "done",
+      url: "https://www.github.com/",
+    };
+    expect(stepLabel(step)).toBe("Reading: github.com");
+  });
+
+  it("handles hostname without www.", () => {
+    const step: StepEventData = {
+      step_id: "s1",
+      kind: "read",
+      status: "done",
+      url: "https://github.com",
+    };
+    expect(stepLabel(step)).toBe("Reading: github.com");
+  });
+
+  it("uses raw URL when hostname parsing fails", () => {
+    const step: StepEventData = {
+      step_id: "s1",
+      kind: "read",
+      status: "done",
+      url: "not a valid url",
+    };
+    expect(stepLabel(step)).toBe("Reading: not a valid url");
+  });
+
+  it("returns 'Reading' when url is missing and read failed", () => {
+    const step: StepEventData = {
+      step_id: "s1",
+      kind: "read",
+      status: "failed",
+    };
+    expect(stepLabel(step)).toBe("Reading (failed)");
+  });
+
+  it("appends ' (failed)' to failed read with URL", () => {
+    const step: StepEventData = {
+      step_id: "s1",
+      kind: "read",
+      status: "failed",
+      url: "https://www.example.com",
+    };
+    expect(stepLabel(step)).toBe("Reading: example.com (failed)");
+  });
+
+  it("returns 'Reading unavailable' for unavailable read", () => {
+    const step: StepEventData = {
+      step_id: "s1",
+      kind: "read",
+      status: "unavailable",
+    };
+    expect(stepLabel(step)).toBe("Reading unavailable");
+  });
+
+  it("does not throw on bad URL in try/catch", () => {
+    const step: StepEventData = {
+      step_id: "s1",
+      kind: "read",
+      status: "done",
+      url: "ht!tp://inv@lid",
+    };
+    // Should not throw
+    expect(() => stepLabel(step)).not.toThrow();
+  });
+});
+
+describe("stepsToggleLabel", () => {
+  it("returns 'Hide web steps' when expanded", () => {
+    expect(stepsToggleLabel(true, 3)).toBe("Hide web steps");
+  });
+
+  it("returns 'Show web steps (<count>)' when collapsed", () => {
+    expect(stepsToggleLabel(false, 3)).toBe("Show web steps (3)");
+  });
+
+  it("handles count of 0", () => {
+    expect(stepsToggleLabel(false, 0)).toBe("Show web steps (0)");
+  });
+
+  it("handles count of 1", () => {
+    expect(stepsToggleLabel(false, 1)).toBe("Show web steps (1)");
+  });
+});
+
+describe("sourceLabel", () => {
+  it("returns title when present and non-empty", () => {
+    const source = { title: "Example Article", url: "https://example.com" };
+    expect(sourceLabel(source)).toBe("Example Article");
+  });
+
+  it("returns hostname when title is empty string", () => {
+    const source = { title: "", url: "https://www.example.com" };
+    expect(sourceLabel(source)).toBe("example.com");
+  });
+
+  it("returns hostname when title is whitespace only", () => {
+    const source = { title: "   ", url: "https://www.example.com" };
+    expect(sourceLabel(source)).toBe("example.com");
+  });
+
+  it("strips www. from hostname", () => {
+    const source = { title: "", url: "https://www.github.com/path" };
+    expect(sourceLabel(source)).toBe("github.com");
+  });
+
+  it("handles hostname without www.", () => {
+    const source = { title: "", url: "https://github.com" };
+    expect(sourceLabel(source)).toBe("github.com");
+  });
+
+  it("handles bad URL gracefully", () => {
+    const source = { title: "", url: "not a valid url" };
+    // Should either return the URL or handle gracefully
+    expect(() => sourceLabel(source)).not.toThrow();
   });
 });
