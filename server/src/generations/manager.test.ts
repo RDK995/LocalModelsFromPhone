@@ -394,6 +394,49 @@ describe("GenerationManager", () => {
       });
     });
 
+    it("numbers each distinct page read in first-read order and carries n on sources (FR31)", async () => {
+      const { client, seen } = scripted((round) =>
+        round === 0
+          ? [callChunk([call("web_search"), call("read_page", { url: "http://r/x" }), call("read_page", { url: "http://r/x" }), call("read_page", { url: "http://r/redir" }), call("read_page", { url: "http://b" })])]
+          : [doneChunk("ok", false), doneChunk("", true)]
+      );
+      const web_ = new FakeWebTools();
+      web_.execute = (c: WebToolCall, signal: AbortSignal, numberPage?: (u: string) => number) => {
+        web_.executed.push(c);
+        const args = c.function.arguments as { url?: string };
+        if (c.function.name === "web_search") {
+          return Promise.resolve({
+            toolResult: "1. A\n   http://b",
+            events: [
+              { type: "source", data: { title: "B", url: "http://b" } },
+              { type: "source", data: { title: "S", url: "http://s" } },
+            ] as WebEvent[],
+          });
+        }
+        const finalUrl = args.url === "http://r/redir" ? "http://r/final" : args.url!;
+        const n = numberPage!(finalUrl);
+        return Promise.resolve({
+          toolResult: `Page [${n}]\nURL: ${finalUrl}`,
+          events: [{ type: "source", data: { title: `T ${finalUrl}`, url: finalUrl, n } }] as WebEvent[],
+        });
+      };
+      const manager = new GenerationManager(client, web_);
+      manager.startGeneration("gen-1", { model: "test", messages: userMessages, web: true });
+      const events = await collect(manager);
+      const sources = JSON.parse(events.find((e) => e.type === "sources")!.data);
+      expect(sources.items).toEqual([
+        { title: "B", url: "http://b", n: 3 },
+        { title: "S", url: "http://s" },
+        { title: "T http://r/x", url: "http://r/x", n: 1 },
+        { title: "T http://r/final", url: "http://r/final", n: 2 },
+      ]);
+      const toolMsgs = seen[1].request.messages.filter((m) => m.role === "tool").map((m) => m.content);
+      expect(toolMsgs[1]).toContain("[1]");
+      expect(toolMsgs[2]).toContain("[1]");
+      expect(toolMsgs[3]).toContain("[2]");
+      expect(toolMsgs[4]).toContain("[3]");
+    });
+
     it("web:true with no tool call emits no sources event", async () => {
       const { client } = scripted(() => [doneChunk("plain", false), doneChunk("", true)]);
       const manager = new GenerationManager(client, new FakeWebTools());

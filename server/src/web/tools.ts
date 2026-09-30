@@ -26,7 +26,7 @@ export type StepEvent = {
   };
 };
 
-export type SourceEvent = { type: "source"; data: { title: string; url: string } };
+export type SourceEvent = { type: "source"; data: { title: string; url: string; n?: number } };
 export type WebEvent = StepEvent | SourceEvent;
 
 export type WebToolsOptions = {
@@ -159,7 +159,7 @@ export function createWebTools(opts: WebToolsOptions = {}) {
     return { toolResult, events };
   }
 
-  async function readPage(url: string, signal: AbortSignal) {
+  async function readPage(url: string, signal: AbortSignal, numberPage?: (finalUrl: string) => number) {
     const step_id = crypto.randomUUID();
     const events: WebEvent[] = [
       { type: "step", data: { step_id, kind: "read", status: "started", url } },
@@ -171,8 +171,10 @@ export function createWebTools(opts: WebToolsOptions = {}) {
       const finalUrl: string = typeof b.final_url === "string" ? b.final_url : url;
       const title: string = typeof b.title === "string" ? b.title : "";
       events.push({ type: "step", data: { step_id, kind: "read", status: "done", url } });
-      events.push({ type: "source", data: { title, url: finalUrl } });
-      let toolResult = `Title: ${title}\nURL: ${finalUrl}\n\n${typeof b.markdown === "string" ? b.markdown : ""}`;
+      const n = numberPage?.(finalUrl);
+      events.push({ type: "source", data: n === undefined ? { title, url: finalUrl } : { title, url: finalUrl, n } });
+      const label = n === undefined ? "" : `Page [${n}] - cite this page as [${n}]\n`;
+      let toolResult = `${label}Title: ${title}\nURL: ${finalUrl}\n\n${typeof b.markdown === "string" ? b.markdown : ""}`;
       if (b.truncated === true) {
         toolResult += "\n\n[Note: the page content was truncated; only the first part is shown.]";
       }
@@ -223,12 +225,12 @@ export function createWebTools(opts: WebToolsOptions = {}) {
       return (
         `Today's date is ${WEEKDAYS[now.getDay()]}, ${MONTHS[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()} (${iso}). ` +
         `You may use the web_search and read_page tools to get current information. ` +
-        `For a broad or open-ended question (for example "today's news trends"), search with more than one query, using different angles and wording. ` +
+        `For a broad or open-ended question (for example "today's news trends"), make at least two web_search calls (more than one query) with different angles and wording. ` +
         `Do not put the exact date into search queries. ` +
-        `Read pages from at least three different websites before you answer. ` +
-        `Cite the pages you relied on. Write every citation as a markdown link [text](url), including source cells inside tables, ` +
-        `where the url is the page's full URL copied exactly from the web_search or read_page results, never shortened, truncated or invented. ` +
-        `Only link pages that those tools returned. ` +
+        `Then call read_page on results from at least three different websites before you answer, and always write the answer. ` +
+        `You have at most 10 tool calls in total. ` +
+        `Cite each page you relied on by the page number that read_page gave it, in square brackets, for example [2], including source cells inside tables. ` +
+        `Cite only numbers given by read_page, and do not type URLs as citations. ` +
         `A narrow factual question need not search more than it needs.`
       );
     },
@@ -236,6 +238,7 @@ export function createWebTools(opts: WebToolsOptions = {}) {
     async execute(
       call: WebToolCall,
       signal: AbortSignal,
+      numberPage?: (finalUrl: string) => number,
     ): Promise<{ toolResult: string; events: WebEvent[] }> {
       const name = call.function?.name;
       const args = call.function?.arguments ?? {};
@@ -249,7 +252,7 @@ export function createWebTools(opts: WebToolsOptions = {}) {
         if (typeof args.url !== "string" || args.url.trim() === "") {
           return { toolResult: "Error: read_page requires a non-empty string argument 'url'.", events: [] };
         }
-        return readPage(args.url, signal);
+        return readPage(args.url, signal, numberPage);
       }
       return {
         toolResult: `Error: unknown tool '${String(name)}'. Available tools: web_search, read_page.`,

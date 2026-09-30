@@ -95,7 +95,7 @@ export interface StepEventData {
 }
 
 export interface SourcesEvent {
-  items: Array<{ title: string; url: string }>;
+  items: Array<{ title: string; url: string; n?: number }>;
 }
 
 export interface ErrorEvent {

@@ -16,6 +16,7 @@ import type {
   OllamaToolCall,
 } from "../ollama/client";
 import { createWebTools, type WebEvent, type WebToolCall } from "../web/tools";
+import { createPageNumberer } from "../web/pageNumbers";
 import type {
   ChatRequest,
   ContentEvent,
@@ -51,7 +52,8 @@ export interface GenerationWebTools {
   systemNote(now: Date): string;
   execute(
     call: WebToolCall,
-    signal: AbortSignal
+    signal: AbortSignal,
+    numberPage?: (finalUrl: string) => number
   ): Promise<{ toolResult: string; events: WebEvent[] }>;
 }
 
@@ -145,6 +147,7 @@ export class GenerationManager {
     let iterator: AsyncGenerator<OllamaChatResponse & { toolCalls?: OllamaToolCall[] }, void, unknown> | undefined;
     let toolCallCount = 0;
     const sources: SourcesEvent["items"] = [];
+    const numberPage = createPageNumberer();
     try {
       let finalChunk: OllamaChatResponse | undefined;
 
@@ -199,7 +202,7 @@ export class GenerationManager {
             });
             continue;
           }
-          const outcome = await Promise.race([this.webTools.execute(toolCall, signal), aborted]);
+          const outcome = await Promise.race([this.webTools.execute(toolCall, signal, numberPage), aborted]);
           if (outcome === "aborted") {
             throw new DOMException("Generation cancelled", "AbortError");
           }
@@ -207,8 +210,17 @@ export class GenerationManager {
           for (const event of outcome.events) {
             if (event.type === "step") {
               this.append(record, "step", JSON.stringify(event.data));
-            } else if (!sources.some((s) => s.url === event.data.url)) {
-              sources.push({ title: event.data.title, url: event.data.url });
+            } else {
+              const existing = sources.find((s) => s.url === event.data.url);
+              if (!existing) {
+                sources.push(
+                  event.data.n === undefined
+                    ? { title: event.data.title, url: event.data.url }
+                    : { title: event.data.title, url: event.data.url, n: event.data.n }
+                );
+              } else if (event.data.n !== undefined) {
+                existing.n = event.data.n;
+              }
             }
           }
           request.messages.push({

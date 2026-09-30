@@ -67,10 +67,81 @@ describe("createWebTools", () => {
     expect(note).toContain("more than one");
     expect(note).toContain("exact date");
     expect(note).toContain("three different websites");
-    expect(note).toContain("markdown link");
-    expect(note).toContain("copied exactly");
+    expect(note).toContain("[2]");
+    expect(note).toContain("number");
     expect(note).toContain("tables");
     expect(note).toContain("narrow");
+    expect(note).not.toContain("markdown link");
+  });
+
+  it("systemNote tells the model to cite by page number, not URL", () => {
+    const note = createWebTools().systemNote(new Date(2026, 8, 30, 12, 0, 0));
+    expect(note).toContain("do not type URLs");
+    expect(note).toContain("given by read_page");
+  });
+
+  it("read_page labels the page with the number from numberPage", async () => {
+    const f = fakeSearch(() =>
+      json(200, { url: "u", final_url: "https://p.example/b", title: "Page T", markdown: "body" }),
+    );
+    try {
+      const w = createWebTools({ baseUrl: f.baseUrl });
+      const asked: string[] = [];
+      const { toolResult, events } = await w.execute(
+        call("read_page", { url: "https://p.example/a" }),
+        new AbortController().signal,
+        (u: string) => {
+          asked.push(u);
+          return 7;
+        },
+      );
+      expect(asked).toEqual(["https://p.example/b"]);
+      expect(toolResult.split("\n")[0]).toContain("[7]");
+      expect(toolResult).toContain("Title: Page T");
+      expect(toolResult).toContain("URL: https://p.example/b");
+      expect(events[2]).toEqual({ type: "source", data: { title: "Page T", url: "https://p.example/b", n: 7 } });
+    } finally {
+      f.server.stop(true);
+    }
+  });
+
+  it("a failed read_page gets no number and does not call numberPage", async () => {
+    const f = fakeSearch(() => json(400, { error: "blocked_destination" }));
+    try {
+      const w = createWebTools({ baseUrl: f.baseUrl });
+      let called = 0;
+      const { toolResult, events } = await w.execute(
+        call("read_page", { url: "http://127.0.0.1/" }),
+        new AbortController().signal,
+        () => {
+          called++;
+          return 1;
+        },
+      );
+      expect(called).toBe(0);
+      expect(toolResult).not.toMatch(/\[\d+\]/);
+      expect(events.some((e: WebEvent) => e.type === "source")).toBe(false);
+    } finally {
+      f.server.stop(true);
+    }
+  });
+
+  it("web_search listing carries no bracketed numbers and its sources no n", async () => {
+    const f = fakeSearch(() =>
+      json(200, { results: [{ url: "https://a.example/1", title: "Alpha", snippet: "s" }] }),
+    );
+    try {
+      const w = createWebTools({ baseUrl: f.baseUrl });
+      const { toolResult, events } = await w.execute(
+        call("web_search", { query: "cats" }),
+        new AbortController().signal,
+        () => 9,
+      );
+      expect(toolResult).not.toMatch(/\[\d+\]/);
+      expect(events[2]).toEqual({ type: "source", data: { title: "Alpha", url: "https://a.example/1" } });
+    } finally {
+      f.server.stop(true);
+    }
   });
 
   it("web_search 200: events, sources, result text and request body", async () => {
