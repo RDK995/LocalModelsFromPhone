@@ -238,7 +238,7 @@ Cycle 1: PASS — whole milestone, reviewer tier Mid (model sonnet, ORDINARY_IMP
 
 ## M10c1 — The Mac serves a website's own logo through a token-protected route
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -252,11 +252,11 @@ C4, C12, C13 (plus search/API.md)
 
 ### As-Built
 
-Pending.
+.harness/as-built/M10c1.md — RECORDED — 13/14 files attributed; components C4,C12,C13; 3 edges; claim mismatches NONE
 
 ### Acceptance Criteria
 
-- [ ] **M10c1-AC1**: GET /v1/icon?host=<public site> on the server with the bearer token returns that site's own icon as image bytes (fetched by the search service from the site itself, no third-party logo service), a second request is served from the Mac cache without contacting the site, a host that is or redirects to a local, LAN or tailnet address is refused and returns no_icon, a site with no icon returns no_icon, and a request without the token is 401.
+- [x] **M10c1-AC1**: GET /v1/icon?host=<public site> on the server with the bearer token returns that site's own icon as image bytes (fetched by the search service from the site itself, no third-party logo service), a second request is served from the Mac cache without contacting the site, a host that is or redirects to a local, LAN or tailnet address is refused and returns no_icon, a site with no icon returns no_icon, and a request without the token is 401.
 
 ### Baseline
 
@@ -273,7 +273,7 @@ T4 C4 isValidIconHost accepts single-label hosts   Cheap, attempt 1, PASS; red .
 
 ### Review
 
-Pending.
+Cycle 1: PASS — tier Top, model opus, reason_code SECURITY (T1 address-guard refactor and icon fetch), scope WHOLE_MILESTONE, diff b8ec398..14098de. Per-criterion: M10c1-AC1 PASS. Findings: 0 BLOCKER, 0 IMPORTANT, 2 OPTIONAL (recorded under Follow-ups). Reviewer re-ran milestone validation, exit 0 — .harness/evidence/M10c1-review.log. No report written (PASS).
 
 Split record (from M10c): Human decision 2026-09-30: the owner chose Option A (split exactly as proposed in the escalation record). M10c replaced by M10c1 (Mac half: C4, C12, C13, search/API.md; one new criterion M10c1-AC1 worded as proposed) and M10c2 (phone half: C1, C2, C3; keeps M10c-AC1 unchanged, depends on M10c1). Criteria conserved: original 1 (M10c-AC1) -> M10c2 unchanged; M10c1-AC1 added by the human's decision.
 
@@ -310,6 +310,8 @@ Recommended decision:
 - Archived M10 to .harness/archive/M10.md (595 -> 536 lines). milestones.md stays above 400: M10b (most recently settled), M10c-M13 (open) and M5a (BLOCKED) are protected.
 - Owner-reported 2026-09-30 (phone screenshot; outside M10c1 scope, not implemented): markdown tables in assistant answers render misaligned (body-row cells shift one column left: trend+description in column 1, source ref under 'What's happening', Source column empty) and a 3-column table is too cramped at phone width. Needs correct cell alignment plus a phone-friendly fallback for wide tables (e.g. stacked per-row layout). Cause (model output vs MarkdownText renderer, FR26/M10b) not yet diagnosed.
 - Owner-reported 2026-09-30 (phone screenshots; outside M10c1 scope, not implemented): a broad web-enabled prompt ('What are today's news trends') produced an answer drawn from one site: one web_search with the exact date in the query, one read_page of an AI-news round-up, and all ten cited sources were links from that page. Broad questions should draw on several distinct sites and cover the topic as asked. Cause (query shaping, single read, no source-diversity guidance in the M9 tool-loop prompt) not yet diagnosed.
+- Review cycle 1 OPTIONAL: server/src/web/tools.ts returns a three-way IconResult (ok / none / unavailable with timeout flag) where D-M10c-2 records C12 as `{bytes, contentType} | null`; the three-way shape is what D-M10c-2's own 502/504 passthrough needs. Amend the C12 line of D-M10c-2 in .harness/architecture.md so the record matches what was built.
+- Review cycle 1 OPTIONAL: server GET /v1/icon 200 response (server/src/http/server.ts) omits `X-Content-Type-Options: nosniff`, which the search service sets; add it as defence in depth for bytes from arbitrary websites.
 
 ## M10c2 — Links to a web answer's sources show the site's own logo and open in Safari
 

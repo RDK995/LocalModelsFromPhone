@@ -7375,7 +7375,7 @@
       "architecture": "C4, C12, C13",
       "requirements": [],
       "traces": "AC21 (Mac icon fetch and guard), FR27 (Mac half; FR27 owned by M10c2)",
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -7383,16 +7383,17 @@
         "commit": "b8ec398b0bdaa3dff72bef6a6ba85d939b320e4d"
       },
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M10c1.md",
+        "result": "RECORDED \u2014 13/14 files attributed; components C4,C12,C13; 3 edges; claim mismatches NONE"
       },
       "criteria": [
         {
           "id": "M10c1-AC1",
           "text": "GET /v1/icon?host=<public site> on the server with the bearer token returns that site's own icon as image bytes (fetched by the search service from the site itself, no third-party logo service), a second request is served from the Mac cache without contacting the site, a host that is or redirects to a local, LAN or tailnet address is refused and returns no_icon, a site with no icon returns no_icon, and a request without the token is 401.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
-            "Live: bash server/scripts/icon-route-proof.sh exit 0 (.harness/evidence/M10c1-T3-verifier.log): github.com icon image/png via C4->C12->C13, second request from cache (one fetch line), localhost/app.localhost/100.100.100.100.nip.io -> 404 no_icon (blocked), example.com -> 404 no_icon (none), 401 without/wrong token, no third-party logo service in src. LAN and loopback-by-DNS live cases SKIP (names do not resolve on this network); LAN and redirect-to-local refusal covered by search unit tests (.harness/evidence/M10c1-T1-verifier.log). Unit: search 159 pass (T1), server 161 pass (T4 verifier)."
+            "Live: bash server/scripts/icon-route-proof.sh exit 0 (.harness/evidence/M10c1-T3-verifier.log): github.com icon image/png via C4->C12->C13, second request from cache (one fetch line), localhost/app.localhost/100.100.100.100.nip.io -> 404 no_icon (blocked), example.com -> 404 no_icon (none), 401 without/wrong token, no third-party logo service in src. LAN and loopback-by-DNS live cases SKIP (names do not resolve on this network); LAN and redirect-to-local refusal covered by search unit tests (.harness/evidence/M10c1-T1-verifier.log). Unit: search 159 pass (T1), server 161 pass (T4 verifier).",
+            "Reviewer cycle 1 (opus) PASS: re-ran milestone validation, exit 0 (.harness/evidence/M10c1-review.log); LAN/redirect-to-local clause judged covered by search unit tests plus server mapping tests."
           ]
         }
       ],
@@ -7599,7 +7600,27 @@
           "findings": []
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "PASS",
+          "scope": "WHOLE_MILESTONE",
+          "tier": "Top",
+          "model": "opus",
+          "reason_code": "SECURITY",
+          "diff_range": "b8ec398b0bdaa3dff72bef6a6ba85d939b320e4d..14098de",
+          "per_criterion": {
+            "M10c1-AC1": "PASS"
+          },
+          "findings": {
+            "BLOCKER": 0,
+            "IMPORTANT": 0,
+            "OPTIONAL": 2
+          },
+          "artifact": null,
+          "review_log": ".harness/evidence/M10c1-review.log"
+        }
+      ],
       "findings": [],
       "validation": [
         {
@@ -7620,7 +7641,9 @@
         "Split from M10c 2026-09-30 by human decision (Option A); original pickup blocker preserved under blocked/human_decision.",
         "Archived M10 to .harness/archive/M10.md (595 -> 536 lines). milestones.md stays above 400: M10b (most recently settled), M10c-M13 (open) and M5a (BLOCKED) are protected.",
         "Owner-reported 2026-09-30 (phone screenshot; outside M10c1 scope, not implemented): markdown tables in assistant answers render misaligned (body-row cells shift one column left: trend+description in column 1, source ref under 'What's happening', Source column empty) and a 3-column table is too cramped at phone width. Needs correct cell alignment plus a phone-friendly fallback for wide tables (e.g. stacked per-row layout). Cause (model output vs MarkdownText renderer, FR26/M10b) not yet diagnosed.",
-        "Owner-reported 2026-09-30 (phone screenshots; outside M10c1 scope, not implemented): a broad web-enabled prompt ('What are today's news trends') produced an answer drawn from one site: one web_search with the exact date in the query, one read_page of an AI-news round-up, and all ten cited sources were links from that page. Broad questions should draw on several distinct sites and cover the topic as asked. Cause (query shaping, single read, no source-diversity guidance in the M9 tool-loop prompt) not yet diagnosed."
+        "Owner-reported 2026-09-30 (phone screenshots; outside M10c1 scope, not implemented): a broad web-enabled prompt ('What are today's news trends') produced an answer drawn from one site: one web_search with the exact date in the query, one read_page of an AI-news round-up, and all ten cited sources were links from that page. Broad questions should draw on several distinct sites and cover the topic as asked. Cause (query shaping, single read, no source-diversity guidance in the M9 tool-loop prompt) not yet diagnosed.",
+        "Review cycle 1 OPTIONAL: server/src/web/tools.ts returns a three-way IconResult (ok / none / unavailable with timeout flag) where D-M10c-2 records C12 as `{bytes, contentType} | null`; the three-way shape is what D-M10c-2's own 502/504 passthrough needs. Amend the C12 line of D-M10c-2 in .harness/architecture.md so the record matches what was built.",
+        "Review cycle 1 OPTIONAL: server GET /v1/icon 200 response (server/src/http/server.ts) omits `X-Content-Type-Options: nosniff`, which the search service sets; add it as defence in depth for bytes from arbitrary websites."
       ],
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
