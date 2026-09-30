@@ -242,7 +242,7 @@ Task plan (packets in .harness/tasks/):
 - M9-T4 — C6+C4 tool loop, 10-call cap (AC3,AC4)  Mid (sonnet, ORDINARY_IMPLEMENTATION) — planned, after T1-T3
 - M9-T5 — web-chat-proof.sh live proof (AC1-AC3)  Mid (sonnet, ORDINARY_IMPLEMENTATION) — planned, after T4
 
-Progress: T1, T2, T3, T3b accepted and committed. Remaining: T4, T5.
+Handoff (CONTINUE, continuation 1): T1, T2, T3, T3b accepted and committed. Remaining: T4 (packet written, not dispatched), T5 (packet not yet written). Notes in state.json M9.handoff.
 
 ### Validation
 

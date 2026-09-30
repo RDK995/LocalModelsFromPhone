@@ -6508,7 +6508,7 @@
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
       ],
-      "handoff": "T1,T2,T3,T3b accepted. Next: T4 (packet .harness/tasks/M9-T4.md written), then T5 live proof."
+      "handoff": "CONTINUE (continuation 1 handed off at turn ceiling) after T1,T2,T3,T3b accepted and committed (HEAD after this record commit). Next: dispatch M9-T4 from the already-written packet .harness/tasks/M9-T4.md (Mid, sonnet, attempt 3), verify, commit; then write packet M9-T5 (server/scripts/web-chat-proof.sh live proof against resident tools-capable model + search service on 127.0.0.1:7790: AC2 step/sources/answer over SSE, AC3 web-off run makes no search request, AC1 /v1/state tools field live; 409 path cites unit tests if every installed model has tools) and run it; then set REVIEW."
     },
     "M10": {
       "id": "M10",
