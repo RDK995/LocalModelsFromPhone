@@ -236,19 +236,19 @@ Cycle 1: PASS — whole milestone, reviewer tier Mid (model sonnet, ORDINARY_IMP
 - The markdown renderer must be pure JavaScript and Expo Go-compatible (no native module; requirements Constraints). If it adds a new dependency, record that technology choice under Deviations in .harness/architecture.md before M10b completes.
 - Links render as plain, non-tappable text in M10b (FR27's rule for links that are not sources); M10c adds the logo for links matching the reply's sources.
 
-## M10c — Links to a web answer's sources show the site's own logo and open in Safari
+## M10c1 — The Mac serves a website's own logo through a token-protected route
 
-Status: BLOCKED
+Status: TODO
 
 ### Outcome
 
-In a web answer, a link whose URL matches one of that reply's saved sources (ignoring scheme, a leading www. and a trailing slash) shows its text followed by the website's own logo, fetched by the Mac (the search service, through the same public-sites-only guard used for page reading, image content only, cached on the Mac) and passed to the phone through a new token-protected server route, then cached on the phone, with a globe icon when none loads or the Mac is unreachable; tapping the logo opens the page in Safari. The phone contacts no website or logo service itself, and no third-party logo service is called. Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (split from the FR26-FR28 plan, see M10b); re-planned 2026-09-30 to span phone, server and search service, so re-size at implementation start. Architecture deviation D-M10c-2 (Mac fetches icons; supersedes the withdrawn D-M10c-1) is recorded.
+The server exposes GET /v1/icon?host=<site> behind the bearer token (C4), which asks the search service (C12 -> C13) for that site's own icon; the search service fetches it from the site itself through the same public-sites-only guard used for page reading, accepts image content only, caches it on the Mac, and returns no_icon for a refused (local, LAN, tailnet, or redirecting there) or icon-less host. No third-party logo service is called; search/API.md documents the route (FR25). Architecture deviation D-M10c-2 applies. Split from M10c on 2026-09-30 by human decision (Option A) after the pickup check found signals IMPLEMENTATION_PLUS_LIVE_PROOF, PRODUCTION_FILES_GT_8 and MULTIPLE_OUTCOMES on a one-criterion milestone; this part carries one signal (IMPLEMENTATION_PLUS_LIVE_PROOF).
 
-Owns: FR27. Traces to: AC21.
+Owns: none owned (FR27 owned by M10c2). Traces to: AC21 (Mac icon fetch and guard), FR27 (Mac half; FR27 owned by M10c2).
 
 ### Architecture
 
-C1, C2, C3, C4, C12, C13
+C4, C12, C13 (plus search/API.md)
 
 ### As-Built
 
@@ -256,7 +256,7 @@ Pending.
 
 ### Acceptance Criteria
 
-- [ ] **M10c-AC1**: In a web answer, a link whose URL matches a saved source (including a www./trailing-slash/scheme variant) shows the site's logo after its text and tapping it opens that page in Safari; a link not among the sources (e.g. https://www.msn.com/...) and a link in a non-web answer are plain, non-tappable text with no logo; a site with no reachable logo shows the globe icon. No third-party logo service is called, and the phone contacts no website or logo service directly - logos arrive from the Mac (checked by inspection plus a network observation during the live proof); the Mac's icon fetch refuses local, LAN and tailnet destinations.
+- [ ] **M10c1-AC1**: GET /v1/icon?host=<public site> on the server with the bearer token returns that site's own icon as image bytes (fetched by the search service from the site itself, no third-party logo service), a second request is served from the Mac cache without contacting the site, a host that is or redirects to a local, LAN or tailnet address is refused and returns no_icon, a site with no icon returns no_icon, and a request without the token is 401.
 
 ### Baseline
 
@@ -266,11 +266,15 @@ Pending.
 
 ### Validation
 
-Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd search && bun test) && (cd server && bun test && bun run typecheck) && (cd mobile && bun run typecheck && bun test && bun run lint) && bash scripts/source-logo-proof.sh`
+Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd search && bun test) && (cd server && bun test && bun run typecheck) && bash scripts/icon-route-proof.sh`
 
 ### Review
 
 Pending.
+
+Split record (from M10c): Human decision 2026-09-30: the owner chose Option A (split exactly as proposed in the escalation record). M10c replaced by M10c1 (Mac half: C4, C12, C13, search/API.md; one new criterion M10c1-AC1 worded as proposed) and M10c2 (phone half: C1, C2, C3; keeps M10c-AC1 unchanged, depends on M10c1). Criteria conserved: original 1 (M10c-AC1) -> M10c2 unchanged; M10c1-AC1 added by the human's decision.
+
+Original M10c pickup escalation, preserved:
 
 Human Escalation (BLOCKED):
 
@@ -298,10 +302,56 @@ Recommended decision:
 ### Follow-ups
 
 - Architecture deviation D-M10c-2 (the Mac fetches each site's icon: C13 GET /v1/icon behind C4 GET /v1/icon; the phone talks only to the Mac) is recorded as Material: yes and approved by the human on 2026-09-30; it supersedes D-M10c-1, which is withdrawn and must not be implemented.
-- A logo failing to load must never block or break the answer (FR27).
 - search/API.md must document the new GET /v1/icon route (FR25).
-- Pickup check 2026-09-30: signals IMPLEMENTATION_PLUS_LIVE_PROOF, PRODUCTION_FILES_GT_8, MULTIPLE_OUTCOMES require a split; one criterion cannot be split without a re-cut, so BLOCKED for a human decision (see Review).
+- Split from M10c 2026-09-30 by human decision (Option A); original pickup escalation preserved under Review.
 - Archived M10 to .harness/archive/M10.md (595 -> 536 lines). milestones.md stays above 400: M10b (most recently settled), M10c-M13 (open) and M5a (BLOCKED) are protected.
+
+## M10c2 — Links to a web answer's sources show the site's own logo and open in Safari
+
+Status: TODO
+
+### Outcome
+
+In a web answer, a link whose URL matches one of that reply's saved sources (ignoring scheme, a leading www. and a trailing slash) shows its text followed by the website's own logo, obtained from the Mac through M10c1's token-protected GET /v1/icon route and cached on the phone, with a globe icon when none loads or the Mac is unreachable; tapping the logo opens the page in Safari. The phone contacts no website or logo service itself, and no third-party logo service is called. Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal). Split from M10c on 2026-09-30 by human decision (Option A); depends on M10c1.
+
+Owns: FR27. Traces to: AC21. Depends on: M10c1.
+
+### Architecture
+
+C1, C2, C3
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+
+- [ ] **M10c-AC1**: In a web answer, a link whose URL matches a saved source (including a www./trailing-slash/scheme variant) shows the site's logo after its text and tapping it opens that page in Safari; a link not among the sources (e.g. https://www.msn.com/...) and a link in a non-web answer are plain, non-tappable text with no logo; a site with no reachable logo shows the globe icon. No third-party logo service is called, and the phone contacts no website or logo service directly - logos arrive from the Mac (checked by inspection plus a network observation during the live proof); the Mac's icon fetch refuses local, LAN and tailnet destinations.
+
+### Baseline
+
+
+### Evidence
+
+
+### Validation
+
+Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd mobile && bun run typecheck && bun test && bun run lint) && bash scripts/source-logo-proof.sh`
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+- Architecture deviation D-M10c-2 (the Mac fetches each site's icon: C13 GET /v1/icon behind C4 GET /v1/icon; the phone talks only to the Mac) is recorded as Material: yes and approved by the human on 2026-09-30; it supersedes D-M10c-1, which is withdrawn and must not be implemented.
+- A logo failing to load must never block or break the answer (FR27).
+- Split from M10c 2026-09-30 by human decision (Option A); depends on M10c1 (GET /v1/icon must exist).
 
 ## M10d — A web answer's sources start folded as "Sources (n)", each its own tappable entry
 
@@ -309,7 +359,7 @@ Status: TODO
 
 ### Outcome
 
-The source list at the end of a web answer starts collapsed behind a "Sources (n)" header that expands and collapses on tap (not remembered when the chat is reopened), and each source is its own entry - site logo as in M10c plus page title - opening in Safari, never merged with another source into one link. Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; split from the FR26-FR28 plan, see M10b).
+The source list at the end of a web answer starts collapsed behind a "Sources (n)" header that expands and collapses on tap (not remembered when the chat is reopened), and each source is its own entry - site logo as in M10c2 plus page title - opening in Safari, never merged with another source into one link. Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; split from the FR26-FR28 plan, see M10b).
 
 Owns: FR28. Traces to: AC22.
 
