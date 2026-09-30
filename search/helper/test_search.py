@@ -109,6 +109,7 @@ HIT = [{"title": "T", "href": "https://d.example", "body": "B"}]
 class FallbackTests(unittest.TestCase):
     def tearDown(self):
         os.environ.pop("SEARCH_HELPER_FORCE_DDGS", None)
+        os.environ.pop("SEARCH_HELPER_FORCE_BROWSER", None)
 
     def test_ddgs_raises_uses_browser(self):
         calls = []
@@ -147,6 +148,86 @@ class FallbackTests(unittest.TestCase):
             self.assertEqual(len(calls), 1, mode)
             out = search.run("q", 5, fake_factory(HIT), fake_browser([]))
             self.assertEqual(out["detail"], f"ddgs: {why}; browser: no results")
+
+    def test_force_browser_fail_both_fail(self):
+        # When both FORCE_DDGS=fail and FORCE_BROWSER=fail, browser_search should never be called
+        os.environ["SEARCH_HELPER_FORCE_DDGS"] = "fail"
+        os.environ["SEARCH_HELPER_FORCE_BROWSER"] = "fail"
+        calls = []
+        out = search.run("q", 5, fake_factory(HIT), fake_browser(GOOD, calls=calls))
+        self.assertEqual(out["error"], "search_failed")
+        self.assertIn("browser: forced failure", out["detail"])
+        self.assertEqual(calls, [])  # browser_search should never be called
+
+    def test_force_browser_hang(self):
+        # When FORCE_BROWSER=hang, launch is called, then sleep is called with >= 600s
+        os.environ["SEARCH_HELPER_FORCE_BROWSER"] = "hang"
+        sleep_calls = []
+
+        def fake_sleep(duration):
+            sleep_calls.append(duration)
+
+        # Create a fake PW harness that tracks the launch call
+        launch_called = [False]
+        new_page_called = [False]
+
+        class Page:
+            def set_default_timeout(self, ms):
+                pass
+
+            def goto(self, *a, **k):
+                pass
+
+            def wait_for_url(self, pattern, **k):
+                pass
+
+            def wait_for_selector(self, selector, **k):
+                pass
+
+            def evaluate(self, script):
+                return []
+
+        class Ctx:
+            def new_page(self):
+                new_page_called[0] = True
+                return Page()
+
+        class Browser:
+            def new_context(self, **k):
+                return Ctx()
+
+            def close(self):
+                pass
+
+        class PW:
+            @staticmethod
+            def launch(headless):
+                launch_called[0] = True
+                return Browser()
+
+            chromium = type("C", (), {"launch": staticmethod(launch)})
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                pass
+
+        # Replace the module's sleep function
+        original_sleep = search._sleep
+        try:
+            search._sleep = fake_sleep
+            search.browser_search("python", 5, sync_playwright=lambda: PW())
+        finally:
+            search._sleep = original_sleep
+
+        # Verify that launch was called
+        self.assertTrue(launch_called[0], "launch should be called")
+        # Verify that sleep was called with >= 600s
+        self.assertEqual(len(sleep_calls), 1, "sleep should be called exactly once")
+        self.assertGreaterEqual(sleep_calls[0], 600, "sleep duration should be >= 600s")
+        # Verify that new_page was called after sleep
+        self.assertTrue(new_page_called[0], "new_page should still be called after sleep")
 
     def test_decode_bing_redirect(self):
         real = "https://en.wikipedia.org/wiki/Ada_Lovelace"

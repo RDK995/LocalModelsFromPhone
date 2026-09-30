@@ -3,16 +3,23 @@
 When ddgs raises or returns nothing usable, a headless Chromium (Playwright) is started on demand,
 loads a Bing results page (UK / English), scrapes the result links and is always closed again.
 
-Test-only hook: env SEARCH_HELPER_FORCE_DDGS = "fail" makes the ddgs step behave as if it raised
-("forced failure"); "empty" makes it behave as if it returned zero results. Any other value or
-unset means normal behaviour. It never affects the browser step.
+Test-only hooks:
+- env SEARCH_HELPER_FORCE_DDGS = "fail" makes the ddgs step behave as if it raised ("forced failure");
+  "empty" makes it behave as if it returned zero results. Any other value or unset means normal behaviour.
+  It never affects the browser step.
+- env SEARCH_HELPER_FORCE_BROWSER = "fail" makes the browser step behave as if it raised, without
+  launching a browser. "hang" sleeps for a long time after launching, simulating a slow search holding
+  a live browser. Any other value or unset means normal behaviour.
 """
 import argparse
 import base64
 import json
 import os
 import sys
+import time
 from urllib.parse import parse_qs, quote_plus, urlparse
+
+_sleep = time.sleep
 
 REGION = "uk-en"
 MIN_MAX, MAX_MAX = 1, 10
@@ -84,6 +91,9 @@ def browser_search(query, max_results, sync_playwright=None):
     words = [w.lower() for w in query.split() if len(w) > 2] or [query.lower()]
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=True)
+        # Test-only hook: simulate a slow search holding a live browser
+        if os.environ.get("SEARCH_HELPER_FORCE_BROWSER") == "hang":
+            _sleep(3600)
         try:
             context = browser.new_context(
                 locale="en-GB",
@@ -175,11 +185,15 @@ def run(query, max_results, ddgs_factory=None, browser_search=None):
         if why == "no results":
             return {"results": [], "backend": "ddgs"}
         return {"error": "search_failed", "detail": why}
-    try:
-        found = browser_search(query, max_results)
-        bwhy = None if found else "no results"
-    except Exception as e:  # noqa: BLE001 - contract: report, never raise
-        found, bwhy = [], f"{type(e).__name__}: {e}"
+    # Test-only hook: simulate browser step failure
+    if os.environ.get("SEARCH_HELPER_FORCE_BROWSER") == "fail":
+        bwhy = "forced failure"
+    else:
+        try:
+            found = browser_search(query, max_results)
+            bwhy = None if found else "no results"
+        except Exception as e:  # noqa: BLE001 - contract: report, never raise
+            found, bwhy = [], f"{type(e).__name__}: {e}"
     if bwhy is None:
         return {"results": found[:max_results], "backend": "browser"}
     return {"error": "search_failed", "detail": f"ddgs: {why}; browser: {bwhy}"}
