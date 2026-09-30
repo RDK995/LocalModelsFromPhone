@@ -324,7 +324,7 @@ Cycle 1: PASS (tier Mid, reviewer sonnet, reason ORDINARY_IMPLEMENTATION; diff f
 
 ## M10d — A web answer's sources start folded as "Sources (n)", each its own tappable entry
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -350,10 +350,20 @@ ba6d03256dcc55711a0f0385718fcfdc1546c8a5 on m10d-sources-folded
 
 ### Evidence
 
+Tasks (routing -> rungs):
+- T1 — Sources (n) fold + one row per source (C1)   Mid (ORDINARY_IMPLEMENTATION), attempt 3 PASS; verifier PASS (typecheck 0, 427 pass, independent RED in a baseline worktree, not weakened) — commit 434938a. Pure model renamed sourceListModel.ts (case-insensitive FS clash with SourceList.tsx). .harness/evidence/M10d-T1-worker.log, M10d-T1-verifier.log.
+- T3 — mobile lint fix, markdownText.test.ts:159 quotes (pre-existing from a305a9e)   Cheap (BOUNDED_LOW_RISK), attempt 1 PASS; verifier PASS (lint 0, line 159 only, same strings) — commit 9470ede. .harness/evidence/M10d-T3-worker.log, M10d-T3-verifier.log.
+- T2 — live Mac-side proof mobile/scripts/sources-list-proof.{sh,ts}   Mid (ORDINARY_IMPLEMENTATION), attempt 3 PASS. Verifier: self-test 0, typecheck 0, lint 0, 427 pass, independent recount agrees, checks genuinely asserted on live sources, token never printed, no model loaded; it reported FAIL only because its own live run was still writing proof.log. Orchestrator read the finished log: PASSED. — commit f00e328. .harness/evidence/M10d-T2-worker.log (22:01 run, 10 sources, 9/9 hosts image), M10d-T2-proof.log + -replies.json (22:05 run, 6 sources, 4/4 hosts image), M10d-T2-verifier.log.
+
+M10d-AC1:
+- Unit tests: mobile/src/ui/sourceListModel.test.ts (header, collapsed start, toggle both ways, one entry per source, screenshot-shaped 6-source fixture: www.wsj.com/wsj.com pair, empty title, newline title, long URL, identical-URL pair; empty list; SourceList.tsx rows and chat.tsx wiring by source text).
+- Mac-side live proof: sources-list-proof.sh PASSED twice (above); bundle host restarted 22:05:11 so the phone loads the new code.
+- OWED (human) — the owner's phone screenshot. Steps: (1) on the iPhone swipe Expo Go away so it fully quits, reopen it and open the project (downloads the new bundle); (2) in a chat with Web search on, ask "What are today's top technology news stories?"; (3) pass = under the answer a single line "Sources (n)" with nothing listed; screenshot it; (4) tap it - pass = n separate rows, each a site logo (or globe) then a page title, none run together; screenshot it; (5) tap one row - pass = that page opens in Safari; (6) tap the header again - the list folds; leave the chat and reopen it - pass = folded again. Save as .harness/evidence/M10d-AC1-owner-phone.png and -expanded.png.
+All not yet reviewed.
 
 ### Validation
 
-Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/sources-list-proof.sh`
+`cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/sources-list-proof.sh --self-test && bash scripts/sources-list-proof.sh` — typecheck 0, 427 pass, lint 0, self-test 0, live proof PASSED (needs a resident tools-capable model and the internet). Artifacts: .harness/evidence/M10d-T{1,2,3}-verifier.log, M10d-T2-proof.log, M10d-T2-replies.json.
 
 ### Review
 
@@ -366,6 +376,9 @@ Pending.
 ### Follow-ups
 
 - Reuses M10c's site-logo component (FR27 logo and globe fallback); two sources on the same site each get their own entry with the same logo.
+- Lint regression from M10c4 T5 (markdownText.test.ts:159) fixed here as T3; M10c4's validation did not run lint.
+- Owner phone screenshot for M10d-AC1 is owed (human step; see Evidence).
+- Inside a Sources row the SourceLogo is itself a pressable Text opening the same URL as the row; harmless duplicate tap target.
 
 ## M11 — Web replies are saved, resume after a drop, and keep page text out of later prompts
 

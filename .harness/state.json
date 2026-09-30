@@ -8943,7 +8943,7 @@
         "FR28"
       ],
       "traces": "AC22",
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -8959,16 +8959,179 @@
           "id": "M10d-AC1",
           "text": "A web answer's sources start collapsed as \"Sources (n)\", expand and collapse on tap, and each source is its own tappable entry (logo + title) opening in Safari - including a source set shaped like the 2026-09-30 phone screenshot in which several sources rendered glued into one link. Proven by unit tests, a Mac-side live proof, and the owner's phone screenshot.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "Unit tests: mobile/src/ui/sourceListModel.test.ts (header 'Sources (n)', starts collapsed, toggle both ways, one entry per source with distinct keys and own url, screenshot-shaped 6-source fixture incl. www.wsj.com/wsj.com pair, empty title, newline title, long URL, identical-URL pair; empty list renders nothing; SourceList.tsx separate TouchableOpacity rows with SourceLogo + title calling onOpenSource(entry.url); useState(false), no storage; chat.tsx renders SourceList). T1 434938a, .harness/evidence/M10d-T1-verifier.log. Not reviewed.",
+            "Mac-side live proof: mobile/scripts/sources-list-proof.sh, runs 2026-09-30 22:01 (worker, 10 sources, 9/9 hosts image; .harness/evidence/M10d-T2-worker.log) and 22:05 (verifier, 6 sources, 4/4 hosts image; .harness/evidence/M10d-T2-proof.log, -replies.json), both PASSED, model nemotron3:33b unchanged. T2 f00e328. Not reviewed.",
+            "OWED (human): the owner's phone screenshot. Steps recorded under Evidence in milestones.md; save as .harness/evidence/M10d-AC1-owner-phone.png (collapsed) and -expanded.png."
+          ]
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M10d-T1",
+          "scope": "C1: SourceList component + pure sourceListModel (Sources (n) header, collapsed by default, toggle, one TouchableOpacity row per source with SourceLogo + title), wired into chat.tsx",
+          "packet": ".harness/tasks/M10d-T1.md",
+          "paths": [
+            "mobile/src/ui/sourceListModel.ts",
+            "mobile/src/ui/sourceListModel.test.ts",
+            "mobile/src/ui/SourceList.tsx",
+            "mobile/src/app/chat.tsx"
+          ],
+          "criteria": [
+            "M10d-AC1"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "new collapsible list component + pure view-model with unit tests; reuses FR27 SourceLogo"
+          },
+          "tests": "cd mobile && bun run typecheck && bun test && bun run lint",
+          "requirements": [
+            "FR28"
+          ],
+          "constraints": [],
+          "depends_on": [],
+          "findings": [],
+          "attempt_log": [
+            {
+              "role": "worker",
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "base": "9f17cef",
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M10d-T1-worker.log",
+              "note": "427 pass; RED: new suite failed on baseline; renamed sourceList.ts -> sourceListModel.ts (case-insensitive FS collided with SourceList.tsx); lint failed only on pre-existing markdownText.test.ts:159"
+            },
+            {
+              "role": "verifier",
+              "attempt": 3,
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M10d-T1-verifier.log",
+              "note": "typecheck 0, 427 pass; lint errors confirmed present at 9f17cef in an untouched file; independent RED in a baseline worktree; files allowed (renamed pair accepted); SourceLogo.tsx unchanged; not weakened"
+            }
+          ],
+          "attempts": 1,
+          "status": "ACCEPTED",
+          "commit": "434938a"
+        },
+        {
+          "id": "M10d-T3",
+          "scope": "Lint: double-quote two strings at mobile/src/ui/markdownText.test.ts:159 (introduced a305a9e, M10c4 T5) so mobile lint passes",
+          "packet": ".harness/tasks/M10d-T3.md",
+          "paths": [
+            "mobile/src/ui/markdownText.test.ts"
+          ],
+          "criteria": [],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "quote-style lint fix on one test line"
+          },
+          "tests": "cd mobile && bun run lint && bun test src/ui/markdownText.test.ts && bun run typecheck",
+          "requirements": [],
+          "constraints": [],
+          "depends_on": [],
+          "findings": [],
+          "attempt_log": [
+            {
+              "role": "worker",
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "base": "434938a",
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M10d-T3-worker.log",
+              "note": "lint 0, 33 pass, tsc 0"
+            },
+            {
+              "role": "verifier",
+              "attempt": 1,
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M10d-T3-verifier.log",
+              "note": "lint 0; line 159 only; identical string values"
+            }
+          ],
+          "attempts": 1,
+          "status": "ACCEPTED",
+          "commit": "9470ede"
+        },
+        {
+          "id": "M10d-T2",
+          "scope": "Live Mac-side proof mobile/scripts/sources-list-proof.{sh,ts}: real web-on POST /v1/chat on the resident model, sourceListModel over the live sources, logos via real /v1/icon, screenshot-shaped fixture, bundle-host restart, --self-test",
+          "packet": ".harness/tasks/M10d-T2.md",
+          "paths": [
+            "mobile/scripts/sources-list-proof.sh",
+            "mobile/scripts/sources-list-proof.ts",
+            ".harness/evidence/M10d-T2-proof.log",
+            ".harness/evidence/M10d-T2-replies.json"
+          ],
+          "criteria": [
+            "M10d-AC1"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "live proof script modelled on existing proofs; non-deterministic model output"
+          },
+          "tests": "cd mobile && bash scripts/sources-list-proof.sh --self-test && bash scripts/sources-list-proof.sh && bun run typecheck && bun run lint",
+          "requirements": [
+            "FR28"
+          ],
+          "constraints": [],
+          "depends_on": [
+            "M10d-T1"
+          ],
+          "findings": [],
+          "attempt_log": [
+            {
+              "role": "worker",
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "base": "434938a",
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M10d-T2-worker.log",
+              "note": "self-test exit 0; live run 22:01 exit 0, nemotron3:33b, 10 sources, 9/9 hosts image, checks 1-7 PASS"
+            },
+            {
+              "role": "verifier",
+              "attempt": 3,
+              "verdict": "FAIL (in-progress artifact); orchestrator judged PASS",
+              "artifact": ".harness/evidence/M10d-T2-verifier.log",
+              "note": "self-test 0, typecheck 0, lint 0, 427 pass; independent recount from replies JSON agrees; checks genuinely asserted, live checks use live sources, token only in 0600 temp file, no model load. Verdict FAIL only because its OWN live run (started 22:05:11) was still writing M10d-T2-proof.log when it reported. Orchestrator read the finished log: 68 lines, '=== Proof PASSED ===', nemotron3:33b, 6 sources, 4/4 hosts image, all checks PASS; that run is the committed proof.log/replies.json."
+            }
+          ],
+          "attempts": 1,
+          "status": "ACCEPTED",
+          "commit": "f00e328"
+        }
+      ],
       "reviews": [],
       "findings": [],
-      "validation": [],
-      "planned_validation": "cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/sources-list-proof.sh",
+      "validation": [
+        {
+          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/sources-list-proof.sh --self-test && bash scripts/sources-list-proof.sh",
+          "note": "typecheck 0, bun test 427 pass, lint 0, self-test 0, live proof PASSED (verifier run 22:05, recorded in proof.log). Live proof depends on a resident tools-capable model and the internet.",
+          "artifacts": [
+            ".harness/evidence/M10d-T1-verifier.log",
+            ".harness/evidence/M10d-T3-verifier.log",
+            ".harness/evidence/M10d-T2-verifier.log",
+            ".harness/evidence/M10d-T2-proof.log",
+            ".harness/evidence/M10d-T2-replies.json",
+            ".harness/evidence/M10d-T2-worker.log"
+          ]
+        }
+      ],
+      "planned_validation": "cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/sources-list-proof.sh --self-test && bash scripts/sources-list-proof.sh",
       "follow_ups": [
-        "Reuses M10c's site-logo component (FR27 logo and globe fallback); two sources on the same site each get their own entry with the same logo."
+        "Reuses M10c's site-logo component (FR27 logo and globe fallback); two sources on the same site each get their own entry with the same logo.",
+        "Lint regression from M10c4 T5 (markdownText.test.ts:159 single quotes) fixed here as T3; M10c4's validation command did not include lint.",
+        "Owner phone screenshot for M10d-AC1 is owed (human step; see Evidence).",
+        "Inside a Sources row the SourceLogo is itself a pressable Text opening the same URL as the row; harmless duplicate tap target."
       ],
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
