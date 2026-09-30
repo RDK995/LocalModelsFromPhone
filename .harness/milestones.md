@@ -241,7 +241,7 @@ Cycle 2: PASS — whole milestone (widened: the correction changed files no cycl
 
 ## M10b — Assistant answers show formatted text instead of raw markdown
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -263,6 +263,7 @@ Pending.
 
 ### Baseline
 
+4e6039f5030b5fea0d13f1086f30c1cac2a08100 on m10b-formatted-answers
 
 ### Evidence
 

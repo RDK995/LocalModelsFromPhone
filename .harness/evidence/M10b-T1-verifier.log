@@ -1,0 +1,42 @@
+VERIFIER RUN — Task M10b-T1
+============================
+
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint
+
+Exit Status: 0
+
+Output:
+$ tsc --noEmit
+bun test v1.4.0 (1381054db)
+
+ 277 pass
+ 0 fail
+ 1924 expect() calls
+Ran 277 tests across 21 files. [187.00ms]
+$ eslint src --max-warnings 0
+
+Adversarial Input Tests:
+All of the following passed without throwing and completed in under 1ms:
+- parseMarkdown("**")
+- parseMarkdown("*")
+- parseMarkdown("[")
+- parseMarkdown("[a](")
+- parseMarkdown("```")
+- parseMarkdown("| a |")
+- parseMarkdown("| a |\n|---|")
+- parseMarkdown("*" * 5000 + "_[`")
+
+AC20 Fixture Verification:
+parseMarkdown(FIXTURE1) visibleText output verified to contain:
+- "Heading", "bold", "italic", "first item", "1. one", "2. two", "code", "Example", "const total"
+
+And verified to NOT contain:
+- "**", "__", "](", backtick, "[", "https://example.com"
+- No line starting with "#"
+
+Prefix Sweep:
+Both FIXTURE1 and FIXTURE2 tested for all prefixes (0 to full length).
+All prefixes parse without throwing.
+All prefix visibleText outputs exclude "**", "](", and lines starting with "# " or "## ".
+

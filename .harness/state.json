@@ -7142,12 +7142,12 @@
         "FR26"
       ],
       "traces": "AC20",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
-        "commit": "",
-        "branch": ""
+        "commit": "4e6039f5030b5fea0d13f1086f30c1cac2a08100",
+        "branch": "m10b-formatted-answers"
       },
       "as_built": {
         "artifact": null,
@@ -7161,7 +7161,59 @@
           "evidence": []
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M10b-T1",
+          "scope": "C1: pure markdown parser (parseMarkdown/parseInline/visibleText) tolerant of streaming prefixes",
+          "tests": "cd mobile && bun run typecheck && bun test && bun run lint",
+          "requirements": [
+            "FR26"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M10b-AC1"
+          ],
+          "paths": [
+            "mobile/src/ui/markdown.ts",
+            "mobile/src/ui/markdown.test.ts"
+          ],
+          "depends_on": [],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "hand-written parser with many streaming edge cases; bun-testable"
+          },
+          "status": "ACCEPTED",
+          "attempts": 1,
+          "packet": ".harness/tasks/M10b-T1.md",
+          "commit": "",
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M10b-T1-worker.log",
+              "verdict": "PASS",
+              "base": "4e6039f",
+              "changed_files": [
+                "mobile/src/ui/markdown.ts",
+                "mobile/src/ui/markdown.test.ts"
+              ],
+              "note": "Red: .harness/evidence/M10b-T1-red.log (26 fail); entered at Mid rung (attempt 3)"
+            },
+            {
+              "attempt": 3,
+              "role": "verifier",
+              "artifact": ".harness/evidence/M10b-T1-verifier.log",
+              "verdict": "PASS",
+              "note": "exit 0, 277 pass, typecheck and lint clean; files within allowed; not weakened; adversarial inputs no throw, <1ms"
+            }
+          ]
+        }
+      ],
       "reviews": [],
       "findings": [],
       "validation": [],
