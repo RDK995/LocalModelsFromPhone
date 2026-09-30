@@ -238,7 +238,7 @@ Cycle 1: PASS — whole milestone, reviewer tier Mid (model sonnet, ORDINARY_IMP
 
 ## M10c1 — The Mac serves a website's own logo through a token-protected route
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -260,9 +260,11 @@ Pending.
 
 ### Baseline
 
+b8ec398b0bdaa3dff72bef6a6ba85d939b320e4d on m10c-source-logos (clean tree at pickup; branch already opened for M10c).
 
 ### Evidence
 
+Pickup check 2026-09-30: 1 criterion (size OK); shape OK (HTTP entry point GET /v1/icon on the server); one signal IMPLEMENTATION_PLUS_LIVE_PROOF, seam already checked by the human split decision. Tasks: T1 C13 icon fetch/cache/route + API.md (Top, SECURITY); T2 C12 icon() + C4 GET /v1/icon (Mid); T3 live proof server/scripts/icon-route-proof.sh (Mid).
 
 ### Validation
 

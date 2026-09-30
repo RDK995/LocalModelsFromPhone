@@ -7375,12 +7375,12 @@
       "architecture": "C4, C12, C13",
       "requirements": [],
       "traces": "AC21 (Mac icon fetch and guard), FR27 (Mac half; FR27 owned by M10c2)",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
-        "commit": "",
-        "branch": ""
+        "branch": "m10c-source-logos",
+        "commit": "b8ec398b0bdaa3dff72bef6a6ba85d939b320e4d"
       },
       "as_built": {
         "artifact": null,
