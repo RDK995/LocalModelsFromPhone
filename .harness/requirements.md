@@ -168,8 +168,12 @@ answered from a single website. These are built next, before M10d.
   question (e.g. "today's news trends") it should search with more than one query, not put the
   exact date into search queries, read pages from at least three different websites before
   answering, and cite the pages it relied on; a narrow factual question need not search more than
-  it needs. This is guidance only: the server does not check or re-prompt the model's choices, and
-  the FR19 cap of 10 tool calls is unchanged.
+  it needs. The same instructions tell it to write every citation as a markdown link whose URL is
+  the page's full URL copied exactly from its web_search/read_page results (never shortened,
+  truncated or invented), including source cells in tables, so each cited source gets its FR27 logo;
+  links only ever point at pages returned by its tools. This is guidance only: the server does not
+  check, rewrite or re-prompt the model's choices, the phone renderer is unchanged, and the FR19 cap
+  of 10 tool calls is unchanged.
 
 ## Acceptance Criteria
 
@@ -241,8 +245,10 @@ All proven against the live Mac Studio and Ollama, not mocks.
 24. **AC24** — Live on the Mac with the owner's usual tools-capable model resident (named in the
     evidence) and the web switch on: of 3 broad prompts (including "What are today's news
     trends"), at least 2 produce replies whose saved sources span at least 3 distinct websites
-    (host compared ignoring a leading `www.`). The server's web instructions contain the FR30
-    guidance (unit test).
+    (host compared ignoring a leading `www.`). In the same run, at least 2 of the 3 replies each
+    contain markdown links matching (FR27 rules) at least 3 distinct saved sources, and none of their
+    links fails to match a saved source. The server's web instructions contain the FR30 guidance,
+    including the always-link wording (unit test).
 
 ## Constraints
 
@@ -269,8 +275,9 @@ All proven against the live Mac Studio and Ollama, not mocks.
 - Markdown rendering must be pure JavaScript and Expo Go–compatible (no native module).
 - **The phone talks only to the Mac** (over the tailnet). The app makes no request to any website
   or third-party service; opening a page in Safari on the owner's tap is not the app's traffic.
-- Broad-question source diversity is best-effort model guidance (FR30); a single reply that uses
-  fewer than three sites is not a defect.
+- Broad-question source diversity and always-linked citations are best-effort model guidance
+  (FR30); a single reply that uses fewer than three sites, or cites a source without a link, is not a
+  defect.
 
 ## Non-Goals
 
@@ -321,6 +328,8 @@ All proven against the live Mac Studio and Ollama, not mocks.
 - A table row with the wrong number of cells: padded or surplus kept, never shifted; a row missing a
   separator is padded, not re-split, so a value may sit under the next heading (FR29).
 - A narrow web question need not read three sites (FR30).
+- The model still cites a source in plain words or with a shortened URL despite the guidance: shown
+  as plain text with no logo (FR27); the server does not repair it (FR30).
 
 ## Decisions / Clarifications
 
@@ -397,6 +406,16 @@ All proven against the live Mac Studio and Ollama, not mocks.
 - Defaults chosen by Claude, shown to the human and agreed (2026-09-30): surplus cells are joined
   into the last column; tables apply to saved replies too; sites compared ignoring `www.`; the
   test uses the owner's usual model.
+- **Always link sources, folded into FR30 / M10c4** (human, 2026-09-30, "Fold it into the next
+  piece"): the model is told to write every citation as a link with the exact full URL from its
+  tool results, table source cells included, so every source gets a logo. Addresses the owner's
+  M10c3 AC5 remark "some have logos some don't". Guidance only, as for source diversity: no server
+  check or rewrite, no phone change.
+- **Link pass bar: 2 of 3 replies with 3+ linked sources and no non-matching links** (human,
+  2026-09-30), measured on the same 3 broad prompts as the diversity proof; chosen over all 3
+  (flaky) and over 1+ link (does not show every source getting a logo). Proven from the saved reply
+  text on the Mac; no extra phone observation (FR27 matching already proven in M10c2) (default chosen
+  by Claude, shown to the human and agreed).
 
 ## Open Questions
 
