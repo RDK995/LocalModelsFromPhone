@@ -221,7 +221,7 @@ Cycle 1: PASS — tier Mid (sonnet, ORDINARY_IMPLEMENTATION), whole milestone, d
 
 ## M10 — The phone has a per-chat web-search switch and shows steps and sources live
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -252,16 +252,18 @@ e98f0601a4330343f9a1063ce48e154d60109d8a on m10-phone-web-switch
 
 Task plan (packets in .harness/tasks/):
 - M10-T1 — C2 step/sources events, accumulator, web flag   Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — .harness/evidence/M10-T1-verifier.log (exit 0, 183 mobile pass, typecheck+lint 0; red M10-T1-red.log)
-- M10-T2 — C3 switch + steps/sources persisted, session    Mid (sonnet, ORDINARY_IMPLEMENTATION) — planned
-- M10-T3 — C1 view-model: labels, switch state             Cheap (haiku, BOUNDED_LOW_RISK) — planned
-- M10-T4 — C1 chat.tsx switch, steps, sources in Safari    Mid (sonnet, ORDINARY_IMPLEMENTATION) — planned
-- M10-T5 — web-switch-proof.sh live proof                  Mid (sonnet, ORDINARY_IMPLEMENTATION) — planned
+- M10-T2 — C3 switch + steps/sources persisted, session    Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — commit 7f09b0b; .harness/evidence/M10-T2-verifier.log (first run exit 0, 204 pass; a later appended FAIL is the verifier re-running over in-progress T3 files after the commit, see state note); red M10-T2-red.log. Late worker quote-style fix committed separately.
+- M10-T3 — C1 view-model: labels, switch state             Cheap (haiku, BOUNDED_LOW_RISK), attempt 1, PASS — commit f9abe88; .harness/evidence/M10-T3-verifier.log (exit 0, 238 then 246 pass; late FAIL only for other tasks' files); red M10-T3-red.log
+- M10-T4 — C1 chat.tsx switch, steps, sources in Safari    Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — commit 1d5e438; .harness/evidence/M10-T4-verifier.log (exit 0, 246 pass, diff read against criteria 1-6); no unit oracle for the screen
+- M10-T5 — web-switch-proof.sh live proof                  Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — .harness/evidence/M10-T5-verifier.log (full command incl. live proof exit 0, all checks PASS, Mac restored); proof log M10-T5-proof.log
 
-Implementation continuation 1 handoff: T1 accepted; next is writing the T2 packet (store Conversation.web_search absent=false + setWebSearch; assistant Message steps/sources persisted and validated; sendInConversation reads the switch at send time and passes web to sendMessage, persisting accumulator steps/sources). T1 added StreamAccumulator.steps/sources and SendMessageCallbacks.web.
+Implementation complete (continuation 2): all five tasks accepted. Mac-side evidence for each criterion is in the live proof (M10-T5-proof.log): AC1 check 1 (switch off by default incl. legacy data, persists across a fresh store on the same files), check 2 (off sends no web); AC2 check 3 (disabled + explanation, stubbed stub-no-tools because all 5 installed models have tools) and check 4 (mid-reply flip takes effect next prompt); AC3/AC4 check 5 (live search step before the answer, sources with http(s) links, persisted steps/sources, collapsed toggle label). Owed by the owner on the phone: see Validation.
 
 ### Validation
 
-Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/web-switch-proof.sh` plus the owner's phone observation (screenshot) for the live steps, collapse and Safari links.
+`cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/web-switch-proof.sh` — exit 0 (M10-T5 verifier, .harness/evidence/M10-T5-verifier.log): 246 pass, lint clean, live proof all PASS.
+
+Owner's phone observation still owed (cannot be claimed Mac-side): (1) open a chat, see the "Web search" switch off; open an older chat, also off; (2) turn it on, force-quit Expo Go, reopen that chat, still on; (3) with web on, ask "What are today's top news headlines?", watch "Searching: ..." (and any "Reading: ...") lines appear live, then the answer; after it finishes the steps fold into "Show web steps (n)" which expands; (4) tap a source under "Sources" and it opens in Safari; (5) screenshot of (3)/(4).
 
 ### Review
 
@@ -275,6 +277,8 @@ Pending.
 
 - Size check at pickup: 4 criteria, one signal (IMPLEMENTATION_PLUS_LIVE_PROOF); seam check: the phone observation proves the same outcome - not split.
 - milestones.md stays above 400 lines after archiving M8: M9 (most recently settled), M10-M13 (open) and M5a (BLOCKED) are protected.
+- Subagent completion notifications arrived before some workers/verifiers had stopped; their late re-runs landed in the shared tree and appended to evidence logs. Consider waiting for each agent's final hand-back before starting the next task.
+- The live proof's model made no read_page call, so a live "Reading: <domain>" step was not seen Mac-side (read labels are unit-tested).
 
 ## M11 — Web replies are saved, resume after a drop, and keep page text out of later prompts
 

@@ -6609,7 +6609,7 @@
         "FR22"
       ],
       "traces": "AC13, AC14",
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -6767,7 +6767,7 @@
               "role": "verifier",
               "artifact": ".harness/evidence/M10-T2-verifier.log",
               "verdict": "PASS",
-              "note": "exit 0, 204 pass, typecheck and lint clean; files within allowed; not weakened"
+              "note": "exit 0, 204 pass, typecheck and lint clean; files within allowed; not weakened; the verifier kept running after its PASS report and, after commit 7f09b0b, re-ran over a tree containing in-progress M10-T3 files (typecheck exit 2 on T3's not-yet-written exports) and appended that to M10-T2-verifier.log; git show --stat 7f09b0b confirms the commit holds only T2's 4 allowed code files, so the late FAIL is cross-task contamination, not a T2 defect. The T2 worker also applied a quote-style eslint --fix to conversationSession.test.ts after the commit (committed separately)"
             }
           ]
         },
@@ -6827,7 +6827,7 @@
               "role": "verifier",
               "artifact": ".harness/evidence/M10-T3-verifier.log",
               "verdict": "PASS",
-              "note": "exit 0, 238 pass, typecheck and lint clean; exact strings matched; not weakened"
+              "note": "exit 0, 238 pass, typecheck and lint clean; exact strings matched; not weakened; a late second verifier report (exit 0, 246 pass) marked FAIL only for mobile/src/app/chat.tsx (M10-T4, committed 1d5e438) and the stray T2 quote reformat of conversationSession.test.ts; git show --stat f9abe88 holds only T3's 4 allowed code files, so this is cross-task contamination, not a T3 defect"
             }
           ]
         },
@@ -6880,9 +6880,9 @@
             {
               "attempt": 3,
               "role": "verifier",
-              "artifact": null,
+              "artifact": ".harness/evidence/M10-T4-verifier.log",
               "verdict": "PASS",
-              "note": "exit 0, 238 pass, typecheck and lint clean; diff read in full against criteria 1-5; verifier reported saving .harness/evidence/M10-T4-verifier.log but no such file exists - its run is re-covered by the M10-T5 verifier's full-suite run over the same tree"
+              "note": "exit 0, 246 pass, typecheck and lint clean; diff read in full against criteria 1-6, all met; the verifier's full report arrived late and marked FAIL solely for the quote-style reformat of mobile/src/chat/conversationSession.test.ts, which the M10-T2 worker made after 7f09b0b (not T4); commit 1d5e438 holds only mobile/src/app/chat.tsx"
             }
           ]
         },
@@ -6916,20 +6916,51 @@
             "reason_code": "ORDINARY_IMPLEMENTATION",
             "detail": "live proof script following existing proof pattern"
           },
-          "status": "PLANNED",
-          "attempts": 0,
+          "status": "ACCEPTED",
+          "attempts": 1,
           "packet": ".harness/tasks/M10-T5.md",
           "commit": null,
-          "attempt_log": []
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M10-T5-worker.log",
+              "verdict": "PASS",
+              "base": "1d5e438",
+              "changed_files": [
+                "mobile/scripts/web-switch-proof.sh",
+                "mobile/scripts/web-switch-proof.ts"
+              ],
+              "note": "no Red step: proof exercises code landed by T1-T3; live run on nemotron3:33b; proof log .harness/evidence/M10-T5-proof.log; no read_page call happened in the run (no live Reading: step); no-tools case stubbed because all 5 installed models have tools"
+            },
+            {
+              "attempt": 3,
+              "role": "verifier",
+              "artifact": ".harness/evidence/M10-T5-verifier.log",
+              "verdict": "PASS",
+              "note": "exit 0, 246 pass, typecheck and lint clean, live proof all checks PASS and Mac restored; every criterion asserted with a failing exit; token never printed; app modules used"
+            }
+          ]
         }
       ],
       "reviews": [],
       "findings": [],
-      "validation": [],
+      "validation": [
+        {
+          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/web-switch-proof.sh",
+          "exit_status": 0,
+          "artifact": ".harness/evidence/M10-T5-verifier.log",
+          "note": "run by the M10-T5 verifier over the final tree: 246 pass, lint clean, live proof all PASS. Phone-screen observation (switch row, persistence after force-quit, live steps, collapse, Safari links, screenshot) is owed by the owner and cannot be claimed Mac-side"
+        }
+      ],
       "planned_validation": "cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/web-switch-proof.sh",
       "follow_ups": [
         "Size check at pickup: 4 criteria, one signal (IMPLEMENTATION_PLUS_LIVE_PROOF); seam check: the phone observation is the proof of the same outcome - not split.",
-        "milestones.md stays above 400 lines after archiving M8: M9 (most recently settled), M10-M13 (open) and M5a (BLOCKED) are protected."
+        "milestones.md stays above 400 lines after archiving M8: M9 (most recently settled), M10-M13 (open) and M5a (BLOCKED) are protected.",
+        "Subagent completion notifications arrived before some workers/verifiers had actually stopped; late re-runs landed in the shared tree and appended to evidence logs (T2/T3/T4 verifiers reported FAIL on other tasks' files). Harness: consider not starting the next task until a dispatched agent's final hand-back arrives.",
+        "The live proof's model made no read_page call, so a live 'Reading: <domain>' step was not observed Mac-side; stepLabel read branches are unit-tested and the owner's phone check may show one."
       ],
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"

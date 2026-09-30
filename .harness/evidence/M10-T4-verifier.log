@@ -1,0 +1,84 @@
+=== M10-T4 Verification Run ===
+Date: 2026-09-30
+
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint
+
+Current commit: f9abe88 M10 T3: the chat view-model carries web steps and sources, labels each step (Searching/Reading/failed/unavailable), and decides whether the web switch is usable for the loaded model
+
+Exit Status: 0
+
+Output:
+$ tsc --noEmit
+bun test v1.4.0 (1381054db)
+
+ 246 pass
+ 0 fail
+ 514 expect() calls
+Ran 246 tests across 20 files. [93.00ms]
+$ eslint src --max-warnings 0
+
+=== Files Modified in Working Tree ===
+Files outside .harness/:
+- mobile/src/app/chat.tsx (allowed)
+- mobile/src/chat/conversationSession.test.ts (NOT allowed - only mobile/src/app/chat.tsx permitted)
+
+=== Verification of Acceptance Criteria ===
+
+Criterion 1: Switch below header with value from conversation.web_search, toggles via setWebSearch
+- Lines 313-327: Web search row rendered below header ✓
+- Line 315: "Web search" label ✓
+- Line 316-320: React Native Switch component ✓
+- Line 317: value={conversation?.web_search === true} ✓
+- Line 318-153: Toggling calls storeRef.current.setWebSearch(id, value) ✓
+- Line 154: Sets conversation state from result ✓
+- Line 319: disabled={!webState?.enabled} - NOT disabled on isLoading ✓
+
+Criterion 2: Capability gate - getState() after token set and on focus via useFocusEffect
+- Lines 121-146: useFocusEffect hook present ✓
+- Line 131: clientRef.current.getState() called ✓
+- Line 133: webSwitchState computed ✓
+- Line 137: On error, treats as webSwitchState(null, null) ✓
+- Line 135: Only console.error, no Alert on getState failure ✓
+- Line 319: Switch disabled based on webState?.enabled ✓
+- Lines 322-326: Explanation shown only when disabled and explanation exists ✓
+- Line 317: Stored value shown regardless of disabled state ✓
+
+Criterion 3: Steps - live while streaming, toggle when complete, distinct key, collapsed by default
+- Lines 358-392: Steps rendering logic ✓
+- Lines 360-365: While item.streaming true, renders steps via stepLabel ✓
+- Lines 366-389: When streaming false, renders toggle via stepsToggleLabel ✓
+- Line 372, 378, 383: Uses distinct key ${item.key}:steps ✓
+- Line 383: expandedKeys.has() check means collapsed by default ✓
+
+Criterion 4: Sources - "Sources" heading with tappable rows, openURL with catch
+- Lines 407-422: Sources rendering after reply content ✓
+- Line 409: "Sources" heading ✓
+- Lines 410-420: Tappable rows using sourceLabel ✓
+- Line 414: onPress calls handleOpenSource(source.url) ✓
+- Lines 161-163: handleOpenSource calls Linking.openURL with .catch ✓
+
+Criterion 5: No unrelated behaviour change
+- File review shows existing patterns preserved
+- Sending (lines 170-259): unchanged
+- Stop button (lines 261-275): unchanged
+- Thinking toggle (lines 338-357): unchanged pattern followed for steps
+- Blocked message (lines 431-441): unchanged
+- Error handling: preserved existing patterns
+
+Criterion 6: Tests pass with exit 0
+- Exit status: 0 ✓
+- Tests: 246 pass, 0 fail ✓
+- Typecheck: passed ✓
+- Lint: passed ✓
+
+=== Issues Found ===
+
+File violation: mobile/src/chat/conversationSession.test.ts was modified
+- Task permits changes only to: mobile/src/app/chat.tsx
+- Changed file is: conversationSession.test.ts (quote style changes from single to double quotes)
+- This is a file the worker should not have modified
+
+Test weakening: NO - changes in conversationSession.test.ts are only quote style formatting, no logic changes
+
+All acceptance criteria are satisfied by the code.
