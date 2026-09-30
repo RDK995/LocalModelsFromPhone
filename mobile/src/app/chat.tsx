@@ -44,6 +44,7 @@ import {
 } from "react-native";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { MarkdownText } from "@/ui/MarkdownText";
+import { SourceList } from "@/ui/SourceList";
 import { getToken } from "@/api/secureStoreToken";
 import { createAPIClient } from "@/api/expoFetchClient";
 import { stopGeneration, UNAUTHORIZED_MESSAGE } from "@/chat/chatController";
@@ -59,7 +60,6 @@ import {
   toggleExpanded,
   stepLabel,
   stepsToggleLabel,
-  sourceLabel,
 } from "@/ui/chatItems";
 import type { PendingTurn } from "@/ui/chatItems";
 import { webSwitchDisplayValue, webSwitchState } from "@/ui/webSwitch";
@@ -426,20 +426,11 @@ export default function ChatScreen() {
                       <ActivityIndicator style={styles.loadingDots} />
                     )}
                     {item.sources && (
-                      <View style={styles.sourcesContainer}>
-                        <Text style={styles.sourcesHeading}>Sources</Text>
-                        {item.sources.map((source, index) => (
-                          <TouchableOpacity
-                            key={`${index}:${source.url}`}
-                            accessibilityRole="link"
-                            onPress={() => handleOpenSource(source.url)}
-                          >
-                            <Text style={styles.sourceText}>
-                              {sourceLabel(source)}
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
+                      <SourceList
+                        sources={item.sources}
+                        iconCache={iconCacheRef.current}
+                        onOpenSource={handleOpenSource}
+                      />
                     )}
                   </View>
                   {item.role === "assistant" && item.model && (
@@ -624,20 +615,6 @@ const styles = StyleSheet.create({
     color: "#888",
     fontStyle: "italic",
     marginTop: 2,
-  },
-  sourcesContainer: {
-    marginTop: 8,
-    gap: 4,
-  },
-  sourcesHeading: {
-    fontSize: 12,
-    fontWeight: "bold",
-    color: "#555",
-  },
-  sourceText: {
-    fontSize: 13,
-    color: "#007AFF",
-    textDecorationLine: "underline",
   },
   loadingDots: {
     marginTop: 8,
