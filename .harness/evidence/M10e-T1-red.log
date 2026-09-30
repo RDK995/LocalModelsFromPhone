@@ -1,0 +1,79 @@
+RED run on baseline 1b139be3d6add2607288a2811c3cc3db2c3b2739 (chat.tsx/MarkdownText.tsx/SourceList.tsx unchanged)
+$ bun test src/ui/answerLayout.test.ts
+bun test v1.4.0 (1381054db)
+
+src/ui/answerLayout.test.ts:
+324 |   // everything drawn after it.
+325 |   const answerBottom = Math.max(
+326 |     answer.top + answer.height,
+327 |     ...laid.answerTexts.map((t) => abs(t.node).top + abs(t.node).height),
+328 |   );
+329 |   expect(answerBottom).toBeLessThanOrEqual(bubble.top + bubble.height - pad + 0.5);
+                             ^
+error: expect(received).toBeLessThanOrEqual(expected)
+
+Expected: <= 369.1666564941406
+Received: 1135.9999389648438
+
+      at expectFitsBubble (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/answerLayout.test.ts:329:24)
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/answerLayout.test.ts:371:5)
+(fail) a bulleted web answer fits its bubble (FR32, AC26) > reopened from saved history: full bubble width, text above Sources (n) and the model name [5.33ms]
+324 |   // everything drawn after it.
+325 |   const answerBottom = Math.max(
+326 |     answer.top + answer.height,
+327 |     ...laid.answerTexts.map((t) => abs(t.node).top + abs(t.node).height),
+328 |   );
+329 |   expect(answerBottom).toBeLessThanOrEqual(bubble.top + bubble.height - pad + 0.5);
+                             ^
+error: expect(received).toBeLessThanOrEqual(expected)
+
+Expected: <= 258.8333435058594
+Received: 611.3333129882812
+
+      at expectFitsBubble (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/answerLayout.test.ts:329:24)
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/answerLayout.test.ts:374:5)
+(fail) a bulleted web answer fits its bubble (FR32, AC26) > while streaming: full bubble width, text above the indicator and Sources (n) [1.08ms]
+334 |   if (laid.modelLabel) {
+335 |     expect(abs(laid.modelLabel).top).toBeGreaterThanOrEqual(bubble.top + bubble.height - 0.5);
+336 |   }
+337 | 
+338 |   // Full width: the bubble opens to its maximum and the answer fills its inside.
+339 |   expect(bubble.width).toBeCloseTo(bubbleMax, 0);
+                             ^
+error: expect(received).toBeCloseTo(expected, precision)
+
+Expected: 306.84999999999997
+Received: 46
+
+Expected precision: 0
+Expected difference: < 0.5
+Received difference: 260.84999999999997
+
+      at expectFitsBubble (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/answerLayout.test.ts:339:24)
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/answerLayout.test.ts:378:5)
+(fail) a bulleted web answer fits its bubble (FR32, AC26) > while streaming with no sources yet (first words): still full bubble width [0.37ms]
+334 |   if (laid.modelLabel) {
+335 |     expect(abs(laid.modelLabel).top).toBeGreaterThanOrEqual(bubble.top + bubble.height - 0.5);
+336 |   }
+337 | 
+338 |   // Full width: the bubble opens to its maximum and the answer fills its inside.
+339 |   expect(bubble.width).toBeCloseTo(bubbleMax, 0);
+                             ^
+error: expect(received).toBeCloseTo(expected, precision)
+
+Expected: 306.84999999999997
+Received: 108
+
+Expected precision: 0
+Expected difference: < 0.5
+Received difference: 198.84999999999997
+
+      at expectFitsBubble (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/answerLayout.test.ts:339:24)
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/answerLayout.test.ts:381:5)
+(fail) a bulleted web answer fits its bubble (FR32, AC26) > a one-line plain answer also takes the full bubble width [0.36ms]
+
+ 3 pass
+ 4 fail
+ 24 expect() calls
+Ran 7 tests across 1 file. [22.00ms]
+exit 1

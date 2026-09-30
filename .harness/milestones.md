@@ -300,7 +300,7 @@ Cycle 1: PASS (tier Mid, reviewer sonnet, reason ROUTED_MID; diff ba6d032..9753b
 
 ## M10e — Every answer fits its bubble at full width, with "Sources (n)" and the model name below it
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -324,6 +324,7 @@ Pending.
 
 ### Baseline
 
+1b139be3d6add2607288a2811c3cc3db2c3b2739 on m10e-answer-fits-bubble
 
 ### Evidence
 

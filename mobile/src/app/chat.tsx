@@ -546,6 +546,11 @@ const styles = StyleSheet.create({
   },
   assistantMessage: {
     alignSelf: "flex-start",
+    // FR32: a definite width, not shrink-wrap. List text is flex: 1
+    // (flexBasis 0), so a shrink-wrapped bubble measured only the bullets and
+    // took its width from other content, then sized its height for text wider
+    // than it drew (the 2026-09-30 squeezed, overflowing answer).
+    width: "85%",
     backgroundColor: "#f0f0f0",
   },
   messageText: {

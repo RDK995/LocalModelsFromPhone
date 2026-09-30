@@ -9163,12 +9163,12 @@
         "FR32"
       ],
       "traces": "AC26",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
-        "commit": "",
-        "branch": ""
+        "commit": "1b139be3d6add2607288a2811c3cc3db2c3b2739",
+        "branch": "m10e-answer-fits-bubble"
       },
       "as_built": {
         "artifact": null,
@@ -9194,7 +9194,20 @@
           "evidence": []
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M10e-T1",
+          "scope": "C1: diagnose + fix squeezed/overflowing list answer; computed-layout test (AC1, AC2)",
+          "packet": ".harness/tasks/M10e-T1.md",
+          "routing": {
+            "tier": "Top",
+            "model": "opus",
+            "reason_code": "AMBIGUOUS",
+            "detail": "unclear layout bug, cause undiagnosed; bun cannot render RN so the test oracle must be designed"
+          },
+          "attempts": []
+        }
+      ],
       "reviews": [],
       "findings": [],
       "validation": [],

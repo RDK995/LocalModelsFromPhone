@@ -1,0 +1,139 @@
+=== VERIFICATION OF M10e-T1: Answer Fits Bubble ===
+Date: 2026-09-30
+Verifier: Claude Haiku 4.5 (automated verification)
+
+=== TASK SUMMARY ===
+Task: Diagnose and fix layout bug where assistant answer (bulleted list) is squeezed to ~45% width.
+Fix: Add width: "85%" to assistantMessage style to prevent shrink-wrapping.
+Test Oracle: Use yoga-layout to compute actual layout and verify bubble takes full width and text doesn't overflow.
+
+=== 1. GREEN TEST RUN (Current State) ===
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint
+
+Exit Status: 0
+
+Output:
+$ tsc --noEmit
+bun test v1.4.0 (1381054db)
+
+ 434 pass
+ 0 fail
+ 12016 expect() calls
+Ran 434 tests across 28 files. [225.00ms]
+$ eslint src --max-warnings 0
+
+=== 2. RED TEST RUN (Baseline Verification) ===
+Created temporary worktree at baseline commit 1b139be:
+- Copied new test file: mobile/src/ui/answerLayout.test.ts
+- Copied modified package.json with yoga-layout ^3.2.1
+- Copied modified bun.lock
+- Ran: cd worktree/mobile && bun install && bun test src/ui/answerLayout.test.ts
+
+Exit Status: 1
+
+Output (excerpt of failures):
+error: expect(received).toBeLessThanOrEqual(expected)
+Expected: <= 369.1666564941406
+Received: 1135.9999389648438
+  (fail) a bulleted web answer fits its bubble (FR32, AC26) > reopened from saved history: full bubble width, text above Sources (n) and the model name
+
+error: expect(received).toBeLessThanOrEqual(expected)
+Expected: <= 258.8333435058594
+Received: 611.3333129882812
+  (fail) a bulleted web answer fits its bubble (FR32, AC26) > while streaming: full bubble width, text above the indicator and Sources (n)
+
+error: expect(received).toBeCloseTo(expected, precision)
+Expected: 306.84999999999997
+Received: 46
+  (fail) a bulleted web answer fits its bubble (FR32, AC26) > while streaming with no sources yet (first words): still full bubble width
+
+error: expect(received).toBeCloseTo(expected, precision)
+Expected: 306.84999999999997
+Received: 108
+  (fail) a bulleted web answer fits its bubble (FR32, AC26) > a one-line plain answer also takes the full bubble width
+
+ 3 pass
+ 4 fail
+ 24 expect() calls
+Ran 7 tests across 1 file. [21.00ms]
+
+=== 3. FILES CHANGED VERIFICATION ===
+Changed files (git diff 1b139be + git status):
+- mobile/bun.lock (ALLOWED - devDependency lock)
+- mobile/package.json (ALLOWED - devDependency yoga-layout)
+- mobile/src/app/chat.tsx (ALLOWED - style change to assistantMessage)
+- mobile/src/ui/answerLayout.test.ts (ALLOWED - new test file)
+- .harness/* (EXCLUDED - orchestrator files)
+
+All changed files are within allowed list. No files outside allowed changes detected.
+
+=== 4. TESTS WEAKENED CHECK ===
+Reviewed: No existing test files were modified (only new answerLayout.test.ts added).
+Found: No existing tests were deleted, weakened, or had assertions removed.
+Result: PASS - no existing tests compromised.
+
+=== 5. YOGA-LAYOUT DEPENDENCY CHECK ===
+Verified in mobile/package.json: yoga-layout is under "devDependencies" section only.
+Not in runtime dependencies section.
+Result: PASS - yoga-layout is devDependency only.
+
+=== 6. ACCEPTANCE CRITERIA VERIFICATION ===
+
+M10e-AC1: Test reproduces 2026-09-30 22:32 phone screenshot (bulleted list with sources)
+and shows for both streaming and saved forms that answer takes full bubble width and
+nothing overlaps with Sources and model name below.
+
+Test Coverage:
+- answerLayout.test.ts line 370: "reopened from saved history: full bubble width, text above Sources (n) and the model name"
+  Calls expectFitsBubble(layOut(savedItem()))
+  
+- answerLayout.test.ts line 373: "while streaming: full bubble width, text above the indicator and Sources (n)"
+  Calls expectFitsBubble(layOut(streamingItem()))
+  
+- answerLayout.test.ts line 376: "while streaming with no sources yet (first words): still full bubble width"
+  Tests streaming form without sources
+
+- answerLayout.test.ts line 380: "a one-line plain answer also takes the full bubble width"
+  Tests edge case with simple text
+
+Assertions exercised:
+- Line 329: expect(answerBottom).toBeLessThanOrEqual(bubble.top + bubble.height - pad + 0.5)
+  Verifies answer text ends inside bubble, above Sources and model name
+  
+- Line 339: expect(bubble.width).toBeCloseTo(bubbleMax, 0)
+  Verifies bubble takes full width (85% of content container)
+  
+- Line 340: expect(answer.width).toBeCloseTo(bubbleMax - 2 * pad, 0)
+  Verifies answer content fills bubble width
+  
+- Lines 341-346: Text layout assertions
+  Verify answer texts fit within bubble and don't overflow
+
+Diagnosed cause (stated in test comments, lines 8-14):
+"bun cannot render React Native, so this test computes the layout with yoga-layout -- the flexbox 
+engine React Native uses -- configured the way React Native 0.86 configures it (YGErrataAll...)"
+
+Code fix location (mobile/src/app/chat.tsx, lines 548-550):
+Added width: "85%" to assistantMessage style.
+Diagnosis comment (lines 549-551):
+"List text is flex: 1 (flexBasis 0), so a shrink-wrapped bubble measured only the bullets and
+took its width from other content, then sized its height for text wider than it drew."
+
+M10e-AC2: Existing FR26-FR31 rendering tests pass unchanged, and typecheck/tests/lint pass.
+- Full test suite: 434 pass, 0 fail
+- typecheck: No errors
+- lint: No errors
+Result: PASS - all existing tests pass unchanged
+
+=== SUMMARY ===
+All verification checks passed:
+✓ Tests command ran successfully (exit 0, 434 tests pass)
+✓ RED state confirmed on baseline (exit 1, 3 pass 4 fail, exact values match)
+✓ Files changed match allowed list exactly
+✓ No existing tests weakened or deleted
+✓ yoga-layout is devDependency only
+✓ Both streaming and saved answer forms tested
+✓ Assertions verify full width and no overflow
+✓ Diagnosis recorded with file:line
+✓ Acceptance criteria AC1 and AC2 fully exercised
+
