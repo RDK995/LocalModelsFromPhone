@@ -1,0 +1,23 @@
+Preflight ok: bun, Ollama, search service
+Resident model with tools: nemotron3:33b
+Proof server on http://127.0.0.1:59416
+Prompt 1: What are today's news trends (may take minutes)...
+Prompt 2: What are the latest developments in artificial intelligence? (may take minutes)...
+Prompt 3: What is happening in the world economy right now? (may take minutes)...
+
+Model: nemotron3:33b
+- Prompt: What are today's news trends
+    status=complete sources=10 distinct hosts=9 [reutersinstitute.politics.ox.ac.uk, globalviewsworld.com, technologymagazine.com, vogue.com, britannica.com, globalissues.org, 92q.com, readynewsletter.com, techcham.com]
+    links=0 matched distinct saved sources=0 unmatched=0
+    diversity=PASS links=fail
+- Prompt: What are the latest developments in artificial intelligence?
+    status=complete sources=8 distinct hosts=8 [realifeai.com, kersai.com, best-ai.news, llm-stats.com, nextbigfuture.com, skycrumbs.com, aitrendssetter.com, buildthisnow.com]
+    links=3 matched distinct saved sources=1 unmatched=2 ["https://realifeai.com/ai-breakthroughs-2026/","https://kersai.com/ai-breakthroughs-2026/"]
+    diversity=PASS links=fail
+- Prompt: What is happening in the world economy right now?
+    status=complete sources=5 distinct hosts=5 [spglobal.com, oecd.org, desapublications.un.org, your.fitch.group, weforum.org]
+    links=0 matched distinct saved sources=0 unmatched=0
+    diversity=PASS links=fail
+Diversity passes: 3/3 (need >=2)
+Link passes: 0/3 (need >=2)
+RESULT: FAIL

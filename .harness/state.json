@@ -8509,7 +8509,7 @@
         "FR30"
       ],
       "traces": "AC24",
-      "status": "IN_PROGRESS",
+      "status": "BLOCKED",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -8525,13 +8525,17 @@
           "id": "M10c4-AC1",
           "text": "Unit test: with web search on, the server's web instructions to the model (given alongside the FR19 date note) contain the FR30 guidance - for a broad or open-ended question search with more than one query, do not put the exact date into search queries, read pages from at least three different websites before answering, and cite the pages relied on, writing every citation (including source cells in tables) as a markdown link whose URL is copied exactly from the web_search/read_page results, never shortened or invented; a narrow factual question need not search more than it needs - and with web search off no such guidance is given; the existing 10-tool-call cap tests pass unchanged and the server adds no source-diversity or link check, rewrite or re-prompt.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "server/src/web/tools.test.ts 'systemNote carries the FR30 guidance' (commit e3c3ae1; verifier .harness/evidence/M10c4-T1-verifier.log); web off manager.test.ts:281; cap test manager.test.ts:329 unchanged. Not reviewed."
+          ]
         },
         {
           "id": "M10c4-AC2",
           "text": "Live on the Mac with the owner's usual tools-capable model resident (named in the evidence) and the web switch on, through the server's chat route: of 3 broad prompts (including \"What are today's news trends\"), at least 2 produce replies whose saved sources span at least 3 distinct websites (host compared ignoring a leading www.); and, in the same run, at least 2 of the 3 replies each contain markdown links matching (FR27 rules: scheme, leading www. and trailing slash ignored) at least 3 distinct saved sources with no link that fails to match a saved source; the prompts, the per-reply distinct hosts, the per-reply matched/unmatched link counts and both pass counts are recorded.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "NOT MET: 4 live runs (T2 run 1 + T3 runs 1-3), model nemotron3:33b: diversity 3/3 every run, link passes 0/3 every run. .harness/evidence/M10c4-T2-proof.log, M10c4-T3-run{1,2,3}-proof.log; counting independently confirmed .harness/evidence/M10c4-T3-verifier.log"
+          ]
         }
       ],
       "tasks": [
@@ -8620,10 +8624,69 @@
               "verdict": "FAIL",
               "artifact": ".harness/evidence/M10c4-T2-proof.log",
               "note": "model nemotron3:33b; exit 1; diversity 3/3 PASS (hosts 4,5,5); links 0/3 (matched distinct 2,2,1; unmatched 1,2,0). Orchestrator read replies JSON: script counting looks correct; failure is model link fidelity (host variant, invented ibm.com URLs) and citing one source repeatedly. Script not yet verified or committed."
+            },
+            {
+              "role": "verifier",
+              "attempt": 3,
+              "verdict": "PASS (counting only)",
+              "artifact": ".harness/evidence/M10c4-T3-verifier.log",
+              "note": "Verifier (under T3) recomputed per-reply hosts, distinct matched sources and unmatched links from all four replies JSON files with its own code; agrees with every proof log. Script counting is correct; the live bar itself failed."
             }
           ],
           "attempts": 1,
-          "status": "IN_PROGRESS"
+          "status": "BLOCKED",
+          "open_issue": "Script verified correct and committed with the phase record; the AC2 bar it measures is not met (see M10c4-T3)."
+        },
+        {
+          "id": "M10c4-T3",
+          "scope": "Revise the FR30 systemNote wording so the resident model links >=3 distinct saved sources with no unmatched link; prove with source-diversity-proof.sh",
+          "packet": ".harness/tasks/M10c4-T3.md",
+          "paths": [
+            "server/src/web/tools.ts",
+            "server/src/web/tools.test.ts"
+          ],
+          "criteria": [
+            "M10c4-AC1",
+            "M10c4-AC2"
+          ],
+          "routing": {
+            "tier": "Top",
+            "model": "opus",
+            "reason_code": "NO_TEST_ORACLE",
+            "detail": "prompt-text change whose only judge is a non-deterministic live model run; T2 run 1 failed the link bar"
+          },
+          "tests": "cd server && bun test && bun run typecheck && bash scripts/source-diversity-proof.sh",
+          "requirements": [
+            "FR30"
+          ],
+          "constraints": [],
+          "depends_on": [
+            "M10c4-T1",
+            "M10c4-T2"
+          ],
+          "findings": [],
+          "attempt_log": [
+            {
+              "role": "worker",
+              "attempt": 4,
+              "tier": "Top",
+              "model": "opus",
+              "base": "e6a75d2",
+              "verdict": "FAIL",
+              "artifact": ".harness/evidence/M10c4-T3-run3-proof.log",
+              "note": "162 pass, tsc clean; 3 live runs, nemotron3:33b, each diversity 3/3, links 0/3. Sources per reply rose from 5 to 8-10 (multiple searches and reads now happen). Remaining failures: \u3010\u3011 and [n] footnote citations instead of markdown links, small retyping errors in long URLs (dropped path words, changed filenames, spaces inserted), links copied from inside page text. Diff saved as .harness/evidence/M10c4-T3-attempt4.patch."
+            },
+            {
+              "role": "verifier",
+              "attempt": 4,
+              "verdict": "FAIL",
+              "artifact": ".harness/evidence/M10c4-T3-verifier.log",
+              "note": "unit tests 162 pass + typecheck exit 0; files allowed; tests not weakened; no server-side check added; independent recount agrees with all proof logs: 0/3 link passes is real, not a counting artefact."
+            }
+          ],
+          "attempts": 1,
+          "status": "BLOCKED",
+          "open_issue": "Ladder exhausted at Top. Unaccepted source change reverted from the tree; preserved as .harness/evidence/M10c4-T3-attempt4.patch (applies cleanly to HEAD)."
         }
       ],
       "reviews": [],
@@ -8634,11 +8697,23 @@
         "Source: owner-reported single-site follow-up recorded under M10c1 (.harness/archive/M10c1.md, Follow-ups).",
         "Architecture deviation D-M10c4-1 (Material: no) records the Requirement Coverage addition FR30 -> C12.",
         "The live proof loads a model and depends on the internet and a non-deterministic model; the pass bar is 2 of 3 by human decision.",
-        "FOLDED IN 2026-09-30 via roast-requirements (FR30, AC24, M10c4-AC1/AC2 amended; pass bar 2 of 3 replies with 3+ linked sources, human decision). Original request (owner's verbatim choice: \"Fold it into the next piece\"): fold \"tell the model to always link its sources, so every source gets a logo\" into M10c4. Needs FR30 / AC24 (and M10c4 criteria) amended in .harness/requirements.md via the requirements process before M10c4 starts; not yet in any requirement or criterion."
+        "FOLDED IN 2026-09-30 via roast-requirements (FR30, AC24, M10c4-AC1/AC2 amended; pass bar 2 of 3 replies with 3+ linked sources, human decision). Original request (owner's verbatim choice: \"Fold it into the next piece\"): fold \"tell the model to always link its sources, so every source gets a logo\" into M10c4. Needs FR30 / AC24 (and M10c4 criteria) amended in .harness/requirements.md via the requirements process before M10c4 starts; not yet in any requirement or criterion.",
+        "milestones.md is over 400 lines, but no milestone is archivable: M10c3 is the most recently settled (protected), M10c4 is active, M5a is BLOCKED, the rest are TODO."
       ],
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
-      ]
+      ],
+      "blocked": {
+        "problem": "M10c4-AC2's link bar (2 of 3 broad replies each linking >=3 distinct saved sources with no unmatched link) is not met by the resident model nemotron3:33b in any of 4 live runs (0/3 every time), across two wordings of the FR30 instructions. The diversity bar passes 3/3 every run. The model cites with \u3010\u3011 or [n] footnotes instead of markdown links and retypes long URLs with small errors; FR30 forbids the server from checking, rewriting or re-prompting.",
+        "affected": "M10c4 / M10c4-AC2 (FR30, AC24)",
+        "attempts": [
+          "T1 (Mid): FR30 wording added to systemNote, accepted (e3c3ae1). T2 live run 1: diversity 3/3, links 0/3 (one search only, same source linked repeatedly, a mangled host, URLs from inside page text).",
+          "T3 (Top, NO_TEST_ORACLE): step-by-step wording, 'copied letter for letter', 'never a link found inside page text', 'never \u3010\u3011 or [1]', 'no spaces'. 3 live runs: sources per reply rose 5 -> 8-10, diversity 3/3 each, links 0/3 each.",
+          "Verifier recomputed every reply's counts with independent code: the 0/3 is real, not a counting error."
+        ],
+        "remaining": "No further rung on the ladder; more wording is unlikely to help because the remaining errors are the model not following formatting and copying instructions.",
+        "recommended": "Keep the diversity result and stop gating on exact links: amend M10c4-AC2 (via roast-requirements) so the link part is recorded but not a pass condition, apply the T3 wording (.harness/evidence/M10c4-T3-attempt4.patch) because it made the model search and read several sites, and rely on M10d's Sources list to give every source its logo. Alternatives: try a different tools-capable model the owner is willing to keep resident; or change FR30 to let the server turn footnote citations into links (a requirements and design change)."
+      }
     },
     "M10d": {
       "id": "M10d",
