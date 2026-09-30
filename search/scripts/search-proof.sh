@@ -184,9 +184,9 @@ hits="$(grep -rnE 'API_KEY|TOKEN|SECRET|os\.environ|os\.getenv|process\.env' \
   "$SEARCH_DIR/helper/search.py" "$SEARCH_DIR/src" "$REPO_ROOT/ops/scripts/install-search-helper.sh" 2>/dev/null || true)"
 info "env/key reads found:"
 printf '%s\n' "${hits:-<none>}" | sed 's/^/        | /'
-bad="$(printf '%s\n' "$hits" | grep -v '^$' | grep -vE 'SEARCH_PORT|SEARCH_HELPER_FORCE_DDGS' || true)"
+bad="$(printf '%s\n' "$hits" | grep -v '^$' | grep -vE 'SEARCH_PORT|SEARCH_HELPER_FORCE_DDGS|SEARCH_HELPER_FORCE_BROWSER|SEARCH_TIMEOUT_MS' || true)"
 if [[ -z "$bad" ]]; then
-  pass "no API key/token/env reads other than SEARCH_PORT and SEARCH_HELPER_FORCE_DDGS (test hook); service ran under env -i HOME PATH"
+  pass "no API key/token/env reads other than SEARCH_PORT and the test hooks SEARCH_HELPER_FORCE_DDGS, SEARCH_HELPER_FORCE_BROWSER and SEARCH_TIMEOUT_MS; service ran under env -i HOME PATH"
 else
   fail "no API key/token/env reads" "$bad"
 fi
