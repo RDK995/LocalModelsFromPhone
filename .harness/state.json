@@ -7955,12 +7955,12 @@
         "FR29"
       ],
       "traces": "AC23",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
-        "commit": "",
-        "branch": ""
+        "commit": "d4a4e67e5da0803bfb3874ded201202ba7c2dd04",
+        "branch": "m10c3-readable-tables"
       },
       "as_built": {
         "artifact": null,
@@ -7998,7 +7998,71 @@
           "evidence": []
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M10c3-T1",
+          "scope": "C1 parser: diagnose 2026-09-30 misalignment; normalise table rows to header width (pad short, join surplus); streaming-safe",
+          "packet": ".harness/tasks/M10c3-T1.md",
+          "paths": [
+            "mobile/src/ui/markdown.ts",
+            "mobile/src/ui/markdown.test.ts"
+          ],
+          "criteria": [
+            "M10c3-AC1",
+            "M10c3-AC2",
+            "M10c3-AC4"
+          ],
+          "routing": {
+            "tier": "Top",
+            "model": "opus",
+            "reason_code": "AMBIGUOUS",
+            "detail": "cause of the owner-reported misalignment is undiagnosed and the screenshot model output is not on disk; diagnosis has no given oracle"
+          },
+          "tests": "cd mobile && bun test src/ui/markdown.test.ts && bun run typecheck && bun run lint",
+          "requirements": [
+            "FR29"
+          ],
+          "constraints": [],
+          "depends_on": [],
+          "findings": [],
+          "attempt_log": [],
+          "attempts": 0,
+          "status": "PENDING",
+          "commit": null
+        },
+        {
+          "id": "M10c3-T2",
+          "scope": "C1 renderer: pure tableLayout helper (2 cols grid, 3+ cols cards) and MarkdownText wiring",
+          "packet": ".harness/tasks/M10c3-T2.md",
+          "paths": [
+            "mobile/src/ui/tableLayout.ts",
+            "mobile/src/ui/tableLayout.test.ts",
+            "mobile/src/ui/MarkdownText.tsx",
+            "mobile/src/ui/markdownText.test.ts"
+          ],
+          "criteria": [
+            "M10c3-AC3",
+            "M10c3-AC4"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "new pure layout helper plus React Native rendering wiring"
+          },
+          "tests": "cd mobile && bun test src/ui/tableLayout.test.ts src/ui/markdownText.test.ts && bun run typecheck && bun run lint",
+          "requirements": [
+            "FR29"
+          ],
+          "constraints": [],
+          "depends_on": [],
+          "findings": [],
+          "attempt_log": [],
+          "attempts": 0,
+          "status": "PENDING",
+          "commit": null
+        }
+      ],
       "reviews": [],
       "findings": [],
       "validation": [],

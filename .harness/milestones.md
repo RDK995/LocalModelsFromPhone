@@ -267,7 +267,7 @@ Cycle 1: PASS — tier Mid, model sonnet, reason_code ORDINARY_IMPLEMENTATION (h
 
 ## M10c3 — Tables in answers line up under their headings and stay readable at phone width
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -293,6 +293,7 @@ Pending.
 
 ### Baseline
 
+d4a4e67e5da0803bfb3874ded201202ba7c2dd04 on m10c3-readable-tables
 
 ### Evidence
 
