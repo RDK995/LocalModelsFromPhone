@@ -133,10 +133,15 @@ the page, and the source list folded away at the bottom.
   trivial differences (scheme http/https, a leading `www.`, a trailing slash). Any other link —
   a URL not in the reply's sources, a truncated/made-up URL such as `https://www.msn.com/...`, or
   any link in a reply that has no sources — is shown as plain, non-tappable text with no logo.
-  The logo is the site's own icon, fetched by the phone directly from that website (no
-  third-party logo/favicon service); when none is available or the phone is offline, a generic
-  globe icon is shown instead. Fetched logos are cached on the phone so a site is not re-asked on
-  every render. A logo failing to load never blocks or breaks the answer.
+  The logo is the site's own icon, fetched **by the Mac** from that website (no third-party
+  logo/favicon service) and passed to the phone; the phone never contacts a website or logo service
+  itself — it asks the FR12 server (token-authenticated) for a site's logo. The Mac's icon fetch
+  applies the FR21 rules (public addresses only, every redirect re-checked, the connected address
+  checked, byte and time limits) and accepts image content only. Logos are cached on the Mac (a site
+  is fetched once, not per request) and on the phone (not re-asked on every render). Logos are
+  requested when an answer is shown, so replies saved before this change get logos too. When the
+  site has no icon, refuses the Mac, or the Mac is unreachable, a generic globe icon is shown
+  instead. A logo failing to load never blocks or breaks the answer.
 - [FR28] **Collapsed source list.** The source list at the end of a web answer (FR22) is collapsed
   by default behind a header showing the count (e.g. "Sources (5)"); tapping it expands and
   collapses the list. The expanded state is not persisted (a reopened chat shows it collapsed).
@@ -197,7 +202,9 @@ All proven against the live Mac Studio and Ollama, not mocks.
     trailing-slash/scheme variant) shows the site's logo after its text and tapping it opens that
     page in Safari; a link not among the sources (e.g. `https://www.msn.com/...`) and a link in a
     non-web answer are plain, non-tappable text with no logo; a site with no reachable logo shows
-    the globe icon. No third-party logo service is called.
+    the globe icon. No third-party logo service is called, and the phone contacts no website or
+    logo service directly — logos arrive from the Mac (checked by inspection plus a network
+    observation during the live proof).
 22. **AC22** — A web answer's sources start collapsed as "Sources (n)", expand and collapse on tap,
     and each source is its own tappable entry (logo + title) opening in Safari — including a source
     set shaped like the 2026-09-30 phone screenshot in which several sources rendered glued into one
@@ -226,6 +233,8 @@ All proven against the live Mac Studio and Ollama, not mocks.
 - Loaded models run with a large context window (e.g. `nemotron3:33b` at 131 072 tokens, checked
   2026-09-29), so a reply's web material fits without special handling beyond FR21 truncation.
 - Markdown rendering must be pure JavaScript and Expo Go–compatible (no native module).
+- **The phone talks only to the Mac** (over the tailnet). The app makes no request to any website
+  or third-party service; opening a page in Safari on the owner's tap is not the app's traffic.
 
 ## Non-Goals
 
@@ -266,8 +275,10 @@ All proven against the live Mac Studio and Ollama, not mocks.
 - A follow-up asks about a page read earlier: the model re-reads it (page text is not kept).
 - The model writes a link that is not one of the reply's sources, or a truncated URL: plain,
   non-tappable text, no logo (FR27).
-- A site has no icon, blocks the request, or the phone is offline: globe icon; the answer is
-  unaffected (FR27).
+- A site has no icon, blocks the Mac's request, or the Mac is unreachable: globe icon; the answer
+  is unaffected (FR27).
+- The Mac is asked for a logo of a site at a local, LAN or tailnet address, or the icon redirects
+  there: refused (FR21 rules), globe icon (FR27).
 - A reply is still streaming with half-written markup (e.g. an open `**` or `[text](`): shown
   without error and re-rendered as more text arrives (FR26).
 - Two sources share a site: each is its own entry with the same logo (FR28).
@@ -316,6 +327,13 @@ All proven against the live Mac Studio and Ollama, not mocks.
 - Defaults chosen by Claude, shown to the human and agreed (2026-09-30): thinking stays plain
   text; URL matching ignores scheme, `www.` and trailing slash; logos cached on the phone; the
   source list's expanded state is not persisted.
+- **The phone talks only to the Mac; the Mac fetches logos** (human, 2026-09-30, later the same
+  day): supersedes "fetched by the phone directly from the site" above. Chosen over dropping real
+  logos for a globe on every source. Mac-side defaults chosen by Claude and agreed: FR21 safety
+  rules apply to icon fetches, image content only, logos cached on the Mac and on the phone, logos
+  requested at display time so older saved replies get them. Architecture deviation D-M10c-1
+  (phone -> public web) is therefore no longer wanted and must be withdrawn/replaced when the
+  architecture and M10c plan are updated.
 - Owner phone observation of M10 (2026-09-30, screenshots shown in session): the web switch
   shown on, a web answer ending in a source list, and a source link opening the WSJ archive page
   in Safari. The same screenshots showed raw markdown and one source entry with several sources

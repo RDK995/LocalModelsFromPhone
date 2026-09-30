@@ -291,13 +291,13 @@ Status: TODO
 
 ### Outcome
 
-In a web answer, a link whose URL matches one of that reply's saved sources (ignoring scheme, a leading www. and a trailing slash) shows its text followed by the website's own logo, fetched by the phone directly from the site and cached on the phone, with a globe icon when none loads; tapping the logo opens the page in Safari. Any other link stays plain, non-tappable text, and no third-party logo service is called. Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; split from the FR26-FR28 plan, see M10b). Architecture deviation D-M10c-1 (phone fetches site icons from the public web) is recorded.
+In a web answer, a link whose URL matches one of that reply's saved sources (ignoring scheme, a leading www. and a trailing slash) shows its text followed by the website's own logo, fetched by the Mac (the search service, through the same public-sites-only guard used for page reading, image content only, cached on the Mac) and passed to the phone through a new token-protected server route, then cached on the phone, with a globe icon when none loads or the Mac is unreachable; tapping the logo opens the page in Safari. The phone contacts no website or logo service itself, and no third-party logo service is called. Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (split from the FR26-FR28 plan, see M10b); re-planned 2026-09-30 to span phone, server and search service, so re-size at implementation start. Architecture deviation D-M10c-2 (Mac fetches icons; supersedes the withdrawn D-M10c-1) is recorded.
 
 Owns: FR27. Traces to: AC21.
 
 ### Architecture
 
-C1, C3, C15
+C1, C2, C3, C4, C12, C13
 
 ### As-Built
 
@@ -305,7 +305,7 @@ Pending.
 
 ### Acceptance Criteria
 
-- [ ] **M10c-AC1**: In a web answer, a link whose URL matches a saved source (including a www./trailing-slash/scheme variant) shows the site's logo after its text and tapping it opens that page in Safari; a link not among the sources (e.g. https://www.msn.com/...) and a link in a non-web answer are plain, non-tappable text with no logo; a site with no reachable logo shows the globe icon. No third-party logo service is called.
+- [ ] **M10c-AC1**: In a web answer, a link whose URL matches a saved source (including a www./trailing-slash/scheme variant) shows the site's logo after its text and tapping it opens that page in Safari; a link not among the sources (e.g. https://www.msn.com/...) and a link in a non-web answer are plain, non-tappable text with no logo; a site with no reachable logo shows the globe icon. No third-party logo service is called, and the phone contacts no website or logo service directly - logos arrive from the Mac (checked by inspection plus a network observation during the live proof); the Mac's icon fetch refuses local, LAN and tailnet destinations.
 
 ### Baseline
 
@@ -315,7 +315,7 @@ Pending.
 
 ### Validation
 
-Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/source-logo-proof.sh`
+Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd search && bun test) && (cd server && bun test && bun run typecheck) && (cd mobile && bun run typecheck && bun test && bun run lint) && bash scripts/source-logo-proof.sh`
 
 ### Review
 
@@ -327,8 +327,9 @@ Pending.
 
 ### Follow-ups
 
-- Architecture deviation D-M10c-1 (new edge C1 -> C15: the phone fetches each site's own icon directly) is recorded as Material: yes, grounded in the human's 2026-09-30 requirements decision; confirm it is accepted before M10c completes.
+- Architecture deviation D-M10c-2 (the Mac fetches each site's icon: C13 GET /v1/icon behind C4 GET /v1/icon; the phone talks only to the Mac) is recorded as Material: yes and approved by the human on 2026-09-30; it supersedes D-M10c-1, which is withdrawn and must not be implemented.
 - A logo failing to load must never block or break the answer (FR27).
+- search/API.md must document the new GET /v1/icon route (FR25).
 
 ## M10d — A web answer's sources start folded as "Sources (n)", each its own tappable entry
 

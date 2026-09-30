@@ -425,6 +425,8 @@ technology or responsibility changes. The later C12 client timeout (M9) must exc
 
 Milestone: M10c (planned 2026-09-30; FR26-FR28 split into M10b, M10c, M10d)
 Material: yes
+Status: WITHDRAWN (human, 2026-09-30) — the phone talks only to the Mac; superseded by D-M10c-2.
+Never implemented.
 Change: C1 gains a direct HTTPS request to the public web (C15) for a source site's own icon,
 outside the tailnet, and caches fetched icons on the phone (C3 or an equivalent on-device cache),
 falling back to a bundled globe icon. Until now the phone talked only to the Mac over the tailnet
@@ -436,3 +438,41 @@ third-party logo/favicon service)". Agreement: this is the human's own decision 
 fetched by the phone directly from the site; a third-party logo service (e.g. Google) was
 rejected"). Recorded at planning so it is not a silent departure; to be confirmed as accepted
 before M10c completes.
+
+### D-M10c-2 — The Mac fetches each website's own icon; the phone asks the Mac (supersedes D-M10c-1)
+
+Milestone: M10c (recorded 2026-09-30, before M10c started)
+Material: yes
+Change: no new edge to the public web. FR27 logos travel phone -> C2 -> C10 -> C4 -> C12 -> C13 ->
+C15, reusing existing edges I1/I4/I5/I15/I16/I18:
+- **C4 (I4)** gains `GET /v1/icon?host=<hostname>` (bearer auth like every route) ->
+  `200` image bytes with the upstream image `Content-Type` and a `Cache-Control` max-age, or
+  `404 {error:"no_icon"}` when the site has none, refuses, or is blocked; `400 bad_host` for a
+  malformed host; `502`/`504` pass through as `icon_unavailable`. C4 validates the host is a DNS
+  hostname (no scheme, path, port or IP literal) and delegates to C12.
+- **C12 (I15)** gains `icon(host, signal) -> {bytes, contentType} | null`, a thin client of C13.
+- **C13 (I16)** gains `GET /v1/icon?host=<hostname>` in its documented API (`search/API.md`):
+  `200` image bytes | `404 {error:"no_icon"}` | `400 {error:"blocked_destination"|"bad_url"}` |
+  `504 {error:"timeout"}`. It fetches `https://<host>/` through the I18 SSRF-guarded fetcher (same
+  address checks, every redirect re-checked, connected address checked), takes the first
+  `<link rel>` of `apple-touch-icon` / `icon` / `shortcut icon`, else `/favicon.ico`, and fetches
+  that through the same guard. Image content only (`image/png`, `image/jpeg`, `image/gif`,
+  `image/webp`, `image/x-icon`, `image/vnd.microsoft.icon`; SVG refused because React Native's
+  `Image` cannot render it without a native module), capped at 256 KiB and 10 s overall.
+  Results — including "no icon" — are cached by C13 on disk under its own cache directory keyed by
+  normalised host (lower-case, leading `www.` stripped), so a site is fetched once; entries expire
+  after 7 days (negative results after 1 day). No third-party favicon service is used.
+- **C2** gains `siteIcon(host) -> dataUri | null` (null on any error; never throws into the UI).
+- **C3** caches fetched icons on the phone (data URI per normalised host, including a "none"
+  marker) so a render does not re-ask the Mac.
+- **C1** renders the logo after a source-matched link text and in the source list, falling back to
+  a bundled globe icon while loading, when `siteIcon` returns null, or when the Mac is unreachable.
+  Icons are requested at display time, so replies saved before M10c get logos too.
+Requirement Coverage additions: FR26 -> C1; FR27 -> C1, C2, C3, C4, C12, C13; FR28 -> C1.
+The Overview's "two halves joined only by the tailnet" holds unchanged: the phone's only network
+peer remains the Mac.
+Why: the human decided on 2026-09-30 that the iPhone must talk only to the Mac, and chose "the Mac
+fetches logos" over "globe icon only" (`.harness/requirements.md` FR27 and Decisions). C13 is the
+only Mac component that already reaches arbitrary public sites under the FR21 guard, so icon
+fetching lives there rather than adding a second public-web client in C4-C7. Agreement: the human
+approved these architecture edits on 2026-09-30.
