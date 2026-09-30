@@ -308,6 +308,8 @@ Recommended decision:
 - search/API.md must document the new GET /v1/icon route (FR25).
 - Split from M10c 2026-09-30 by human decision (Option A); original pickup escalation preserved under Review.
 - Archived M10 to .harness/archive/M10.md (595 -> 536 lines). milestones.md stays above 400: M10b (most recently settled), M10c-M13 (open) and M5a (BLOCKED) are protected.
+- Owner-reported 2026-09-30 (phone screenshot; outside M10c1 scope, not implemented): markdown tables in assistant answers render misaligned (body-row cells shift one column left: trend+description in column 1, source ref under 'What's happening', Source column empty) and a 3-column table is too cramped at phone width. Needs correct cell alignment plus a phone-friendly fallback for wide tables (e.g. stacked per-row layout). Cause (model output vs MarkdownText renderer, FR26/M10b) not yet diagnosed.
+- Owner-reported 2026-09-30 (phone screenshots; outside M10c1 scope, not implemented): a broad web-enabled prompt ('What are today's news trends') produced an answer drawn from one site: one web_search with the exact date in the query, one read_page of an AI-news round-up, and all ten cited sources were links from that page. Broad questions should draw on several distinct sites and cover the topic as asked. Cause (query shaping, single read, no source-diversity guidance in the M9 tool-loop prompt) not yet diagnosed.
 
 ## M10c2 — Links to a web answer's sources show the site's own logo and open in Safari
 
