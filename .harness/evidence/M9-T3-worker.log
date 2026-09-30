@@ -1,0 +1,19 @@
+bun test v1.4.0 (1381054db)
+
+ 138 pass
+ 0 fail
+ 584 expect() calls
+Ran 138 tests across 5 files. [2.06s]
+$ tsc --noEmit
+src/ui/modelActions.test.ts(15,14): error TS2741: Property 'tools' is missing in type '{ name: string; size_bytes: number; }' but required in type 'Model'.
+src/ui/modelList.test.ts(38,9): error TS2741: Property 'tools' is missing in type '{ name: string; size_bytes: number; }' but required in type 'Model'.
+src/ui/modelList.test.ts(39,9): error TS2741: Property 'tools' is missing in type '{ name: string; size_bytes: number; }' but required in type 'Model'.
+src/ui/modelList.test.ts(65,9): error TS2741: Property 'tools' is missing in type '{ name: string; size_bytes: number; }' but required in type 'Model'.
+src/ui/modelList.test.ts(66,9): error TS2741: Property 'tools' is missing in type '{ name: string; size_bytes: number; }' but required in type 'Model'.
+src/ui/modelList.test.ts(80,16): error TS2741: Property 'tools' is missing in type '{ name: string; size_bytes: number; }' but required in type 'Model'.
+src/ui/modelList.test.ts(93,16): error TS2741: Property 'tools' is missing in type '{ name: string; size_bytes: number; }' but required in type 'Model'.
+src/ui/modelList.test.ts(122,9): error TS2741: Property 'tools' is missing in type '{ name: string; size_bytes: number; }' but required in type 'Model'.
+src/ui/modelList.test.ts(123,9): error TS2741: Property 'tools' is missing in type '{ name: string; size_bytes: number; }' but required in type 'Model'.
+src/ui/modelList.test.ts(139,16): error TS2741: Property 'tools' is missing in type '{ name: string; size_bytes: number; }' but required in type 'Model'.
+src/ui/modelList.test.ts(179,16): error TS2741: Property 'tools' is missing in type '{ name: string; size_bytes: number; }' but required in type 'Model'.
+src/ui/modelList.test.ts(199,16): error TS2741: Property 'tools' is missing in type '{ name: string; size_bytes: number; }' but required in type 'Model'.

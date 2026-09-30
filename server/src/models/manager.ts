@@ -25,6 +25,7 @@ export interface ModelManagerOllama {
   ps(): Promise<OllamaPsResponse>;
   load(name: string): Promise<void>;
   unload(name: string): Promise<void>;
+  show(name: string): Promise<{ capabilities?: string[] }>;
 }
 
 /**
@@ -156,6 +157,8 @@ export class ModelManager {
   private claimed = false;
   private loadedByServer: string | null = null;
   private readonly timing: ModelManagerTiming;
+  /** Successful /api/show answers for the `tools` capability, by model name. */
+  private readonly toolsSupport = new Map<string, boolean>();
 
   constructor(
     private ollama: ModelManagerOllama,
@@ -168,6 +171,27 @@ export class ModelManager {
   /** Whether a load or unload is currently running (or being checked). */
   isBusy(): boolean {
     return this.claimed || this.operation.kind !== "idle";
+  }
+
+  /**
+   * Whether `name` has Ollama's `tools` capability, from `/api/show`'s
+   * `capabilities` array. A successful answer is cached per model name for the
+   * life of the manager; a failed lookup returns false and is not cached, so a
+   * transient Ollama failure does not permanently disable web for the model.
+   */
+  async supportsTools(name: string): Promise<boolean> {
+    const cached = this.toolsSupport.get(name);
+    if (cached !== undefined) {
+      return cached;
+    }
+    try {
+      const info = await this.ollama.show(name);
+      const supported = Array.isArray(info.capabilities) && info.capabilities.includes("tools");
+      this.toolsSupport.set(name, supported);
+      return supported;
+    } catch {
+      return false;
+    }
   }
 
   /**
@@ -187,7 +211,13 @@ export class ModelManager {
       throw new OllamaDownError();
     }
 
-    const models = tags.models.map((m) => ({ name: m.name, size_bytes: m.size }));
+    const models = await Promise.all(
+      tags.models.map(async (m) => ({
+        name: m.name,
+        size_bytes: m.size,
+        tools: await this.supportsTools(m.name),
+      }))
+    );
     const resident =
       ps.models.length > 0
         ? { name: ps.models[0].name, loaded_by_server: ps.models[0].name === this.loadedByServer }

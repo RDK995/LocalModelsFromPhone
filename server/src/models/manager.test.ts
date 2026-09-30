@@ -44,6 +44,9 @@ class FakeOllama implements ModelManagerOllama {
   /** Injected latency so `tags()`/`ps()` really await, letting overlapping calls interleave. */
   tagsDelayMs = 0;
   psDelayMs = 0;
+  /** Per-model /api/show answers; a model absent here reports only "completion". */
+  showResults = new Map<string, { capabilities?: string[] } | Error>();
+  showCalls: string[] = [];
 
   constructor(
     private tagsResult: OllamaTagsResponse | Error,
@@ -64,6 +67,13 @@ class FakeOllama implements ModelManagerOllama {
     if (this.psDelayMs > 0) await Bun.sleep(this.psDelayMs);
     if (this.psResult instanceof Error) throw this.psResult;
     return { models: [...this.psModels] };
+  }
+
+  async show(name: string): Promise<{ capabilities?: string[] }> {
+    this.showCalls.push(name);
+    const result = this.showResults.get(name) ?? { capabilities: ["completion"] };
+    if (result instanceof Error) throw result;
+    return result;
   }
 
   async load(name: string): Promise<void> {
@@ -150,9 +160,73 @@ describe("ModelManager", () => {
     const state = await manager.state();
 
     expect(state.models).toEqual([
-      { name: "quirky-llama-9000", size_bytes: 123456 },
-      { name: "another-oddball-model", size_bytes: 42 },
+      { name: "quirky-llama-9000", size_bytes: 123456, tools: false },
+      { name: "another-oddball-model", size_bytes: 42, tools: false },
     ]);
+  });
+
+  describe("tools capability (M9)", () => {
+    it("state() reports tools per model from /api/show capabilities", async () => {
+      const ollama = new FakeOllama(
+        { models: [tagModel("with-tools", 1), tagModel("without-tools", 2)] },
+        { models: [] }
+      );
+      ollama.showResults.set("with-tools", { capabilities: ["completion", "tools"] });
+      const manager = new ModelManager(ollama, new FakeGenerations(null));
+
+      const state = await manager.state();
+
+      expect(state.models).toEqual([
+        { name: "with-tools", size_bytes: 1, tools: true },
+        { name: "without-tools", size_bytes: 2, tools: false },
+      ]);
+    });
+
+    it("a show failure makes only that model tools:false and state() still succeeds", async () => {
+      const ollama = new FakeOllama(
+        { models: [tagModel("good", 1), tagModel("broken", 2)] },
+        { models: [] }
+      );
+      ollama.showResults.set("good", { capabilities: ["tools"] });
+      ollama.showResults.set("broken", new Error("show exploded"));
+      const manager = new ModelManager(ollama, new FakeGenerations(null));
+
+      const state = await manager.state();
+
+      expect(state.models.map((m) => [m.name, m.tools])).toEqual([
+        ["good", true],
+        ["broken", false],
+      ]);
+    });
+
+    it("supportsTools is false when capabilities is missing", async () => {
+      const ollama = new FakeOllama({ models: [] }, { models: [] });
+      ollama.showResults.set("bare", {});
+      const manager = new ModelManager(ollama, new FakeGenerations(null));
+
+      expect(await manager.supportsTools("bare")).toBe(false);
+    });
+
+    it("supportsTools caches a success per model", async () => {
+      const ollama = new FakeOllama({ models: [] }, { models: [] });
+      ollama.showResults.set("m", { capabilities: ["tools"] });
+      const manager = new ModelManager(ollama, new FakeGenerations(null));
+
+      expect(await manager.supportsTools("m")).toBe(true);
+      expect(await manager.supportsTools("m")).toBe(true);
+      expect(ollama.showCalls).toEqual(["m"]);
+    });
+
+    it("supportsTools does not cache a failure", async () => {
+      const ollama = new FakeOllama({ models: [] }, { models: [] });
+      ollama.showResults.set("m", new Error("transient"));
+      const manager = new ModelManager(ollama, new FakeGenerations(null));
+
+      expect(await manager.supportsTools("m")).toBe(false);
+      ollama.showResults.set("m", { capabilities: ["tools"] });
+      expect(await manager.supportsTools("m")).toBe(true);
+      expect(ollama.showCalls).toEqual(["m", "m"]);
+    });
   });
 
   it("reports resident with loaded_by_server:false for a model the server never loaded", async () => {

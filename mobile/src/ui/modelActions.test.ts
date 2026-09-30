@@ -12,7 +12,7 @@ import type { StateResponse } from "@shared/api";
 
 function stateWith(operation: StateResponse["operation"]): StateResponse {
   return {
-    models: [{ name: "llama3:70b", size_bytes: 39_000_000_000 }],
+    models: [{ name: "llama3:70b", size_bytes: 39_000_000_000, tools: false }],
     resident: null,
     operation,
     generation: null,

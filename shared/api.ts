@@ -5,6 +5,7 @@
 export interface Model {
   name: string;
   size_bytes: number;
+  tools: boolean;
 }
 
 export interface ResidentModel {
@@ -54,6 +55,7 @@ export interface ChatRequest {
     role: "user" | "assistant";
     content: string;
   }>;
+  web?: boolean;
 }
 
 export interface OperationResponse {

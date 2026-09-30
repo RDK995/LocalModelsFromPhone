@@ -38,6 +38,7 @@ export interface OllamaStateClient extends OllamaChatClient {
   ps(): Promise<OllamaPsResponse>;
   load(name: string): Promise<void>;
   unload(name: string): Promise<void>;
+  show(name: string): Promise<{ capabilities?: string[] }>;
 }
 
 export interface CreateServerOptions {
@@ -210,12 +211,15 @@ function parseChatRequest(body: unknown): ChatRequest | string {
   if (typeof body !== "object" || body === null || Array.isArray(body)) {
     return "Request body must be a JSON object";
   }
-  const { model, messages } = body as Record<string, unknown>;
+  const { model, messages, web } = body as Record<string, unknown>;
   if (typeof model !== "string" || model.length === 0) {
     return "model must be a non-empty string";
   }
   if (!Array.isArray(messages)) {
     return "messages must be an array";
+  }
+  if (web !== undefined && typeof web !== "boolean") {
+    return "web must be a boolean";
   }
   const parsed: ChatRequest["messages"] = [];
   for (let i = 0; i < messages.length; i++) {
@@ -232,7 +236,7 @@ function parseChatRequest(body: unknown): ChatRequest | string {
     }
     parsed.push({ role, content });
   }
-  return { model, messages: parsed };
+  return web === undefined ? { model, messages: parsed } : { model, messages: parsed, web };
 }
 
 /**
@@ -505,6 +509,14 @@ export function createServer({
           return errorResponse(
             "model_not_resident",
             `Model "${body.model}" is not loaded; load it first`,
+            409
+          );
+        }
+
+        if (body.web === true && !(await modelManager.supportsTools(body.model))) {
+          return errorResponse(
+            "tools_unsupported",
+            `Model "${body.model}" does not support tool calling, so web search is unavailable`,
             409
           );
         }

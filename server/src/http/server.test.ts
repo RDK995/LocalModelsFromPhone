@@ -22,6 +22,9 @@ class FakeOllamaClient implements OllamaStateClient {
   /** Overridable per test to hold or fail a load/unload mid-flight. */
   loadImpl: (name: string) => Promise<void> = async () => {};
   unloadImpl: (name: string) => Promise<void> = async () => {};
+  /** Capabilities /api/show reports for every model; override per test. */
+  showCapabilities: string[] = ["completion"];
+  showCalls: string[] = [];
 
   constructor(
     private chatImpl: ChatImpl,
@@ -35,6 +38,11 @@ class FakeOllamaClient implements OllamaStateClient {
 
   async ps(): Promise<OllamaPsResponse> {
     return this.psResponse;
+  }
+
+  async show(name: string): Promise<{ capabilities?: string[] }> {
+    this.showCalls.push(name);
+    return { capabilities: this.showCapabilities };
   }
 
   async load(name: string): Promise<void> {
@@ -347,12 +355,12 @@ describe("HTTP Server with Bearer Auth", () => {
 
       expect(response.status).toBe(200);
       const body = (await response.json()) as {
-        models: Array<{ name: string; size_bytes: number }>;
+        models: Array<{ name: string; size_bytes: number; tools: boolean }>;
         resident: { name: string; loaded_by_server: boolean } | null;
         operation: { kind: string };
         generation: unknown;
       };
-      expect(body.models).toEqual([{ name: "llama3", size_bytes: 42 }]);
+      expect(body.models).toEqual([{ name: "llama3", size_bytes: 42, tools: false }]);
       expect(body.resident).toEqual({ name: "llama3", loaded_by_server: false });
       expect(body.operation.kind).toBe("idle");
       expect(body.generation).toBeNull();
@@ -382,6 +390,102 @@ describe("HTTP Server with Bearer Auth", () => {
         resident: { name: string; loaded_by_server: boolean } | null;
       };
       expect(body.resident).toBeNull();
+    } finally {
+      server.stop();
+    }
+  });
+
+  it("/v1/state reports tools:true for a model whose /api/show lists tools", async () => {
+    const client = new FakeOllamaClient(completingChat(0), {
+      models: [{ name: "llama3", modified_at: "", size: 42, digest: "abc" }],
+    });
+    client.showCapabilities = ["completion", "tools"];
+    setValidToken("test-token");
+    const server = createServer({ ollama: client, port: 0 });
+    try {
+      const response = await fetch(`http://127.0.0.1:${server.port}/v1/state`, {
+        headers: authHeaders("test-token"),
+      });
+      const body = (await response.json()) as { models: Array<{ tools: boolean }> };
+      expect(body.models.map((m) => m.tools)).toEqual([true]);
+    } finally {
+      server.stop();
+    }
+  });
+
+  async function postChat(port: number | undefined, body: unknown): Promise<Response> {
+    return fetch(`http://127.0.0.1:${port}/v1/chat`, {
+      method: "POST",
+      headers: authHeaders("test-token"),
+      body: JSON.stringify(body),
+    });
+  }
+  const webBody = (web: unknown) => ({
+    model: "fake-model",
+    messages: [{ role: "user", content: "hello" }],
+    web,
+  });
+
+  it("POST /v1/chat web:true on a model without tools returns 409 tools_unsupported", async () => {
+    let started = 0;
+    const client = new FakeOllamaClient(async function* () {
+      started++;
+    });
+    setValidToken("test-token");
+    const server = createServer({ ollama: client, port: 0 });
+    try {
+      const res = await postChat(server.port, webBody(true));
+      expect(res.status).toBe(409);
+      expect(((await res.json()) as { error: string }).error).toBe("tools_unsupported");
+      expect(started).toBe(0);
+    } finally {
+      server.stop();
+    }
+  });
+
+  it("POST /v1/chat web:true on a tools-capable model streams as before", async () => {
+    const client = new FakeOllamaClient(completingChat(1));
+    client.showCapabilities = ["completion", "tools"];
+    setValidToken("test-token");
+    const server = createServer({ ollama: client, port: 0 });
+    try {
+      const res = await postChat(server.port, webBody(true));
+      expect(res.status).toBe(200);
+      expect(res.headers.get("Content-Type")).toBe("text/event-stream");
+      await res.text();
+    } finally {
+      server.stop();
+    }
+  });
+
+  it("POST /v1/chat web:\"yes\" is 400 bad_request", async () => {
+    const client = new FakeOllamaClient(completingChat(0));
+    setValidToken("test-token");
+    const server = createServer({ ollama: client, port: 0 });
+    try {
+      const res = await postChat(server.port, webBody("yes"));
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as { error: string; message: string };
+      expect(body.error).toBe("bad_request");
+      expect(body.message).toBe("web must be a boolean");
+    } finally {
+      server.stop();
+    }
+  });
+
+  it("POST /v1/chat without web streams and never calls show", async () => {
+    const client = new FakeOllamaClient(completingChat(1));
+    setValidToken("test-token");
+    const server = createServer({ ollama: client, port: 0 });
+    try {
+      const res = await fetch(`http://127.0.0.1:${server.port}/v1/chat`, {
+        method: "POST",
+        headers: authHeaders("test-token"),
+        body: CHAT_REQUEST_BODY,
+      });
+      expect(res.status).toBe(200);
+      await res.text();
+      expect(client.showCalls).toEqual([]);
     } finally {
       server.stop();
     }

@@ -35,8 +35,8 @@ describe("toModelListView", () => {
     const state: StateResponse = {
       ...baseState,
       models: [
-        { name: "llama3:70b", size_bytes: 39_000_000_000 },
-        { name: "phi3:mini", size_bytes: 2_300_000_000 },
+        { name: "llama3:70b", size_bytes: 39_000_000_000, tools: false },
+        { name: "phi3:mini", size_bytes: 2_300_000_000, tools: false },
       ],
     };
 
@@ -62,8 +62,8 @@ describe("toModelListView", () => {
     const state: StateResponse = {
       ...baseState,
       models: [
-        { name: "llama3:70b", size_bytes: 39_000_000_000 },
-        { name: "phi3:mini", size_bytes: 2_300_000_000 },
+        { name: "llama3:70b", size_bytes: 39_000_000_000, tools: false },
+        { name: "phi3:mini", size_bytes: 2_300_000_000, tools: false },
       ],
       resident: { name: "phi3:mini", loaded_by_server: true },
     };
@@ -77,7 +77,7 @@ describe("toModelListView", () => {
   it("still reports the resident label when the resident model is not in the list (another tool loaded it)", () => {
     const state: StateResponse = {
       ...baseState,
-      models: [{ name: "llama3:70b", size_bytes: 39_000_000_000 }],
+      models: [{ name: "llama3:70b", size_bytes: 39_000_000_000, tools: false }],
       resident: { name: "mystery-model", loaded_by_server: false },
     };
 
@@ -90,7 +90,7 @@ describe("toModelListView", () => {
   it("reports 'Nothing loaded' and marks no row when resident is null", () => {
     const state: StateResponse = {
       ...baseState,
-      models: [{ name: "llama3:70b", size_bytes: 39_000_000_000 }],
+      models: [{ name: "llama3:70b", size_bytes: 39_000_000_000, tools: false }],
       resident: null,
     };
 
@@ -119,8 +119,8 @@ describe("toModelListView", () => {
     const state: StateResponse = {
       ...baseState,
       models: [
-        { name: "llama3:70b", size_bytes: 39_000_000_000 },
-        { name: "phi3:mini", size_bytes: 2_300_000_000 },
+        { name: "llama3:70b", size_bytes: 39_000_000_000, tools: false },
+        { name: "phi3:mini", size_bytes: 2_300_000_000, tools: false },
       ],
       resident: { name: "phi3:mini", loaded_by_server: true },
     };
@@ -136,7 +136,7 @@ describe("toModelListView", () => {
   it("shows a 'Loading <model>…' busy label and makes no row loadable or unloadable while loading", () => {
     const state: StateResponse = {
       ...baseState,
-      models: [{ name: "llama3:70b", size_bytes: 39_000_000_000 }],
+      models: [{ name: "llama3:70b", size_bytes: 39_000_000_000, tools: false }],
       operation: { kind: "loading", model: "llama3:70b" },
     };
 
@@ -176,7 +176,7 @@ describe("toModelListView", () => {
   it("reports the failure reason from a load that ended idle with an error, and nothing resident", () => {
     const state: StateResponse = {
       ...baseState,
-      models: [{ name: "llama3:70b", size_bytes: 39_000_000_000 }],
+      models: [{ name: "llama3:70b", size_bytes: 39_000_000_000, tools: false }],
       resident: null,
       operation: {
         kind: "idle",
@@ -196,7 +196,7 @@ describe("toModelListView", () => {
   it("maps a load failure's error_code through describeOperationFailure (FR16, M5b)", () => {
     const state: StateResponse = {
       ...baseState,
-      models: [{ name: "llama3:70b", size_bytes: 39_000_000_000 }],
+      models: [{ name: "llama3:70b", size_bytes: 39_000_000_000, tools: false }],
       resident: null,
       operation: {
         kind: "idle",

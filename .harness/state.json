@@ -6319,7 +6319,7 @@
         {
           "id": "M9-T3",
           "scope": "C5+C4: tools capability per model in GET /v1/state via /api/show; POST /v1/chat web:true on non-tools model -> 409 tools_unsupported",
-          "tests": "see packet",
+          "tests": "cd server && bun test && bun run typecheck && cd ../mobile && npx tsc --noEmit",
           "requirements": [
             "FR19"
           ],
@@ -6329,6 +6329,7 @@
             "M9-AC1"
           ],
           "paths": [
+            "shared/api.ts",
             "server/src/models/manager.ts",
             "server/src/models/manager.test.ts",
             "server/src/http/server.ts",
@@ -6341,11 +6342,89 @@
             "reason_code": "ORDINARY_IMPLEMENTATION",
             "detail": "two components, state shape change"
           },
-          "status": "PLANNED",
-          "attempts": 0,
+          "status": "ACCEPTED",
+          "attempts": 1,
           "packet": ".harness/tasks/M9-T3.md",
           "commit": null,
-          "attempt_log": []
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M9-T3-worker.log",
+              "verdict": "FAIL",
+              "base": "f6a50a6",
+              "changed_files": [
+                "shared/api.ts",
+                "server/src/models/manager.ts",
+                "server/src/models/manager.test.ts",
+                "server/src/http/server.ts",
+                "server/src/http/server.test.ts"
+              ],
+              "note": "Red: .harness/evidence/M9-T3-red.log (10 fail). Server green (138 pass, tsc 0); mobile tsc failed on 12 Model fixtures outside allowed files - a packet scoping gap, repaired by M9-T3b, not a ladder climb"
+            },
+            {
+              "attempt": 3,
+              "role": "verifier",
+              "artifact": ".harness/evidence/M9-T3-verifier.log",
+              "verdict": "PASS",
+              "note": "combined T3+T3b tree: full Tests exit 0, 138 server pass, mobile tsc 0; files within union of allowed; not weakened"
+            }
+          ]
+        },
+        {
+          "id": "M9-T3b",
+          "scope": "mobile Model fixtures gain tools:false after M9-T3 made Model.tools required",
+          "tests": "cd mobile && npx tsc --noEmit && bun test src/ui/modelList.test.ts src/ui/modelActions.test.ts; cd ../server && bun test && bun run typecheck",
+          "requirements": [
+            "FR19"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M9-AC1"
+          ],
+          "paths": [
+            "mobile/src/ui/modelList.test.ts",
+            "mobile/src/ui/modelActions.test.ts"
+          ],
+          "depends_on": [
+            "M9-T3"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "type-only fixture repair after settled contract change"
+          },
+          "status": "ACCEPTED",
+          "attempts": 1,
+          "packet": ".harness/tasks/M9-T3b.md",
+          "commit": null,
+          "attempt_log": [
+            {
+              "attempt": 1,
+              "role": "worker",
+              "tier": "Cheap",
+              "model": "haiku",
+              "artifact": ".harness/evidence/M9-T3b-worker.log",
+              "verdict": "PASS",
+              "base": "f6a50a6",
+              "changed_files": [
+                "mobile/src/ui/modelList.test.ts",
+                "mobile/src/ui/modelActions.test.ts"
+              ],
+              "note": "red: M9-T3b-red.log (12 tsc errors); 23 mobile tests pass"
+            },
+            {
+              "attempt": 1,
+              "role": "verifier",
+              "artifact": ".harness/evidence/M9-T3-verifier.log",
+              "verdict": "PASS",
+              "note": "verified together with M9-T3"
+            }
+          ]
         },
         {
           "id": "M9-T4",
@@ -6429,7 +6508,7 @@
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
       ],
-      "handoff": "CONTINUE after T1,T2 accepted. Next: write packet M9-T3 (AC1) and run it; then T4 (tool loop: use OllamaClient.chat 4th arg tools and yielded `toolCalls`; createWebTools from server/src/web/tools.ts; C6 aggregates `source` events into one `sources` SSE event before done, dedupe by url; system note from systemNote(new Date()) prepended only when web:true; tools omitted once 10 calls have run; a stub-Ollama test that keeps calling tools proves the cap); then T5 live proof server/scripts/web-chat-proof.sh."
+      "handoff": "T1,T2,T3,T3b accepted. Next: T4 (packet .harness/tasks/M9-T4.md written), then T5 live proof."
     },
     "M10": {
       "id": "M10",

@@ -1,0 +1,177 @@
+bun test v1.4.0 (1381054db)
+
+src/models/manager.test.ts:
+157 |     );
+158 |     const manager = new ModelManager(ollama, new FakeGenerations(null));
+159 | 
+160 |     const state = await manager.state();
+161 | 
+162 |     expect(state.models).toEqual([
+                               ^
+error: expect(received).toEqual(expected)
+
+@@ -4,3 +4,2 @@
+      "size_bytes": 123456,
+-     "tools": false,
+    },
+@@ -9,3 +8,2 @@
+      "size_bytes": 42,
+-     "tools": false,
+    },
+
+- Expected  - 2
++ Received  + 0
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/models/manager.test.ts:162:26)
+(fail) ModelManager > maps state().models verbatim from an arbitrary tags list, in order [0.50ms]
+174 |       ollama.showResults.set("with-tools", { capabilities: ["completion", "tools"] });
+175 |       const manager = new ModelManager(ollama, new FakeGenerations(null));
+176 | 
+177 |       const state = await manager.state();
+178 | 
+179 |       expect(state.models).toEqual([
+                                 ^
+error: expect(received).toEqual(expected)
+
+@@ -4,3 +4,2 @@
+      "size_bytes": 1,
+-     "tools": true,
+    },
+@@ -9,3 +8,2 @@
+      "size_bytes": 2,
+-     "tools": false,
+    },
+
+- Expected  - 2
++ Received  + 0
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/models/manager.test.ts:179:28)
+(fail) ModelManager > tools capability (M9) > state() reports tools per model from /api/show capabilities [0.12ms]
+191 |       ollama.showResults.set("broken", new Error("show exploded"));
+192 |       const manager = new ModelManager(ollama, new FakeGenerations(null));
+193 | 
+194 |       const state = await manager.state();
+195 | 
+196 |       expect(state.models.map((m) => [m.name, m.tools])).toEqual([
+                                                               ^
+error: expect(received).toEqual(expected)
+
+@@ -3,3 +3,3 @@
+      "good",
+-     true,
++     undefined,
+    ],
+@@ -7,3 +7,3 @@
+      "broken",
+-     false,
++     undefined,
+    ],
+
+- Expected  - 2
++ Received  + 2
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/models/manager.test.ts:196:58)
+(fail) ModelManager > tools capability (M9) > a show failure makes only that model tools:false and state() still succeeds [0.10ms]
+202 |     it("supportsTools is false when capabilities is missing", async () => {
+203 |       const ollama = new FakeOllama({ models: [] }, { models: [] });
+204 |       ollama.showResults.set("bare", {});
+205 |       const manager = new ModelManager(ollama, new FakeGenerations(null));
+206 | 
+207 |       expect(await manager.supportsTools("bare")).toBe(false);
+                                 ^
+TypeError: manager.supportsTools is not a function. (In 'manager.supportsTools("bare")', 'manager.supportsTools' is undefined)
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/models/manager.test.ts:207:28)
+(fail) ModelManager > tools capability (M9) > supportsTools is false when capabilities is missing [0.09ms]
+210 |     it("supportsTools caches a success per model", async () => {
+211 |       const ollama = new FakeOllama({ models: [] }, { models: [] });
+212 |       ollama.showResults.set("m", { capabilities: ["tools"] });
+213 |       const manager = new ModelManager(ollama, new FakeGenerations(null));
+214 | 
+215 |       expect(await manager.supportsTools("m")).toBe(true);
+                                 ^
+TypeError: manager.supportsTools is not a function. (In 'manager.supportsTools("m")', 'manager.supportsTools' is undefined)
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/models/manager.test.ts:215:28)
+(fail) ModelManager > tools capability (M9) > supportsTools caches a success per model [0.09ms]
+220 |     it("supportsTools does not cache a failure", async () => {
+221 |       const ollama = new FakeOllama({ models: [] }, { models: [] });
+222 |       ollama.showResults.set("m", new Error("transient"));
+223 |       const manager = new ModelManager(ollama, new FakeGenerations(null));
+224 | 
+225 |       expect(await manager.supportsTools("m")).toBe(false);
+                                 ^
+TypeError: manager.supportsTools is not a function. (In 'manager.supportsTools("m")', 'manager.supportsTools' is undefined)
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/models/manager.test.ts:225:28)
+(fail) ModelManager > tools capability (M9) > supportsTools does not cache a failure [0.08ms]
+
+src/http/server.test.ts:
+358 |         models: Array<{ name: string; size_bytes: number; tools: boolean }>;
+359 |         resident: { name: string; loaded_by_server: boolean } | null;
+360 |         operation: { kind: string };
+361 |         generation: unknown;
+362 |       };
+363 |       expect(body.models).toEqual([{ name: "llama3", size_bytes: 42, tools: false }]);
+                                ^
+error: expect(received).toEqual(expected)
+
+@@ -4,3 +4,2 @@
+      "size_bytes": 42,
+-     "tools": false,
+    },
+
+- Expected  - 1
++ Received  + 0
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/server.test.ts:363:27)
+(fail) HTTP Server with Bearer Auth > /v1/state reports real models, resident state, and active generation [2.18ms]
+405 |     try {
+406 |       const response = await fetch(`http://127.0.0.1:${server.port}/v1/state`, {
+407 |         headers: authHeaders("test-token"),
+408 |       });
+409 |       const body = (await response.json()) as { models: Array<{ tools: boolean }> };
+410 |       expect(body.models.map((m) => m.tools)).toEqual([true]);
+                                                    ^
+error: expect(received).toEqual(expected)
+
+  [
+-   true,
++   undefined,
+  ]
+
+- Expected  - 1
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/server.test.ts:410:47)
+(fail) HTTP Server with Bearer Auth > /v1/state reports tools:true for a model whose /api/show lists tools [1.43ms]
+433 |     });
+434 |     setValidToken("test-token");
+435 |     const server = createServer({ ollama: client, port: 0 });
+436 |     try {
+437 |       const res = await postChat(server.port, webBody(true));
+438 |       expect(res.status).toBe(409);
+                               ^
+error: expect(received).toBe(expected)
+
+Expected: 409
+Received: 200
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/server.test.ts:438:26)
+(fail) HTTP Server with Bearer Auth > POST /v1/chat web:true on a model without tools returns 409 tools_unsupported [3.11ms]
+462 |     const client = new FakeOllamaClient(completingChat(0));
+463 |     setValidToken("test-token");
+464 |     const server = createServer({ ollama: client, port: 0 });
+465 |     try {
+466 |       const res = await postChat(server.port, webBody("yes"));
+467 |       expect(res.status).toBe(400);
+                               ^
+error: expect(received).toBe(expected)
+
+Expected: 400
+Received: 200
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/server.test.ts:467:26)
+(fail) HTTP Server with Bearer Auth > POST /v1/chat web:"yes" is 400 bad_request [1.20ms]
+
+ 83 pass
+ 10 fail
+ 439 expect() calls
+Ran 93 tests across 2 files. [2.03s]
