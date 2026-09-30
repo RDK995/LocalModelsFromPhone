@@ -1,0 +1,28 @@
+TASK: M10d-T3 - Fix quote-style lint errors in markdownText.test.ts
+
+COMMAND RUN:
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run lint && bun test src/ui/markdownText.test.ts && bun run typecheck
+
+OUTPUT:
+$ eslint src --max-warnings 0
+bun test v1.4.0 (1381054db)
+
+ 33 pass
+ 0 fail
+ 93 expect() calls
+Ran 33 tests across 1 file. [11.00ms]
+$ tsc --noEmit
+
+EXIT STATUS: 0 (Success)
+
+VALIDATION:
+✓ bun run lint exits 0
+✓ bun test still 33 pass 0 fail (for markdownText.test.ts)
+✓ bun run typecheck exits 0
+✓ Line 159 assertion checks the same string content as before (now with double-quoted strings)
+
+CHANGES MADE:
+File: mobile/src/ui/markdownText.test.ts (line 159 only)
+- Changed single-quoted strings with embedded double quotes to double-quoted strings with escaped inner quotes
+- Before: md.indexOf('case "cite"') and md.indexOf('case "link"')
+- After:  md.indexOf("case \"cite\"") and md.indexOf("case \"link\"")

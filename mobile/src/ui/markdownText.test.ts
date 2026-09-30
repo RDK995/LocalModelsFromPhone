@@ -156,7 +156,7 @@ describe("2-column grid has a definite width on the device (M10c3-C4)", () => {
 });
 
 describe("numbered citations render as source logos (FR31, M10c4-T5)", () => {
-  const cite = md.slice(md.indexOf('case "cite"'), md.indexOf('case "link"'));
+  const cite = md.slice(md.indexOf("case \"cite\""), md.indexOf("case \"link\""));
   it("imports presentCitation", () => {
     expect(md).toMatch(/import\s*\{[^}]*\bpresentCitation\b[^}]*\}\s*from\s*"\.\/inlineLink"/);
   });

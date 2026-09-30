@@ -1,0 +1,23 @@
+$ tsc --noEmit
+
+---
+Verification Details
+---
+
+Commit being verified: 434938a
+Current HEAD: 434938a
+
+Git diff 434938a -- mobile/src/ui/markdownText.test.ts:
+diff --git a/mobile/src/ui/markdownText.test.ts b/mobile/src/ui/markdownText.test.ts
+index cd75164..666f191 100644
+--- a/mobile/src/ui/markdownText.test.ts
++++ b/mobile/src/ui/markdownText.test.ts
+@@ -156,7 +156,7 @@ describe("2-column grid has a definite width on the device (M10c3-C4)", () => {
+ });
+ 
+ describe("numbered citations render as source logos (FR31, M10c4-T5)", () => {
+-  const cite = md.slice(md.indexOf('case "cite"'), md.indexOf('case "link"'));
++  const cite = md.slice(md.indexOf("case \"cite\""), md.indexOf("case \"link\""));
+   it("imports presentCitation", () => {
+     expect(md).toMatch(/import\s*\{[^}]*\bpresentCitation\b[^}]*\}\s*from\s*"\.\/inlineLink"/);
+   });
