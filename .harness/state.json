@@ -6946,7 +6946,25 @@
         }
       ],
       "reviews": [],
-      "findings": [],
+      "findings": [
+        {
+          "id": "M10-R1-F1",
+          "cycle": 1,
+          "severity": "IMPORTANT",
+          "status": "OPEN",
+          "summary": "web switch stuck on and still sends web:true for a no-tools resident model",
+          "report": ".harness/reviews/M10-cycle1.md",
+          "correction_task": "M10-C1"
+        },
+        {
+          "id": "M10-R1-F2",
+          "cycle": 1,
+          "severity": "OPTIONAL",
+          "status": "DEFERRED",
+          "summary": "capability checked only on focus; steps use index keys",
+          "report": ".harness/reviews/M10-cycle1.md"
+        }
+      ],
       "validation": [
         {
           "command": "cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/web-switch-proof.sh",
@@ -6964,6 +6982,14 @@
       ],
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
+      ],
+      "fix_cycles": [
+        {
+          "cycle": 1,
+          "report": ".harness/reviews/M10-cycle1.md",
+          "pre_correction": "e14b57f9dc084c32a5b19f87c70f03a02b7f0dc6",
+          "status": "IN_PROGRESS"
+        }
       ]
     },
     "M11": {

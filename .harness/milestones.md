@@ -267,7 +267,11 @@ Owner's phone observation still owed (cannot be claimed Mac-side): (1) open a ch
 
 ### Review
 
-Pending.
+Cycle 1: CHANGES REQUIRED — whole milestone (Scope SUBSTANTIVE), report .harness/reviews/M10-cycle1.md, validation re-run exit 0 (.harness/evidence/M10-review.log); M10-AC1 PASS, M10-AC2 PASS with caveat (finding 1), M10-AC3 PASS, M10-AC4 PASS (all on Mac evidence; phone observation owner-owed); 0 BLOCKER, 1 IMPORTANT, 1 OPTIONAL.
+- F1 (IMPORTANT): switch stuck on and still sending web for a no-tools model — correction task M10-C1.
+- F2 (OPTIONAL): capability checked only on focus; index keys for steps — not routed, recorded under Follow-ups.
+Fix cycle 1 Pre-correction: e14b57f9dc084c32a5b19f87c70f03a02b7f0dc6 (after committing the review records).
+
 
 ### Review Cycles
 
