@@ -262,6 +262,7 @@ Implementation complete (continuation 2): all five tasks accepted. Mac-side evid
 ### Validation
 
 `cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/web-switch-proof.sh` — exit 0 (M10-T5 verifier, .harness/evidence/M10-T5-verifier.log): 246 pass, lint clean, live proof all PASS.
+Fix cycle 1: same command exit 0 over fb76a0c (M10-C1 verifier, .harness/evidence/M10-C1-verifier.log): 248 pass, lint clean, live proof all PASS (.harness/evidence/M10-C1-proof.log).
 
 Owner's phone observation still owed (cannot be claimed Mac-side): (1) open a chat, see the "Web search" switch off; open an older chat, also off; (2) turn it on, force-quit Expo Go, reopen that chat, still on; (3) with web on, ask "What are today's top news headlines?", watch "Searching: ..." (and any "Reading: ...") lines appear live, then the answer; after it finishes the steps fold into "Show web steps (n)" which expands; (4) tap a source under "Sources" and it opens in Safari; (5) screenshot of (3)/(4).
 
@@ -271,17 +272,21 @@ Cycle 1: CHANGES REQUIRED — whole milestone (Scope SUBSTANTIVE), report .harne
 - F1 (IMPORTANT): switch stuck on and still sending web for a no-tools model — correction task M10-C1.
 - F2 (OPTIONAL): capability checked only on focus; index keys for steps — not routed, recorded under Follow-ups.
 Fix cycle 1 Pre-correction: e14b57f9dc084c32a5b19f87c70f03a02b7f0dc6 (after committing the review records).
+Fix cycle 1 corrections: M10-C1 (F1) — Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS, commit fb76a0c. Verifier (.harness/evidence/M10-C1-verifier.log): `cd mobile && bun run typecheck && bun test && bun run lint` exit 0, 248 pass; live `bash scripts/web-switch-proof.sh` exit 0, all checks PASS, Mac restored (.harness/evidence/M10-C1-proof.log); Tests Weakened NO; red .harness/evidence/M10-C1-red.log. sendMessage now sends web:true only when the stored switch is on AND the resident is listed with tools:true in the send-time getState; the Switch shows webSwitchDisplayValue(stored, state) (off while unavailable) and the stored web_search is not rewritten.
+Correction diff: `git diff e14b57f9dc084c32a5b19f87c70f03a02b7f0dc6 HEAD`. Files changed (git diff --name-only): mobile/src/app/chat.tsx, mobile/src/chat/chatController.ts, mobile/src/chat/chatController.test.ts, mobile/src/chat/conversationSession.test.ts, mobile/src/ui/webSwitch.ts, mobile/src/ui/webSwitch.test.ts, plus .harness records (milestones.md, state.json, tasks/M10-C1.md, evidence/M10-C1-*.log, evidence/M10-T5-proof.log).
+Files changed that no finding named: mobile/src/chat/chatController.ts (the gate lives where getState already runs, not in the named conversationSession.ts), mobile/src/ui/webSwitch.ts (new webSwitchDisplayValue), and their tests; .harness/evidence/M10-T5-proof.log was rewritten by the live proof re-run (the script writes that log). server/src/generations/manager.ts (named) was not changed: the gate is client-side.
 
 
 ### Review Cycles
 
-0
+1
 
 ### Follow-ups
 
 - Size check at pickup: 4 criteria, one signal (IMPLEMENTATION_PLUS_LIVE_PROOF); seam check: the phone observation proves the same outcome - not split.
 - milestones.md stays above 400 lines after archiving M8: M9 (most recently settled), M10-M13 (open) and M5a (BLOCKED) are protected.
 - Subagent completion notifications arrived before some workers/verifiers had stopped; their late re-runs landed in the shared tree and appended to evidence logs. Consider waiting for each agent's final hand-back before starting the next task.
+- Review cycle 1 F2 (OPTIONAL, not routed): the capability check runs only on screen focus, so a model change while the chat is open is not seen until refocus (the send-time gate from M10-C1 now stops a wrong web request regardless); web steps use array index keys.
 - The live proof's model made no read_page call, so a live "Reading: <domain>" step was not seen Mac-side (read labels are unit-tested).
 
 ## M11 — Web replies are saved, resume after a drop, and keep page text out of later prompts
