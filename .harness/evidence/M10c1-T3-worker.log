@@ -1,0 +1,5 @@
+commit: 4dcce038ede3130cc9ce080677af8f68f7e0b785
+cmd: bash server/scripts/icon-route-proof.sh -> exit 1 (only FAIL: AC4 bare 'localhost' through server returns 400 bad_host, not 404 no_icon)
+cmd: ICON_PROOF_SELFTEST_FAIL=1 bash server/scripts/icon-route-proof.sh -> exit 1 (forced FAIL shown)
+PASS: AC1,AC2,AC3,AC4(app.localhost, 100.100.100.100.nip.io),AC5,AC6,AC7. SKIP: localtest.me, 10.0.0.1.nip.io (do not resolve on this network).
+full output: .harness/evidence/M10c1-T3-proof.log, M10c1-T3-red.log

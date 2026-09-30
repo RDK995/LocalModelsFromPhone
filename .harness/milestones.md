@@ -265,10 +265,14 @@ b8ec398b0bdaa3dff72bef6a6ba85d939b320e4d on m10c-source-logos (clean tree at pic
 ### Evidence
 
 Pickup check 2026-09-30: 1 criterion (size OK); shape OK (HTTP entry point GET /v1/icon on the server); one signal IMPLEMENTATION_PLUS_LIVE_PROOF, seam already checked by the human split decision. Tasks: T1 C13 icon fetch/cache/route + API.md (Top, SECURITY); T2 C12 icon() + C4 GET /v1/icon (Mid); T3 live proof server/scripts/icon-route-proof.sh (Mid).
+T1 C13 icon fetch/cache/route + API.md   Top (SECURITY), attempt 4, PASS; verifier PASS (159 pass, typecheck clean) — .harness/evidence/M10c1-T1-verifier.log; commit 4dcce03
+T2 C12 icon() + C4 GET /v1/icon          Mid, attempt 3, PASS; verifier PASS (160 pass, typecheck clean) — .harness/evidence/M10c1-T2-verifier.log; commit d0f5954
+T3 live proof server/scripts/icon-route-proof.sh   Mid, attempt 3, FAIL on a product defect only (server returns 400 bad_host for bare `localhost`, from an over-strict T2 packet dot rule; the AC needs 404 no_icon). Script uncommitted in the tree; re-verify after T4 (no new rung — the script is not at fault). Live so far: github.com icon PNG ok + second request from cache (one fetch line); app.localhost and 100.100.100.100.nip.io -> no_icon (blocked); example.com -> no_icon (none); 401 without/wrong token; LAN via 10.0.0.1.nip.io and localtest.me SKIP (do not resolve on this network) — LAN/redirect cases covered by search unit tests. Log: .harness/evidence/M10c1-T3-proof.log
+REMAINING (handoff at turn budget): dispatch T4 (packet .harness/tasks/M10c1-T4.md, Cheap), verify + commit; then verifier re-runs T3 (`bash server/scripts/icon-route-proof.sh`) and commit the script + evidence; record milestone validation; set REVIEW.
 
 ### Validation
 
-Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd search && bun test) && (cd server && bun test && bun run typecheck) && bash scripts/icon-route-proof.sh`
+Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd search && bun test) && (cd server && bun test && bun run typecheck) && bash server/scripts/icon-route-proof.sh` (proof lives at server/scripts/, confirmed during implementation)
 
 ### Review
 
