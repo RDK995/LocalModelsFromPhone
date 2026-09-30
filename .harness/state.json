@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M7a",
+  "current_milestone": "M7c",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -5674,12 +5674,12 @@
       "architecture": "C13, C14",
       "requirements": [],
       "traces": "FR20 (unavailable), FR24 (service time limit)",
-      "status": "TODO",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
-        "commit": "",
-        "branch": ""
+        "commit": "06aade1194d6fd1a010ed47697adf26f8a9d24c4",
+        "branch": "m7c-search-unavailable-timeout"
       },
       "as_built": {
         "artifact": null,
@@ -5690,15 +5690,192 @@
           "id": "M7c-AC1",
           "text": "With both backends forced to fail, the service returns 503 search_unavailable; a search exceeding its time limit returns 504 timeout and its helper process is killed.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            ".harness/evidence/M7c-T3-verifier.log",
+            ".harness/evidence/M7c-T1-verifier.log",
+            ".harness/evidence/M7c-T2-verifier.log"
+          ]
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M7c-T1",
+          "scope": "C13 search time limit (default 25 s, SEARCH_TIMEOUT_MS test override) -> 504 timeout; helper spawned in own process group, whole group SIGKILLed on timeout/abort/exit",
+          "tests": "cd /Users/ryankenny/Projects/CodingHarnessv2/search && bun test && bun run typecheck",
+          "requirements": [
+            "FR20",
+            "FR24"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M7c-AC1"
+          ],
+          "paths": [
+            "search/src/search/runHelper.ts",
+            "search/src/http/server.ts",
+            "search/src/index.ts",
+            "search/src/search/search.test.ts",
+            "search/src/search/timeout.test.ts"
+          ],
+          "depends_on": [],
+          "routing": {
+            "tier": "Top",
+            "model": "opus",
+            "reason_code": "DIFFICULT_CONCURRENCY",
+            "detail": "helper process tree (python + Playwright driver + Chromium) must die on timeout/abort, racing normal exit"
+          },
+          "status": "ACCEPTED",
+          "attempts": 1,
+          "packet": ".harness/tasks/M7c-T1.md",
+          "commit": "f41e844",
+          "attempt_log": [
+            {
+              "attempt": 4,
+              "role": "worker",
+              "tier": "Top",
+              "model": "opus",
+              "artifact": ".harness/evidence/M7c-T1-worker.log",
+              "verdict": "PASS",
+              "base": "06aade1",
+              "changed_files": [
+                "search/src/search/runHelper.ts",
+                "search/src/http/server.ts",
+                "search/src/index.ts",
+                "search/src/search/timeout.test.ts"
+              ],
+              "note": "Red: .harness/evidence/M7c-T1-red.log (3 fail); spawn detached + process.kill(-pid,SIGKILL) on timeout/abort/normal exit"
+            },
+            {
+              "attempt": 4,
+              "role": "verifier",
+              "artifact": ".harness/evidence/M7c-T1-verifier.log",
+              "verdict": "PASS",
+              "note": "bun test 131 pass + tsc clean, exit 0; no tests weakened; no stray sleep 60"
+            }
+          ]
+        },
+        {
+          "id": "M7c-T2",
+          "scope": "C14 test-only SEARCH_HELPER_FORCE_BROWSER=fail|hang hooks with offline unit tests",
+          "tests": "cd /Users/ryankenny/Projects/CodingHarnessv2 && search/helper/.venv/bin/python -m unittest discover -s search/helper -p 'test_*.py'",
+          "requirements": [
+            "FR20"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M7c-AC1"
+          ],
+          "paths": [
+            "search/helper/search.py",
+            "search/helper/test_search.py"
+          ],
+          "depends_on": [],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "two env branches beside the existing FORCE_DDGS hook, tests stated"
+          },
+          "status": "ACCEPTED",
+          "attempts": 1,
+          "packet": ".harness/tasks/M7c-T2.md",
+          "commit": "c3e514d",
+          "attempt_log": [
+            {
+              "attempt": 1,
+              "role": "worker",
+              "tier": "Cheap",
+              "model": "haiku",
+              "artifact": ".harness/evidence/M7c-T2-worker.log",
+              "verdict": "PASS",
+              "base": "06aade1",
+              "changed_files": [
+                "search/helper/search.py",
+                "search/helper/test_search.py"
+              ],
+              "note": "Red 2 fail; Green 35 OK"
+            },
+            {
+              "attempt": 1,
+              "role": "verifier",
+              "artifact": ".harness/evidence/M7c-T2-verifier.log",
+              "verdict": "PASS",
+              "note": "35 unittests OK exit 0; not weakened"
+            }
+          ]
+        },
+        {
+          "id": "M7c-T3",
+          "scope": "search/scripts/failure-proof.sh: own service, forced both-fail -> 503 search_unavailable; forced hang with live Chromium + SEARCH_TIMEOUT_MS=8000 -> 504 timeout, helper PID and new headless Chromium gone; search-proof.sh allow-list admits SEARCH_TIMEOUT_MS and SEARCH_HELPER_FORCE_BROWSER",
+          "tests": "cd /Users/ryankenny/Projects/CodingHarnessv2/search && bash scripts/failure-proof.sh && bash scripts/search-proof.sh && bash scripts/fallback-proof.sh",
+          "requirements": [
+            "FR20",
+            "FR24"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M7c-AC1"
+          ],
+          "paths": [
+            "search/scripts/failure-proof.sh",
+            "search/scripts/search-proof.sh"
+          ],
+          "depends_on": [
+            "M7c-T1",
+            "M7c-T2"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "proof script with process-lifecycle assertions, follows fallback-proof.sh"
+          },
+          "status": "ACCEPTED",
+          "attempts": 1,
+          "packet": ".harness/tasks/M7c-T3.md",
+          "commit": "79def3c",
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M7c-T3-worker.log",
+              "verdict": "PASS",
+              "base": "f41e844",
+              "changed_files": [
+                "search/scripts/failure-proof.sh",
+                "search/scripts/search-proof.sh"
+              ],
+              "note": "worker did not capture failure-proof exit status; verifier did"
+            },
+            {
+              "attempt": 3,
+              "role": "verifier",
+              "artifact": ".harness/evidence/M7c-T3-verifier.log",
+              "verdict": "PASS",
+              "note": "failure-proof/search-proof/fallback-proof each exit 0; 504 after 8.07 s with 3 new Chromium pids in flight, all gone after"
+            }
+          ]
+        }
+      ],
       "reviews": [],
       "findings": [],
-      "validation": [],
+      "validation": [
+        {
+          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2 && search/helper/.venv/bin/python -m unittest discover -s search/helper -p 'test_*.py' && (cd search && bun test && bun run typecheck && bash scripts/failure-proof.sh && bash scripts/fallback-proof.sh && bash scripts/search-proof.sh) && ! pgrep -f 'chrom.*headless' && ! pgrep -f 'helper/search.py'",
+          "note": "failure-proof.sh needs no public network (own service on 127.0.0.1:7792, FAILURE_PROOF_PORT, env -i; forced SEARCH_HELPER_FORCE_DDGS=fail + SEARCH_HELPER_FORCE_BROWSER=fail -> 503; SEARCH_TIMEOUT_MS=8000 + FORCE_BROWSER=hang with live headless Chromium -> 504, helper PID and new Chromium gone after the 504 and after stop). fallback-proof.sh / search-proof.sh (regression, allow-list) need public network. Components confirmed exit 0 by verifiers: bun test 131 + typecheck (.harness/evidence/M7c-T1-verifier.log); helper unittest 35 OK (.harness/evidence/M7c-T2-verifier.log); failure-proof, search-proof, fallback-proof each exit 0, no leftover chromium/helper, 7791/7792 free (.harness/evidence/M7c-T3-verifier.log)."
+        }
+      ],
       "planned_validation": "Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2/search && bun test && bun run typecheck && bash scripts/search-proof.sh`",
-      "follow_ups": [],
+      "follow_ups": [
+        "M7c-T1: runHelper also SIGKILLs the helper's process group after a normal exit (to reap leftovers); after the helper is reaped its pgid could in theory be reused by an unrelated new group leader. Very unlikely; not fixed.",
+        "M7c-T1: on client abort runHelper returns detail 'request aborted' mapped to 503; nobody receives it (client gone).",
+        "D-M7c-1: search time limit default 25 s; the C12 client timeout planned for M9 must exceed it."
+      ],
       "complexity_signals": [
         "CONCURRENCY_LIFECYCLE"
       ],

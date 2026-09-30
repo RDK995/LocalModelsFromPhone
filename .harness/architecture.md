@@ -406,3 +406,17 @@ fallback uses Bing's results page (`cc=GB`, `setlang=en-GB`, locale en-GB).
 Why: AC16 requires ddgs to be *forced* to fail or return nothing; an env hook is the smallest seam
 that exercises the real entry point. Test hook alongside the existing `SEARCH_PORT`; no component
 boundary, technology or responsibility changes.
+
+### D-M7c-1 — Search time limit value, process-group kill, and test-only forcing hooks
+
+Milestone: M7c
+Material: no
+Change: C13 enforces a 25 s default time limit on each helper run (FR24 names no value), overridable
+by the test-only env var `SEARCH_TIMEOUT_MS` read in `search/src/index.ts`. C13 spawns the C14 helper
+detached (its own process group) and SIGKILLs the whole group on timeout, client abort and after a
+normal exit, so Playwright's driver and Chromium die with the helper. C14 gains a test-only env var
+`SEARCH_HELPER_FORCE_BROWSER` (`fail` | `hang`) beside `SEARCH_HELPER_FORCE_DDGS`, so the 503 and
+504 paths can be proven through `POST /v1/search` without the public network.
+Why: I17 says the helper is "killed by C13 on timeout or abort"; killing only the helper PID leaves
+Chromium behind. The limit value and hooks are implementation detail; no component boundary,
+technology or responsibility changes. The later C12 client timeout (M9) must exceed 25 s.
