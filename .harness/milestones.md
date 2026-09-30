@@ -280,6 +280,8 @@ M10b-AC1 evidence (Mac-side): live proof check 1 (streamed reply: heading, list,
 
 Owner's phone observation still owed (cannot be claimed Mac-side): ask for an answer with a heading, bold, a list, inline code and a link; watch it stream with no raw markup; reopen an older saved chat and see its answers formatted; confirm links are plain non-tappable text and thinking stays plain.
 
+Owner's phone observation received 2026-09-30 (.harness/evidence/M10b-owner-phone.png, nemotron3:33b web answer on the phone): bulleted list and bold (inline and multi-line) render with no raw ** or list markers visible. Not shown in that screenshot: a heading, inline code, a code block, an inline link in the answer body, a pre-change saved chat, or thinking.
+
 ### Review
 
 Cycle 1: PASS — whole milestone, reviewer tier Mid (model sonnet, ORDINARY_IMPLEMENTATION), diff 4e6039f..52544c3; validation re-run exit 0 incl. live proof (.harness/evidence/M10b-review.log); M10b-AC1 PASS (on Mac evidence; phone observation owner-owed, see Validation); 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL.
