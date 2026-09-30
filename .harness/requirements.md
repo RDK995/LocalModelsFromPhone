@@ -21,6 +21,10 @@ will join the harness later as its coding agent, can share it.
 phone, the owner asked for formatted answers, a small site logo beside each sourced fact that opens
 the page, and the source list folded away at the bottom.
 
+**Follow-ups after the logo work (FR29–FR30, added 2026-09-30):** after M10c1/M10c2 the owner
+reported, from phone screenshots, misaligned and cramped tables in answers and a broad web question
+answered from a single website. These are built next, before M10d.
+
 ## Functional Requirements
 
 - [FR1] **Model list.** The app lists every model installed in Ollama (`GET /api/tags`) by its
@@ -147,6 +151,22 @@ the page, and the source list folded away at the bottom.
   collapses the list. The expanded state is not persisted (a reopened chat shows it collapsed).
   Each source is a separate entry — its own site logo (as FR27) and its page title — tappable to
   open in Safari; distinct sources are never merged into one link.
+- [FR29] **Readable tables.** A markdown table in an assistant answer (web or not, new or already
+  saved; FR26) renders with every body cell under its own column heading: a row with fewer cells
+  than the header row is padded with empty cells, and a row with more has the surplus text kept
+  (joined into the last column), never dropped or shifted. A table of two columns renders as a
+  grid; a table of three or more columns renders as one card per body row, each card listing
+  "heading: value" per column on its own line, so nothing is squeezed at phone width and no
+  sideways scrolling is needed. Inline formatting and links in cells follow FR26/FR27. A table
+  still streaming (header only, half a row) renders without error. The cause of the 2026-09-30
+  misalignment (model output shape vs. the FR26 renderer) is diagnosed and covered by a test.
+- [FR30] **Several sites for broad questions.** With the web switch on, the instructions the
+  server gives the model (alongside the FR19 date note) tell it that for a broad or open-ended
+  question (e.g. "today's news trends") it should search with more than one query, not put the
+  exact date into search queries, read pages from at least three different websites before
+  answering, and cite the pages it relied on; a narrow factual question need not search more than
+  it needs. This is guidance only: the server does not check or re-prompt the model's choices, and
+  the FR19 cap of 10 tool calls is unchanged.
 
 ## Acceptance Criteria
 
@@ -209,6 +229,16 @@ All proven against the live Mac Studio and Ollama, not mocks.
     and each source is its own tappable entry (logo + title) opening in Safari — including a source
     set shaped like the 2026-09-30 phone screenshot in which several sources rendered glued into one
     link. Proven by unit tests, a Mac-side live proof, and the owner's phone screenshot.
+23. **AC23** — Unit tests: a table shaped like the 2026-09-30 phone screenshot (trend, description,
+    source columns) renders each value under its own heading; a row with missing cells and a row
+    with extra cells lose no text and shift nothing; a 2-column table renders as a grid and a
+    3+-column table as one card per row with "heading: value" lines; a half-streamed table renders
+    without error; a saved reply's table renders the same way. Plus the owner's phone observation.
+24. **AC24** — Live on the Mac with the owner's usual tools-capable model resident (named in the
+    evidence) and the web switch on: of 3 broad prompts (including "What are today's news
+    trends"), at least 2 produce replies whose saved sources span at least 3 distinct websites
+    (host compared ignoring a leading `www.`). The server's web instructions contain the FR30
+    guidance (unit test).
 
 ## Constraints
 
@@ -235,6 +265,8 @@ All proven against the live Mac Studio and Ollama, not mocks.
 - Markdown rendering must be pure JavaScript and Expo Go–compatible (no native module).
 - **The phone talks only to the Mac** (over the tailnet). The app makes no request to any website
   or third-party service; opening a page in Safari on the owner's tap is not the app's traffic.
+- Broad-question source diversity is best-effort model guidance (FR30); a single reply that uses
+  fewer than three sites is not a defect.
 
 ## Non-Goals
 
@@ -282,6 +314,8 @@ All proven against the live Mac Studio and Ollama, not mocks.
 - A reply is still streaming with half-written markup (e.g. an open `**` or `[text](`): shown
   without error and re-rendered as more text arrives (FR26).
 - Two sources share a site: each is its own entry with the same logo (FR28).
+- A table row with the wrong number of cells: padded or surplus kept, never shifted (FR29).
+- A narrow web question need not read three sites (FR30).
 
 ## Decisions / Clarifications
 
@@ -338,6 +372,21 @@ All proven against the live Mac Studio and Ollama, not mocks.
   shown on, a web answer ending in a source list, and a source link opening the WSJ archive page
   in Safari. The same screenshots showed raw markdown and one source entry with several sources
   merged into a single link, which FR26–FR28 address.
+- **Follow-ups next** (human, 2026-09-30): the owner-reported table and single-site follow-ups
+  (recorded under M10c1 in milestones.md) become FR29–FR30, built after M10c2 and before M10d.
+- **Wide tables become cards** (human): three or more columns render as one card per row
+  ("heading: value" lines); two columns stay a grid. Chosen over sideways scrolling and over only
+  fixing alignment.
+- **Source diversity by guidance only** (human): clearer instructions to the model; chosen over
+  the server checking for a single site and re-prompting (slower, uses the 10-call budget).
+- **Pass bar: 3+ sites in at least 2 of 3 broad prompts** (human), chosen over "every time"
+  (flaky with a non-deterministic model) and over a 2-site bar.
+- **Small review follow-ups left out** (human): the `X-Content-Type-Options: nosniff` header on
+  the server's GET /v1/icon, amending D-M10c-2's C12 line in architecture.md, and auto-restarting
+  com.harness.search on new code stay recorded as follow-ups, not part of FR29–FR30.
+- Defaults chosen by Claude, shown to the human and agreed (2026-09-30): surplus cells are joined
+  into the last column; tables apply to saved replies too; sites compared ignoring `www.`; the
+  test uses the owner's usual model.
 
 ## Open Questions
 
