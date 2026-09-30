@@ -5,15 +5,21 @@
  */
 
 import type { StreamEvent } from "@/api/client";
+import type { SourcesEvent, StepEventData } from "@shared/api";
 
 export interface StreamAccumulator {
   thinking: string;
   content: string;
+  /** Web steps in arrival order, one entry per step_id. */
+  steps: StepEventData[];
+  sources: SourcesEvent["items"];
 }
 
 export const initialStreamAccumulator: StreamAccumulator = {
   thinking: "",
   content: "",
+  steps: [],
+  sources: [],
 };
 
 /**
@@ -32,6 +38,16 @@ export function applyStreamEvent(
       return { ...acc, thinking: acc.thinking + event.data.text };
     case "content":
       return { ...acc, content: acc.content + event.data.text };
+    case "step": {
+      const i = acc.steps.findIndex((s) => s.step_id === event.data.step_id);
+      const steps =
+        i === -1
+          ? [...acc.steps, event.data]
+          : acc.steps.map((s, j) => (j === i ? event.data : s));
+      return { ...acc, steps };
+    }
+    case "sources":
+      return { ...acc, sources: event.data.items };
     case "done":
     case "error":
       return acc;

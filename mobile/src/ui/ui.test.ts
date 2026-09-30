@@ -21,7 +21,12 @@ describe("applyStreamEvent", () => {
 
     const result = events.reduce(applyStreamEvent, initialStreamAccumulator);
 
-    expect(result).toEqual({ thinking: "", content: "Hello World" });
+    expect(result).toEqual({
+      thinking: "",
+      content: "Hello World",
+      steps: [],
+      sources: [],
+    });
   });
 
   it("appends thinking events to the displayed thinking text, separately from content", () => {
@@ -37,6 +42,8 @@ describe("applyStreamEvent", () => {
     expect(result).toEqual({
       thinking: "Let me think",
       content: "answer: 42",
+      steps: [],
+      sources: [],
     });
   });
 

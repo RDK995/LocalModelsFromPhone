@@ -47,6 +47,8 @@ export interface SendMessageCallbacks {
    * targeted if that field were ever missing.
    */
   onModelResolved?: (model: string) => void;
+  /** Ask the server for web tools (FR18); only `true` adds `web` to the body. */
+  web?: boolean;
   signal?: AbortSignal;
 }
 
@@ -87,7 +89,9 @@ export async function sendMessage(
 
   try {
     await client.chat(
-      { model: resident, messages },
+      callbacks.web === true
+        ? { model: resident, messages, web: true }
+        : { model: resident, messages },
       {
         onStart: callbacks.onStart,
         onEvent: callbacks.onEvent,

@@ -20,6 +20,8 @@ import type {
   ContentEvent,
   DoneEvent,
   ErrorEvent,
+  StepEventData,
+  SourcesEvent,
   ConfirmationRequiredError as ConfirmationRequiredBody,
 } from "@shared/api";
 import { resumeDelayMs, RESUME_BUDGET_MS } from "./resume";
@@ -28,7 +30,20 @@ export type StreamEvent =
   | { type: "thinking"; data: ThinkingEvent }
   | { type: "content"; data: ContentEvent }
   | { type: "done"; data: DoneEvent }
-  | { type: "error"; data: ErrorEvent };
+  | { type: "error"; data: ErrorEvent }
+  | { type: "step"; data: StepEventData }
+  | { type: "sources"; data: SourcesEvent };
+
+type SSEEventName =
+  | "thinking"
+  | "content"
+  | "done"
+  | "error"
+  | "step"
+  | "sources";
+
+const STEP_KINDS = ["search", "read"];
+const STEP_STATUSES = ["started", "done", "failed", "unavailable"];
 
 interface StreamOptions {
   /**
@@ -689,7 +704,7 @@ export class APIClient {
         }
 
         const event = this.parseSSEEvent(
-          eventType as "thinking" | "content" | "done" | "error",
+          eventType as SSEEventName,
           dataLines.join("\n")
         );
 
@@ -885,7 +900,7 @@ export class APIClient {
   }
 
   private parseSSEEvent(
-    type: "thinking" | "content" | "done" | "error",
+    type: SSEEventName,
     data: string
   ): StreamEvent | null {
     try {
@@ -920,6 +935,41 @@ export class APIClient {
               message: parsed.message || "",
             } as ErrorEvent,
           };
+        case "step": {
+          if (
+            !parsed ||
+            typeof parsed.step_id !== "string" ||
+            !STEP_KINDS.includes(parsed.kind) ||
+            !STEP_STATUSES.includes(parsed.status)
+          ) {
+            return null;
+          }
+          const step: StepEventData = {
+            step_id: parsed.step_id,
+            kind: parsed.kind,
+            status: parsed.status,
+          };
+          if (typeof parsed.query === "string") step.query = parsed.query;
+          if (typeof parsed.url === "string") step.url = parsed.url;
+          if (typeof parsed.detail === "string") step.detail = parsed.detail;
+          return { type: "step", data: step };
+        }
+        case "sources": {
+          const items: SourcesEvent["items"] = Array.isArray(parsed?.items)
+            ? parsed.items
+                .filter(
+                  (i: unknown) =>
+                    !!i &&
+                    typeof (i as { title?: unknown }).title === "string" &&
+                    typeof (i as { url?: unknown }).url === "string"
+                )
+                .map((i: { title: string; url: string }) => ({
+                  title: i.title,
+                  url: i.url,
+                }))
+            : [];
+          return { type: "sources", data: { items } };
+        }
         default:
           return null;
       }

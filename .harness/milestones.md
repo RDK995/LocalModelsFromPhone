@@ -251,11 +251,13 @@ e98f0601a4330343f9a1063ce48e154d60109d8a on m10-phone-web-switch
 ### Evidence
 
 Task plan (packets in .harness/tasks/):
-- M10-T1 — C2 step/sources events, accumulator, web flag   Mid (sonnet, ORDINARY_IMPLEMENTATION) — dispatched
+- M10-T1 — C2 step/sources events, accumulator, web flag   Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — .harness/evidence/M10-T1-verifier.log (exit 0, 183 mobile pass, typecheck+lint 0; red M10-T1-red.log)
 - M10-T2 — C3 switch + steps/sources persisted, session    Mid (sonnet, ORDINARY_IMPLEMENTATION) — planned
 - M10-T3 — C1 view-model: labels, switch state             Cheap (haiku, BOUNDED_LOW_RISK) — planned
 - M10-T4 — C1 chat.tsx switch, steps, sources in Safari    Mid (sonnet, ORDINARY_IMPLEMENTATION) — planned
 - M10-T5 — web-switch-proof.sh live proof                  Mid (sonnet, ORDINARY_IMPLEMENTATION) — planned
+
+Implementation continuation 1 handoff: T1 accepted; next is writing the T2 packet (store Conversation.web_search absent=false + setWebSearch; assistant Message steps/sources persisted and validated; sendInConversation reads the switch at send time and passes web to sendMessage, persisting accumulator steps/sources). T1 added StreamAccumulator.steps/sources and SendMessageCallbacks.web.
 
 ### Validation
 

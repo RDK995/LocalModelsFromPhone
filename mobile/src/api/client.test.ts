@@ -505,6 +505,76 @@ describe("APIClient SSE streaming", () => {
   });
 });
 
+describe("APIClient step and sources events", () => {
+  const doneChunk =
+    "event: done\ndata: {\"status\":\"complete\",\"model\":\"m\",\"eval_count\":1,\"tokens_per_second\":1}\n\n";
+
+  async function run(chunks: string[], request: Parameters<APIClient["chat"]>[0]) {
+    const bodies: string[] = [];
+    const fetchMock = mock(async (_url: string, init?: RequestInit) => {
+      bodies.push(init?.body as string);
+      return sseResponse(chunks);
+    });
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+    const events: StreamEvent[] = [];
+    let errored: Error | null = null;
+    await client.chat(request, {
+      onEvent: (e) => events.push(e),
+      onError: (e) => {
+        errored = e;
+      },
+      onComplete: () => {},
+    });
+    return { events, bodies, errored };
+  }
+
+  const req = { model: "m", messages: [{ role: "user" as const, content: "hi" }] };
+
+  it("delivers step, step, sources, done in order with parsed data", async () => {
+    const { events, errored } = await run(
+      [
+        "event: step\ndata: {\"step_id\":\"s1\",\"kind\":\"search\",\"status\":\"started\",\"query\":\"cats\"}\n\n",
+        "event: step\ndata: {\"step_id\":\"s1\",\"kind\":\"search\",\"status\":\"done\",\"query\":\"cats\"}\n\n",
+        "event: sources\ndata: {\"items\":[{\"title\":\"A\",\"url\":\"https://a\"},{\"title\":1,\"url\":\"x\"},{\"title\":\"B\"}]}\n\n",
+        doneChunk,
+      ],
+      req
+    );
+    expect(errored).toBeNull();
+    expect(events.map((e) => e.type)).toEqual(["step", "step", "sources", "done"]);
+    expect(events[0]).toEqual({
+      type: "step",
+      data: { step_id: "s1", kind: "search", status: "started", query: "cats" },
+    });
+    expect(events[1]).toMatchObject({ type: "step", data: { status: "done" } });
+    expect(events[2]).toEqual({
+      type: "sources",
+      data: { items: [{ title: "A", url: "https://a" }] },
+    });
+  });
+
+  it("drops a malformed step without breaking the stream", async () => {
+    const { events, errored } = await run(
+      [
+        "event: step\ndata: {\"kind\":\"search\",\"status\":\"started\"}\n\n",
+        "event: step\ndata: {\"step_id\":\"s2\",\"kind\":\"search\",\"status\":\"bogus\"}\n\n",
+        "event: step\ndata: {\"step_id\":\"s3\",\"kind\":\"nope\",\"status\":\"done\"}\n\n",
+        "event: content\ndata: {\"text\":\"hi\"}\n\n",
+        doneChunk,
+      ],
+      req
+    );
+    expect(errored).toBeNull();
+    expect(events.map((e) => e.type)).toEqual(["content", "done"]);
+  });
+
+  it("sends web:true in the chat body when the request carries it", async () => {
+    const { bodies } = await run([doneChunk], { ...req, web: true });
+    expect(JSON.parse(bodies[0]).web).toBe(true);
+  });
+});
+
 describe("APIClient SSE comment lines", () => {
   it("ignores the leading ': connected' comment line the server sends to open the stream", async () => {
     // Every SSE response begins with a ": connected" comment line before any

@@ -154,6 +154,34 @@ describe("sendMessage (F2: model attribution)", () => {
     expect(sentBody.model).toBe("llama3");
   });
 
+  it("sends web:true only when callbacks.web is true, else no web key", async () => {
+    async function bodyFor(web?: boolean): Promise<Record<string, unknown>> {
+      let body = "";
+      const fetchMock = mock(async (url: string, init?: RequestInit) => {
+        if (url.endsWith("/v1/state")) return stateResponse({ name: "llama3" });
+        body = init?.body as string;
+        const stream = controlledSseResponse("gen-1");
+        stream.push(
+          "event: done\ndata: {\"status\":\"complete\",\"model\":\"llama3\",\"eval_count\":1,\"tokens_per_second\":1}\n\n"
+        );
+        stream.close();
+        return stream.response;
+      });
+      const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+      client.setToken("t");
+      const result = newCallbacks();
+      await sendMessage(client, [{ role: "user", content: "hi" }], {
+        ...result.callbacks,
+        ...(web === undefined ? {} : { web }),
+      });
+      return JSON.parse(body);
+    }
+
+    expect((await bodyFor(true)).web).toBe(true);
+    expect("web" in (await bodyFor())).toBe(false);
+    expect("web" in (await bodyFor(false))).toBe(false);
+  });
+
   it("blocks sending and makes no /v1/chat request when no model is resident", async () => {
     const calls: string[] = [];
 

@@ -84,7 +84,7 @@ describe("buildChatItems: pending turn", () => {
   it("reflects accumulated content and thinking while streaming", () => {
     const items = buildChatItems(
       [],
-      pendingTurn({ accumulator: { content: "Hel", thinking: "reasoning" } })
+      pendingTurn({ accumulator: { content: "Hel", thinking: "reasoning", steps: [], sources: [] } })
     );
 
     expect(items[1]).toEqual({
@@ -99,7 +99,7 @@ describe("buildChatItems: pending turn", () => {
   it("omits thinking on the pending assistant item when it is empty", () => {
     const items = buildChatItems(
       [],
-      pendingTurn({ accumulator: { content: "Hel", thinking: "" } })
+      pendingTurn({ accumulator: { content: "Hel", thinking: "", steps: [], sources: [] } })
     );
 
     expect(items[1]).not.toHaveProperty("thinking");
@@ -151,14 +151,14 @@ describe("buildChatItems: index/key stability across Send -> streaming -> persis
     // 2. While streaming: content has arrived.
     const streaming = buildChatItems([], {
       ...pending,
-      accumulator: { content: "Hello", thinking: "" },
+      accumulator: { content: "Hello", thinking: "", steps: [], sources: [] },
     });
 
     // 3. Both messages now persisted, pending not yet cleared by the caller.
     const persistedBoth = [userMessage("u1", "hi"), assistantMessage("a1", "Hello")];
     const settledPendingStillSet = buildChatItems(persistedBoth, {
       ...pending,
-      accumulator: { content: "Hello", thinking: "" },
+      accumulator: { content: "Hello", thinking: "", steps: [], sources: [] },
     });
 
     // 4. Caller has cleared the pending turn.

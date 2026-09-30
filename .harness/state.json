@@ -6667,7 +6667,9 @@
             "mobile/src/ui/streamReducer.ts",
             "mobile/src/ui/streamReducer.test.ts",
             "mobile/src/chat/chatController.ts",
-            "mobile/src/chat/chatController.test.ts"
+            "mobile/src/chat/chatController.test.ts",
+            "mobile/src/ui/chatItems.test.ts",
+            "mobile/src/ui/ui.test.ts"
           ],
           "depends_on": [],
           "routing": {
@@ -6676,11 +6678,39 @@
             "reason_code": "ORDINARY_IMPLEMENTATION",
             "detail": "two event types in the 955-line SSE client with resume/replay; fake-fetch testable"
           },
-          "status": "DISPATCHED",
-          "attempts": 0,
+          "status": "ACCEPTED",
+          "attempts": 1,
           "packet": ".harness/tasks/M10-T1.md",
           "commit": null,
-          "attempt_log": []
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M10-T1-worker.log",
+              "verdict": "PASS",
+              "base": "8494ee3",
+              "changed_files": [
+                "mobile/src/api/client.ts",
+                "mobile/src/api/client.test.ts",
+                "mobile/src/ui/streamReducer.ts",
+                "mobile/src/ui/streamReducer.test.ts",
+                "mobile/src/chat/chatController.ts",
+                "mobile/src/chat/chatController.test.ts",
+                "mobile/src/ui/chatItems.test.ts",
+                "mobile/src/ui/ui.test.ts"
+              ],
+              "note": "Red: .harness/evidence/M10-T1-red.log (7 fail); entered at Mid rung (attempt 3); chatItems.test.ts/ui.test.ts only gained empty steps/sources accumulator fields"
+            },
+            {
+              "attempt": 3,
+              "role": "verifier",
+              "artifact": ".harness/evidence/M10-T1-verifier.log",
+              "verdict": "PASS",
+              "note": "exit 0, 183 pass, typecheck and lint clean; files within allowed; not weakened"
+            }
+          ]
         },
         {
           "id": "M10-T2",
