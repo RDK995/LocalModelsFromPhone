@@ -1,0 +1,11 @@
+M10c3-AC5 owner phone observation, attempt 2 — 2026-09-30 17:29-17:31 BST, Expo Go after a full quit/reopen, branch m10c3-readable-tables at dc3648c.
+Result: FAIL (3+-column part PASS, 2-column part FAIL).
+
+(a) 3+-column table — M10c3-AC5-owner-phone-2.png (17:29, web answer "Today's top news headlines"):
+    one card per row with "heading: value" lines (#, Headline, Key points, Source); no squeezing, no sideways scroll. PASS.
+    Owner remarks: "some have logos some don't" (row 1's source is a markdown link to a saved source with logo; rows 2-3 write "Open Chronicle" as plain text, not a link) and "all data is from one place" (FR30 / M10c4 scope, not M10c3).
+
+(b) 2-column table — M10c3-AC5-owner-phone-2b.png (17:31, prompt "I need a two column table of fruits and their colours", web switch on):
+    the assistant bubble is collapsed to a very narrow strip at the left; each row shows only ~2 clipped letters
+    (header "FC", rows "AR", "BY", "CC", "GG", "SR", ...), the rest of each cell is cut off/invisible. The grid is unreadable. FAIL.
+    Owner answered "Grid looks wrong".
