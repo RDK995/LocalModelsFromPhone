@@ -191,7 +191,7 @@ Cycle 1: PASS, tier Top (opus, DIFFICULT_CONCURRENCY from M7c-T1; whole mileston
 
 ## M8 — The search service is always on, loopback only, with a documented API
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -219,10 +219,16 @@ Pending.
 
 ### Evidence
 
+- M8-T1 — C9 search LaunchAgent + installers        Cheap (haiku), attempt 1, PASS — commit 80b0742; .harness/evidence/M8-T1-verifier.log (exit 0; red .harness/evidence/M8-T1-red.log)
+- M8-T2 — search/API.md                              Cheap (haiku), attempt 1, PASS — commit 9b8fe66; .harness/evidence/M8-T2-verifier.log (exit 0, 131 pass; verifier FAIL on packet-mandated test-only env-var mention overridden by orchestrator — see state.json)
+- M8-T3 — ops/scripts/search-service-proof.sh        Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — commit c7980a0; .harness/evidence/M8-T3-verifier.log (exit 0; red .harness/evidence/M8-T3-red.log)
+- M8-AC1: launchd pid 48055 -> 48174 after kill -9, /v1/health 200 again; sole listener 127.0.0.1:7790 (M8-T3-verifier.log)
+- M8-AC2: tailnet 100.82.139.85:7790 and LAN 192.168.0.179:7790 refused (curl exit 7); tailscale serve status maps only 7787/7789; no Authorization header sent (M8-T3-verifier.log)
+- M8-AC3: search/API.md; 14 live route/error checks match it, each status/code grepped in the doc (M8-T3-verifier.log)
 
 ### Validation
 
-Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/verify-ops-install.sh && bash ops/scripts/search-service-proof.sh`
+`cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/verify-ops-install.sh && bash ops/scripts/search-service-proof.sh && (cd search && bun test)`
 
 ### Review
 
@@ -234,7 +240,9 @@ Pending.
 
 ### Follow-ups
 
-None.
+- search/API.md 'Environment Variables' paragraph repeats the claim that the process-group SIGKILL kills Chromium (M7c OPTIONAL finding: Chromium is in its own group and exits when its pipe closes) and has a typo 'help process group'.
+- search-service-proof.sh live POST /v1/search depends on the public ddgs backend; a transient 503/504 fails the proof (by design).
+- Live proof leaves com.harness.search installed and loaded (the intended always-on state).
 
 ## M9 — The server answers a web-enabled chat by running the model's search tool loop
 

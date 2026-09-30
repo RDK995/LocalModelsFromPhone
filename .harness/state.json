@@ -5923,7 +5923,7 @@
         "FR25"
       ],
       "traces": "AC19",
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -5939,27 +5939,205 @@
           "id": "M8-AC1",
           "text": "The search service runs under the per-user LaunchAgent com.harness.search and answers GET /v1/health on 127.0.0.1:7790; killing its process makes launchd restart it and it answers again.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            ".harness/evidence/M8-T3-verifier.log",
+            ".harness/evidence/M8-T1-verifier.log"
+          ]
         },
         {
           "id": "M8-AC2",
           "text": "The service is not reachable on the Mac's tailnet address or LAN address, no Tailscale Serve mapping points at it, and it requires no token.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            ".harness/evidence/M8-T3-verifier.log"
+          ]
         },
         {
           "id": "M8-AC3",
           "text": "The HTTP API (search, read, health: requests, responses, errors) is documented in the repository, and each documented route answers as documented on loopback.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            ".harness/evidence/M8-T3-verifier.log",
+            ".harness/evidence/M8-T2-verifier.log"
+          ]
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M8-T1",
+          "scope": "C9: com.harness.search LaunchAgent plist (KeepAlive, loopback service, no test-only env) + install-search-agent.sh (--load) + uninstall-search-agent.sh; verify-ops-install.sh checks them",
+          "tests": "plutil -lint ops/scripts/com.harness.search.plist && bash ops/scripts/verify-ops-install.sh && test -x install/uninstall scripts",
+          "requirements": [
+            "FR25"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M8-AC1"
+          ],
+          "paths": [
+            "ops/scripts/com.harness.search.plist",
+            "ops/scripts/install-search-agent.sh",
+            "ops/scripts/uninstall-search-agent.sh",
+            "ops/scripts/verify-ops-install.sh"
+          ],
+          "depends_on": [],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "mirrors existing com.harness.server plist + installer"
+          },
+          "status": "ACCEPTED",
+          "attempts": 1,
+          "packet": ".harness/tasks/M8-T1.md",
+          "commit": "80b0742",
+          "attempt_log": [
+            {
+              "attempt": 1,
+              "role": "worker",
+              "tier": "Cheap",
+              "model": "haiku",
+              "artifact": ".harness/evidence/M8-T1-worker.log",
+              "verdict": "PASS",
+              "base": "1057559",
+              "changed_files": [
+                "ops/scripts/com.harness.search.plist",
+                "ops/scripts/install-search-agent.sh",
+                "ops/scripts/uninstall-search-agent.sh",
+                "ops/scripts/verify-ops-install.sh"
+              ],
+              "note": "Red: .harness/evidence/M8-T1-red.log"
+            },
+            {
+              "attempt": 1,
+              "role": "verifier",
+              "artifact": ".harness/evidence/M8-T1-verifier.log",
+              "verdict": "PASS",
+              "note": "exit 0; not loaded into launchd by the task; not weakened"
+            }
+          ]
+        },
+        {
+          "id": "M8-T2",
+          "scope": "C13 HTTP API reference search/API.md (health, search, read, errors, curl, OpenCode note, test-only env)",
+          "tests": "test -s search/API.md && greps && (cd search && bun test)",
+          "requirements": [
+            "FR25"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M8-AC3"
+          ],
+          "paths": [
+            "search/API.md"
+          ],
+          "depends_on": [],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "documentation of tested behaviour; live-checked by M8-T3"
+          },
+          "status": "ACCEPTED",
+          "attempts": 1,
+          "packet": ".harness/tasks/M8-T2.md",
+          "commit": "9b8fe66",
+          "attempt_log": [
+            {
+              "attempt": 1,
+              "role": "worker",
+              "tier": "Cheap",
+              "model": "haiku",
+              "artifact": ".harness/evidence/M8-T2-worker.log",
+              "verdict": "PASS",
+              "base": "1057559",
+              "changed_files": [
+                "search/API.md"
+              ],
+              "note": "9 error codes grep-traced to search/src"
+            },
+            {
+              "attempt": 1,
+              "role": "verifier",
+              "artifact": ".harness/evidence/M8-T2-verifier.log",
+              "verdict": "FAIL (overridden by orchestrator judgement, see note)",
+              "note": "exit 0, 131 pass; verifier returned FAIL solely because SEARCH_HELPER_FORCE_* are documented though they live in search/helper, not search/src. Orchestrator overrode: the packet explicitly required mentioning them as test-only, and they are read by the C14 helper that runHelper.ts spawns; all route/field/code claims confirmed."
+            }
+          ]
+        },
+        {
+          "id": "M8-T3",
+          "scope": "ops/scripts/search-service-proof.sh live proof of M8-AC1..AC3; registered in verify-ops-install.sh",
+          "tests": "bash ops/scripts/verify-ops-install.sh && bash ops/scripts/search-service-proof.sh",
+          "requirements": [
+            "FR25"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M8-AC1",
+            "M8-AC2",
+            "M8-AC3"
+          ],
+          "paths": [
+            "ops/scripts/search-service-proof.sh",
+            "ops/scripts/verify-ops-install.sh"
+          ],
+          "depends_on": [
+            "M8-T1",
+            "M8-T2"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "live launchd/interface/Tailscale proof script"
+          },
+          "status": "ACCEPTED",
+          "attempts": 1,
+          "packet": ".harness/tasks/M8-T3.md",
+          "commit": "c7980a0",
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M8-T3-worker.log",
+              "verdict": "PASS",
+              "base": "9b8fe66",
+              "changed_files": [
+                "ops/scripts/search-service-proof.sh",
+                "ops/scripts/verify-ops-install.sh"
+              ],
+              "note": "Red: .harness/evidence/M8-T3-red.log (PROOF_SKIP_INSTALL=1, agent booted out -> step 2 FAIL)"
+            },
+            {
+              "attempt": 3,
+              "role": "verifier",
+              "artifact": ".harness/evidence/M8-T3-verifier.log",
+              "verdict": "PASS",
+              "note": "verifier rerun exit 0: pid 48055->48174 after kill -9; tailnet 100.82.139.85 and LAN 192.168.0.179 refused (curl 7); serve status maps only 7787/7789; 14 route checks match API.md"
+            }
+          ]
+        }
+      ],
       "reviews": [],
       "findings": [],
-      "validation": [],
-      "planned_validation": "cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/verify-ops-install.sh && bash ops/scripts/search-service-proof.sh",
-      "follow_ups": [],
+      "validation": [
+        {
+          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/verify-ops-install.sh && bash ops/scripts/search-service-proof.sh && (cd search && bun test)",
+          "note": "milestone validation for the reviewer; task-level runs in verifier logs"
+        }
+      ],
+      "planned_validation": "cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/verify-ops-install.sh && bash ops/scripts/search-service-proof.sh && (cd search && bun test)",
+      "follow_ups": [
+        "search/API.md 'Environment Variables' paragraph repeats the claim that the process-group SIGKILL kills Chromium (M7c OPTIONAL finding: Chromium is in its own group and exits when its pipe closes) and has a typo 'help process group'.",
+        "search-service-proof.sh live POST /v1/search depends on the public ddgs backend; a transient 503/504 fails the proof (by design).",
+        "Live proof leaves com.harness.search installed and loaded (the intended always-on state)."
+      ],
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
       ]
