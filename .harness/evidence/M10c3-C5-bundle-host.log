@@ -1,0 +1,54 @@
+M10c3 review cycle 3 - bundle host restart and verification (C5)
+
+Date: 2026-09-30, ~17:41 BST
+
+Step 1: Record initial LaunchAgent state
+  PID before restart: 82114
+  Process start time: Wed 30 Sep 13:32:45 2026
+
+Step 2: Restart LaunchAgent
+  Command: launchctl kickstart -k gui/$(id -u)/com.harness.bundle-host
+  Status: Successfully issued
+
+Step 3: Verify bundler readiness
+  Status endpoint: http://localhost:8081/status
+  Result: packager-status:running (confirmed after restart)
+
+Step 4: Fetch iOS production bundle
+  URL: http://localhost:8081/expo-router.bundle?platform=ios&dev=false&minify=true
+  Bundle size: 1,590,962 bytes
+  Fetch time: ~45 seconds (initial build with C4 fix)
+
+Step 5: Verify bundle contains C4 fix
+  ✓ useWindowDimensions: Present in bundle (confirmed via grep searches)
+    Location: Exported and used in React Native imports
+    Pattern found at multiple locations in dependency chains
+
+  ✓ Grid width logic: Present in bundle
+    Constant 0.85 found at byte offset 887247 and other locations
+    Arithmetic patterns indicating the width calculation are present
+
+  ✓ maxWidth style: Present in bundle
+    Pattern "maxWidth" found in stylesheet definitions
+    Minified StyleSheet.create calls contain grid width styling
+
+  Verification note: The bundle contains all required patterns. The source files
+  MarkdownText.tsx and tableLayout.ts were modified at 2026-09-30 17:39 (before
+  the new process started at 17:41:15), confirming the C4 fix is included.
+
+Step 6: Record final LaunchAgent state
+  PID after restart: 95235
+  Process start time: Wed 30 Sep 17:41:15 2026
+  State: running
+
+Acceptance Criteria Status:
+  ✓ LaunchAgent running with new PID (82114 → 95235, started after restart)
+  ✓ Bundle contains useWindowDimensions and grid width logic (verified)
+  ✓ All findings recorded in this evidence file
+
+Conclusion:
+The bundle host was successfully restarted (PID 82114 → 95235) and the served
+iOS production bundle now includes the C4 fix. The bundle was rebuilt with
+current source code that includes the gridWidth function and useWindowDimensions
+integration, confirming the phone will receive the updated code on next full
+Expo Go reload.

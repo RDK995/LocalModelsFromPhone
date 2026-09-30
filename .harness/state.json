@@ -7956,7 +7956,7 @@
       ],
       "traces": "AC23",
       "status": "REVIEW",
-      "review_cycles": 2,
+      "review_cycles": 3,
       "review_override": {
         "by": "human",
         "date": "2026-09-30",
@@ -7996,7 +7996,8 @@
           "text": "Unit tests: a two-column table renders as a grid, and a table of three or more columns renders as one card per body row listing \"heading: value\" per column on its own line; inline formatting and links inside cells render as in FR26/FR27.",
           "status": "PENDING",
           "evidence": [
-            "mobile/src/ui/tableLayout.test.ts grid/cards/Inline pass-through; markdownText.test.ts static wiring checks (.harness/evidence/M10c3-T2-verifier.log)"
+            "mobile/src/ui/tableLayout.test.ts grid/cards/Inline pass-through; markdownText.test.ts static wiring checks (.harness/evidence/M10c3-T2-verifier.log)",
+            "Fix cycle 3 C4: tableLayout.test.ts gridWidth tests; markdownText.test.ts 'M10c3-C4' grid definite-width wiring; red .harness/evidence/M10c3-C4-red.log; verifier .harness/evidence/M10c3-C4-verifier.log"
           ]
         },
         {
@@ -8014,7 +8015,8 @@
           "status": "PENDING",
           "evidence": [
             "Attempt 1 FAIL (.harness/evidence/M10c3-AC5-owner-phone-1.log/.png): diagnosed as stale JavaScript on the phone (Expo Go session from before 30fa036; bundle host is --no-dev, no fast refresh). Served bundle verified current (.harness/evidence/M10c3-C3-bundle-host.log). OWED: owner attempt 2 after a full Expo Go reload.",
-            "Attempt 2 FAIL (.harness/evidence/M10c3-AC5-owner-phone-2.log, -2.png, -2b.png; 2026-09-30 after full Expo Go quit/reopen): 3+-column cards PASS; 2-column grid FAIL - bubble collapses to a narrow strip, cells clipped to ~2 letters. Escalated (cap spent)."
+            "Attempt 2 FAIL (.harness/evidence/M10c3-AC5-owner-phone-2.log, -2.png, -2b.png; 2026-09-30 after full Expo Go quit/reopen): 3+-column cards PASS; 2-column grid FAIL - bubble collapses to a narrow strip, cells clipped to ~2 letters. Escalated (cap spent).",
+            "Fix cycle 3: C4 (dc74468) gives the 2-column grid a definite width (gridWidth(window width), MarkdownText.tsx) so the shrink-wrapped bubble no longer collapses; bundle host restarted 17:41:15 and served app bundle verified to contain it (.harness/evidence/M10c3-C5-verifier.log addendum). OWED: owner attempt 3 (steps in milestones.md Evidence)."
           ]
         }
       ],
@@ -8269,6 +8271,113 @@
           "attempts": 1,
           "status": "ACCEPTED",
           "commit": "341752c"
+        },
+        {
+          "id": "M10c3-C4",
+          "scope": "diagnose and fix the collapsed 2-column grid on the device (bubble shrink-wraps to flex-basis-0 cells); red-first test",
+          "packet": ".harness/tasks/M10c3-C4.md",
+          "paths": [
+            "mobile/src/ui/MarkdownText.tsx",
+            "mobile/src/ui/markdownText.test.ts",
+            "mobile/src/ui/tableLayout.test.ts",
+            "mobile/src/ui/tableLayout.ts"
+          ],
+          "criteria": [
+            "M10c3-AC3",
+            "M10c3-AC5"
+          ],
+          "routing": {
+            "tier": "Top",
+            "model": "opus",
+            "reason_code": "NO_TEST_ORACLE",
+            "detail": "on-device RN flex layout outcome; bun cannot render RN, so only structural tests are possible; true oracle is the owner's phone"
+          },
+          "tests": "cd mobile && bun run typecheck && bun test && bun run lint",
+          "requirements": [
+            "FR29"
+          ],
+          "constraints": [],
+          "depends_on": [],
+          "findings": [
+            "cycle2-F1"
+          ],
+          "attempt_log": [
+            {
+              "role": "worker",
+              "attempt": 4,
+              "tier": "Top",
+              "model": "opus",
+              "base": "f1e924d",
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M10c3-C4-worker.log",
+              "note": "cause: assistant bubble (chat.tsx alignSelf flex-start, maxWidth 85%) shrink-wraps; grid cells flex:1 = flexBasis 0 give ~0 intrinsic width. Fix: gridWidth(windowWidth) in tableLayout.ts, MarkdownText grid container width via useWindowDimensions + tableGrid maxWidth 100%. Red: .harness/evidence/M10c3-C4-red.log (3 fail + 1 error). 396 pass"
+            },
+            {
+              "role": "verifier",
+              "attempt": 4,
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M10c3-C4-verifier.log",
+              "note": "exit 0, 396 pass; files within allowed; chat.tsx unchanged; cards branch no diff; tests not weakened; new tests fail on HEAD versions independently"
+            }
+          ],
+          "attempts": 1,
+          "status": "ACCEPTED",
+          "commit": "dc74468"
+        },
+        {
+          "id": "M10c3-C5",
+          "scope": "restart bundle host (LaunchAgent com.harness.bundle-host) so Expo Go gets the C4 fix; prove the served bundle contains it",
+          "packet": ".harness/tasks/M10c3-C5.md",
+          "paths": [],
+          "criteria": [
+            "M10c3-AC5"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "restart one LaunchAgent and curl-check the bundle; no code change"
+          },
+          "tests": "launchctl print gui/$UID/com.harness.bundle-host; grep the served app bundle",
+          "requirements": [
+            "FR29"
+          ],
+          "constraints": [],
+          "depends_on": [
+            "M10c3-C4"
+          ],
+          "findings": [
+            "cycle2-F1"
+          ],
+          "attempt_log": [
+            {
+              "role": "worker",
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "base": "dc74468",
+              "verdict": "INTERRUPTED",
+              "artifact": ".harness/evidence/M10c3-C5-bundle-host.log",
+              "note": "hit turn limit without terminal report; persisted log shows restart PID 82114 -> 95235 (17:41:15); its bundle check used a URL without app code"
+            },
+            {
+              "role": "verifier",
+              "attempt": 1,
+              "verdict": "PASS (rejected as evidence for the bundle half)",
+              "artifact": ".harness/evidence/M10c3-C5-verifier.log",
+              "note": "restart confirmed (PID 95235, 17:41:15); bundle claim rested on library '.85' hits in a bundle with no app code"
+            },
+            {
+              "role": "orchestrator",
+              "attempt": 1,
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M10c3-C5-verifier.log (ORCHESTRATOR ADDENDUM)",
+              "note": "contradiction resolved by direct check: manifest launchAsset bundle (3,859,193 bytes) contains tableLayout(block.rows) grid branch with width: tableWidth, gridWidth + useWindowDimensions in MarkdownText"
+            }
+          ],
+          "attempts": 1,
+          "status": "ACCEPTED",
+          "commit": null
         }
       ],
       "reviews": [
@@ -8309,6 +8418,26 @@
           "model": "sonnet",
           "reason_code": "ORDINARY_IMPLEMENTATION",
           "tier_note": "cycle-2 reviewer was invoked at Mid/sonnet (cycle-1 correction tasks were Cheap; sonnet floor)"
+        },
+        {
+          "cycle": 3,
+          "verdict": "PENDING",
+          "scope": "2-column grid on the device only (named human review override, cap 3)",
+          "input": ".harness/reviews/M10c3-cycle2.md + .harness/evidence/M10c3-AC5-owner-phone-2.log/-2.png/-2b.png",
+          "pre_correction": "f1e924dc66fabdcd0bd5e4860afb80b00a2f5459",
+          "correction_diff": "f1e924dc66fabdcd0bd5e4860afb80b00a2f5459..HEAD",
+          "correction_files": [
+            "mobile/src/ui/MarkdownText.tsx",
+            "mobile/src/ui/markdownText.test.ts",
+            "mobile/src/ui/tableLayout.test.ts",
+            "mobile/src/ui/tableLayout.ts"
+          ],
+          "files_outside_findings": "none; cycle-2 F1 (AC5) names no file; the human override names MarkdownText.tsx/tableLayout.ts and a red-first test; markdownText.test.ts/tableLayout.test.ts are those tests. chat.tsx not changed.",
+          "diff_range": "f1e924d..dc74468",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "ORDINARY_IMPLEMENTATION",
+          "tier_note": "planned routing for the scoped cycle-3 re-review (small, test-backed renderer change; AC5 is owner-observed); the skill may raise it"
         }
       ],
       "findings": [],
@@ -8320,7 +8449,9 @@
             ".harness/evidence/M10c3-T1-verifier.log",
             ".harness/evidence/M10c3-T1-worker-red.log",
             ".harness/evidence/M10c3-T2-verifier.log",
-            ".harness/evidence/M10c3-C3-verifier.log"
+            ".harness/evidence/M10c3-C3-verifier.log",
+            ".harness/evidence/M10c3-C4-verifier.log",
+            ".harness/evidence/M10c3-C5-verifier.log"
           ]
         }
       ],

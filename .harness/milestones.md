@@ -310,6 +310,7 @@ d4a4e67e5da0803bfb3874ded201202ba7c2dd04 on m10c3-readable-tables
 - M10c3-AC5 attempt 2 FAIL (`.harness/evidence/M10c3-AC5-owner-phone-2.log`, `-2.png`, `-2b.png`; after full Expo Go quit/reopen): 3+-column cards PASS; 2-column grid FAIL - bubble collapses to a narrow strip, cells clipped to ~2 letters. Escalated.
 - M10c3-AC5: attempt 1 FAIL (stale bundle, above). OWED — owner attempt 2. Steps: (1) on the iPhone, swipe Expo Go away in the app switcher so it fully quits; (2) reopen Expo Go and open the project from the list (it downloads the bundle again); if the old look persists, shake the phone and tap Reload; (3) optional Mac-side belt-and-braces if still old: `launchctl kickstart -k gui/$(id -u)/com.harness.bundle-host`, wait ~30 s, repeat (1)-(2); (4) with Web search on, ask for today's news trends as a table with 3+ columns and, separately, a 2-column table (e.g. "a two-column table of country and capital"); (5) pass = 3+-column table shows one card per row with "heading: value" lines, 2-column table is an aligned grid, nothing scrolls sideways — record as `.harness/evidence/M10c3-AC5-owner-phone-2.log/.png`. If it still shows the old grid after a confirmed fresh load, capture the answer's raw text.
 
+- M10c3-AC5 attempt 3 OWED (after fix cycle 3; bundle host restarted 17:41:15 and serving the fix). Owner steps: (1) on the iPhone, swipe Expo Go away in the app switcher so it fully quits; (2) reopen Expo Go and open the project (it downloads the new bundle); (3) ask "I need a two column table of fruits and their colours" - pass = the bubble is wide (about 85% of the screen) and both columns are readable, lined up under their headings, text wrapping inside its column, nothing scrolls sideways; (4) with Web search on, ask for a table with 3 or more columns (e.g. today's news trends) - pass = one card per row with "heading: value" lines, unchanged from attempt 2; (5) for the 2-column answer, long-press/copy the answer's raw text and save it with the screenshots as `.harness/evidence/M10c3-AC5-owner-phone-3.log`, `-3.png` (3+ columns), `-3b.png` (2 columns). If the 2-column table still looks collapsed after a confirmed fresh load, that raw text is required.
 
 ### Validation
 
@@ -329,6 +330,10 @@ Correction: C3 (F1) commit 341752c, Top/opus AMBIGUOUS, attempt 4 PASS, verifier
 Correction diff `5ccf325..HEAD` files (outside .harness/): mobile/src/ui/markdown.test.ts, mobile/src/ui/markdownText.test.ts. Files not named by a cycle-2 finding: none (Finding 1 names no file; both test files serve its suggested correction (2)).
 
 Cycle 3 (named review override, cap 3): input `.harness/reviews/M10c3-cycle2.md` (BLOCKER on M10c3-AC5 still open) + `.harness/evidence/M10c3-AC5-owner-phone-2.log`, `-2.png`, `-2b.png`. Pre-correction: f1e924dc66fabdcd0bd5e4860afb80b00a2f5459
+Corrections:
+- C4 (cycle-2 F1, 2-column grid on the device) commit dc74468 - Top/opus NO_TEST_ORACLE, attempt 4 PASS, verifier PASS. Cause: the assistant bubble (chat.tsx `alignSelf: "flex-start"`, `maxWidth: "85%"`) shrink-wraps its content, and each grid cell is `flex: 1` (flexBasis 0), so a 2-column grid has ~0 natural width and the bubble collapses. Fix: `gridWidth(windowWidth)` in tableLayout.ts (bubble inner width at max size) and the grid container in MarkdownText.tsx gets `width: tableWidth` via useWindowDimensions plus `maxWidth: "100%"`; cells still split it equally and wrap. Red `.harness/evidence/M10c3-C4-red.log`; verifier `.harness/evidence/M10c3-C4-verifier.log` (exit 0, 396 pass; cards branch and chat.tsx unchanged).
+- C5 bundle host restart - Cheap/haiku BOUNDED_LOW_RISK, attempt 1 INTERRUPTED (turn limit; restart persisted: PID 82114 -> 95235 at 17:41:15). Its and the verifier's bundle check read a bundle URL with no app code; contradiction resolved by a direct orchestrator check of the manifest's launchAsset bundle, which contains the C4 grid width (`.harness/evidence/M10c3-C5-verifier.log`, ORCHESTRATOR ADDENDUM). No repository file changed.
+Correction diff `f1e924d..HEAD` files (outside .harness/): mobile/src/ui/MarkdownText.tsx, mobile/src/ui/markdownText.test.ts, mobile/src/ui/tableLayout.test.ts, mobile/src/ui/tableLayout.ts. Files not named by a finding: cycle-2 F1 names no file; all four are the grid renderer and its red-first tests that the human override named. chat.tsx not changed.
 
 Human Escalation (BLOCKED, 2026-09-30):
 
@@ -355,7 +360,7 @@ Human decision 2026-09-30 (owner, verbatim choice "One more fix round (Recommend
 
 ### Review Cycles
 
-2
+3
 
 ### Follow-ups
 
