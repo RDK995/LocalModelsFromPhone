@@ -305,6 +305,9 @@ d4a4e67e5da0803bfb3874ded201202ba7c2dd04 on m10c3-readable-tables
 - M10c3-AC3: tableLayout.test.ts grid (2 cols) / cards (3+ cols, heading: value) / Inline pass-through; markdownText.test.ts static wiring (renderInline for cells, no horizontal scroll).
 - M10c3-AC4: markdown.test.ts streaming (header only, header+separator, half row), every-prefix and chunked-equals-whole parse; tableLayout.test.ts header-only.
 - M10c3-AC5: OWED — owner phone observation in Expo Go; cannot be claimed Mac-side.
+- C3 (review cycle 2, Finding 1) — diagnose the owner's AC5 failure   Top (opus, AMBIGUOUS: cause undiagnosed, no oracle), attempt 4, PASS — commit 341752c. Worker `.harness/evidence/M10c3-C3-worker.log`, verifier `.harness/evidence/M10c3-C3-verifier.log` (exit 0, 390 pass; files within allowed; tests not weakened; new tests fail 7 on pre-milestone markdown.ts f8bae28, re-run independently).
+- Cycle-2 diagnosis: NO CODE DEFECT; the phone ran stale JavaScript. HEAD cannot produce the screenshot (3+ columns always become cards; every row padded to header width; one MarkdownText -> tableLayout path for streamed and saved replies, chat.tsx:415, MarkdownText.tsx:121). The pre-milestone renderer (per-row flex:1 cells, no padding) reproduces it exactly, including the "snap": a half-streamed row has fewer, wider cells until it reaches the header's count, and a final row written with fewer cells never does. The bundle host (LaunchAgent com.harness.bundle-host, `expo start --no-dev --minify`, cwd mobile/ of this checkout) started 13:32, before 30fa036 (14:28), and has no fast refresh in production mode; the bundle it serves now contains the card layout (`.harness/evidence/M10c3-C3-bundle-host.log`). So an Expo Go session opened earlier kept the old code.
+- M10c3-AC5: attempt 1 FAIL (stale bundle, above). OWED — owner attempt 2. Steps: (1) on the iPhone, swipe Expo Go away in the app switcher so it fully quits; (2) reopen Expo Go and open the project from the list (it downloads the bundle again); if the old look persists, shake the phone and tap Reload; (3) optional Mac-side belt-and-braces if still old: `launchctl kickstart -k gui/$(id -u)/com.harness.bundle-host`, wait ~30 s, repeat (1)-(2); (4) with Web search on, ask for today's news trends as a table with 3+ columns and, separately, a 2-column table (e.g. "a two-column table of country and capital"); (5) pass = 3+-column table shows one card per row with "heading: value" lines, 2-column table is an aligned grid, nothing scrolls sideways — record as `.harness/evidence/M10c3-AC5-owner-phone-2.log/.png`. If it still shows the old grid after a confirmed fresh load, capture the answer's raw text.
 
 
 ### Validation
@@ -321,10 +324,12 @@ Corrections (all Cheap/haiku, BOUNDED_LOW_RISK, attempt 1 PASS, verifier PASS):
 Correction diff `949dd2d..HEAD` files (outside .harness/): mobile/src/ui/markdown.test.ts, mobile/src/ui/tableLayout.test.ts, mobile/src/ui/tableLayout.ts. Files not named by a cycle-1 finding: none.
 
 Cycle 2: report `.harness/reviews/M10c3-cycle2.md` (CHANGES REQUIRED, SUBSTANTIVE: 1 BLOCKER on M10c3-AC5 - owner phone observation attempt 1 FAIL, `.harness/evidence/M10c3-AC5-owner-phone-1.log/.png`). Pre-correction: 5ccf32573581424ec7c0a5a3a5969a248333edfd
+Correction: C3 (F1) commit 341752c, Top/opus AMBIGUOUS, attempt 4 PASS, verifier PASS - tests reproduce the screenshot's table shapes and pin the single render path; diagnosis stale bundle, no product code changed (see Evidence). AC5 remains OWED from the owner (attempt 2 steps in Evidence).
+Correction diff `5ccf325..HEAD` files (outside .harness/): mobile/src/ui/markdown.test.ts, mobile/src/ui/markdownText.test.ts. Files not named by a cycle-2 finding: none (Finding 1 names no file; both test files serve its suggested correction (2)).
 
 ### Review Cycles
 
-1
+2
 
 ### Follow-ups
 
@@ -334,6 +339,7 @@ Cycle 2: report `.harness/reviews/M10c3-cycle2.md` (CHANGES REQUIRED, SUBSTANTIV
 - Decided (human, 2026-09-30, review cycle 1 Finding 1): a row the model wrote without a column separator (e.g. "trend — description | source" under a 3-column header) is padded, not re-split - it lines up and loses no text, but the source may sit under the 2nd heading with the last column empty. No dash/colon/full-width-pipe splitting heuristic (rejected). FR29, AC23 and M10c3-AC1 amended to say so.
 - Surplus-cell join differs between parser (" | ", markdown.ts fitRow) and tableLayout's defensive path (" " text node); only the parser path is reached in practice.
 - milestones.md exceeds 400 lines; nothing archivable this phase (M10c2 is the most recently settled milestone and protected; the rest are open).
+- M10c3-AC5 attempt 2 owed from the owner after fully closing and reopening Expo Go (steps in Evidence). The 2-cycle review cap is now spent: if the next review still fails AC5 after a confirmed fresh load, the milestone escalates to the human with the raw markdown of that answer.
 
 ## M10c4 — Broad web questions draw on at least three different websites
 

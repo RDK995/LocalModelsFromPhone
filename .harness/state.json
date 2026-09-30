@@ -7956,7 +7956,7 @@
       ],
       "traces": "AC23",
       "status": "REVIEW",
-      "review_cycles": 1,
+      "review_cycles": 2,
       "review_override": null,
       "baseline": {
         "commit": "d4a4e67e5da0803bfb3874ded201202ba7c2dd04",
@@ -8006,7 +8006,9 @@
           "id": "M10c3-AC5",
           "text": "Owner's phone observation in Expo Go (recorded in evidence): an answer containing a three-or-more-column table shows one card per row with every value under its own heading, and a two-column table shows as an aligned grid, with no sideways scrolling.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "Attempt 1 FAIL (.harness/evidence/M10c3-AC5-owner-phone-1.log/.png): diagnosed as stale JavaScript on the phone (Expo Go session from before 30fa036; bundle host is --no-dev, no fast refresh). Served bundle verified current (.harness/evidence/M10c3-C3-bundle-host.log). OWED: owner attempt 2 after a full Expo Go reload."
+          ]
         }
       ],
       "tasks": [
@@ -8207,6 +8209,59 @@
           "attempts": 1,
           "status": "ACCEPTED",
           "commit": "3d1d4e6"
+        },
+        {
+          "id": "M10c3-C3",
+          "scope": "diagnose AC5 phone failure: reproduce screenshot table shapes through parseMarkdown->tableLayout; trace streamed vs saved render path; fix any defect red-first",
+          "packet": ".harness/tasks/M10c3-C3.md",
+          "paths": [
+            "mobile/src/ui/markdown.test.ts",
+            "mobile/src/ui/markdownText.test.ts"
+          ],
+          "criteria": [
+            "M10c3-AC1",
+            "M10c3-AC2",
+            "M10c3-AC3",
+            "M10c3-AC4",
+            "M10c3-AC5"
+          ],
+          "routing": {
+            "tier": "Top",
+            "model": "opus",
+            "reason_code": "AMBIGUOUS",
+            "detail": "cause of owner phone failure undiagnosed; HEAD appears unable to produce the screenshot; no test oracle until cause found"
+          },
+          "tests": "cd mobile && bun test && bun run typecheck && bun run lint",
+          "requirements": [
+            "FR29"
+          ],
+          "constraints": [],
+          "depends_on": [],
+          "findings": [
+            "cycle2-F1"
+          ],
+          "attempt_log": [
+            {
+              "role": "worker",
+              "attempt": 4,
+              "tier": "Top",
+              "model": "opus",
+              "base": "5ccf325",
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M10c3-C3-worker.log",
+              "note": "NO CODE DEFECT FOUND; 390 pass; new tests fail 7 on pre-milestone markdown.ts f8bae28 (cases 1b,4,5 + 4 FR29)"
+            },
+            {
+              "role": "verifier",
+              "attempt": 4,
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M10c3-C3-verifier.log",
+              "note": "exit 0, 390 pass; files within allowed; tests not weakened; discrimination re-run independently: 7 fail on f8bae28"
+            }
+          ],
+          "attempts": 1,
+          "status": "ACCEPTED",
+          "commit": "341752c"
         }
       ],
       "reviews": [
@@ -8228,6 +8283,24 @@
           ],
           "files_outside_findings": "none; markdown.test.ts answers F1 and F2, tableLayout.ts/.test.ts answer F3; .harness/ records (requirements.md FR29/AC23 amended per the human decision on F1) are harness state",
           "human_decision": "F1: 'Line up, accept the gap' (human, 2026-09-30) - rows missing a separator are padded, not re-split"
+        },
+        {
+          "cycle": 2,
+          "verdict": "CHANGES_REQUIRED",
+          "scope": "SUBSTANTIVE",
+          "diff_range": "949dd2d..5ccf325",
+          "artifact": ".harness/reviews/M10c3-cycle2.md",
+          "pre_correction": "5ccf32573581424ec7c0a5a3a5969a248333edfd",
+          "correction_diff": "5ccf32573581424ec7c0a5a3a5969a248333edfd..HEAD",
+          "correction_files": [
+            "mobile/src/ui/markdown.test.ts",
+            "mobile/src/ui/markdownText.test.ts"
+          ],
+          "files_outside_findings": "none; both test files answer F1 (reproduction of the screenshot shapes, render-path trace). No product code changed.",
+          "diagnosis": "stale bundle on the phone, not a code defect: .harness/evidence/M10c3-C3-bundle-host.log, .harness/evidence/M10c3-C3-verifier.log",
+          "tier": "Top",
+          "reason_code": "AMBIGUOUS",
+          "tier_note": "the cycle-2 report does not state the reviewer tier; recorded as the milestone review routing from cycle 1"
         }
       ],
       "findings": [],
@@ -8238,7 +8311,8 @@
           "artifacts": [
             ".harness/evidence/M10c3-T1-verifier.log",
             ".harness/evidence/M10c3-T1-worker-red.log",
-            ".harness/evidence/M10c3-T2-verifier.log"
+            ".harness/evidence/M10c3-T2-verifier.log",
+            ".harness/evidence/M10c3-C3-verifier.log"
           ]
         }
       ],
@@ -8249,7 +8323,8 @@
         "M10c3-AC5 owed: owner phone observation in Expo Go (3+-column table as one card per row, 2-column table as aligned grid, no sideways scrolling) cannot be claimed Mac-side.",
         "Decided (human, 2026-09-30, review cycle 1 Finding 1): a row the model wrote without a column separator (e.g. \"trend \u2014 description | source\" under a 3-column header) is padded, not re-split - it lines up and loses no text, but the source may sit under the 2nd heading with the last column empty. No dash/colon/full-width-pipe splitting heuristic (rejected). FR29, AC23 and M10c3-AC1 amended to say so.",
         "Surplus-cell join separator differs: parser joins with \" | \" (markdown.ts fitRow), tableLayout defensive path joins with \" \" text node; the parser path is the one reached in practice.",
-        "milestones.md is 615+ lines; archiving not possible this phase: only settled unarchived milestone is M10c2 (most recently settled, protected)."
+        "milestones.md is 615+ lines; archiving not possible this phase: only settled unarchived milestone is M10c2 (most recently settled, protected).",
+        "M10c3-AC5 attempt 2 owed from the owner after fully closing and reopening Expo Go (steps in milestones.md Evidence). If it fails again after a confirmed fresh load, the review cap (2 cycles) is spent: escalate with the raw markdown of that answer."
       ],
       "complexity_signals": []
     },
