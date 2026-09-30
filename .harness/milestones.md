@@ -205,7 +205,7 @@ Cycle 1: PASS — tier Mid (sonnet, ORDINARY_IMPLEMENTATION), whole milestone, d
 
 ## M9 — The server answers a web-enabled chat by running the model's search tool loop
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -230,9 +230,16 @@ Pending.
 
 ### Baseline
 
+9830d5c60f43e7761b9dbd48fea4e377713734cb on m9-server-web-tool-loop
 
 ### Evidence
 
+Task plan (packets in .harness/tasks/):
+- M9-T1 — C7 chat tools + tool_calls              Cheap (haiku, BOUNDED_LOW_RISK) — in progress
+- M9-T2 — C12 server/src/web/tools.ts             Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — .harness/evidence/M9-T2-verifier.log (exit 0, 14 pass; red M9-T2-red.log)
+- M9-T3 — C5+C4 tools capability, 409 gate (AC1)  Mid (sonnet, ORDINARY_IMPLEMENTATION) — planned
+- M9-T4 — C6+C4 tool loop, 10-call cap (AC3,AC4)  Mid (sonnet, ORDINARY_IMPLEMENTATION) — planned, after T1-T3
+- M9-T5 — web-chat-proof.sh live proof (AC1-AC3)  Mid (sonnet, ORDINARY_IMPLEMENTATION) — planned, after T4
 
 ### Validation
 
@@ -248,6 +255,8 @@ Pending.
 
 ### Follow-ups
 
+- Size check at pickup: 4 criteria, one signal (IMPLEMENTATION_PLUS_LIVE_PROOF); seam check on the capability gate done, not split (see state.json follow_ups).
+- milestones.md stays above 400 lines after archiving M7c: M8 (most recently settled) and M5a (BLOCKED) are protected.
 - R8: tool-calling quality varies by model; acceptance is proven on at least one installed model, others observed.
 
 ## M10 — The phone has a per-chat web-search switch and shows steps and sources live
