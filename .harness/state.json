@@ -6176,7 +6176,7 @@
         "FR19"
       ],
       "traces": "AC13 (switch off), AC14 (server half), AC17 (10-call cap), FR18 (capability gate)",
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -6184,33 +6184,41 @@
         "branch": "m9-server-web-tool-loop"
       },
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M9.md",
+        "result": "RECORDED \u2014 C4, C5, C6, C7, C12 observed; 6 edges; 14 of 16 files attributed; no claim mismatches"
       },
       "criteria": [
         {
           "id": "M9-AC1",
           "text": "GET /v1/state reports each model's tools capability from Ollama /api/show, and POST /v1/chat with web:true for a resident model without tools returns 409 tools_unsupported (proven with a stubbed capability check if every installed model has tools).",
-          "status": "PENDING",
-          "evidence": []
+          "status": "PASS",
+          "evidence": [
+            "Cycle-1 review PASS (sonnet): bun test 148 pass, typecheck clean, live proof exit 0 \u2014 .harness/evidence/M9-review.log, .harness/evidence/M9-review-live.log"
+          ]
         },
         {
           "id": "M9-AC2",
           "text": "With web:true, a prompt asking for current information against the live resident model makes the server offer web_search and read_page with a note of the current date; the SSE stream carries at least one step event (started, then its final status), a sources event before done, and the final answer.",
-          "status": "PENDING",
-          "evidence": []
+          "status": "PASS",
+          "evidence": [
+            "Cycle-1 review PASS (sonnet): bun test 148 pass, typecheck clean, live proof exit 0 \u2014 .harness/evidence/M9-review.log, .harness/evidence/M9-review-live.log"
+          ]
         },
         {
           "id": "M9-AC3",
           "text": "With web absent or false, the Ollama chat request carries no tools and the search service receives no request.",
-          "status": "PENDING",
-          "evidence": []
+          "status": "PASS",
+          "evidence": [
+            "Cycle-1 review PASS (sonnet): bun test 148 pass, typecheck clean, live proof exit 0 \u2014 .harness/evidence/M9-review.log, .harness/evidence/M9-review-live.log"
+          ]
         },
         {
           "id": "M9-AC4",
           "text": "A reply is capped at 10 tool calls: after the 10th the tools are withdrawn and the model gives its answer.",
-          "status": "PENDING",
-          "evidence": []
+          "status": "PASS",
+          "evidence": [
+            "Cycle-1 review PASS (sonnet): bun test 148 pass, typecheck clean, live proof exit 0 \u2014 .harness/evidence/M9-review.log, .harness/evidence/M9-review-live.log"
+          ]
         }
       ],
       "tasks": [
@@ -6545,7 +6553,30 @@
           ]
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "PASS",
+          "scope": "WHOLE_MILESTONE",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "ORDINARY_IMPLEMENTATION",
+          "diff_range": "9830d5c60f43e7761b9dbd48fea4e377713734cb..5a13c8a",
+          "per_criterion": {
+            "M9-AC1": "PASS",
+            "M9-AC2": "PASS",
+            "M9-AC3": "PASS",
+            "M9-AC4": "PASS"
+          },
+          "findings": {
+            "BLOCKER": 0,
+            "IMPORTANT": 0,
+            "OPTIONAL": 0
+          },
+          "artifact": null,
+          "review_log": ".harness/evidence/M9-review.log"
+        }
+      ],
       "findings": [],
       "validation": [
         {

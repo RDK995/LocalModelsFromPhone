@@ -1,0 +1,18 @@
+Preflight ok: bun, Ollama, search service
+Resident model with tools: nemotron3:33b
+Proof server on http://127.0.0.1:63316 (proxies: ollama 63314, search 63315)
+  nemotron3:33b: tools=true
+  qwen3.8:27b: tools=true
+  devstral:24b: tools=true
+  qwen3-coder:30b: tools=true
+  qwen3.6:27b: tools=true
+[0;32mPASS[0m: M9-AC1: GET /v1/state reports each model's tools capability matching /api/show
+NOTE: every installed model has tools, so the 409 tools_unsupported half of AC1 is proven by the unit tests in server/src/http/server.test.ts (M9-T3); it is not faked live.
+[0;32mPASS[0m: M9-AC3: web absent/false sends no tools, no date note, and the search service gets no request
+AC2 attempt 1 of 3 (large local model; may take minutes)...
+  model did not call a web tool on this attempt
+AC2 attempt 2 of 3 (large local model; may take minutes)...
+  steps=2 sources=1 answer_chars=221
+[0;32mPASS[0m: M9-AC2: web:true offered both tools with a dated system note; step, sources, content and done all live
+
+[0;32mAll M9 live proofs passed[0m

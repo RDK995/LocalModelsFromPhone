@@ -205,7 +205,7 @@ Cycle 1: PASS — tier Mid (sonnet, ORDINARY_IMPLEMENTATION), whole milestone, d
 
 ## M9 — The server answers a web-enabled chat by running the model's search tool loop
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -219,14 +219,14 @@ C4, C5, C6, C7, C12
 
 ### As-Built
 
-Pending.
+.harness/as-built/M9.md — RECORDED: C4, C5, C6, C7, C12 observed; 6 edges; 14 of 16 files attributed; no claim mismatches
 
 ### Acceptance Criteria
 
-- [ ] **M9-AC1**: GET /v1/state reports each model's tools capability from Ollama /api/show, and POST /v1/chat with web:true for a resident model without tools returns 409 tools_unsupported (proven with a stubbed capability check if every installed model has tools).
-- [ ] **M9-AC2**: With web:true, a prompt asking for current information against the live resident model makes the server offer web_search and read_page with a note of the current date; the SSE stream carries at least one step event (started, then its final status), a sources event before done, and the final answer.
-- [ ] **M9-AC3**: With web absent or false, the Ollama chat request carries no tools and the search service receives no request.
-- [ ] **M9-AC4**: A reply is capped at 10 tool calls: after the 10th the tools are withdrawn and the model gives its answer.
+- [x] **M9-AC1**: GET /v1/state reports each model's tools capability from Ollama /api/show, and POST /v1/chat with web:true for a resident model without tools returns 409 tools_unsupported (proven with a stubbed capability check if every installed model has tools).
+- [x] **M9-AC2**: With web:true, a prompt asking for current information against the live resident model makes the server offer web_search and read_page with a note of the current date; the SSE stream carries at least one step event (started, then its final status), a sources event before done, and the final answer.
+- [x] **M9-AC3**: With web absent or false, the Ollama chat request carries no tools and the search service receives no request.
+- [x] **M9-AC4**: A reply is capped at 10 tool calls: after the 10th the tools are withdrawn and the model gives its answer.
 
 ### Baseline
 
@@ -250,7 +250,7 @@ All tasks accepted (continuation 2 completed T4 and T5). Criteria are checked of
 
 ### Review
 
-Pending.
+Cycle 1: PASS — tier Mid (sonnet, ORDINARY_IMPLEMENTATION), whole milestone, diff 9830d5c..5a13c8a; M9-AC1 PASS, M9-AC2 PASS, M9-AC3 PASS, M9-AC4 PASS; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL; validation exit 0 — .harness/evidence/M9-review.log, .harness/evidence/M9-review-live.log
 
 ### Review Cycles
 
