@@ -7188,7 +7188,7 @@
           "status": "ACCEPTED",
           "attempts": 1,
           "packet": ".harness/tasks/M10b-T1.md",
-          "commit": "",
+          "commit": "c69e1f3",
           "attempt_log": [
             {
               "attempt": 3,
@@ -7210,6 +7210,61 @@
               "artifact": ".harness/evidence/M10b-T1-verifier.log",
               "verdict": "PASS",
               "note": "exit 0, 277 pass, typecheck and lint clean; files within allowed; not weakened; adversarial inputs no throw, <1ms"
+            }
+          ]
+        },
+        {
+          "id": "M10b-T2",
+          "scope": "C1: MarkdownText component rendering parser tree; chat.tsx renders assistant content through it",
+          "tests": "cd mobile && bun run typecheck && bun test && bun run lint",
+          "requirements": [
+            "FR26"
+          ],
+          "constraints": [],
+          "findings": [],
+          "criteria": [
+            "M10b-AC1"
+          ],
+          "paths": [
+            "mobile/src/ui/MarkdownText.tsx",
+            "mobile/src/ui/markdownText.test.ts",
+            "mobile/src/app/chat.tsx"
+          ],
+          "depends_on": [
+            "M10b-T1"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "new RN component wired into chat screen; no runtime render oracle under bun"
+          },
+          "status": "ACCEPTED",
+          "attempts": 1,
+          "packet": ".harness/tasks/M10b-T2.md",
+          "commit": "",
+          "attempt_log": [
+            {
+              "attempt": 3,
+              "role": "worker",
+              "tier": "Mid",
+              "model": "sonnet",
+              "artifact": ".harness/evidence/M10b-T2-worker.log",
+              "verdict": "PASS",
+              "base": "13d098f",
+              "changed_files": [
+                "mobile/src/ui/MarkdownText.tsx",
+                "mobile/src/ui/markdownText.test.ts",
+                "mobile/src/app/chat.tsx"
+              ],
+              "note": "Resumed an INTERRUPTED earlier attempt's untracked test file (kept all assertions; one lint quote fix). Red: .harness/evidence/M10b-T2-red.log (15 fail/3 pass). Optional headingFontSize helper not done (no allowed .ts sibling)."
+            },
+            {
+              "attempt": 3,
+              "role": "verifier",
+              "artifact": ".harness/evidence/M10b-T2-verifier.log",
+              "verdict": "PASS",
+              "note": "exit 0, 295 pass, typecheck+lint clean; files within allowed; not weakened; no discrepancies"
             }
           ]
         }

@@ -43,6 +43,7 @@ import {
   Linking,
 } from "react-native";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { MarkdownText } from "@/ui/MarkdownText";
 import { getToken } from "@/api/secureStoreToken";
 import { createAPIClient } from "@/api/expoFetchClient";
 import { stopGeneration, UNAUTHORIZED_MESSAGE } from "@/chat/chatController";
@@ -398,9 +399,12 @@ export default function ChatScreen() {
                         : styles.assistantMessage,
                     ]}
                   >
-                    {item.content.length > 0 && (
-                      <Text style={styles.messageText}>{item.content}</Text>
-                    )}
+                    {item.content.length > 0 &&
+                      (item.role === "assistant" ? (
+                        <MarkdownText text={item.content} style={styles.messageText} />
+                      ) : (
+                        <Text style={styles.messageText}>{item.content}</Text>
+                      ))}
                     {item.streaming && (
                       <ActivityIndicator style={styles.loadingDots} />
                     )}
