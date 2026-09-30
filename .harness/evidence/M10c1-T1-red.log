@@ -1,0 +1,296 @@
+bun test v1.4.0 (1381054db)
+
+src/http/server.test.ts:
+192 | describe("GET /v1/icon", () => {
+193 |   it("returns the <link rel=icon> image with its content-type and a 7-day cache-control", async () => {
+194 |     routes["a1.test/"] = html(`<link rel="stylesheet" href="/s.css"><link rel="icon" href="/img/i.png">`);
+195 |     routes["a1.test/img/i.png"] = img("image/png", PNG);
+196 |     const r = await getIcon(iconSrv, "a1.test");
+197 |     expect(r.status).toBe(200);
+                           ^
+error: expect(received).toBe(expected)
+
+Expected: 200
+Received: 404
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.test.ts:197:22)
+(fail) GET /v1/icon > returns the <link rel=icon> image with its content-type and a 7-day cache-control [3.64ms]
+205 |     routes["a2.test/"] = html(
+206 |       `<link rel="preload" href="/p.png"><LINK REL="Apple-Touch-Icon" HREF="touch.png"><link rel="icon" href="/i.png">`,
+207 |     );
+208 |     routes["a2.test/touch.png"] = img("image/png", PNG);
+209 |     const r = await getIcon(iconSrv, "a2.test");
+210 |     expect(r.status).toBe(200);
+                           ^
+error: expect(received).toBe(expected)
+
+Expected: 200
+Received: 404
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.test.ts:210:22)
+(fail) GET /v1/icon > matches rel case-insensitively as a token list (apple-touch-icon, 'Shortcut Icon'), first in document order [1.37ms]
+220 | 
+221 |   it("falls back to /favicon.ico when the page links no icon", async () => {
+222 |     routes["b1.test/"] = html(`<link rel="stylesheet" href="/s.css">`);
+223 |     routes["b1.test/favicon.ico"] = img("image/x-icon", ICO);
+224 |     const r = await getIcon(iconSrv, "b1.test");
+225 |     expect(r.status).toBe(200);
+                           ^
+error: expect(received).toBe(expected)
+
+Expected: 200
+Received: 404
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.test.ts:225:22)
+(fail) GET /v1/icon > falls back to /favicon.ico when the page links no icon [2.91ms]
+228 |   });
+229 | 
+230 |   it("falls back to /favicon.ico when the page itself fails (404)", async () => {
+231 |     routes["b2.test/favicon.ico"] = img("image/x-icon", ICO);
+232 |     const r = await getIcon(iconSrv, "b2.test");
+233 |     expect(r.status).toBe(200);
+                           ^
+error: expect(received).toBe(expected)
+
+Expected: 200
+Received: 404
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.test.ts:233:22)
+(fail) GET /v1/icon > falls back to /favicon.ico when the page itself fails (404) [0.94ms]
+235 | 
+236 |   it("no icon anywhere -> 404 no_icon", async () => {
+237 |     routes["c1.test/"] = html("");
+238 |     const r = await getIcon(iconSrv, "c1.test");
+239 |     expect(r.status).toBe(404);
+240 |     expect(await r.json()).toEqual({ error: "no_icon" });
+                                 ^
+error: expect(received).toEqual(expected)
+
+  {
+-   "error": "no_icon",
++   "error": "not_found",
+  }
+
+- Expected  - 1
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.test.ts:240:28)
+(fail) GET /v1/icon > no icon anywhere -> 404 no_icon [3.04ms]
+244 |     routes["c2.test/"] = html(`<link rel="icon" type="image/svg+xml" href="/i.svg">`);
+245 |     routes["c2.test/i.svg"] = img("image/svg+xml", Buffer.from("<svg/>"));
+246 |     routes["c2.test/favicon.ico"] = img("image/svg+xml", Buffer.from("<svg/>"));
+247 |     const r = await getIcon(iconSrv, "c2.test");
+248 |     expect(r.status).toBe(404);
+249 |     expect(await r.json()).toEqual({ error: "no_icon" });
+                                 ^
+error: expect(received).toEqual(expected)
+
+  {
+-   "error": "no_icon",
++   "error": "not_found",
+  }
+
+- Expected  - 1
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.test.ts:249:28)
+(fail) GET /v1/icon > SVG-only -> 404 no_icon [2.49ms]
+253 |     routes["c3.test/"] = html(`<link rel="icon" href="/big.png">`);
+254 |     routes["c3.test/big.png"] = img("image/png", Buffer.alloc(256 * 1024 + 1, 7));
+255 |     routes["c3.test/favicon.ico"] = img("image/x-icon", Buffer.alloc(300 * 1024, 7));
+256 |     const r = await getIcon(iconSrv, "c3.test");
+257 |     expect(r.status).toBe(404);
+258 |     expect(await r.json()).toEqual({ error: "no_icon" });
+                                 ^
+error: expect(received).toEqual(expected)
+
+  {
+-   "error": "no_icon",
++   "error": "not_found",
+  }
+
+- Expected  - 1
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.test.ts:258:28)
+(fail) GET /v1/icon > oversize icon (> 256 KiB) -> 404 no_icon, never truncated bytes [2.00ms]
+260 | 
+261 |   it("an icon exactly 256 KiB is accepted", async () => {
+262 |     const exact = Buffer.alloc(256 * 1024, 5);
+263 |     routes["c4.test/favicon.ico"] = img("image/png", exact);
+264 |     const r = await getIcon(iconSrv, "c4.test");
+265 |     expect(r.status).toBe(200);
+                           ^
+error: expect(received).toBe(expected)
+
+Expected: 200
+Received: 404
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.test.ts:265:22)
+(fail) GET /v1/icon > an icon exactly 256 KiB is accepted [1.13ms]
+278 |     routes["d1.test/"] = html(`<link rel="icon" href="/i.png">`);
+279 |     routes["d1.test/i.png"] = img("image/png", PNG);
+280 |     const log = spyOn(console, "log");
+281 |     try {
+282 |       const first = await getIcon(iconSrv, "d1.test");
+283 |       expect(first.status).toBe(200);
+                                 ^
+error: expect(received).toBe(expected)
+
+Expected: 200
+Received: 404
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.test.ts:283:28)
+(fail) GET /v1/icon > second request (also via www. and upper case) is served from the disk cache with zero upstream hits; one log line per upstream lookup only [1.71ms]
+299 | 
+300 |   it("a negative result is cached too", async () => {
+301 |     routes["d2.test/"] = html("");
+302 |     expect((await getIcon(iconSrv, "d2.test")).status).toBe(404);
+303 |     const n = hitsFor("d2.test").length;
+304 |     expect(n).toBe(2); // page + /favicon.ico
+                    ^
+error: expect(received).toBe(expected)
+
+Expected: 2
+Received: 0
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.test.ts:304:15)
+(fail) GET /v1/icon > a negative result is cached too [0.76ms]
+314 |       { resolve: async () => [{ address: "127.0.0.1", family: 4 }], isAllowedAddress: (ip) => ip === "127.0.0.1" },
+315 |       {},
+316 |       { cacheDir, origin: (h) => `http://${h}:${sitePort}`, now: () => now },
+317 |     );
+318 |     const call = (host: string) => handler(new Request(`http://127.0.0.1/v1/icon?host=${host}`));
+319 |     expect((await call("d3.test")).status).toBe(200);
+                                                 ^
+error: expect(received).toBe(expected)
+
+Expected: 200
+Received: 404
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.test.ts:319:44)
+(fail) GET /v1/icon > an expired entry is refetched (positive after 7 days, negative after 1 day) [0.61ms]
+335 |     expect(hitsFor("d3.test").length).toBe(p0 * 2);
+336 |   });
+337 | 
+338 |   it("a corrupt cache entry is treated as a miss", async () => {
+339 |     routes["d5.test/favicon.ico"] = img("image/x-icon", ICO);
+340 |     expect((await getIcon(iconSrv, "d5.test")).status).toBe(200);
+                                                             ^
+error: expect(received).toBe(expected)
+
+Expected: 200
+Received: 404
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.test.ts:340:56)
+(fail) GET /v1/icon > a corrupt cache entry is treated as a miss [0.68ms]
+347 |   });
+348 | 
+349 |   it("blocked host under the default strict policy (localhost) -> 400 blocked_destination, not cached", async () => {
+350 |     const before = readdirSync(cacheDir).length;
+351 |     const r = await getIcon(strictIcon, "localhost");
+352 |     expect(r.status).toBe(400);
+                           ^
+error: expect(received).toBe(expected)
+
+Expected: 400
+Received: 404
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.test.ts:352:22)
+(fail) GET /v1/icon > blocked host under the default strict policy (localhost) -> 400 blocked_destination, not cached [1.19ms]
+359 |       res.writeHead(302, { location: "http://169.254.169.254/latest/meta-data/" });
+360 |       res.end();
+361 |     };
+362 |     routes["e1.test/favicon.ico"] = img("image/x-icon", ICO);
+363 |     const r = await getIcon(iconSrv, "e1.test");
+364 |     expect(r.status).toBe(400);
+                           ^
+error: expect(received).toBe(expected)
+
+Expected: 400
+Received: 404
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.test.ts:364:22)
+(fail) GET /v1/icon > a page redirecting to a forbidden address -> 400 blocked_destination (redirect re-checked), not cached [0.67ms]
+370 | 
+371 |   it("an icon <link> pointing at a forbidden address is not fetched -> 400 blocked_destination (no fallback)", async () => {
+372 |     routes["e2.test/"] = html(`<link rel="icon" href="http://10.0.0.1/i.png">`);
+373 |     routes["e2.test/favicon.ico"] = img("image/x-icon", ICO);
+374 |     const r = await getIcon(iconSrv, "e2.test");
+375 |     expect(r.status).toBe(400);
+                           ^
+error: expect(received).toBe(expected)
+
+Expected: 400
+Received: 404
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.test.ts:375:22)
+(fail) GET /v1/icon > an icon <link> pointing at a forbidden address is not fetched -> 400 blocked_destination (no fallback) [0.55ms]
+382 |     routes["e3.test/i.png"] = (_req, res) => {
+383 |       res.writeHead(301, { location: "http://10.0.0.1/i.png" });
+384 |       res.end();
+385 |     };
+386 |     const r = await getIcon(iconSrv, "e3.test");
+387 |     expect(r.status).toBe(400);
+                           ^
+error: expect(received).toBe(expected)
+
+Expected: 400
+Received: 404
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.test.ts:387:22)
+(fail) GET /v1/icon > an icon that redirects to a forbidden address -> 400 blocked_destination [0.53ms]
+396 |       { resolve: async () => [{ address: "127.0.0.1", family: 4 }], isAllowedAddress: (ip) => ip === "127.0.0.1" },
+397 |       {},
+398 |       { cacheDir, origin: (h) => `http://${h}:${sitePort}`, timeoutMs: 300 },
+399 |     );
+400 |     const r = await handler(new Request("http://127.0.0.1/v1/icon?host=f1.test"));
+401 |     expect(r.status).toBe(504);
+                           ^
+error: expect(received).toBe(expected)
+
+Expected: 504
+Received: 404
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.test.ts:401:22)
+(fail) GET /v1/icon > 504 timeout when the site never answers within the deadline, not cached [0.36ms]
+425 |       "user@a.test",
+426 |     ];
+427 |     const n = hits.length;
+428 |     for (const h of bad) {
+429 |       const r = await getIcon(iconSrv, h);
+430 |       expect({ h, status: r.status }).toEqual({ h, status: 400 });
+                                            ^
+error: expect(received).toEqual(expected)
+
+@@ -2,3 +2,3 @@
+    "h": "",
+-   "status": 400,
++   "status": 404,
+  }
+
+- Expected  - 1
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.test.ts:430:39)
+(fail) GET /v1/icon > bad host -> 400 bad_url, no upstream contact [0.88ms]
+436 |     expect(hits.length).toBe(n);
+437 |   });
+438 | 
+439 |   it("non-GET -> 405", async () => {
+440 |     const r = await getIcon(iconSrv, "a1.test", "POST");
+441 |     expect(r.status).toBe(405);
+                           ^
+error: expect(received).toBe(expected)
+
+Expected: 405
+Received: 404
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.test.ts:441:22)
+(fail) GET /v1/icon > non-GET -> 405 [0.51ms]
+
+ 10 pass
+ 19 fail
+ 54 expect() calls
+Ran 29 tests across 1 file. [502.00ms]
+e7a4e20590b2f3074f898d7bac319f29fb85baad

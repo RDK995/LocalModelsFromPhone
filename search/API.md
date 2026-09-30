@@ -1,6 +1,6 @@
 # C13 Search Service HTTP API
 
-The search service provides a loopback-only HTTP API for web search and page reading. It is not exposed via Tailscale Serve, LAN, or any network interface other than loopback.
+The search service provides a loopback-only HTTP API for web search, page reading and website icons. It is not exposed via Tailscale Serve, LAN, or any network interface other than loopback.
 
 **Base URL:** `http://127.0.0.1:7790`
 
@@ -211,6 +211,70 @@ curl -X POST http://127.0.0.1:7790/v1/read \
 
 ---
 
+### GET /v1/icon
+
+Returns a website's own icon (logo) as image bytes, fetched by the Mac from that website itself. No third-party favicon or logo service is ever used: the only addresses contacted are `<host>` and URLs that its home page itself links.
+
+**Request:**
+- Method: `GET`
+- Query: `host=<hostname>`, a bare DNS hostname such as `example.com` or `www.example.com`
+
+| Parameter | Type | Required | Notes |
+|-----------|------|----------|-------|
+| `host` | string | Yes | ASCII hostname only: labels of letters, digits and hyphens, at most 253 characters. No scheme, path, port, credentials, spaces or IP literal (a name whose last label is numeric, e.g. `0x7f.1`, is refused as an IP literal). Case-insensitive. |
+
+**How the icon is found:**
+1. `https://<host>/` is fetched (HTML only, first 512 KiB).
+2. The first `<link>` in document order whose `rel` token list (case-insensitive) contains `apple-touch-icon` or `icon` (which covers `shortcut icon`) is taken; its `href` is resolved against the final page URL.
+3. If there is no such link, the page fetch fails (other than a block or the deadline), or the linked icon is not usable, `https://<host>/favicon.ico` is tried instead.
+
+Every fetch goes through the same SSRF guard as `POST /v1/read`: every resolved DNS record and every IP literal must be a public address, every redirect hop (max 5) is re-checked, and the socket connects only to the address that was checked.
+
+**Accepted icon content:** `image/png`, `image/jpeg`, `image/gif`, `image/webp`, `image/x-icon`, `image/vnd.microsoft.icon`. SVG and every other type count as "no icon". An icon larger than 256 KiB counts as "no icon" (bytes are never truncated).
+
+**Limits:** 256 KiB per icon; 512 KiB for the HTML page; one 10-second deadline covering the page fetch and the icon fetch(es) together.
+
+**Success Response (200 OK):** the icon bytes, with headers:
+
+| Header | Value |
+|--------|-------|
+| `Content-Type` | The upstream image media type (one of the accepted types above, without parameters) |
+| `Cache-Control` | `public, max-age=604800` |
+| `X-Content-Type-Options` | `nosniff` |
+
+**Error Responses (JSON):**
+
+| Status | Code | Condition |
+|--------|------|-----------|
+| 400 Bad Request | `bad_url` | `host` missing or not a valid bare hostname (see above) |
+| 400 Bad Request | `blocked_destination` | The host resolves to a non-public address (e.g. `localhost`, LAN, tailnet, link-local/metadata), or the page, a redirect, the linked icon URL or `/favicon.ico` points at one. A block ends the lookup: nothing further (not even `/favicon.ico`) is fetched. |
+| 404 Not Found | `no_icon` | The site has no usable icon: no icon link and no `/favicon.ico`, only SVG / non-image / oversize icons, upstream errors, or the site is unreachable or refuses the Mac |
+| 504 Gateway Timeout | `timeout` | The 10-second overall deadline was exceeded |
+| 499 Client Closed Connection | — | The client aborted the request |
+| 405 Method Not Allowed | `method_not_allowed` | Request method is not `GET` |
+
+**Caching:** Results are cached on disk under the service's own cache directory (`SEARCH_ICON_CACHE_DIR`, default `~/Library/Caches/harness-search/icons`, created with mode 0700), one file per normalised host (lower-case, leading `www.` stripped; the filename is the SHA-256 of the host). Each entry records the bytes, content type and fetch time, or a "no icon" marker. Icons are kept for 7 days, "no icon" results for 1 day; after that the site is fetched again. `blocked_destination` and `timeout` results are not cached. A cache hit makes no network request. A corrupt or unreadable entry is treated as a miss.
+
+**Logging:** each lookup that contacts the site (cache miss) logs one stdout line `icon fetch host=<normalised host> result=<ok|none|blocked|timeout>`; a cache hit logs nothing.
+
+**Example:**
+```bash
+curl --max-time 15 -s -D - -o icon.bin "http://127.0.0.1:7790/v1/icon?host=example.com"
+# 200, Content-Type: image/x-icon, Cache-Control: public, max-age=604800
+
+curl --max-time 15 -s "http://127.0.0.1:7790/v1/icon?host=localhost"
+# 400 {"error":"blocked_destination"}
+```
+
+**Example Response (404):**
+```json
+{
+  "error": "no_icon"
+}
+```
+
+---
+
 ## Unknown Routes and Wrong Methods
 
 **Unknown Route:**
@@ -234,7 +298,7 @@ curl http://127.0.0.1:7790/unknown
 
 ## Response Format
 
-All successful and error responses are JSON with `Content-Type: application/json`.
+All successful and error responses are JSON with `Content-Type: application/json`, except a `200` from `GET /v1/icon`, which is image bytes with the image `Content-Type`.
 
 **Standard Error Shape:**
 ```json
@@ -298,7 +362,7 @@ async function readPage(url) {
 
 ---
 
-## Environment Variables (Test-Only)
+## Environment Variables
 
 The following environment variables are **test-only** and must not be relied upon in production:
 
@@ -308,6 +372,12 @@ The following environment variables are **test-only** and must not be relied upo
 | `SEARCH_TIMEOUT_MS` | integer | 25000 | Override the search helper time limit in milliseconds (must be positive; invalid values are ignored) |
 | `SEARCH_HELPER_FORCE_DDGS` | string | (unset) | Test-only hook to force a specific DuckDuckGo behavior (see search helper docs) |
 | `SEARCH_HELPER_FORCE_BROWSER` | string (`fail` \| `hang`) | (unset) | Test-only hook to simulate browser failures (`fail`) or hangs (`hang`) without using the public network |
+
+The following environment variable is **production configuration** (not test-only):
+
+| Variable | Type | Default | Effect |
+|----------|------|---------|--------|
+| `SEARCH_ICON_CACHE_DIR` | path | `~/Library/Caches/harness-search/icons` | Directory for the `GET /v1/icon` disk cache (created with mode 0700 if missing) |
 
 The help process group is SIGKILLed unconditionally on timeout, client abort, or after normal exit to ensure Chromium and Playwright processes do not linger.
 
@@ -321,6 +391,7 @@ The help process group is SIGKILLed unconditionally on timeout, client abort, or
 - **Helper Subprocess:** The helper is spawned in its own process group (detached), so process kills affect the entire search operation including Playwright and Chromium.
 - **Content Types:** Only `text/html`, `text/plain`, and `application/xhtml+xml` are supported for `/v1/read`.
 - **Redirects:** Up to 5 redirects are followed on `/v1/read`. Each hop is subject to the same SSRF checks.
+- **Icons:** `GET /v1/icon` reuses the `/v1/read` guarded fetcher (`fetchBytes` in `fetchPage.ts`, same guard code) with an image-only type allow-list, a 256 KiB cap and a 10-second overall deadline.
 
 ---
 
@@ -338,3 +409,4 @@ All behavior, error codes, limits, and request/response shapes in this document 
 - **Configuration and defaults:** `search/src/index.ts`
 - **Timeout and helper subprocess:** `search/src/search/runHelper.ts`
 - **Tests:** `search/src/http/server.test.ts`
+- **Icon route (FR27, architecture D-M10c-2):** `search/src/icon/icon.ts` (host validation, link discovery, guarded icon lookup), `search/src/icon/cache.ts` (disk cache, TTLs), `search/src/http/server.ts` (route); tests in `search/src/icon/icon.test.ts` and `search/src/http/server.test.ts`

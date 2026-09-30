@@ -89,6 +89,7 @@ const DEFAULT_TIMEOUT_MS = 15_000;
 const DEFAULT_MAX_BYTES = 5 * 1024 * 1024;
 const DEFAULT_MAX_REDIRECTS = 5;
 const ALLOWED_TYPES = new Set(["text/html", "text/plain", "application/xhtml+xml"]);
+const PAGE_ACCEPT = "text/html,application/xhtml+xml,text/plain;q=0.9";
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 
 async function defaultResolve(hostname: string): Promise<ResolvedAddress[]> {
@@ -97,6 +98,57 @@ async function defaultResolve(hostname: string): Promise<ResolvedAddress[]> {
 }
 
 export async function fetchPage(rawUrl: string, opts: FetchPageOptions = {}): Promise<FetchedPage> {
+  const r = await guardedFetch(rawUrl, opts, ALLOWED_TYPES, PAGE_ACCEPT);
+  return {
+    url: r.url,
+    finalUrl: r.finalUrl,
+    status: r.status,
+    contentType: r.contentType,
+    body: decodeText(r.bytes, r.contentTypeHeader),
+    bodyTruncated: r.truncated,
+  };
+}
+
+export interface FetchedBytes {
+  /** The URL as requested (normalised by the WHATWG URL parser). */
+  url: string;
+  /** The URL of the final response after redirects. */
+  finalUrl: string;
+  status: number;
+  /** Lower-cased media type without parameters, e.g. "image/png". */
+  contentType: string;
+  /** The raw (content-encoding decoded) body, at most `maxBytes` bytes. */
+  bytes: Buffer;
+  /** True if the body exceeded `maxBytes` and was cut to its first `maxBytes` bytes. */
+  truncated: boolean;
+}
+
+/**
+ * Same SSRF guard, redirects, limits and error codes as `fetchPage`, but returns the body as raw
+ * bytes and accepts only the given media types (anything else -> `unsupported_content`). Used by
+ * the icon lookup (FR27, D-M10c-2) for image bodies.
+ */
+export async function fetchBytes(
+  rawUrl: string,
+  allowedTypes: ReadonlySet<string>,
+  opts: FetchPageOptions = {},
+): Promise<FetchedBytes> {
+  const accept = [...allowedTypes].join(",");
+  const r = await guardedFetch(rawUrl, opts, allowedTypes, accept);
+  return { url: r.url, finalUrl: r.finalUrl, status: r.status, contentType: r.contentType, bytes: r.bytes, truncated: r.truncated };
+}
+
+interface GuardedResult extends FetchedBytes {
+  contentTypeHeader: string | undefined;
+}
+
+/** The guarded fetch loop shared by `fetchPage` and `fetchBytes` (one copy of the SSRF checks). */
+async function guardedFetch(
+  rawUrl: string,
+  opts: FetchPageOptions,
+  allowedTypes: ReadonlySet<string>,
+  accept: string,
+): Promise<GuardedResult> {
   const policy = opts.isAllowedAddress ?? isPublicAddress;
   const resolve = opts.resolve ?? defaultResolve;
   const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
@@ -121,7 +173,7 @@ export async function fetchPage(rawUrl: string, opts: FetchPageOptions = {}): Pr
   try {
     let current = startUrl;
     for (let hop = 0; ; hop++) {
-      const res = await requestOnce(current, policy, resolve, ctl.signal);
+      const res = await requestOnce(current, policy, resolve, ctl.signal, accept);
       const status = res.statusCode ?? 0;
 
       if (REDIRECT_STATUSES.has(status)) {
@@ -149,7 +201,7 @@ export async function fetchPage(rawUrl: string, opts: FetchPageOptions = {}): Pr
       }
 
       const contentType = mediaType(res.headers["content-type"]);
-      if (!ALLOWED_TYPES.has(contentType)) {
+      if (!allowedTypes.has(contentType)) {
         res.destroy();
         throw new FetchPageError("unsupported_content", `content type ${contentType || "(none)"} not supported`);
       }
@@ -160,8 +212,9 @@ export async function fetchPage(rawUrl: string, opts: FetchPageOptions = {}): Pr
         finalUrl: current.href,
         status,
         contentType,
-        body: decodeText(bytes, res.headers["content-type"]),
-        bodyTruncated: truncated,
+        bytes,
+        truncated,
+        contentTypeHeader: res.headers["content-type"],
       };
     }
   } catch (err) {
@@ -196,6 +249,7 @@ function requestOnce(
   policy: (ip: string) => boolean,
   resolve: (hostname: string) => Promise<ResolvedAddress[]>,
   signal: AbortSignal,
+  accept: string,
 ): Promise<http.IncomingMessage> {
   // WHATWG URL keeps IPv6 literals bracketed and normalises IPv4 forms (0x7f.1, 2130706433).
   const host = url.hostname.startsWith("[") ? url.hostname.slice(1, -1) : url.hostname;
@@ -248,7 +302,7 @@ function requestOnce(
         lookup: lookup as unknown as net.LookupFunction,
         headers: {
           "user-agent": "Mozilla/5.0 (compatible; HarnessSearch/0.1)",
-          accept: "text/html,application/xhtml+xml,text/plain;q=0.9",
+          accept,
           "accept-encoding": "identity",
         },
         agent: false,

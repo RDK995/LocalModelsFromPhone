@@ -1,11 +1,13 @@
 /**
- * Loopback HTTP service (C13, interface I16): POST /v1/read, POST /v1/search, GET /v1/health.
- * The handler takes fetch options only so tests can reach a loopback test server; src/index.ts
- * wires the strict default (no override).
+ * Loopback HTTP service (C13, interface I16): POST /v1/read, POST /v1/search, GET /v1/icon,
+ * GET /v1/health. The handler takes fetch options only so tests can reach a loopback test server;
+ * src/index.ts wires the strict default (no override) and the icon cache directory.
  */
 import { fetchPage, FetchPageError, type FetchPageOptions } from "../fetch/fetchPage";
 import { extractPage } from "../extract/extract";
 import { runHelper, type HelperOptions } from "../search/runHelper";
+import { getIcon, validateHost, type IconOptions } from "../icon/icon";
+import { defaultIconCacheDir } from "../icon/cache";
 
 const STATUS_BY_CODE = {
   bad_url: 400,
@@ -50,9 +52,60 @@ async function handleSearch(req: Request, helperOptions: HelperOptions): Promise
   return json(200, { results: outcome.results, backend: outcome.backend });
 }
 
-export function createHandler(fetchOptions: FetchOverrides = {}, helperOptions: HelperOptions = {}) {
+/** Icon options for the handler; `cacheDir` defaults to `defaultIconCacheDir()`. */
+export type IconHandlerOptions = Partial<IconOptions>;
+
+const ICON_CACHE_CONTROL = "public, max-age=604800";
+
+async function handleIcon(
+  req: Request,
+  fetchOptions: FetchOverrides,
+  iconOptions: IconHandlerOptions,
+): Promise<Response> {
+  const raw = new URL(req.url).searchParams.get("host");
+  const host = raw === null ? null : validateHost(raw);
+  if (!host) return json(400, { error: "bad_url" });
+  try {
+    const outcome = await getIcon(
+      host,
+      { ...iconOptions, cacheDir: iconOptions.cacheDir ?? defaultIconCacheDir() },
+      { resolve: fetchOptions.resolve, isAllowedAddress: fetchOptions.isAllowedAddress },
+      req.signal,
+    );
+    switch (outcome.kind) {
+      case "ok":
+        return new Response(new Uint8Array(outcome.bytes), {
+          status: 200,
+          headers: {
+            "content-type": outcome.contentType,
+            "cache-control": ICON_CACHE_CONTROL,
+            "x-content-type-options": "nosniff",
+          },
+        });
+      case "none":
+        return json(404, { error: "no_icon" });
+      case "blocked":
+        return json(400, { error: "blocked_destination" });
+      case "timeout":
+        return json(504, { error: "timeout" });
+    }
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") return new Response(null, { status: 499 });
+    return json(404, { error: "no_icon" });
+  }
+}
+
+export function createHandler(
+  fetchOptions: FetchOverrides = {},
+  helperOptions: HelperOptions = {},
+  iconOptions: IconHandlerOptions = {},
+) {
   return async (req: Request): Promise<Response> => {
     const path = new URL(req.url).pathname;
+    if (path === "/v1/icon") {
+      if (req.method !== "GET") return json(405, { error: "method_not_allowed" });
+      return handleIcon(req, fetchOptions, iconOptions);
+    }
     if (path === "/v1/health") {
       if (req.method !== "GET") return json(405, { error: "method_not_allowed" });
       return json(200, { ok: true });
@@ -99,12 +152,17 @@ export function createHandler(fetchOptions: FetchOverrides = {}, helperOptions: 
   };
 }
 
-export function startServer(port: number, fetchOptions: FetchOverrides = {}, helperOptions: HelperOptions = {}) {
+export function startServer(
+  port: number,
+  fetchOptions: FetchOverrides = {},
+  helperOptions: HelperOptions = {},
+  iconOptions: IconHandlerOptions = {},
+) {
   return Bun.serve({
     hostname: "127.0.0.1",
     port,
     // Bun's max idleTimeout is 255 s; the 15 s fetch deadline must not be cut off.
     idleTimeout: 60,
-    fetch: createHandler(fetchOptions, helperOptions),
+    fetch: createHandler(fetchOptions, helperOptions, iconOptions),
   });
 }
