@@ -314,10 +314,15 @@ Milestone command (reviewer to run; task-level runs passed per verifier logs abo
 ### Review
 
 Cycle 1: report `.harness/reviews/M10c3-cycle1.md` (CHANGES REQUIRED, SUBSTANTIVE: 1 IMPORTANT, 2 OPTIONAL; reviewer evidence `.harness/evidence/M10c3-review.log`). Pre-correction: 949dd2dd21745b1946e56d09d1d9465ce18da27b
+Human decision on Finding 1 (2026-09-30): "Line up, accept the gap" - a row missing a separator is padded, not re-split; FR29, AC23, M10c3-AC1 amended.
+Corrections (all Cheap/haiku, BOUNDED_LOW_RISK, attempt 1 PASS, verifier PASS):
+- C1 (F1, F2) commit 59ac6e7 - markdown.test.ts asserts the merged trend+description stays whole in column 1 (no text lost) with the source under the 2nd heading and the last column empty; tautological chunk/concat check removed (saved = live rests on chat.tsx's single MarkdownText path). `.harness/evidence/M10c3-C1-verifier.log`.
+- C2 (F3) commit 3d1d4e6 - tableLayout normaliseRow joins surplus with " | " like markdown.ts fitRow. `.harness/evidence/M10c3-C2-verifier.log`.
+Correction diff `949dd2d..HEAD` files (outside .harness/): mobile/src/ui/markdown.test.ts, mobile/src/ui/tableLayout.test.ts, mobile/src/ui/tableLayout.ts. Files not named by a cycle-1 finding: none.
 
 ### Review Cycles
 
-0
+1
 
 ### Follow-ups
 

@@ -7956,7 +7956,7 @@
       ],
       "traces": "AC23",
       "status": "REVIEW",
-      "review_cycles": 0,
+      "review_cycles": 1,
       "review_override": null,
       "baseline": {
         "commit": "d4a4e67e5da0803bfb3874ded201202ba7c2dd04",
@@ -7972,7 +7972,8 @@
           "text": "Unit tests: a table shaped like the 2026-09-30 phone screenshot (trend, description, source columns) renders each value under its own heading when each value has its own cell; a body row missing a column separator (e.g. trend and description written into one cell) is padded, not re-split - its cells line up with the header and no text is lost, though a value may then sit under the next heading with the last column empty (accepted, human decision 2026-09-30); and the diagnosed cause of that misalignment (model output shape vs. the FR26 renderer) is covered by a test that fails on the pre-fix code.",
           "status": "PENDING",
           "evidence": [
-            "mobile/src/ui/markdown.test.ts FR29 screenshot-shaped table test and pinning test (short row padded); fails on baseline f8bae28 per .harness/evidence/M10c3-T1-verifier.log"
+            "mobile/src/ui/markdown.test.ts FR29 screenshot-shaped table test and pinning test (short row padded); fails on baseline f8bae28 per .harness/evidence/M10c3-T1-verifier.log",
+            "Cycle 1 correction C1 (commit 59ac6e7): markdown.test.ts \"FR29: a row missing a column separator is padded, not re-split: it lines up and loses no text (human decision 2026-09-30)\" asserts rows[1][0] holds the whole merged trend+description, source at rows[1][1], empty rows[1][2] (.harness/evidence/M10c3-C1-verifier.log)"
           ]
         },
         {
@@ -7980,7 +7981,8 @@
           "text": "Unit tests: a body row with fewer cells than the header row is padded with empty cells, and a body row with more cells keeps the surplus text joined into the last column; no text is dropped and no value moves to another column.",
           "status": "PENDING",
           "evidence": [
-            "mobile/src/ui/markdown.test.ts FR29 short-row padding and surplus-join tests (.harness/evidence/M10c3-T1-verifier.log); tableLayout.test.ts defensive short/long rows (.harness/evidence/M10c3-T2-verifier.log)"
+            "mobile/src/ui/markdown.test.ts FR29 short-row padding and surplus-join tests (.harness/evidence/M10c3-T1-verifier.log); tableLayout.test.ts defensive short/long rows (.harness/evidence/M10c3-T2-verifier.log)",
+            "Cycle 1 correction C2 (commit 3d1d4e6): tableLayout normaliseRow surplus join now \" | \", matching markdown.ts fitRow (.harness/evidence/M10c3-C2-verifier.log)"
           ]
         },
         {
@@ -7996,7 +7998,8 @@
           "text": "Unit tests: a table still streaming (header only, or half a body row) renders without error, and a saved (reopened) reply's table renders the same way as a live one.",
           "status": "PENDING",
           "evidence": [
-            "markdown.test.ts streaming and every-prefix/chunked-equals-whole tests (.harness/evidence/M10c3-T1-verifier.log); tableLayout.test.ts header-only (.harness/evidence/M10c3-T2-verifier.log)"
+            "markdown.test.ts streaming and every-prefix/chunked-equals-whole tests (.harness/evidence/M10c3-T1-verifier.log); tableLayout.test.ts header-only (.harness/evidence/M10c3-T2-verifier.log)",
+            "Cycle 1 correction C1: tautological chunked-equals-whole assertion removed; saved = live rests on the single MarkdownText render path in mobile/src/app/chat.tsx"
           ]
         },
         {
@@ -8105,6 +8108,105 @@
           "attempts": 1,
           "status": "ACCEPTED",
           "commit": "30fa036"
+        },
+        {
+          "id": "M10c3-C1",
+          "scope": "markdown.test.ts: assert agreed padding of a row missing a separator; drop tautological chunk/concat check",
+          "packet": ".harness/tasks/M10c3-C1.md",
+          "paths": [
+            "mobile/src/ui/markdown.test.ts"
+          ],
+          "criteria": [
+            "M10c3-AC1",
+            "M10c3-AC4"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "test-only edits from stated assertions"
+          },
+          "tests": "cd mobile && bun test mobile/src/ui/markdown.test.ts && bun run typecheck && bun run lint",
+          "requirements": [
+            "FR29"
+          ],
+          "constraints": [],
+          "depends_on": [],
+          "findings": [
+            "cycle1-F1",
+            "cycle1-F2"
+          ],
+          "attempt_log": [
+            {
+              "role": "worker",
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "base": "929afbb",
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M10c3-C1-worker.log",
+              "note": "exit 0"
+            },
+            {
+              "role": "verifier",
+              "attempt": 1,
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M10c3-C1-verifier.log",
+              "note": "exit 0, typecheck and lint clean, tests not weakened"
+            }
+          ],
+          "attempts": 1,
+          "status": "ACCEPTED",
+          "commit": "59ac6e7"
+        },
+        {
+          "id": "M10c3-C2",
+          "scope": "tableLayout normaliseRow surplus join matches parser (\" | \")",
+          "packet": ".harness/tasks/M10c3-C2.md",
+          "paths": [
+            "mobile/src/ui/tableLayout.ts",
+            "mobile/src/ui/tableLayout.test.ts"
+          ],
+          "criteria": [
+            "M10c3-AC2"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "one-line join change plus matching expectations"
+          },
+          "tests": "cd mobile && bun test mobile/src/ui/tableLayout.test.ts && bun run typecheck && bun run lint",
+          "requirements": [
+            "FR29"
+          ],
+          "constraints": [],
+          "depends_on": [],
+          "findings": [
+            "cycle1-F3"
+          ],
+          "attempt_log": [
+            {
+              "role": "worker",
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "base": "929afbb",
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M10c3-C2-worker.log",
+              "note": "exit 0"
+            },
+            {
+              "role": "verifier",
+              "attempt": 1,
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M10c3-C2-verifier.log",
+              "note": "exit 0, typecheck and lint clean, tests not weakened"
+            }
+          ],
+          "attempts": 1,
+          "status": "ACCEPTED",
+          "commit": "3d1d4e6"
         }
       ],
       "reviews": [
@@ -8119,8 +8221,13 @@
           "review_log": ".harness/evidence/M10c3-review.log",
           "pre_correction": "949dd2dd21745b1946e56d09d1d9465ce18da27b",
           "correction_diff": "949dd2dd21745b1946e56d09d1d9465ce18da27b..HEAD",
-          "correction_files": [],
-          "files_outside_findings": "pending"
+          "correction_files": [
+            "mobile/src/ui/markdown.test.ts",
+            "mobile/src/ui/tableLayout.test.ts",
+            "mobile/src/ui/tableLayout.ts"
+          ],
+          "files_outside_findings": "none; markdown.test.ts answers F1 and F2, tableLayout.ts/.test.ts answer F3; .harness/ records (requirements.md FR29/AC23 amended per the human decision on F1) are harness state",
+          "human_decision": "F1: 'Line up, accept the gap' (human, 2026-09-30) - rows missing a separator are padded, not re-split"
         }
       ],
       "findings": [],
