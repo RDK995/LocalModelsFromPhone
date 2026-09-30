@@ -10,6 +10,7 @@ import { Platform, StyleSheet, Text, View } from "react-native";
 import type { StyleProp, TextStyle } from "react-native";
 import { parseMarkdown } from "./markdown";
 import type { Block, Inline } from "./markdown";
+import { tableLayout } from "./tableLayout";
 import { presentLink } from "./inlineLink";
 import type { LinkSource } from "./sourceLinks";
 import { SourceLogo } from "./SourceLogo";
@@ -116,23 +117,46 @@ function renderBlock(
           <Text style={[style, styles.quoteText]}>{renderInline(block.children, ctx)}</Text>
         </View>
       );
-    case "table":
+    case "table": {
+      const layout = tableLayout(block.rows);
+      if (layout.kind === "grid") {
+        return (
+          <View key={i} style={styles.list}>
+            <View style={styles.tableRow}>
+              {layout.header.map((cell, c) => (
+                <Text key={c} style={[style, styles.tableCell, styles.bold]}>
+                  {renderInline(cell, ctx)}
+                </Text>
+              ))}
+            </View>
+            {layout.rows.map((row, r) => (
+              <View key={r} style={styles.tableRow}>
+                {row.map((cell, c) => (
+                  <Text key={c} style={[style, styles.tableCell]}>
+                    {renderInline(cell, ctx)}
+                  </Text>
+                ))}
+              </View>
+            ))}
+          </View>
+        );
+      }
       return (
         <View key={i} style={styles.list}>
-          {block.rows.map((row, r) => (
-            <View key={r} style={styles.tableRow}>
-              {row.map((cell, c) => (
-                <Text
-                  key={c}
-                  style={[style, styles.tableCell, r === 0 ? styles.bold : null]}
-                >
-                  {renderInline(cell, ctx)}
+          {layout.cards.map((card, r) => (
+            <View key={r} style={styles.tableCard}>
+              {card.map((line, c) => (
+                <Text key={c} style={style}>
+                  <Text style={styles.bold}>{renderInline(line.heading, ctx)}</Text>
+                  {": "}
+                  {renderInline(line.value, ctx)}
                 </Text>
               ))}
             </View>
           ))}
         </View>
       );
+    }
     case "rule":
       return <View key={i} style={styles.rule} />;
   }
@@ -174,6 +198,13 @@ const styles = StyleSheet.create({
   quote: { borderLeftWidth: 3, borderLeftColor: "#ccc", paddingLeft: 8, marginTop: 4 },
   quoteText: { color: "#666" },
   tableRow: { flexDirection: "row", marginTop: 2 },
+  tableCard: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 4,
+    padding: 8,
+    marginTop: 4,
+  },
   tableCell: { flex: 1, paddingRight: 8 },
   rule: { height: 1, backgroundColor: "#ccc", marginVertical: 6 },
 });

@@ -81,3 +81,19 @@ describe("source logos (FR27, M10c2-T3)", () => {
     }
   });
 });
+
+describe("MarkdownText renders tables through tableLayout (FR29)", () => {
+  it("imports and calls the helper", () => {
+    expect(md).toMatch(/import\s*\{\s*tableLayout\s*\}\s*from\s*"\.\/tableLayout"/);
+    expect(md).toContain("tableLayout(block.rows)");
+  });
+  it("renders grid and card layouts with renderInline", () => {
+    expect(md).toContain("layout.kind === \"grid\"");
+    expect(md).toContain("layout.header.map");
+    expect(md).toContain("layout.rows.map");
+    expect(md).toContain("layout.cards.map");
+    expect(md).toContain("renderInline(cell, ctx)");
+    expect(md).toContain("renderInline(line.heading, ctx)");
+    expect(md).toContain("renderInline(line.value, ctx)");
+  });
+});

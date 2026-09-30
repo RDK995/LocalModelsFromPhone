@@ -1,0 +1,60 @@
+VERIFICATION: M10c3-T2
+
+TASK: Make markdown tables readable at phone width (FR29)
+- Two columns: grid layout
+- Three or more columns: cards layout (one card per body row)
+
+COMMAND RUN:
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun test src/ui/tableLayout.test.ts src/ui/markdownText.test.ts && bun run typecheck && bun run lint
+
+EXIT STATUS: 0
+
+OUTPUT:
+bun test v1.4.0 (1381054db)
+
+ 29 pass
+ 0 fail
+ 81 expect() calls
+Ran 29 tests across 2 files. [9.00ms]
+$ tsc --noEmit
+$ eslint src --max-warnings 0
+
+VERIFICATION SUMMARY:
+
+Test Execution:
+- tableLayout.test.ts: Tests verify layout logic
+  * Two-column grid layout (header + body rows, each exactly 2 cells)
+  * Three+ column cards layout (one card per body row, heading:value pairs)
+  * Inline content passed through (bold, link, code types preserved)
+  * Header-only tables don't throw
+  * Short rows get empty cells
+  * Long rows have surplus cells appended to last column with space separator
+- markdownText.test.ts: Static source checks
+  * MarkdownText imports tableLayout from ./tableLayout
+  * tableLayout(block.rows) called
+  * layout.kind === "grid" check present
+  * layout.header.map present (grid headers)
+  * layout.rows.map present (grid body rows)
+  * layout.cards.map present (cards layout)
+  * renderInline(cell, ctx) present (grid cells)
+  * renderInline(line.heading, ctx) present (card headings)
+  * renderInline(line.value, ctx) present (card values)
+
+Files Changed:
+- mobile/src/ui/tableLayout.ts (new file)
+- mobile/src/ui/tableLayout.test.ts (new file)
+- mobile/src/ui/MarkdownText.tsx (modified)
+- mobile/src/ui/markdownText.test.ts (modified)
+
+Implementation Verified:
+- tableLayout.ts exports TableLayout type (grid | cards) and tableLayout() function
+- normaliseRow() handles missing cells (empty Inline[]) and surplus cells (appended with space separator)
+- Grid layout for <= 2 columns, cards layout for >= 3 columns
+- MarkdownText.tsx case "table" calls tableLayout and renders both layouts
+- Grid: header row bold + body rows with flex: 1 cells
+- Cards: each card has tableCard style with border, radius, padding, marginTop, no horizontal ScrollView
+- Both layouts use renderInline for cell content
+- No tests weakened (only additions to markdownText.test.ts)
+- All 29 tests pass
+- TypeScript strict mode passes
+- ESLint with --max-warnings 0 passes
