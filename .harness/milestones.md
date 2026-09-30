@@ -187,7 +187,7 @@ Cycle 2: PASS, tier Mid (sonnet, review floor; correction diff b4faa0a..d15883e,
 
 ## M7c — A search that cannot be answered or runs too long ends with a clear error and its helper killed
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -201,7 +201,7 @@ C13, C14
 
 ### As-Built
 
-Pending.
+.harness/as-built/M7c.md — RECORDED; C13, C14 observed; 3 edges; 4 of 8 files attributed; no claim mismatches
 
 ### Acceptance Criteria
 
@@ -225,7 +225,7 @@ Pending.
 
 ### Review
 
-Pending.
+Cycle 1: PASS, tier Top (opus, DIFFICULT_CONCURRENCY from M7c-T1; whole milestone 06aade1..5d7b75d); M7c-AC1 PASS; 0 BLOCKER, 0 IMPORTANT, 1 OPTIONAL (recorded under Follow-ups); reviewer full validation exit 0 — .harness/evidence/M7c-review.log
 
 ### Review Cycles
 
@@ -236,6 +236,7 @@ Pending.
 - M7c-T1: runHelper also SIGKILLs the helper's process group after a normal exit (to reap leftovers); after the helper is reaped its pgid could in theory be reused by an unrelated new group leader. Very unlikely; not fixed.
 - M7c-T1: on client abort runHelper returns detail 'request aborted' mapped to 503; nobody receives it (client gone).
 - D-M7c-1: search time limit default 25 s; the C12 client timeout planned for M9 must exceed it.
+- Review cycle 1 OPTIONAL: runHelper.ts header comment (lines 4-5) and D-M7c-1 say the group SIGKILL kills Chromium, but Playwright launches Chromium in its own process group; Chromium exits because its pipe to the Playwright driver closes. Behaviour proven by failure-proof.sh; reword the comment and deviation note.
 
 ## M8 — The search service is always on, loopback only, with a documented API
 

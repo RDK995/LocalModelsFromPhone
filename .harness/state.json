@@ -5674,7 +5674,7 @@
       "architecture": "C13, C14",
       "requirements": [],
       "traces": "FR20 (unavailable), FR24 (service time limit)",
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -5682,18 +5682,19 @@
         "branch": "m7c-search-unavailable-timeout"
       },
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M7c.md",
+        "result": "RECORDED \u2014 C13, C14 observed; 3 edges; 4 of 8 files attributed; no claim mismatches"
       },
       "criteria": [
         {
           "id": "M7c-AC1",
           "text": "With both backends forced to fail, the service returns 503 search_unavailable; a search exceeding its time limit returns 504 timeout and its helper process is killed.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             ".harness/evidence/M7c-T3-verifier.log",
             ".harness/evidence/M7c-T1-verifier.log",
-            ".harness/evidence/M7c-T2-verifier.log"
+            ".harness/evidence/M7c-T2-verifier.log",
+            "Cycle-1 review PASS (opus): full validation exit 0 \u2014 .harness/evidence/M7c-review.log"
           ]
         }
       ],
@@ -5862,7 +5863,27 @@
           ]
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "PASS",
+          "scope": "WHOLE_MILESTONE",
+          "tier": "Top",
+          "model": "opus",
+          "reason_code": "DIFFICULT_CONCURRENCY",
+          "diff_range": "06aade1194d6fd1a010ed47697adf26f8a9d24c4..5d7b75d",
+          "per_criterion": {
+            "M7c-AC1": "PASS"
+          },
+          "findings": {
+            "BLOCKER": 0,
+            "IMPORTANT": 0,
+            "OPTIONAL": 1
+          },
+          "artifact": null,
+          "review_log": ".harness/evidence/M7c-review.log"
+        }
+      ],
       "findings": [],
       "validation": [
         {
@@ -5874,7 +5895,8 @@
       "follow_ups": [
         "M7c-T1: runHelper also SIGKILLs the helper's process group after a normal exit (to reap leftovers); after the helper is reaped its pgid could in theory be reused by an unrelated new group leader. Very unlikely; not fixed.",
         "M7c-T1: on client abort runHelper returns detail 'request aborted' mapped to 503; nobody receives it (client gone).",
-        "D-M7c-1: search time limit default 25 s; the C12 client timeout planned for M9 must exceed it."
+        "D-M7c-1: search time limit default 25 s; the C12 client timeout planned for M9 must exceed it.",
+        "Review cycle 1 OPTIONAL: runHelper.ts header comment (lines 4-5) and D-M7c-1 say the group SIGKILL kills Chromium, but Playwright launches Chromium in its own process group; Chromium exits because its pipe to the Playwright driver closes. Behaviour proven by failure-proof.sh; reword the comment and deviation note."
       ],
       "complexity_signals": [
         "CONCURRENCY_LIFECYCLE"
