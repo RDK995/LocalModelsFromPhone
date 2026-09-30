@@ -7955,7 +7955,7 @@
         "FR29"
       ],
       "traces": "AC23",
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -7971,25 +7971,33 @@
           "id": "M10c3-AC1",
           "text": "Unit tests: a table shaped like the 2026-09-30 phone screenshot (trend, description, source columns) renders each value under its own heading, and the diagnosed cause of that misalignment (model output shape vs. the FR26 renderer) is covered by a test that fails on the pre-fix code.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "mobile/src/ui/markdown.test.ts FR29 screenshot-shaped table test and pinning test (short row padded); fails on baseline f8bae28 per .harness/evidence/M10c3-T1-verifier.log"
+          ]
         },
         {
           "id": "M10c3-AC2",
           "text": "Unit tests: a body row with fewer cells than the header row is padded with empty cells, and a body row with more cells keeps the surplus text joined into the last column; no text is dropped and no value moves to another column.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "mobile/src/ui/markdown.test.ts FR29 short-row padding and surplus-join tests (.harness/evidence/M10c3-T1-verifier.log); tableLayout.test.ts defensive short/long rows (.harness/evidence/M10c3-T2-verifier.log)"
+          ]
         },
         {
           "id": "M10c3-AC3",
           "text": "Unit tests: a two-column table renders as a grid, and a table of three or more columns renders as one card per body row listing \"heading: value\" per column on its own line; inline formatting and links inside cells render as in FR26/FR27.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "mobile/src/ui/tableLayout.test.ts grid/cards/Inline pass-through; markdownText.test.ts static wiring checks (.harness/evidence/M10c3-T2-verifier.log)"
+          ]
         },
         {
           "id": "M10c3-AC4",
           "text": "Unit tests: a table still streaming (header only, or half a body row) renders without error, and a saved (reopened) reply's table renders the same way as a live one.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "markdown.test.ts streaming and every-prefix/chunked-equals-whole tests (.harness/evidence/M10c3-T1-verifier.log); tableLayout.test.ts header-only (.harness/evidence/M10c3-T2-verifier.log)"
+          ]
         },
         {
           "id": "M10c3-AC5",
@@ -8025,10 +8033,28 @@
           "constraints": [],
           "depends_on": [],
           "findings": [],
-          "attempt_log": [],
-          "attempts": 0,
-          "status": "PENDING",
-          "commit": null
+          "attempt_log": [
+            {
+              "role": "worker",
+              "attempt": 4,
+              "tier": "Top",
+              "model": "opus",
+              "base": "f8bae28",
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M10c3-T1-worker.log",
+              "note": "34 pass; RED on baseline 30 pass 4 fail (.harness/evidence/M10c3-T1-worker-red.log); diagnosis: two-cell body row under three-column header"
+            },
+            {
+              "role": "verifier",
+              "attempt": 4,
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M10c3-T1-verifier.log",
+              "note": "exit 0, 34 pass, typecheck and lint clean, tests not weakened; independent RED on baseline markdown.ts: 4 new tests fail incl. pinning test [3,3] vs [3,2]"
+            }
+          ],
+          "attempts": 1,
+          "status": "ACCEPTED",
+          "commit": "3a4688c"
         },
         {
           "id": "M10c3-T2",
@@ -8057,19 +8083,51 @@
           "constraints": [],
           "depends_on": [],
           "findings": [],
-          "attempt_log": [],
-          "attempts": 0,
-          "status": "PENDING",
-          "commit": null
+          "attempt_log": [
+            {
+              "role": "worker",
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "base": "f8bae28",
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M10c3-T2-worker.log",
+              "note": "29 pass; no separate red step"
+            },
+            {
+              "role": "verifier",
+              "attempt": 3,
+              "verdict": "PASS",
+              "artifact": ".harness/evidence/M10c3-T2-verifier.log",
+              "note": "exit 0, 29 pass, typecheck and lint clean, tests not weakened"
+            }
+          ],
+          "attempts": 1,
+          "status": "ACCEPTED",
+          "commit": "30fa036"
         }
       ],
       "reviews": [],
       "findings": [],
-      "validation": [],
+      "validation": [
+        {
+          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint",
+          "note": "reviewer runs once; task-level runs passed per verifier logs. On-phone rendering (M10c3-AC5) is owner-observed, not Mac-provable.",
+          "artifacts": [
+            ".harness/evidence/M10c3-T1-verifier.log",
+            ".harness/evidence/M10c3-T1-worker-red.log",
+            ".harness/evidence/M10c3-T2-verifier.log"
+          ]
+        }
+      ],
       "planned_validation": "cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint",
       "follow_ups": [
         "Source: owner-reported table follow-up recorded under M10c1 (.harness/archive/M10c1.md, Follow-ups).",
-        "Architecture deviation D-M10c3-1 (Material: no) records the Requirement Coverage addition FR29 -> C1."
+        "Architecture deviation D-M10c3-1 (Material: no) records the Requirement Coverage addition FR29 -> C1.",
+        "M10c3-AC5 owed: owner phone observation in Expo Go (3+-column table as one card per row, 2-column table as aligned grid, no sideways scrolling) cannot be claimed Mac-side.",
+        "Parser cannot restore a value the model wrote without a column separator (e.g. \"trend \u2014 description | source\" under a 3-column header): row is padded so columns stay aligned, but source sits under the 2nd heading and the last is empty. Splitting on dashes/colons/full-width pipes would be guessing; product decision left to owner.",
+        "Surplus-cell join separator differs: parser joins with \" | \" (markdown.ts fitRow), tableLayout defensive path joins with \" \" text node; the parser path is the one reached in practice.",
+        "milestones.md is 615+ lines; archiving not possible this phase: only settled unarchived milestone is M10c2 (most recently settled, protected)."
       ],
       "complexity_signals": []
     },

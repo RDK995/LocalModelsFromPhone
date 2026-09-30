@@ -267,7 +267,7 @@ Cycle 1: PASS — tier Mid, model sonnet, reason_code ORDINARY_IMPLEMENTATION (h
 
 ## M10c3 — Tables in answers line up under their headings and stay readable at phone width
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -297,10 +297,19 @@ d4a4e67e5da0803bfb3874ded201202ba7c2dd04 on m10c3-readable-tables
 
 ### Evidence
 
+- T1 — table rows fit the header (C1 parser, markdown.ts)   Top (opus, AMBIGUOUS: cause undiagnosed, screenshot output not on disk), attempt 4, PASS — commit 3a4688c. Worker `.harness/evidence/M10c3-T1-worker.log`, RED on baseline `.harness/evidence/M10c3-T1-worker-red.log`, verifier `.harness/evidence/M10c3-T1-verifier.log` (exit 0, 34 pass; independent RED on baseline: 4 new tests fail, pinning test rows [3,3] vs [3,2]).
+- T2 — grid / card layout (C1 renderer, tableLayout.ts + MarkdownText.tsx)   Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — commit 30fa036. Worker `.harness/evidence/M10c3-T2-worker.log`, verifier `.harness/evidence/M10c3-T2-verifier.log` (exit 0, 29 pass).
+- Diagnosis (T1, from code plus two local nemotron3:33b samples that were well-formed): the 2026-09-30 misalignment matches a body row with only two cells under a three-column header (trend and description sharing cell 1); the old parser kept per-row cell counts and MarkdownText gave each cell `flex: 1`, so two cells spread across three columns. Pinned in markdown.test.ts.
+- M10c3-AC1: markdown.test.ts screenshot-shaped table + pinning test (fails on baseline).
+- M10c3-AC2: markdown.test.ts short-row padding and surplus join (" | "); tableLayout.test.ts defensive short/long rows.
+- M10c3-AC3: tableLayout.test.ts grid (2 cols) / cards (3+ cols, heading: value) / Inline pass-through; markdownText.test.ts static wiring (renderInline for cells, no horizontal scroll).
+- M10c3-AC4: markdown.test.ts streaming (header only, header+separator, half row), every-prefix and chunked-equals-whole parse; tableLayout.test.ts header-only.
+- M10c3-AC5: OWED — owner phone observation in Expo Go; cannot be claimed Mac-side.
+
 
 ### Validation
 
-Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint`
+Milestone command (reviewer to run; task-level runs passed per verifier logs above): `cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint`
 
 ### Review
 
@@ -314,6 +323,10 @@ Pending.
 
 - Source: owner-reported table follow-up recorded under M10c1 (.harness/archive/M10c1.md, Follow-ups).
 - Architecture deviation D-M10c3-1 (Material: no) records the Requirement Coverage addition FR29 -> C1.
+- M10c3-AC5 owed: owner phone observation in Expo Go (3+-column table as one card per row, 2-column table as aligned grid, no sideways scrolling).
+- A value the model wrote without a column separator (e.g. "trend — description | source" under a 3-column header) cannot be put back under its own heading: the row is padded so columns stay aligned, but the source sits under the 2nd heading and the last is empty. Splitting on dashes, colons or full-width pipes would be guessing; owner decision.
+- Surplus-cell join differs between parser (" | ", markdown.ts fitRow) and tableLayout's defensive path (" " text node); only the parser path is reached in practice.
+- milestones.md exceeds 400 lines; nothing archivable this phase (M10c2 is the most recently settled milestone and protected; the rest are open).
 
 ## M10c4 — Broad web questions draw on at least three different websites
 
