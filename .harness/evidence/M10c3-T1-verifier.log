@@ -1,0 +1,67 @@
+=== M10c3-T1 Verification Run ===
+Date: 2026-09-30
+Commit: f8bae28 (baseline for diff)
+Working tree: M10c3-T1 changes on top
+
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun test src/ui/markdown.test.ts && bun run typecheck && bun run lint
+
+Exit Status: 0
+
+Output:
+bun test v1.4.0 (1381054db)
+
+ 34 pass
+ 0 fail
+ 1955 expect() calls
+Ran 34 tests across 1 file. [100.00ms]
+$ tsc --noEmit
+$ eslint src --max-warnings 0
+
+=== RED Run (baseline parser against new tests) ===
+Baseline: f8bae28:mobile/src/ui/markdown.ts (splitRow without fitRow)
+Test file: Current markdown.test.ts with new AC tests
+
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun test src/ui/markdown.test.ts
+
+Exit Status: 1 (tests failed)
+
+Key failures:
+- "FR29: a body row with fewer cells than the header is padded..." 
+  Expected [3,3] but received [3,2]
+
+- "FR29: surplus body cells are joined into the last column..."
+  Expected cells joined as "2 | 3 | 4" but received separate cells [2], [3], [4]
+
+- "FR29: a table still streaming parses and keeps header width"
+  Expected empty cells [] for missing columns but received nothing
+
+- "FR29: every streamed prefix of a table parses with header-width rows..."
+  Expected row.length to equal header width (3) but received 1
+
+Summary:
+ 30 pass
+ 4 fail
+ 1421 expect() calls
+
+=== Acceptance Criteria Verification ===
+
+AC1: Pinning test for diagnosed cause
+- Test "FR29: a body row with fewer cells than the header is padded, so cells stay under their headings"
+- Diagnosis comment above test explains: body row with TWO cells (missing separator) produces reported misalignment
+- Comment details: "trend and description together in column 1, source under What's happening, Source empty"
+- Comment further explains: old splitRow kept per-row cell count, MarkdownText uses flex:1, so 2 cells stretched to 3 columns
+- RED run confirms test FAILS on baseline ([3,2] instead of [3,3])
+
+AC2: Short rows padded, surplus joined
+- "FR29: a body row with fewer cells than the header is padded..." - padded test case "| x |" produces [["x"], [], []]
+- "FR29: surplus body cells are joined into the last column..." - surplus test "| 1 | 2 | 3 | 4 |" produces [["1"], ["2 | 3 | 4"]]
+- Both fail on RED, pass on current code
+
+AC4: Streaming tables parse correctly
+- "FR29: a table still streaming parses and keeps header width" - tests header-only, header+sep, header+sep+partial row
+- "FR29: every streamed prefix of a table parses with header-width rows, and the whole text parses the same however it arrived" 
+  - Tests all prefixes of a multi-row table
+  - Tests idempotency (streamed vs all-at-once produce identical parse)
+- Both fail on RED, pass on current code

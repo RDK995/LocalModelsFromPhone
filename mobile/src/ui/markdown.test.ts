@@ -106,6 +106,85 @@ describe("blocks", () => {
   test("table header without a separator yet is a paragraph", () => {
     expect(parseMarkdown("| A | B |")[0]?.type).toBe("paragraph");
   });
+
+  const TREND_HEAD = "| Trend | What's happening | Source |\n|---|---|---|\n";
+  const tableRows = (src: string): Inline[][][] => {
+    const b = parseMarkdown(src)[0];
+    if (b?.type !== "table") throw new Error(`expected a table, got ${b?.type}`);
+    return b.rows;
+  };
+
+  test("FR29: a trend / description / source table puts each value under its own heading", () => {
+    expect(tableRows(`${TREND_HEAD}| **AI rules** | Governments draft laws. | [Reuters](https://reuters.com) |`)).toEqual([
+      [[t("Trend")], [t("What's happening")], [t("Source")]],
+      [[bold(t("AI rules"))], [t("Governments draft laws.")], [link("https://reuters.com", t("Reuters"))]],
+    ]);
+  });
+
+  // Diagnosis (M10c3-T1, owner report 2026-09-30): the reported picture -- trend and description
+  // together in column 1, the source under "What's happening", the Source column empty -- is what a
+  // body row with only TWO cells produces when the header has three. The trend/description separator
+  // was missing or not a real cell separator (an em-dash or colon instead of "|", an escaped "\|", or
+  // a look-alike such as the full-width "｜"). The old splitRow kept every row at the cell count its
+  // text had, and MarkdownText gives each cell of a row `flex: 1`, so the two cells stretched across
+  // the whole row (each half the width) instead of sitting in the header's first two of three columns.
+  // Well-formed model output (checked against the local model) parses correctly, so the fix is in the
+  // parser: every body row now has exactly the header's cell count.
+  test("FR29: a body row with fewer cells than the header is padded, so cells stay under their headings", () => {
+    for (const merged of ["**AI rules** — Governments draft laws.", "**AI rules** \\| Governments draft laws."]) {
+      const rows = tableRows(`${TREND_HEAD}| ${merged} | [Reuters](https://reuters.com) |`);
+      expect(rows.map((r) => r.length)).toEqual([3, 3]);
+      expect(rows[1]?.[1]).toEqual([link("https://reuters.com", t("Reuters"))]);
+      expect(rows[1]?.[2]).toEqual([]);
+    }
+    expect(tableRows("| A | B | C |\n|---|---|---|\n| x |")).toEqual([
+      [[t("A")], [t("B")], [t("C")]],
+      [[t("x")], [], []],
+    ]);
+  });
+
+  test("FR29: surplus body cells are joined into the last column, text kept and nothing shifted", () => {
+    expect(tableRows("| A | B |\n|---|---|\n| 1 | 2 | 3 | 4 |")).toEqual([
+      [[t("A")], [t("B")]],
+      [[t("1")], [t("2 | 3 | 4")]],
+    ]);
+    // A pipe inside a link label no longer tears the link apart.
+    expect(tableRows(`${TREND_HEAD}| AI | Laws | [Reuters | Tech](https://reuters.com) |`)[1]).toEqual([
+      [t("AI")],
+      [t("Laws")],
+      [link("https://reuters.com", t("Reuters | Tech"))],
+    ]);
+  });
+
+  test("FR29: a table still streaming parses and keeps header width", () => {
+    expect(parseMarkdown("| Trend | What's happening | Source |")[0]?.type).toBe("paragraph");
+    expect(tableRows(TREND_HEAD)).toEqual([[[t("Trend")], [t("What's happening")], [t("Source")]]]);
+    expect(tableRows(`${TREND_HEAD}| a | b`)).toEqual([
+      [[t("Trend")], [t("What's happening")], [t("Source")]],
+      [[t("a")], [t("b")], []],
+    ]);
+  });
+
+  test("FR29: every streamed prefix of a table parses with header-width rows, and the whole text parses the same however it arrived", () => {
+    const full =
+      `Here you go:\n\n${TREND_HEAD}` +
+      "| **AI rules** | Governments draft laws. | [Reuters](https://reuters.com) |\n" +
+      "| Heat — records fall | [BBC](https://bbc.com) |\n" +
+      "| Markets | Rates | [FT](https://ft.com) | extra |\n\nDone.";
+    for (let n = 0; n <= full.length; n++) {
+      const blocks = parseMarkdown(full.slice(0, n));
+      for (const b of blocks) {
+        if (b.type !== "table") continue;
+        const width = b.rows[0]?.length;
+        for (const row of b.rows) expect(row.length).toBe(width as number);
+      }
+    }
+    const chunks = full.match(/[\s\S]{1,7}/g) ?? [];
+    let streamed = "";
+    for (const c of chunks) streamed += c;
+    expect(parseMarkdown(streamed)).toEqual(parseMarkdown(full));
+    expect(tableRows(full.slice(full.indexOf("| Trend"))).map((r) => r.length)).toEqual([3, 3, 3, 3]);
+  });
 });
 
 describe("inline", () => {

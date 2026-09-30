@@ -1,0 +1,93 @@
+bun test v1.4.0 (1381054db)
+
+src/ui/markdown.test.ts:
+131 |   // Well-formed model output (checked against the local model) parses correctly, so the fix is in the
+132 |   // parser: every body row now has exactly the header's cell count.
+133 |   test("FR29: a body row with fewer cells than the header is padded, so cells stay under their headings", () => {
+134 |     for (const merged of ["**AI rules** — Governments draft laws.", "**AI rules** \\| Governments draft laws."]) {
+135 |       const rows = tableRows(`${TREND_HEAD}| ${merged} | [Reuters](https://reuters.com) |`);
+136 |       expect(rows.map((r) => r.length)).toEqual([3, 3]);
+                                              ^
+error: expect(received).toEqual(expected)
+
+@@ -2,3 +2,3 @@
+    3,
+-   3,
++   2,
+  ]
+
+- Expected  - 1
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:136:41)
+(fail) blocks > FR29: a body row with fewer cells than the header is padded, so cells stay under their headings [0.36ms]
+142 |       [[t("x")], [], []],
+143 |     ]);
+144 |   });
+145 | 
+146 |   test("FR29: surplus body cells are joined into the last column, text kept and nothing shifted", () => {
+147 |     expect(tableRows("| A | B |\n|---|---|\n| 1 | 2 | 3 | 4 |")).toEqual([
+                                                                       ^
+error: expect(received).toEqual(expected)
+
+@@ -24,3 +24,15 @@
+        {
+-         "text": "2 | 3 | 4",
++         "text": "2",
++         "type": "text",
++       },
++     ],
++     [
++       {
++         "text": "3",
++         "type": "text",
++       },
++     ],
++     [
++       {
++         "text": "4",
+          "type": "text",
+
+- Expected  - 1
++ Received  + 13
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:147:66)
+(fail) blocks > FR29: surplus body cells are joined into the last column, text kept and nothing shifted [0.12ms]
+157 |   });
+158 | 
+159 |   test("FR29: a table still streaming parses and keeps header width", () => {
+160 |     expect(parseMarkdown("| Trend | What's happening | Source |")[0]?.type).toBe("paragraph");
+161 |     expect(tableRows(TREND_HEAD)).toEqual([[[t("Trend")], [t("What's happening")], [t("Source")]]]);
+162 |     expect(tableRows(`${TREND_HEAD}| a | b`)).toEqual([
+                                                    ^
+error: expect(received).toEqual(expected)
+
+@@ -34,3 +34,2 @@
+      ],
+-     [],
+    ],
+
+- Expected  - 1
++ Received  + 0
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:162:47)
+(fail) blocks > FR29: a table still streaming parses and keeps header width [0.10ms]
+174 |     for (let n = 0; n <= full.length; n++) {
+175 |       const blocks = parseMarkdown(full.slice(0, n));
+176 |       for (const b of blocks) {
+177 |         if (b.type !== "table") continue;
+178 |         const width = b.rows[0]?.length;
+179 |         for (const row of b.rows) expect(row.length).toBe(width as number);
+                                                           ^
+error: expect(received).toBe(expected)
+
+Expected: 3
+Received: 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:179:54)
+(fail) blocks > FR29: every streamed prefix of a table parses with header-width rows, and the whole text parses the same however it arrived [0.56ms]
+
+ 30 pass
+ 4 fail
+ 1421 expect() calls
+Ran 34 tests across 1 file. [100.00ms]

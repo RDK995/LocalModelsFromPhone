@@ -347,6 +347,17 @@ function splitRow(line: string): string[] {
   return cells;
 }
 
+/**
+ * Give a body row exactly the header's cell count (FR29), so every cell renders under its own
+ * heading: a short row (or one still streaming) gets empty cells at the end; surplus cells are
+ * joined back into the last column with " | " so no text is dropped and no value changes column.
+ */
+function fitRow(cells: string[], width: number): string[] {
+  if (cells.length < width) return [...cells, ...Array<string>(width - cells.length).fill("")];
+  if (cells.length > width) return [...cells.slice(0, width - 1), cells.slice(width - 1).join(" | ")];
+  return cells;
+}
+
 function scanBlocks(source: string): RawBlock[] {
   const lines = source.split(/\r?\n/);
   const blocks: RawBlock[] = [];
@@ -410,10 +421,11 @@ function scanBlocks(source: string): RawBlock[] {
     }
 
     if (isTableStart(lines, i)) {
-      const rows = [splitRow(line)];
+      const header = splitRow(line);
+      const rows = [header];
       i += 2;
       for (; i < lines.length && !isBlank(lines[i] as string) && (lines[i] as string).includes("|"); i++) {
-        rows.push(splitRow(lines[i] as string));
+        rows.push(fitRow(splitRow(lines[i] as string), header.length));
       }
       blocks.push({ type: "table", rows });
       continue;
