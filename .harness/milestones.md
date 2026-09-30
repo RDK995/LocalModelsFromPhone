@@ -156,52 +156,7 @@ Status: DONE
 
 The search service runs under its own per-user LaunchAgent (com.harness.search) that restarts it after it is killed, answers only on loopback with no token and no Tailscale Serve mapping, and its HTTP API is documented so OpenCode can use it later. Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; the LaunchAgent follows the existing C9 pattern and changes no existing lifecycle ownership - not split).
 
-Owns: FR25. Traces to: AC19.
-
-### Architecture
-
-C9, C13
-
-### As-Built
-
-.harness/as-built/M8.md — RECORDED: C9, C13 observed; 3 edges; 6 of 6 files attributed; no claim mismatches
-
-### Acceptance Criteria
-
-- [x] **M8-AC1**: The search service runs under the per-user LaunchAgent com.harness.search and answers GET /v1/health on 127.0.0.1:7790; killing its process makes launchd restart it and it answers again.
-- [x] **M8-AC2**: The service is not reachable on the Mac's tailnet address or LAN address, no Tailscale Serve mapping points at it, and it requires no token.
-- [x] **M8-AC3**: The HTTP API (search, read, health: requests, responses, errors) is documented in the repository, and each documented route answers as documented on loopback.
-
-### Baseline
-
-1057559a3dad47f2107e7e9b5817f6f822a0a6ad on m8-search-always-on-loopback
-
-### Evidence
-
-- M8-T1 — C9 search LaunchAgent + installers        Cheap (haiku), attempt 1, PASS — commit 80b0742; .harness/evidence/M8-T1-verifier.log (exit 0; red .harness/evidence/M8-T1-red.log)
-- M8-T2 — search/API.md                              Cheap (haiku), attempt 1, PASS — commit 9b8fe66; .harness/evidence/M8-T2-verifier.log (exit 0, 131 pass; verifier FAIL on packet-mandated test-only env-var mention overridden by orchestrator — see state.json)
-- M8-T3 — ops/scripts/search-service-proof.sh        Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — commit c7980a0; .harness/evidence/M8-T3-verifier.log (exit 0; red .harness/evidence/M8-T3-red.log)
-- M8-AC1: launchd pid 48055 -> 48174 after kill -9, /v1/health 200 again; sole listener 127.0.0.1:7790 (M8-T3-verifier.log)
-- M8-AC2: tailnet 100.82.139.85:7790 and LAN 192.168.0.179:7790 refused (curl exit 7); tailscale serve status maps only 7787/7789; no Authorization header sent (M8-T3-verifier.log)
-- M8-AC3: search/API.md; 14 live route/error checks match it, each status/code grepped in the doc (M8-T3-verifier.log)
-
-### Validation
-
-`cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/verify-ops-install.sh && bash ops/scripts/search-service-proof.sh && (cd search && bun test)`
-
-### Review
-
-Cycle 1: PASS — tier Mid (sonnet, ORDINARY_IMPLEMENTATION), whole milestone, diff 1057559..9eb03d2; M8-AC1 PASS, M8-AC2 PASS, M8-AC3 PASS; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL; validation exit 0 — .harness/evidence/M8-review.log
-
-### Review Cycles
-
-0
-
-### Follow-ups
-
-- search/API.md 'Environment Variables' paragraph repeats the claim that the process-group SIGKILL kills Chromium (M7c OPTIONAL finding: Chromium is in its own group and exits when its pipe closes) and has a typo 'help process group'.
-- search-service-proof.sh live POST /v1/search depends on the public ddgs backend; a transient 503/504 fails the proof (by design).
-- Live proof leaves com.harness.search installed and loaded (the intended always-on state).
+Detail: `.harness/archive/M8.md`
 
 ## M9 — The server answers a web-enabled chat by running the model's search tool loop
 
@@ -266,7 +221,7 @@ Cycle 1: PASS — tier Mid (sonnet, ORDINARY_IMPLEMENTATION), whole milestone, d
 
 ## M10 — The phone has a per-chat web-search switch and shows steps and sources live
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -291,9 +246,16 @@ Pending.
 
 ### Baseline
 
+e98f0601a4330343f9a1063ce48e154d60109d8a on m10-phone-web-switch
 
 ### Evidence
 
+Task plan (packets in .harness/tasks/):
+- M10-T1 — C2 step/sources events, accumulator, web flag   Mid (sonnet, ORDINARY_IMPLEMENTATION) — dispatched
+- M10-T2 — C3 switch + steps/sources persisted, session    Mid (sonnet, ORDINARY_IMPLEMENTATION) — planned
+- M10-T3 — C1 view-model: labels, switch state             Cheap (haiku, BOUNDED_LOW_RISK) — planned
+- M10-T4 — C1 chat.tsx switch, steps, sources in Safari    Mid (sonnet, ORDINARY_IMPLEMENTATION) — planned
+- M10-T5 — web-switch-proof.sh live proof                  Mid (sonnet, ORDINARY_IMPLEMENTATION) — planned
 
 ### Validation
 
@@ -309,7 +271,8 @@ Pending.
 
 ### Follow-ups
 
-None.
+- Size check at pickup: 4 criteria, one signal (IMPLEMENTATION_PLUS_LIVE_PROOF); seam check: the phone observation proves the same outcome - not split.
+- milestones.md stays above 400 lines after archiving M8: M9 (most recently settled), M10-M13 (open) and M5a (BLOCKED) are protected.
 
 ## M11 — Web replies are saved, resume after a drop, and keep page text out of later prompts
 
