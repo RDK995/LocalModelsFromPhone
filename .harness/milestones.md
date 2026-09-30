@@ -267,7 +267,7 @@ Cycle 1: PASS — tier Mid, model sonnet, reason_code ORDINARY_IMPLEMENTATION (h
 
 ## M10c3 — Tables in answers line up under their headings and stay readable at phone width
 
-Status: BLOCKED
+Status: REVIEW
 
 ### Outcome
 
@@ -348,6 +348,8 @@ The 2-column grid is unreadable on the device. Unit tests do not catch it (they 
 
 Recommended decision:
 Authorise one further bounded fix cycle scoped to the 2-column grid on the device only: diagnose and fix the collapsed bubble/clipped cells (e.g. grid width sizing inside the chat bubble), add a test that would have failed on this shape where one can be written, then owner re-observation of a 2-column table (AC5 attempt 3) and a fresh review. Alternative: render 2-column tables as cards too (amend FR29/AC23, M10c3-AC3 and M10c3-AC5 to drop the grid), which reuses the layout already proven on the phone. Not recommended: accepting AC5 as-is.
+
+Human decision 2026-09-30 (owner, verbatim choice "One more fix round (Recommended)", chosen over "Use cards for all tables"): authorise ONE further bounded fix cycle (fix cycle 3) limited to the 2-column grid rendering on the device (collapsed bubble, clipped cells), with a test that fails first where one can be written, then owner phone re-observation of AC5 (attempt 3, capturing the 2-column answer's raw text), then ONE further fresh review (cycle 3). Named review override: the cap for M10c3 is raised from 2 to 3 cycles for this purpose only; if cycle 3 does not pass, escalate again. Input to fix cycle 3: .harness/reviews/M10c3-cycle2.md plus .harness/evidence/M10c3-AC5-owner-phone-2.log/.png/-2b.png.
 
 ### Review Cycles
 
