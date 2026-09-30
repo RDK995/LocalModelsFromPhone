@@ -420,3 +420,19 @@ normal exit, so Playwright's driver and Chromium die with the helper. C14 gains 
 Why: I17 says the helper is "killed by C13 on timeout or abort"; killing only the helper PID leaves
 Chromium behind. The limit value and hooks are implementation detail; no component boundary,
 technology or responsibility changes. The later C12 client timeout (M9) must exceed 25 s.
+
+### D-M10c-1 — The phone fetches each website's own icon directly (new edge C1 -> C15)
+
+Milestone: M10c (planned 2026-09-30; FR26-FR28 split into M10b, M10c, M10d)
+Material: yes
+Change: C1 gains a direct HTTPS request to the public web (C15) for a source site's own icon,
+outside the tailnet, and caches fetched icons on the phone (C3 or an equivalent on-device cache),
+falling back to a bundled globe icon. Until now the phone talked only to the Mac over the tailnet
+(Overview: "two halves joined only by the tailnet"). FR26-FR28 are also not yet in the
+Requirement Coverage table: FR26 -> C1; FR27 -> C1, C3, C15; FR28 -> C1.
+Why: FR27 requires "the site's own icon, fetched by the phone directly from that website (no
+third-party logo/favicon service)". Agreement: this is the human's own decision recorded in
+`.harness/requirements.md` Decisions ("Website's own logo, not a globe icon (human, 2026-09-30),
+fetched by the phone directly from the site; a third-party logo service (e.g. Google) was
+rejected"). Recorded at planning so it is not a silent departure; to be confirmed as accepted
+before M10c completes.

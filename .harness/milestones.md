@@ -166,58 +166,7 @@ Status: DONE
 
 POST /v1/chat with web:true makes the server offer web_search and read_page to the resident model through Ollama tool calling, with the current date, run each call against the search service, stream step and sources events, and cap a reply at 10 tool calls; GET /v1/state reports each model's tools capability. Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; the tool loop runs inside the existing generation lifecycle, and Stop/resume interactions are M11 and M12 - not split).
 
-Owns: FR19. Traces to: AC13 (switch off), AC14 (server half), AC17 (10-call cap), FR18 (capability gate).
-
-### Architecture
-
-C4, C5, C6, C7, C12
-
-### As-Built
-
-.harness/as-built/M9.md — RECORDED: C4, C5, C6, C7, C12 observed; 6 edges; 14 of 16 files attributed; no claim mismatches
-
-### Acceptance Criteria
-
-- [x] **M9-AC1**: GET /v1/state reports each model's tools capability from Ollama /api/show, and POST /v1/chat with web:true for a resident model without tools returns 409 tools_unsupported (proven with a stubbed capability check if every installed model has tools).
-- [x] **M9-AC2**: With web:true, a prompt asking for current information against the live resident model makes the server offer web_search and read_page with a note of the current date; the SSE stream carries at least one step event (started, then its final status), a sources event before done, and the final answer.
-- [x] **M9-AC3**: With web absent or false, the Ollama chat request carries no tools and the search service receives no request.
-- [x] **M9-AC4**: A reply is capped at 10 tool calls: after the 10th the tools are withdrawn and the model gives its answer.
-
-### Baseline
-
-9830d5c60f43e7761b9dbd48fea4e377713734cb on m9-server-web-tool-loop
-
-### Evidence
-
-Task plan (packets in .harness/tasks/):
-- M9-T1 — C7 chat tools + tool_calls              Cheap (haiku, BOUNDED_LOW_RISK), attempt 1, PASS — .harness/evidence/M9-T1-verifier.log (exit 0, 114 pass; full suite 128 pass, tsc clean; red M9-T1-red.log)
-- M9-T2 — C12 server/src/web/tools.ts             Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — .harness/evidence/M9-T2-verifier.log (exit 0, 14 pass; red M9-T2-red.log)
-- M9-T3 — C5+C4 tools capability, 409 gate (AC1)  Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, worker FAIL on mobile tsc only (12 Model fixtures outside allowed files: packet scoping gap) → repaired by T3b; verifier PASS on combined tree — .harness/evidence/M9-T3-verifier.log (exit 0, 138 server pass, server+mobile tsc 0; red M9-T3-red.log)
-- M9-T3b — mobile Model fixtures gain tools:false     Cheap (haiku, BOUNDED_LOW_RISK), attempt 1, PASS — verified with T3 (23 mobile tests pass; red M9-T3b-red.log)
-- M9-T4 — C6+C4 tool loop, 10-call cap (AC3,AC4)  Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — .harness/evidence/M9-T4-verifier.log (exit 0, 148 server pass, server+mobile tsc 0; red M9-T4-red.log; server.ts/index.ts unchanged)
-- M9-T5 — web-chat-proof.sh live proof (AC1-AC3)  Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS — .harness/evidence/M9-T5-verifier.log (full Tests exit 0: 148 pass, tsc 0, live AC1/AC2/AC3 PASS on nemotron3:33b; SSE M9-T5-sse.log, proxy logs M9-T5-ollama-proxy.jsonl / M9-T5-search-proxy.jsonl; red M9-T5-red.log)
-
-All tasks accepted (continuation 2 completed T4 and T5). Criteria are checked off only by the reviewer.
-
-### Validation
-
-`cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck && bash scripts/web-chat-proof.sh` — exit 0 (verifier run, .harness/evidence/M9-T5-verifier.log). Also `cd mobile && npx tsc --noEmit` exit 0 (.harness/evidence/M9-T4-verifier.log). The live proof needs Ollama with a tools-capable model already loaded and the search service on 127.0.0.1:7790.
-
-### Review
-
-Cycle 1: PASS — tier Mid (sonnet, ORDINARY_IMPLEMENTATION), whole milestone, diff 9830d5c..5a13c8a; M9-AC1 PASS, M9-AC2 PASS, M9-AC3 PASS, M9-AC4 PASS; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL; validation exit 0 — .harness/evidence/M9-review.log, .harness/evidence/M9-review-live.log
-
-### Review Cycles
-
-0
-
-### Follow-ups
-
-- Size check at pickup: 4 criteria, one signal (IMPLEMENTATION_PLUS_LIVE_PROOF); seam check on the capability gate done, not split (see state.json follow_ups).
-- milestones.md stays above 400 lines after archiving M7c: M8 (most recently settled) and M5a (BLOCKED) are protected.
-- R8: tool-calling quality varies by model; acceptance is proven on at least one installed model, others observed.
-- Live proof relies on a tools-capable model already loaded in Ollama; nemotron3:33b called tools on the second of up to three prompts (R8).
-- server/src/index.ts gained PHONE_MODELS_OLLAMA_URL / PHONE_MODELS_SEARCH_URL overrides (defaults unchanged) for the proof's recording proxies.
+Detail: `.harness/archive/M9.md`
 
 ## M10 — The phone has a per-chat web-search switch and shows steps and sources live
 
@@ -289,6 +238,140 @@ Cycle 2: PASS — whole milestone (widened: the correction changed files no cycl
 - Review cycle 1 F2 (OPTIONAL, not routed): the capability check runs only on screen focus, so a model change while the chat is open is not seen until refocus (the send-time gate from M10-C1 now stops a wrong web request regardless); web steps use array index keys.
 - Owner phone check still owed (not provable Mac-side; reviewer graded AC1/AC3/AC4 on Mac evidence): switch visible and off by default incl. an older chat; on-state survives force-quitting Expo Go; a today's-news prompt shows live steps that fold into "Show web steps (n)"; a Sources link opens in Safari; screenshot.
 - The live proof's model made no read_page call, so a live "Reading: <domain>" step was not seen Mac-side (read labels are unit-tested).
+
+## M10b — Assistant answers show formatted text instead of raw markdown
+
+Status: TODO
+
+### Outcome
+
+Every assistant answer on the phone - web or not, streaming or already saved - renders its markdown (bold, italics, headings, lists, inline code and code blocks, links) with no raw markup visible, and half-written markup mid-stream never breaks the view; links show as plain non-tappable text until M10c adds source logos, and thinking stays plain text. Split at planning (2026-09-30) from one FR26-FR28 milestone because of operational-complexity signals MULTIPLE_OUTCOMES + IMPLEMENTATION_PLUS_LIVE_PROOF (a required split; WORKER_TASKS_GT_6 also anticipated); parts: M10b formatted answers (AC20), M10c inline source logos (AC21), M10d collapsed source list (AC22). Each part keeps one signal: IMPLEMENTATION_PLUS_LIVE_PROOF.
+
+Owns: FR26. Traces to: AC20.
+
+### Architecture
+
+C1
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M10b-AC1**: An assistant answer containing bold, a heading, a list, inline code and a link renders with no raw markdown characters visible, both for a newly streamed reply and for a reply saved before this change; a reply mid-stream with unterminated markup renders without error.
+
+### Baseline
+
+
+### Evidence
+
+
+### Validation
+
+Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/markdown-render-proof.sh`
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+- The markdown renderer must be pure JavaScript and Expo Go-compatible (no native module; requirements Constraints). If it adds a new dependency, record that technology choice under Deviations in .harness/architecture.md before M10b completes.
+- Links render as plain, non-tappable text in M10b (FR27's rule for links that are not sources); M10c adds the logo for links matching the reply's sources.
+
+## M10c — Links to a web answer's sources show the site's own logo and open in Safari
+
+Status: TODO
+
+### Outcome
+
+In a web answer, a link whose URL matches one of that reply's saved sources (ignoring scheme, a leading www. and a trailing slash) shows its text followed by the website's own logo, fetched by the phone directly from the site and cached on the phone, with a globe icon when none loads; tapping the logo opens the page in Safari. Any other link stays plain, non-tappable text, and no third-party logo service is called. Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; split from the FR26-FR28 plan, see M10b). Architecture deviation D-M10c-1 (phone fetches site icons from the public web) is recorded.
+
+Owns: FR27. Traces to: AC21.
+
+### Architecture
+
+C1, C3, C15
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M10c-AC1**: In a web answer, a link whose URL matches a saved source (including a www./trailing-slash/scheme variant) shows the site's logo after its text and tapping it opens that page in Safari; a link not among the sources (e.g. https://www.msn.com/...) and a link in a non-web answer are plain, non-tappable text with no logo; a site with no reachable logo shows the globe icon. No third-party logo service is called.
+
+### Baseline
+
+
+### Evidence
+
+
+### Validation
+
+Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/source-logo-proof.sh`
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+- Architecture deviation D-M10c-1 (new edge C1 -> C15: the phone fetches each site's own icon directly) is recorded as Material: yes, grounded in the human's 2026-09-30 requirements decision; confirm it is accepted before M10c completes.
+- A logo failing to load must never block or break the answer (FR27).
+
+## M10d — A web answer's sources start folded as "Sources (n)", each its own tappable entry
+
+Status: TODO
+
+### Outcome
+
+The source list at the end of a web answer starts collapsed behind a "Sources (n)" header that expands and collapses on tap (not remembered when the chat is reopened), and each source is its own entry - site logo as in M10c plus page title - opening in Safari, never merged with another source into one link. Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; split from the FR26-FR28 plan, see M10b).
+
+Owns: FR28. Traces to: AC22.
+
+### Architecture
+
+C1
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M10d-AC1**: A web answer's sources start collapsed as "Sources (n)", expand and collapse on tap, and each source is its own tappable entry (logo + title) opening in Safari - including a source set shaped like the 2026-09-30 phone screenshot in which several sources rendered glued into one link. Proven by unit tests, a Mac-side live proof, and the owner's phone screenshot.
+
+### Baseline
+
+
+### Evidence
+
+
+### Validation
+
+Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/sources-list-proof.sh`
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+- Reuses M10c's site-logo component (FR27 logo and globe fallback); two sources on the same site each get their own entry with the same logo.
 
 ## M11 — Web replies are saved, resume after a drop, and keep page text out of later prompts
 

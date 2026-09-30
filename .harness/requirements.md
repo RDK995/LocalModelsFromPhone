@@ -17,6 +17,10 @@ the web and read pages. All searching and page reading run on the Mac, free, wit
 key or payment. The search capability is a separate loopback-only service so that OpenCode, which
 will join the harness later as its coding agent, can share it.
 
+**Readable answers and inline sources (FR26–FR28, added 2026-09-30):** after using M10 on the
+phone, the owner asked for formatted answers, a small site logo beside each sourced fact that opens
+the page, and the source list folded away at the bottom.
+
 ## Functional Requirements
 
 - [FR1] **Model list.** The app lists every model installed in Ollama (`GET /api/tags`) by its
@@ -118,6 +122,26 @@ will join the harness later as its coding agent, can share it.
   token (loopback-only is the boundary) and is not exposed via Tailscale Serve. It is designed so
   OpenCode can later use it (e.g. via an MCP or custom-tool wrapper); integrating OpenCode is not
   part of this work.
+- [FR26] **Formatted answers.** Every assistant answer — web or not, including replies already
+  saved on the phone — renders its markdown (bold, italics, headings, ordered/unordered lists,
+  inline code/code blocks, links) instead of showing the raw markup (`**`, `#`, `[text](url)`).
+  Rendering works while the reply is still streaming (incomplete markup never breaks the view).
+  The collapsed thinking section (FR10) stays plain text. A link in an answer is treated per FR27.
+- [FR27] **Inline source logos.** Where an answer contains a markdown link whose URL matches one
+  of that reply's saved sources (FR22/FR23), the link's text is shown as ordinary text followed by
+  a small logo of that website; tapping the logo opens the page in Safari. Matching tolerates
+  trivial differences (scheme http/https, a leading `www.`, a trailing slash). Any other link —
+  a URL not in the reply's sources, a truncated/made-up URL such as `https://www.msn.com/...`, or
+  any link in a reply that has no sources — is shown as plain, non-tappable text with no logo.
+  The logo is the site's own icon, fetched by the phone directly from that website (no
+  third-party logo/favicon service); when none is available or the phone is offline, a generic
+  globe icon is shown instead. Fetched logos are cached on the phone so a site is not re-asked on
+  every render. A logo failing to load never blocks or breaks the answer.
+- [FR28] **Collapsed source list.** The source list at the end of a web answer (FR22) is collapsed
+  by default behind a header showing the count (e.g. "Sources (5)"); tapping it expands and
+  collapses the list. The expanded state is not persisted (a reopened chat shows it collapsed).
+  Each source is a separate entry — its own site logo (as FR27) and its page title — tappable to
+  open in Safari; distinct sources are never merged into one link.
 
 ## Acceptance Criteria
 
@@ -166,6 +190,18 @@ All proven against the live Mac Studio and Ollama, not mocks.
     page text, and a follow-up prompt does not re-send page text.
 19. **AC19** — The search service answers on loopback, is not reachable from the tailnet or LAN,
     restarts automatically after being killed, and its HTTP API is documented.
+20. **AC20** — An assistant answer containing bold, a heading, a list, inline code and a link renders
+    with no raw markdown characters visible, both for a newly streamed reply and for a reply saved
+    before this change; a reply mid-stream with unterminated markup renders without error.
+21. **AC21** — In a web answer, a link whose URL matches a saved source (including a `www.`/
+    trailing-slash/scheme variant) shows the site's logo after its text and tapping it opens that
+    page in Safari; a link not among the sources (e.g. `https://www.msn.com/...`) and a link in a
+    non-web answer are plain, non-tappable text with no logo; a site with no reachable logo shows
+    the globe icon. No third-party logo service is called.
+22. **AC22** — A web answer's sources start collapsed as "Sources (n)", expand and collapse on tap,
+    and each source is its own tappable entry (logo + title) opening in Safari — including a source
+    set shaped like the 2026-09-30 phone screenshot in which several sources rendered glued into one
+    link. Proven by unit tests, a Mac-side live proof, and the owner's phone screenshot.
 
 ## Constraints
 
@@ -189,6 +225,7 @@ All proven against the live Mac Studio and Ollama, not mocks.
 - Scraping from one home IP is sometimes blocked by engines; results are best-effort.
 - Loaded models run with a large context window (e.g. `nemotron3:33b` at 131 072 tokens, checked
   2026-09-29), so a reply's web material fits without special handling beyond FR21 truncation.
+- Markdown rendering must be pure JavaScript and Expo Go–compatible (no native module).
 
 ## Non-Goals
 
@@ -227,6 +264,13 @@ All proven against the live Mac Studio and Ollama, not mocks.
 - The switch is changed mid-reply: applies from the next prompt.
 - Swap/unload during a searching reply: FR6 confirmation.
 - A follow-up asks about a page read earlier: the model re-reads it (page text is not kept).
+- The model writes a link that is not one of the reply's sources, or a truncated URL: plain,
+  non-tappable text, no logo (FR27).
+- A site has no icon, blocks the request, or the phone is offline: globe icon; the answer is
+  unaffected (FR27).
+- A reply is still streaming with half-written markup (e.g. an open `**` or `[text](`): shown
+  without error and re-rendered as more text arrives (FR26).
+- Two sources share a site: each is its own entry with the same logo (FR28).
 
 ## Decisions / Clarifications
 
@@ -262,6 +306,20 @@ All proven against the live Mac Studio and Ollama, not mocks.
   the next prompt; browser started on demand; search service auto-starts, loopback-only, no
   token; searching counts as a reply in progress; per-step time limits; 10 tool calls per reply;
   sources = pages read, else search results.
+- **Formatted answers everywhere** (human, 2026-09-30): markdown renders in all answers, not only
+  web ones, including already-saved replies.
+- **Website's own logo, not a globe icon** (human, 2026-09-30), fetched by the phone directly from
+  the site; a third-party logo service (e.g. Google) was rejected. Globe is the fallback only.
+- **Logo only for real sources** (human, 2026-09-30): links not matching the reply's saved sources
+  are plain non-tappable text.
+- **Build before M11** (human, 2026-09-30): FR26–FR28 are the next milestone, ahead of M11.
+- Defaults chosen by Claude, shown to the human and agreed (2026-09-30): thinking stays plain
+  text; URL matching ignores scheme, `www.` and trailing slash; logos cached on the phone; the
+  source list's expanded state is not persisted.
+- Owner phone observation of M10 (2026-09-30, screenshots shown in session): the web switch
+  shown on, a web answer ending in a source list, and a source link opening the WSJ archive page
+  in Safari. The same screenshots showed raw markdown and one source entry with several sources
+  merged into a single link, which FR26–FR28 address.
 
 ## Open Questions
 

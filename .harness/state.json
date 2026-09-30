@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M10",
+  "current_milestone": "M10b",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -26,7 +26,10 @@
     "FR18": "M10",
     "FR22": "M10",
     "FR23": "M11",
-    "FR24": "M13"
+    "FR24": "M13",
+    "FR26": "M10b",
+    "FR27": "M10c",
+    "FR28": "M10d"
   },
   "milestones": {
     "M1": {
@@ -7128,6 +7131,128 @@
             ".harness/evidence/M10-T5-proof.log"
           ]
         }
+      ]
+    },
+    "M10b": {
+      "id": "M10b",
+      "title": "Assistant answers show formatted text instead of raw markdown",
+      "outcome": "Every assistant answer on the phone - web or not, streaming or already saved - renders its markdown (bold, italics, headings, lists, inline code and code blocks, links) with no raw markup visible, and half-written markup mid-stream never breaks the view; links show as plain non-tappable text until M10c adds source logos, and thinking stays plain text. Split at planning (2026-09-30) from one FR26-FR28 milestone because of operational-complexity signals MULTIPLE_OUTCOMES + IMPLEMENTATION_PLUS_LIVE_PROOF (a required split; WORKER_TASKS_GT_6 also anticipated); parts: M10b formatted answers (AC20), M10c inline source logos (AC21), M10d collapsed source list (AC22). Each part keeps one signal: IMPLEMENTATION_PLUS_LIVE_PROOF.",
+      "architecture": "C1",
+      "requirements": [
+        "FR26"
+      ],
+      "traces": "AC20",
+      "status": "TODO",
+      "review_cycles": 0,
+      "review_override": null,
+      "baseline": {
+        "commit": "",
+        "branch": ""
+      },
+      "as_built": {
+        "artifact": null,
+        "result": "PENDING"
+      },
+      "criteria": [
+        {
+          "id": "M10b-AC1",
+          "text": "An assistant answer containing bold, a heading, a list, inline code and a link renders with no raw markdown characters visible, both for a newly streamed reply and for a reply saved before this change; a reply mid-stream with unterminated markup renders without error.",
+          "status": "PENDING",
+          "evidence": []
+        }
+      ],
+      "tasks": [],
+      "reviews": [],
+      "findings": [],
+      "validation": [],
+      "planned_validation": "cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/markdown-render-proof.sh",
+      "follow_ups": [
+        "The markdown renderer must be pure JavaScript and Expo Go-compatible (no native module; requirements Constraints). If it adds a new dependency, record that technology choice under Deviations in .harness/architecture.md before M10b completes.",
+        "Links render as plain, non-tappable text in M10b (FR27's rule for links that are not sources); M10c adds the logo for links matching the reply's sources."
+      ],
+      "complexity_signals": [
+        "IMPLEMENTATION_PLUS_LIVE_PROOF"
+      ]
+    },
+    "M10c": {
+      "id": "M10c",
+      "title": "Links to a web answer's sources show the site's own logo and open in Safari",
+      "outcome": "In a web answer, a link whose URL matches one of that reply's saved sources (ignoring scheme, a leading www. and a trailing slash) shows its text followed by the website's own logo, fetched by the phone directly from the site and cached on the phone, with a globe icon when none loads; tapping the logo opens the page in Safari. Any other link stays plain, non-tappable text, and no third-party logo service is called. Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; split from the FR26-FR28 plan, see M10b). Architecture deviation D-M10c-1 (phone fetches site icons from the public web) is recorded.",
+      "architecture": "C1, C3, C15",
+      "requirements": [
+        "FR27"
+      ],
+      "traces": "AC21",
+      "status": "TODO",
+      "review_cycles": 0,
+      "review_override": null,
+      "baseline": {
+        "commit": "",
+        "branch": ""
+      },
+      "as_built": {
+        "artifact": null,
+        "result": "PENDING"
+      },
+      "criteria": [
+        {
+          "id": "M10c-AC1",
+          "text": "In a web answer, a link whose URL matches a saved source (including a www./trailing-slash/scheme variant) shows the site's logo after its text and tapping it opens that page in Safari; a link not among the sources (e.g. https://www.msn.com/...) and a link in a non-web answer are plain, non-tappable text with no logo; a site with no reachable logo shows the globe icon. No third-party logo service is called.",
+          "status": "PENDING",
+          "evidence": []
+        }
+      ],
+      "tasks": [],
+      "reviews": [],
+      "findings": [],
+      "validation": [],
+      "planned_validation": "cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/source-logo-proof.sh",
+      "follow_ups": [
+        "Architecture deviation D-M10c-1 (new edge C1 -> C15: the phone fetches each site's own icon directly) is recorded as Material: yes, grounded in the human's 2026-09-30 requirements decision; confirm it is accepted before M10c completes.",
+        "A logo failing to load must never block or break the answer (FR27)."
+      ],
+      "complexity_signals": [
+        "IMPLEMENTATION_PLUS_LIVE_PROOF"
+      ]
+    },
+    "M10d": {
+      "id": "M10d",
+      "title": "A web answer's sources start folded as \"Sources (n)\", each its own tappable entry",
+      "outcome": "The source list at the end of a web answer starts collapsed behind a \"Sources (n)\" header that expands and collapses on tap (not remembered when the chat is reopened), and each source is its own entry - site logo as in M10c plus page title - opening in Safari, never merged with another source into one link. Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; split from the FR26-FR28 plan, see M10b).",
+      "architecture": "C1",
+      "requirements": [
+        "FR28"
+      ],
+      "traces": "AC22",
+      "status": "TODO",
+      "review_cycles": 0,
+      "review_override": null,
+      "baseline": {
+        "commit": "",
+        "branch": ""
+      },
+      "as_built": {
+        "artifact": null,
+        "result": "PENDING"
+      },
+      "criteria": [
+        {
+          "id": "M10d-AC1",
+          "text": "A web answer's sources start collapsed as \"Sources (n)\", expand and collapse on tap, and each source is its own tappable entry (logo + title) opening in Safari - including a source set shaped like the 2026-09-30 phone screenshot in which several sources rendered glued into one link. Proven by unit tests, a Mac-side live proof, and the owner's phone screenshot.",
+          "status": "PENDING",
+          "evidence": []
+        }
+      ],
+      "tasks": [],
+      "reviews": [],
+      "findings": [],
+      "validation": [],
+      "planned_validation": "cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint && bash scripts/sources-list-proof.sh",
+      "follow_ups": [
+        "Reuses M10c's site-logo component (FR27 logo and globe fallback); two sources on the same site each get their own entry with the same logo."
+      ],
+      "complexity_signals": [
+        "IMPLEMENTATION_PLUS_LIVE_PROOF"
       ]
     },
     "M11": {
