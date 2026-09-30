@@ -8511,7 +8511,7 @@
         "FR31"
       ],
       "traces": "AC24, AC25",
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -8519,14 +8519,15 @@
         "branch": "m10c4-several-sites"
       },
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M10c4.md",
+        "result": "RECORDED",
+        "summary": ".harness/as-built/M10c4.md — RECORDED — 5/5 files attributed; components C1, C2, C3, C6, C12; 7 edges; claim mismatches NONE"
       },
       "criteria": [
         {
           "id": "M10c4-AC1",
           "text": "Unit test: with web search on, the server's web instructions to the model (given alongside the FR19 date note) contain the FR30 guidance - for a broad or open-ended question search with more than one query, do not put the exact date into search queries, read pages from at least three different websites before answering, and cite the pages it read by their number (e.g. [2], including source cells in tables) rather than by typing URLs; a narrow factual question need not search more than it needs - and with web search off no such guidance is given; the existing 10-tool-call cap tests pass unchanged and the server adds no source-diversity check or re-prompt.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "server/src/web/tools.test.ts 'systemNote carries the FR30 guidance' and 'systemNote tells the model to cite by page number, not URL' (T4, 1f8281c; 'markdown link'/'copied exactly' assertions replaced per amended AC1); web off manager.test.ts:281; cap tests unchanged. .harness/evidence/M10c4-T4-verifier.log. Not reviewed."
           ]
@@ -8534,7 +8535,7 @@
         {
           "id": "M10c4-AC2",
           "text": "Live on the Mac with the owner's usual tools-capable model resident (named in the evidence) and the web switch on, through the server's chat route: of 3 broad prompts (including \"What are today's news trends\"), at least 2 produce replies whose saved sources span at least 3 distinct websites (host compared ignoring a leading www.); and, in the same run, at least 2 of the 3 replies each cite at least 3 distinct saved sources in a form that shows a logo (an FR31 number mark that resolves to a numbered saved source, or an FR27-matching link), with no citation mark or link that fails to resolve; the prompts, the per-reply distinct hosts, the per-reply resolved/unresolved citation counts and both pass counts are recorded.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "T6 live run 1 (1d3e3c1), model nemotron3:33b: diversity 3/3 (hosts 4, 12, 5); cited-with-logo 2/3 (resolved distinct 2, 3, 3; unresolved 0, 0, 0). .harness/evidence/M10c4-T6-run1-proof.log, -replies.json; independent recount .harness/evidence/M10c4-T6-verifier.log. Earlier failing runs under the superseded link-only bar: M10c4-T2/T3 logs. Not reviewed."
           ]
@@ -8542,7 +8543,7 @@
         {
           "id": "M10c4-AC3",
           "text": "Unit tests (server): within one reply each distinct page read gets a number in first-read order (a re-read page keeps its number; a redirect is numbered by its final URL), the page text given to the model carries its number, search-result listings carry no bracketed numbers, and the saved sources event carries each read page's number.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "server/src/web/pageNumbers.test.ts; tools.test.ts 'read_page labels the page with the number from numberPage', 'a failed read_page gets no number...', 'web_search listing carries no bracketed numbers and its sources no n'; manager.test.ts 'numbers each distinct page read in first-read order and carries n on sources (FR31)'. Commit 1f8281c; .harness/evidence/M10c4-T4-verifier.log. Not reviewed."
           ]
@@ -8550,7 +8551,7 @@
         {
           "id": "M10c4-AC4",
           "text": "Unit tests (app): [n], [1][3], [1, 3] and 【n】 marks render as page n's logo (FR27 logo and fallback rules) opening its exact saved URL, with the mark not shown; an unknown number, a mark in a reply without numbered sources (a reply saved before this change), and a mark inside inline code or a code block stay plain text; a half-streamed [2 renders without error; a reopened saved reply resolves the same logos as the live one; FR27 link logos are unchanged.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "mobile: markdown.test.ts numbered-citation parse tests (forms, [2](url) stays link, inline code/fence, half-streamed [2); inlineLink.test.ts presentCitation (resolve, unknown n, old reply); sourceLinks.test.ts sourceByNumber; markdownText.test.ts cite renders SourceLogo (source-text test); client.test.ts keeps integer n; conversationStore.test.ts reopened reply keeps n; streamReducer.test.ts. Commit a305a9e; .harness/evidence/M10c4-T5-verifier.log (independent RED: 6 fail + 2 errors at HEAD). Not reviewed."
           ]
@@ -8871,7 +8872,25 @@
           "commit": "1d3e3c1"
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "PASS",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "ORDINARY_IMPLEMENTATION",
+          "diff_range": "f3576993..a5f83df",
+          "artifact": null,
+          "review_log": ".harness/evidence/M10c4-review.log",
+          "findings": "0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL",
+          "per_criterion": {
+            "M10c4-AC1": "PASS",
+            "M10c4-AC2": "PASS",
+            "M10c4-AC3": "PASS",
+            "M10c4-AC4": "PASS"
+          }
+        }
+      ],
       "findings": [],
       "validation": [
         {

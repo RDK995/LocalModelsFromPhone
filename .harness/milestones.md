@@ -330,7 +330,7 @@ Cycle 3: PASS — tier Top, model opus, reason_code NO_TEST_ORACLE (correction C
 
 ## M10c4 — Broad web questions draw on at least three different websites
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -344,14 +344,14 @@ C12, C6, C2, C3, C1
 
 ### As-Built
 
-Pending.
+.harness/as-built/M10c4.md — RECORDED — 5/5 files attributed; components C1, C2, C3, C6, C12; 7 edges; claim mismatches NONE
 
 ### Acceptance Criteria
 
-- [ ] **M10c4-AC1**: Unit test: with web search on, the server's web instructions to the model (given alongside the FR19 date note) contain the FR30 guidance - for a broad or open-ended question search with more than one query, do not put the exact date into search queries, read pages from at least three different websites before answering, and cite the pages it read by their number (e.g. [2], including source cells in tables) rather than by typing URLs; a narrow factual question need not search more than it needs - and with web search off no such guidance is given; the existing 10-tool-call cap tests pass unchanged and the server adds no source-diversity check or re-prompt.
-- [ ] **M10c4-AC2**: Live on the Mac with the owner's usual tools-capable model resident (named in the evidence) and the web switch on, through the server's chat route: of 3 broad prompts (including "What are today's news trends"), at least 2 produce replies whose saved sources span at least 3 distinct websites (host compared ignoring a leading www.); and, in the same run, at least 2 of the 3 replies each cite at least 3 distinct saved sources in a form that shows a logo (an FR31 number mark that resolves to a numbered saved source, or an FR27-matching link), with no citation mark or link that fails to resolve; the prompts, the per-reply distinct hosts, the per-reply resolved/unresolved citation counts and both pass counts are recorded.
-- [ ] **M10c4-AC3**: Unit tests (server): within one reply each distinct page read gets a number in first-read order (a re-read page keeps its number; a redirect is numbered by its final URL), the page text given to the model carries its number, search-result listings carry no bracketed numbers, and the saved sources event carries each read page's number.
-- [ ] **M10c4-AC4**: Unit tests (app): [n], [1][3], [1, 3] and 【n】 marks render as page n's logo (FR27 logo and fallback rules) opening its exact saved URL, with the mark not shown; an unknown number, a mark in a reply without numbered sources (a reply saved before this change), and a mark inside inline code or a code block stay plain text; a half-streamed [2 renders without error; a reopened saved reply resolves the same logos as the live one; FR27 link logos are unchanged.
+- [x] **M10c4-AC1**: Unit test: with web search on, the server's web instructions to the model (given alongside the FR19 date note) contain the FR30 guidance - for a broad or open-ended question search with more than one query, do not put the exact date into search queries, read pages from at least three different websites before answering, and cite the pages it read by their number (e.g. [2], including source cells in tables) rather than by typing URLs; a narrow factual question need not search more than it needs - and with web search off no such guidance is given; the existing 10-tool-call cap tests pass unchanged and the server adds no source-diversity check or re-prompt.
+- [x] **M10c4-AC2**: Live on the Mac with the owner's usual tools-capable model resident (named in the evidence) and the web switch on, through the server's chat route: of 3 broad prompts (including "What are today's news trends"), at least 2 produce replies whose saved sources span at least 3 distinct websites (host compared ignoring a leading www.); and, in the same run, at least 2 of the 3 replies each cite at least 3 distinct saved sources in a form that shows a logo (an FR31 number mark that resolves to a numbered saved source, or an FR27-matching link), with no citation mark or link that fails to resolve; the prompts, the per-reply distinct hosts, the per-reply resolved/unresolved citation counts and both pass counts are recorded.
+- [x] **M10c4-AC3**: Unit tests (server): within one reply each distinct page read gets a number in first-read order (a re-read page keeps its number; a redirect is numbered by its final URL), the page text given to the model carries its number, search-result listings carry no bracketed numbers, and the saved sources event carries each read page's number.
+- [x] **M10c4-AC4**: Unit tests (app): [n], [1][3], [1, 3] and 【n】 marks render as page n's logo (FR27 logo and fallback rules) opening its exact saved URL, with the mark not shown; an unknown number, a mark in a reply without numbered sources (a reply saved before this change), and a mark inside inline code or a code block stay plain text; a half-streamed [2 renders without error; a reopened saved reply resolves the same logos as the live one; FR27 link logos are unchanged.
 
 ### Baseline
 
@@ -404,7 +404,7 @@ Live AC2 proof (not part of the rerun command; non-deterministic, loads the netw
 
 ### Review
 
-Pending.
+Cycle 1: PASS (tier Mid, reviewer sonnet, reason ORDINARY_IMPLEMENTATION; diff f3576993..a5f83df; per-criterion AC1-AC4 all PASS; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL; reviewer evidence `.harness/evidence/M10c4-review.log`). Reviewer note (not a finding): a grouped mark such as [1][9] with one unknown number renders wholly as plain text rather than showing the logo for [1].
 
 ### Review Cycles
 
