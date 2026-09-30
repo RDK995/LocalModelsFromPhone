@@ -15,6 +15,7 @@ required_scripts=(
   "install-bundle-host-agent.sh"
   "install-search-agent.sh"
   "uninstall-search-agent.sh"
+  "search-service-proof.sh"
   "configure-tailscale-serve.sh"
   "install-pf-anchor.sh"
   "uninstall-pf-anchor.sh"
