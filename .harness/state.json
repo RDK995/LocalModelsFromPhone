@@ -8298,9 +8298,10 @@
           ],
           "files_outside_findings": "none; both test files answer F1 (reproduction of the screenshot shapes, render-path trace). No product code changed.",
           "diagnosis": "stale bundle on the phone, not a code defect: .harness/evidence/M10c3-C3-bundle-host.log, .harness/evidence/M10c3-C3-verifier.log",
-          "tier": "Top",
-          "reason_code": "AMBIGUOUS",
-          "tier_note": "the cycle-2 report does not state the reviewer tier; recorded as the milestone review routing from cycle 1"
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "ORDINARY_IMPLEMENTATION",
+          "tier_note": "cycle-2 reviewer was invoked at Mid/sonnet (cycle-1 correction tasks were Cheap; sonnet floor)"
         }
       ],
       "findings": [],
