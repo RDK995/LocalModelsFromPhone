@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M10d",
+  "current_milestone": "M10e",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -32,7 +32,8 @@
     "FR28": "M10d",
     "FR29": "M10c3",
     "FR30": "M10c4",
-    "FR31": "M10c4"
+    "FR31": "M10c4",
+    "FR32": "M10e"
   },
   "milestones": {
     "M1": {
@@ -9149,6 +9150,56 @@
         "Inside a Sources row the SourceLogo is itself a pressable Text opening the same URL as the row; harmless duplicate tap target.",
         "Owner request 2026-09-30 (NOT in scope, needs /harness:roast-requirements): in the answer body, show the cited site's logo inline instead of the model's written \"Source: <name>\" text. In the owner's screenshot the model (nemotron3:33b) wrote \"Source: Open Chronicle (French edition)\" in prose rather than FR31 [n] citation marks, so no inline logos appeared."
       ],
+      "complexity_signals": [
+        "IMPLEMENTATION_PLUS_LIVE_PROOF"
+      ]
+    },
+    "M10e": {
+      "id": "M10e",
+      "title": "Every answer fits its bubble at full width, with \"Sources (n)\" and the model name below it",
+      "outcome": "Every assistant answer - web or not, streaming, finished or reopened from saved history, and whatever FR26 content it holds (paragraphs, bulleted/numbered lists, headings, FR29 table cards, FR27/FR31 inline logos) - is laid out at the full width available to its bubble with all of its text inside the bubble, and the FR28 \"Sources (n)\" header and the model name always sit below the answer text without overlapping it. The cause of the 2026-09-30 22:32 squeezed, overflowing web answer (.harness/evidence/FR32-owner-phone-squeezed-2026-09-30-2232.png) is diagnosed and pinned by a test. No change to the model instructions, the server, or the FR29 card layout beyond keeping it inside the bubble. Planned 2026-09-30 from FR32 (human decision \"Layout fix now, logos later\": built after M10d, ahead of M11). Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; seam check: the live proof is the owner's phone screenshot of the same outcome, so separating it would leave a test-only half that cannot show the phone is fixed - not split). One subsystem (C1 renderer), a few production files.",
+      "architecture": "C1",
+      "requirements": [
+        "FR32"
+      ],
+      "traces": "AC26",
+      "status": "TODO",
+      "review_cycles": 0,
+      "review_override": null,
+      "baseline": {
+        "commit": "",
+        "branch": ""
+      },
+      "as_built": {
+        "artifact": null,
+        "result": "PENDING"
+      },
+      "criteria": [
+        {
+          "id": "M10e-AC1",
+          "text": "A test reproduces an answer shaped like the 2026-09-30 22:32 phone screenshot (a web reply whose body is a bulleted list of news items, with a Sources list) and shows, for both the live-streaming and the reopened-saved forms, that the answer takes the full bubble width and nothing overlaps the answer text, with \"Sources (n)\" and the model name below it; the diagnosed cause of the squeeze and overflow is recorded.",
+          "status": "PENDING",
+          "evidence": []
+        },
+        {
+          "id": "M10e-AC2",
+          "text": "The existing FR26-FR31 rendering tests pass unchanged (none edited or weakened), and mobile typecheck, tests and lint pass.",
+          "status": "PENDING",
+          "evidence": []
+        },
+        {
+          "id": "M10e-AC3",
+          "text": "The owner's phone screenshot of a new web answer, taken after the phone has loaded the new code, shows the answer at full width, entirely inside its bubble, with \"Sources (n)\" and the model name below it.",
+          "status": "PENDING",
+          "evidence": []
+        }
+      ],
+      "tasks": [],
+      "reviews": [],
+      "findings": [],
+      "validation": [],
+      "planned_validation": "cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint",
+      "follow_ups": [],
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
       ]

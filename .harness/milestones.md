@@ -238,89 +238,7 @@ With the web switch on, the instructions the server gives the model alongside th
 
 Owns: FR30, FR31. Traces to: AC24, AC25.
 
-### Architecture
-
-C12, C6, C2, C3, C1
-
-### As-Built
-
-.harness/as-built/M10c4.md — RECORDED — 5/5 files attributed; components C1, C2, C3, C6, C12; 7 edges; claim mismatches NONE
-
-### Acceptance Criteria
-
-- [x] **M10c4-AC1**: Unit test: with web search on, the server's web instructions to the model (given alongside the FR19 date note) contain the FR30 guidance - for a broad or open-ended question search with more than one query, do not put the exact date into search queries, read pages from at least three different websites before answering, and cite the pages it read by their number (e.g. [2], including source cells in tables) rather than by typing URLs; a narrow factual question need not search more than it needs - and with web search off no such guidance is given; the existing 10-tool-call cap tests pass unchanged and the server adds no source-diversity check or re-prompt.
-- [x] **M10c4-AC2**: Live on the Mac with the owner's usual tools-capable model resident (named in the evidence) and the web switch on, through the server's chat route: of 3 broad prompts (including "What are today's news trends"), at least 2 produce replies whose saved sources span at least 3 distinct websites (host compared ignoring a leading www.); and, in the same run, at least 2 of the 3 replies each cite at least 3 distinct saved sources in a form that shows a logo (an FR31 number mark that resolves to a numbered saved source, or an FR27-matching link), with no citation mark or link that fails to resolve; the prompts, the per-reply distinct hosts, the per-reply resolved/unresolved citation counts and both pass counts are recorded.
-- [x] **M10c4-AC3**: Unit tests (server): within one reply each distinct page read gets a number in first-read order (a re-read page keeps its number; a redirect is numbered by its final URL), the page text given to the model carries its number, search-result listings carry no bracketed numbers, and the saved sources event carries each read page's number.
-- [x] **M10c4-AC4**: Unit tests (app): [n], [1][3], [1, 3] and 【n】 marks render as page n's logo (FR27 logo and fallback rules) opening its exact saved URL, with the mark not shown; an unknown number, a mark in a reply without numbered sources (a reply saved before this change), and a mark inside inline code or a code block stay plain text; a half-streamed [2 renders without error; a reopened saved reply resolves the same logos as the live one; FR27 link logos are unchanged.
-
-### Baseline
-
-f3576993fee872e8fe4bfffdc2b075eecb44596d on m10c4-several-sites
-
-### Evidence
-
-Tasks (routing -> rungs):
-- T1 — FR30 guidance in systemNote (C12)   Mid (ORDINARY_IMPLEMENTATION), attempt 3 PASS; verifier PASS (exit 0, 162 pass, tsc clean, independent RED) — commit e3c3ae1. Artifacts: .harness/evidence/M10c4-T1-worker.log, M10c4-T1-verifier.log. M10c4-AC1 evidence: server/src/web/tools.test.ts "systemNote carries the FR30 guidance"; web off: manager.test.ts:281; 10-call cap test manager.test.ts:329 unchanged.
-- T2 — live proof script + run (AC2)        Mid (ORDINARY_IMPLEMENTATION), attempt 3 FAIL: nemotron3:33b, diversity 3/3, links 0/3 (need 2). .harness/evidence/M10c4-T2-proof.log, M10c4-T2-replies.json. Script counting independently confirmed by the T3 verifier (own code, all four replies files agree); script committed with the phase record.
-- T3 — revised link wording (AC1+AC2)       Top (NO_TEST_ORACLE), attempt 4 FAIL: 162 pass + tsc clean, but 3 live runs (nemotron3:33b) each diversity 3/3, links 0/3; sources per reply rose 5 -> 8-10. Verifier: unit tests exit 0, tests not weakened, no server check added, independent recount confirms 0/3 is real. .harness/evidence/M10c4-T3-run{1,2,3}-proof.log/-replies.json, M10c4-T3-verifier.log. Unaccepted diff reverted from the tree and kept as .harness/evidence/M10c4-T3-attempt4.patch (applies cleanly).
-
-M10c4-AC1: met by T1 (not yet reviewed). M10c4-AC2: diversity half met in all 4 runs; link half NOT met (0/3 in all 4 runs).
-
-Problem:
-M10c4-AC2's link bar (2 of 3 broad replies each linking at least 3 distinct saved sources, with no link that fails to match) is not met by the resident model nemotron3:33b in any of 4 live runs (0/3 every time), across two wordings of the FR30 instructions. The diversity bar passes 3/3 every run. The model cites with 【】 or [n] footnotes instead of markdown links, retypes long URLs with small errors (dropped path words, changed file names, inserted spaces), and links URLs found inside page text. FR30 forbids the server from checking, rewriting or re-prompting.
-
-Requirement/milestone affected:
-M10c4 / M10c4-AC2 (FR30, AC24).
-
-Attempts made:
-1. T1 (Mid): FR30 wording added and accepted (e3c3ae1). T2 live run 1: diversity 3/3, links 0/3 (one search only, one source linked repeatedly, a shortened host, URLs from inside page text).
-2. T3 (Top): step-by-step wording, "copied letter for letter", "never a link found inside page text", "never 【】 or [1]", "no spaces". Three live runs: the model now searches and reads more (8-10 sources), diversity 3/3 each, links 0/3 each.
-3. Verifier recomputed every reply with independent code: the 0/3 is real, not a counting error.
-
-Remaining issue:
-The task ladder is exhausted. The remaining errors are the model not following formatting and copying instructions; more wording is unlikely to fix them.
-
-Recommended decision:
-Keep the diversity result and stop gating on exact links: amend M10c4-AC2 via roast-requirements so link counts are recorded but not a pass condition, apply the T3 wording (.harness/evidence/M10c4-T3-attempt4.patch) because it made the model search and read several sites, and rely on M10d's Sources list to give every source its logo. Alternatives: try a different tools-capable model the owner will keep resident; or change FR30 so the server may turn footnote citations into links (a requirements and design change).
-
-HUMAN DECISION 2026-09-30 (resolves the escalation above): cite by number (FR31, AC25 added; FR30, AC24 amended via roast-requirements); only pages the model opened are numbered. Link-count gating kept (same 2-of-3 shape) but counted over resolving number marks and matching links. The T3 wording patch (.harness/evidence/M10c4-T3-attempt4.patch) may be reused where it helps (it raised pages read to 8-10), minus its URL-copying wording. Status back to IN_PROGRESS.
-
-Phase after the FR31 decision (tasks, routing -> rungs):
-- T4 — server FR31 numbering + cite-by-number systemNote (C12, C6, shared)  Mid (ORDINARY_IMPLEMENTATION), attempt 3 PASS; verifier PASS (exit 0, 171 pass, tsc clean server+mobile, only the amended-AC1 assertion swap, independent RED) — commit 1f8281c. .harness/evidence/M10c4-T4-worker.log, M10c4-T4-verifier.log.
-- T5 — app renders [n]/[1][3]/[1, 3]/【n】 as the numbered source's logo (C1-C3)  Mid (ORDINARY_IMPLEMENTATION), attempt 3 PASS; verifier PASS (exit 0, 411 pass, tsc clean, independent RED 6 fail + 2 errors at HEAD, not weakened) — commit a305a9e. .harness/evidence/M10c4-T5-worker.log, M10c4-T5-verifier.log.
-- T6 — proof script counts FR31 marks + FR27 links, --self-test, one live run  Mid (ORDINARY_IMPLEMENTATION), attempt 3 PASS; verifier PASS (self-test exit 0, independent recount agrees) — commit 1d3e3c1. Live: nemotron3:33b, diversity 3/3 (hosts 4, 12, 5), cited-with-logo 2/3 (resolved distinct 2, 3, 3; unresolved 0, 0, 0). .harness/evidence/M10c4-T6-run1-proof.log, -replies.json, M10c4-T6-verifier.log.
-- T3 superseded by the FR31 decision; its process wording reused in T4 without the URL-copying wording.
-
-M10c4-AC1: T4 tools.test.ts "systemNote carries the FR30 guidance" + "systemNote tells the model to cite by page number, not URL"; web off manager.test.ts:281; cap tests unchanged.
-M10c4-AC2: T6 run 1 (above) — both bars met, 2 of 3 needed.
-M10c4-AC3: T4 pageNumbers.test.ts; tools.test.ts read label / failed read / search listing tests; manager.test.ts "numbers each distinct page read in first-read order and carries n on sources (FR31)".
-M10c4-AC4: T5 markdown.test.ts, inlineLink.test.ts, sourceLinks.test.ts, markdownText.test.ts, client.test.ts, conversationStore.test.ts, streamReducer.test.ts (named in .harness/evidence/M10c4-T5-verifier.log).
-All not yet reviewed.
-
-### Validation
-
-`cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck && bash scripts/source-diversity-proof.sh --self-test && cd ../mobile && bun test && bun run typecheck`
-Live AC2 proof (not part of the rerun command; non-deterministic, loads the network): `cd server && bash scripts/source-diversity-proof.sh` — recorded run .harness/evidence/M10c4-T6-run1-proof.log, exit 0.
-
-### Review
-
-Cycle 1: PASS (tier Mid, reviewer sonnet, reason ORDINARY_IMPLEMENTATION; diff f3576993..a5f83df; per-criterion AC1-AC4 all PASS; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL; reviewer evidence `.harness/evidence/M10c4-review.log`). Reviewer note (not a finding): a grouped mark such as [1][9] with one unknown number renders wholly as plain text rather than showing the logo for [1].
-
-### Review Cycles
-
-0
-
-### Follow-ups
-
-- Source: owner-reported single-site follow-up recorded under M10c1 (.harness/archive/M10c1.md, Follow-ups).
-- Architecture deviation D-M10c4-1 (Material: no) records the Requirement Coverage addition FR30 -> C12.
-- The live proof loads a model and depends on the internet and a non-deterministic model; the pass bar is 2 of 3 by human decision.
-- FOLDED IN 2026-09-30 via roast-requirements (FR30, AC24, M10c4-AC1/AC2 amended; pass bar 2 of 3 replies with 3+ linked sources, human decision). Original request (owner's verbatim choice: "Fold it into the next piece"): fold "tell the model to always link its sources, so every source gets a logo" into M10c4. Needs FR30 / AC24 (and M10c4 criteria) amended in .harness/requirements.md via the requirements process before M10c4 starts; not yet in any requirement or criterion.
-- milestones.md is over 400 lines but nothing is archivable: M10c3 is the most recently settled (protected), M10c4 active, M5a BLOCKED, the rest TODO.
-- Link bar margin is thin: the T6 run passed 2/3 with two replies at exactly 3 resolved sources; the news-trends reply resolved 2 (only 2 of its 5 saved sources were read pages). A rerun may fail.
-- AC4 rendering check (markdownText.test.ts) reads MarkdownText.tsx source text because bun cannot render React Native; no on-device observation of cite logos (AC25 asks for unit tests only).
-- A half-streamed "[2" shows as "2": the "[" is hidden by pre-existing streaming bracket handling (same at HEAD); FR31 says incomplete marks show as text.
-- Size check on resume: 4 criteria; signals IMPLEMENTATION_PLUS_LIVE_PROOF and server+shared+app subsystems. Not split: IN_PROGRESS with recorded work.
+Detail: `.harness/archive/M10c4.md`
 
 ## M10d — A web answer's sources start folded as "Sources (n)", each its own tappable entry
 
@@ -379,6 +297,52 @@ Cycle 1: PASS (tier Mid, reviewer sonnet, reason ROUTED_MID; diff ba6d032..9753b
 - Lint regression from M10c4 T5 (markdownText.test.ts:159) fixed here as T3; M10c4's validation did not run lint.
 - Owner request 2026-09-30 (NOT in scope, needs /harness:roast-requirements): in the answer body, show the cited site's logo inline instead of the model's written "Source: <name>" text. In the owner's screenshot the model (nemotron3:33b) wrote "Source: Open Chronicle (French edition)" in prose rather than FR31 [n] citation marks, so no inline logos appeared.
 - Inside a Sources row the SourceLogo is itself a pressable Text opening the same URL as the row; harmless duplicate tap target.
+
+## M10e — Every answer fits its bubble at full width, with "Sources (n)" and the model name below it
+
+Status: TODO
+
+### Outcome
+
+Every assistant answer - web or not, streaming, finished or reopened from saved history, and whatever FR26 content it holds (paragraphs, bulleted/numbered lists, headings, FR29 table cards, FR27/FR31 inline logos) - is laid out at the full width available to its bubble with all of its text inside the bubble, and the FR28 "Sources (n)" header and the model name always sit below the answer text without overlapping it. The cause of the 2026-09-30 22:32 squeezed, overflowing web answer (.harness/evidence/FR32-owner-phone-squeezed-2026-09-30-2232.png) is diagnosed and pinned by a test. No change to the model instructions, the server, or the FR29 card layout beyond keeping it inside the bubble. Planned 2026-09-30 from FR32 (human decision "Layout fix now, logos later": built after M10d, ahead of M11). Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; seam check: the live proof is the owner's phone screenshot of the same outcome, so separating it would leave a test-only half that cannot show the phone is fixed - not split). One subsystem (C1 renderer), a few production files.
+
+Owns: FR32. Traces to: AC26.
+
+### Architecture
+
+C1
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M10e-AC1**: A test reproduces an answer shaped like the 2026-09-30 22:32 phone screenshot (a web reply whose body is a bulleted list of news items, with a Sources list) and shows, for both the live-streaming and the reopened-saved forms, that the answer takes the full bubble width and nothing overlaps the answer text, with "Sources (n)" and the model name below it; the diagnosed cause of the squeeze and overflow is recorded.
+- [ ] **M10e-AC2**: The existing FR26-FR31 rendering tests pass unchanged (none edited or weakened), and mobile typecheck, tests and lint pass.
+- [ ] **M10e-AC3**: The owner's phone screenshot of a new web answer, taken after the phone has loaded the new code, shows the answer at full width, entirely inside its bubble, with "Sources (n)" and the model name below it.
+
+### Baseline
+
+
+### Evidence
+
+
+### Validation
+
+Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint`
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+None.
 
 ## M11 — Web replies are saved, resume after a drop, and keep page text out of later prompts
 
