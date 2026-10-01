@@ -1,0 +1,65 @@
+=== Web Resume Live Proof ===
+
+Restarting LaunchAgents...
+Waiting for server to be ready...
+Server is up and enforcing auth
+
+--- Recording original Ollama state (before proof) ---
+Before: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":27038329075,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-11T06:26:22.049839807Z","size_vram":27038329075,"context_length":131072}]}
+Originally resident: nemotron3:33b
+
+--- Running proof (mobile/scripts/web-resume-proof.ts) ---
+--- Setup: choosing a tools-capable model ---
+Installed: nemotron3:33b (tools=true), qwen3.8:27b (tools=true), devstral:24b (tools=true), qwen3-coder:30b (tools=true), qwen3.6:27b (tools=true)
+Model used: nemotron3:33b; second installed model for swap check: qwen3.8:27b
+
+--- Checks A+B: web reply; busy checks while searching; drop and resume ---
+  +13097ms first step arrived; reply is still searching (no done yet)
+PASS: Check A: no done event yet when the busy checks run
+PASS: Check A: second chat refused with 409 generation_in_flight (got 409 generation_in_flight)
+PASS: Check A: unload without confirm needs confirmation incl. reply_in_progress (reply_in_progress,not_loaded_by_server)
+PASS: Check A: swap to qwen3.8:27b without confirm needs confirmation incl. reply_in_progress (reply_in_progress,not_loaded_by_server)
+PASS: Check A: the resident model is unchanged after the refused requests
+  +13147ms dropping the connection now
+PASS: Check A: the busy checks ran during the reply
+PASS: Check B: the connection was dropped mid-reply
+PASS: Check B: the dropped prefix has step event(s) and no done
+PASS: Check B: the app resumed via Last-Event-ID (6024b121-9ba2-462a-ae94-0befdce58ac9-561)
+PASS: Check B: the full replay starts at seq 0
+PASS: Check B: the full replay is contiguous (0..n-1)
+PASS: Check B: prefix + resumed seqs equal the full replay's seqs, no gap, no duplicate (1716 vs 1716)
+PASS: Check B: prefix + resumed events equal the full replay event by event
+PASS: Check B: steps folded by step_id are equal (2 steps)
+PASS: Check B: content is equal (348 chars)
+PASS: Check B: exactly one done event
+PASS: Check B: what the app's onEvent received equals the full replay (1716 events)
+Generation 6024b121-9ba2-462a-ae94-0befdce58ac9: 1716 events, 2 steps, 5 sources, prefix 562 events, resumed 1154 events, 39892ms total
+
+--- Check C: persisted web reply ---
+Generation c5179642-121e-4692-a970-ff0e7678b3e7: 3481 events, 6 step events, 80.3s
+PASS: Check C: the reply completed with content (246 chars)
+PASS: Check C: the persisted reply has non-empty steps (3)
+PASS: Check C: the persisted reply has non-empty sources (5)
+PASS: Check C: stored messages have only the allowed keys (extra: none)
+PASS: Check C: the stored conversation has no tool messages
+PASS: Check C: persisted steps hold only step fields, no page text (max detail 0 chars)
+PASS: Check C: persisted sources hold only title, url, n with http(s) URLs
+PASS: Check C: stored conversation (16564 bytes) is only content, thinking, steps, sources plus small metadata (16120 accounted); no page text
+
+--- Check D: follow-up prompt body ---
+PASS: Check D: only user/assistant roles in the outgoing body (user,assistant,user)
+PASS: Check D: the outgoing body is prior prompt, prior answer, follow-up
+PASS: Check D: the prior answer carries its Sources: block
+PASS: Check D: every source URL is in the prior answer (5 sources, 0 missing)
+PASS: Check D: the prior answer text is the stored answer, unchanged
+PASS: Check D: body size 860 is below answer+sources+prompts+margin 1736 (no page text re-sent)
+PASS: Check D: the follow-up request did not ask for web
+Follow-up: 3 messages, 860 bytes, answer 246 chars, sources block 334 chars
+
+All web resume proof checks passed.
+
+--- Cleanup: restoring original Ollama state ---
+Before cleanup: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":27038329075,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-11T06:29:28.830552807Z","size_vram":27038329075,"context_length":131072}]}
+nemotron3:33b is already resident, nothing to restore
+After cleanup: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":27038329075,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-11T06:29:28.830552807Z","size_vram":27038329075,"context_length":131072}]}
+[0;32m=== Proof PASSED, Mac restored to its original state ===[0m
