@@ -42,7 +42,7 @@ type SSEEventName =
   | "step"
   | "sources";
 
-const STEP_KINDS = ["search", "read"];
+const STEP_KINDS = ["search", "read", "continue", "answer_now"];
 const STEP_STATUSES = ["started", "done", "failed", "unavailable"];
 
 interface StreamOptions {

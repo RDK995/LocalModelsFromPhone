@@ -87,7 +87,7 @@ export interface DoneEvent {
 
 export interface StepEventData {
   step_id: string;
-  kind: "search" | "read";
+  kind: "search" | "read" | "continue" | "answer_now";
   status: "started" | "done" | "failed" | "unavailable";
   query?: string;
   url?: string;

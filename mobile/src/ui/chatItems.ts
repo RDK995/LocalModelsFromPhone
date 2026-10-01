@@ -122,6 +122,14 @@ export function toggleExpanded(
 export function stepLabel(step: StepEventData): string {
   const { kind, status, query, url } = step;
 
+  // Handle new step kinds that don't have query/url fields
+  if (kind === "continue") {
+    return "Asked the model to continue";
+  }
+  if (kind === "answer_now") {
+    return "Asked the model to answer now";
+  }
+
   if (status === "unavailable") {
     return kind === "search" ? "Search unavailable" : "Reading unavailable";
   }
