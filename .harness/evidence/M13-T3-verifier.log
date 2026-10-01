@@ -1,0 +1,32 @@
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2 && bash server/scripts/web-failure-proof.sh
+Exit Status: 0
+
+Output:
+=== Web Failure Live Proof (M13-T3) ===
+Resident model with tools: nemotron3:33b
+
+==== Check 1: both search backends forced to fail ====
+[unavailable] own search service on port 59752, own server on port 59753
+--- [unavailable] attempt 1 of 4 ---
+[unavailable] model searched on attempt 1; steps: [{"step_id":"420a23d4-a941-4707-a6ec-d1bdef272782","kind":"search","status":"started","query":"top news headlines","t":33.9},{"step_id":"420a23d4-a941-4707-a6ec-d1bdef272782","kind":"search","status":"unavailable","query":"top news headlines","detail":"search_unavailable","t":33.9}]
+[unavailable] answer (first 200 chars): The web search tool is currently unavailable, so I cannot retrieve today's top news headlines. 
+[unavailable] done: {"status":"complete","model":"nemotron3:33b","eval_count":263,"tokens_per_second":57.94012075778628,"t":54.6} ; reply elapsed 54.6 s
+PASS: [unavailable] stream has a search step with status=unavailable
+PASS: [unavailable] the reply then streamed non-empty answer content
+PASS: [unavailable] ended done status=complete (not error, not cancelled)
+PASS: [unavailable] reply completed in 54.6 s, under the 240 s bound (search step reported at 33.9 s)
+PASS: [unavailable] no new search helper process left running afterwards
+
+==== Check 2: search exceeds its time limit (8000 ms) ====
+[timeout] own search service on port 59795, own server on port 59796
+--- [timeout] attempt 1 of 4 ---
+[timeout] model searched on attempt 1; steps: [{"step_id":"3a30801d-8f5b-44d6-a128-e24bdbaab254","kind":"search","status":"started","query":"top news headlines today","t":17.4},{"step_id":"3a30801d-8f5b-44d6-a128-e24bdbaab254","kind":"search","status":"failed","query":"top news headlines today","detail":"timeout","t":17.4}]
+[timeout] answer (first 200 chars): The web search for today's top news headlines failed. I'm unable to provide the latest headlines at this time. 
+[timeout] done: {"status":"complete","model":"nemotron3:33b","eval_count":158,"tokens_per_second":58.02116964802449,"t":21.2} ; reply elapsed 21.2 s
+PASS: [timeout] stream has a search step with status=failed detail=timeout
+PASS: [timeout] the reply then streamed non-empty answer content
+PASS: [timeout] ended done status=complete (not error, not cancelled)
+PASS: [timeout] reply completed in 21.2 s, under the 240 s bound (search step reported at 17.4 s)
+PASS: [timeout] no new search helper process left running afterwards
+
+All M13 web failure checks passed
