@@ -335,7 +335,7 @@ Cycle 1: PASS — tier Mid, model sonnet, reason_code ORDINARY_IMPLEMENTATION; d
 
 ## M13 — Search failures and time limits never hang a web reply, and no hosted search is used
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -349,13 +349,13 @@ C1, C12, C13, C14
 
 ### As-Built
 
-Pending.
+.harness/as-built/M13.md — RECORDED — 4/5 files attributed; components C1, C4, C13; 8 edges; 5 claim mismatches (C12/C14 claimed but only tested indirectly; C4 and C6 exercised but unclaimed; no new edges)
 
 ### Acceptance Criteria
 
-- [ ] **M13-AC1**: With both search backends forced to fail, the web reply still completes with an answer and the app shows that search was unavailable.
-- [ ] **M13-AC2**: A search or page read exceeding its time limit is shown as a failed step, the model is told it failed, and the reply completes without hanging.
-- [ ] **M13-AC3**: No hosted search or fetch API or key is configured or called: code and config inspection, plus an outbound-connection check during a live web reply.
+- [x] **M13-AC1**: With both search backends forced to fail, the web reply still completes with an answer and the app shows that search was unavailable.
+- [x] **M13-AC2**: A search or page read exceeding its time limit is shown as a failed step, the model is told it failed, and the reply completes without hanging.
+- [x] **M13-AC3**: No hosted search or fetch API or key is configured or called: code and config inspection, plus an outbound-connection check during a live web reply.
 
 ### Baseline
 
@@ -377,7 +377,7 @@ f3e67dfa9514b9446bf29567078819e11fe462fb on m13-search-failures-never-hang
 
 ### Review
 
-Pending.
+Cycle 1: PASS — tier Mid, model sonnet, reason_code ORDINARY_IMPLEMENTATION; diff f3e67df..f5f213e (full milestone); per-criterion M13-AC1=PASS, M13-AC2=PASS, M13-AC3=PASS; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL; no report file (PASS); validation log .harness/evidence/M13-review.log.
 
 ### Review Cycles
 

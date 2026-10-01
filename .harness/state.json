@@ -9697,7 +9697,7 @@
         "FR24"
       ],
       "traces": "AC16 (both fail, time limit), AC18 (no hosted API)",
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -9705,14 +9705,14 @@
         "branch": "m13-search-failures-never-hang"
       },
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M13.md",
+        "result": "RECORDED — 4/5 files attributed; components C1, C4, C13; 8 edges; 5 claim mismatches (C12/C14 claimed but only tested indirectly; C4 and C6 exercised but unclaimed; no new edges)"
       },
       "criteria": [
         {
           "id": "M13-AC1",
           "text": "With both search backends forced to fail, the web reply still completes with an answer and the app shows that search was unavailable.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "Server HTTP: server/src/http/webFailure.test.ts case (a) (T1 90da623): fake search service (real Bun.serve) answers /v1/search 503 search_unavailable -> stream and /events have search step status unavailable detail search_unavailable; fake Ollama's 2nd request carries the tool message saying search is unavailable; reply ends done (not error/cancelled) with the answer; next POST /v1/chat 200. server bun test 178 pass, typecheck 0 (verifier). .harness/evidence/M13-T1-verifier.log",
             "App: mobile/src/chat/webFailureSession.test.ts (T2 b0f13c2) drives sendInConversation + real APIClient over fake fetch + real store with SSE step(search, unavailable) -> content -> done: stored message keeps the unavailable step and full answer, status complete, buildChatItems label 'Search unavailable'; plus mobile/src/ui/webFailureDisplay.test.ts (presentation layer). RED reproduced by verifier (string change fails the test). mobile bun test 446 pass. .harness/evidence/M13-T2-verifier.log, M13-T2-red.log",
@@ -9722,7 +9722,7 @@
         {
           "id": "M13-AC2",
           "text": "A search or page read exceeding its time limit is shown as a failed step, the model is told it failed, and the reply completes without hanging.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "Server HTTP: server/src/http/webFailure.test.ts cases (b) /v1/search and (c) /v1/read held past a 400 ms client limit, (d) /v1/search 504 timeout -> step failed detail timeout (search and read), model's next request carries 'search failed' / 'could not be read' tool message, reply ends done with the answer in < 5 s, next chat 200. RED: removing the client timeout from AbortSignal.any in server/src/web/tools.ts fails (b),(c) at 5 s. .harness/evidence/M13-T1-red.log, M13-T1-verifier.log",
             "App: mobile/src/chat/webFailureSession.test.ts streamed failed search (timeout) -> 'Searching: climate change (failed)' and failed read (timeout) -> '(failed)' read label, each beside the completed answer. .harness/evidence/M13-T2-verifier.log",
@@ -9732,7 +9732,7 @@
         {
           "id": "M13-AC3",
           "text": "No hosted search or fetch API or key is configured or called: code and config inspection, plus an outbound-connection check during a live web reply.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "search/scripts/no-hosted-api-check.sh (T4 5e2e475). Part A: self-test flags a planted api.tavily.com; scans tracked files (excl .harness, node_modules, the script), the com.harness.* LaunchAgent plists and the env of the running server/search service/ollama for tavily, exa, parallel.ai, serpapi, brave, bing, customsearch, jina, firecrawl, ollama.com/api/web_search|web_fetch, OLLAMA_API_KEY, *_API_KEY, SEARCH_API -> no hits. Part B: own search service 7795 + server 7796, live web reply with a search and a read step, lsof sampled ~100 ms on server, search tree and ollama: server loopback only, ollama no connection to ollama.com, none of 66 resolved hosted-API addresses seen, search tree did reach the public web (observed set printed). Verifier run exit 0. .harness/evidence/M13-T4-verifier.log, M13-T4-check.log"
           ]
@@ -9860,7 +9860,24 @@
           "status": "ACCEPTED"
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "PASS",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "ORDINARY_IMPLEMENTATION",
+          "diff_range": "f3e67df..f5f213e",
+          "artifact": null,
+          "review_log": ".harness/evidence/M13-review.log",
+          "findings": "0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL",
+          "per_criterion": {
+            "M13-AC1": "PASS",
+            "M13-AC2": "PASS",
+            "M13-AC3": "PASS"
+          }
+        }
+      ],
       "findings": [],
       "validation": [
         {
