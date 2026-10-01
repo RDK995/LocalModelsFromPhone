@@ -342,6 +342,7 @@ M10e-AC2:
 M10e-AC3:
 - OWED - owner phone screenshot. Bundle host com.harness.bundle-host restarted 2026-09-30 22:48:53 (43 s after commit 3240b95), running from mobile/ on m10e-answer-fits-bubble, HTTP 200 on :8081 (T2; .harness/evidence/M10e-T2-bundle-host.log, M10e-T2-verifier.log). Owner steps: (1) swipe Expo Go away so it fully quits; (2) reopen Expo Go and open the project (downloads the new bundle; if the old look persists, shake and tap Reload); (3) with Web search on, ask for today's top news as a bulleted list; (4) pass = the grey answer bubble is wide (about 85% of the screen) while streaming and when finished, every line of text is inside the bubble, "Sources (n)" is below the text inside the bubble and the model name below the bubble, nothing overlaps; (5) optionally reopen the chat and check again; save as .harness/evidence/M10e-AC3-owner-phone.png.
 - Owner phone screenshot 2026-10-01 06:54, .harness/evidence/M10e-AC3-owner-phone.png: finished web reply (bulleted news list, Web search on) after loading the new code; grey bubble wide, every line inside it, "Sources (8)" below the text inside the bubble. The model name line is not in frame (screenshot ends at the bubble's bottom edge above the input bar).
+- F1 correction: second owner phone screenshot 2026-10-01 06:58, .harness/evidence/M10e-AC3-owner-phone-2.png, same web reply scrolled to the bottom: wide grey bubble with every line inside it, "Sources (8)" below the text inside the bubble, and the model name "nemotron3:33b" below the bubble; nothing overlaps. Owner also stated (2026-10-01) the model name is under the bubble.
 
 ### Validation
 
@@ -350,10 +351,11 @@ M10e-AC3:
 ### Review
 
 Cycle 1: CHANGES REQUIRED (scope RECORD_ONLY), tier Top/opus (AMBIGUOUS, T1 Top-routed), diff 1b139be..45a2911. AC1 PASS, AC2 PASS, AC3 FAIL. 0 BLOCKER, 1 IMPORTANT (F1: AC3 screenshot does not show the model name below the bubble), 0 OPTIONAL. Report .harness/reviews/M10e-cycle1.md; log .harness/evidence/M10e-review.log.
+Fix cycle 1 Pre-correction: 94d0858b6084af89e6ec5a436b2cccc43f92de96 (cycle 1 review records committed). Correction is record-only: second owner screenshot added as AC3 evidence (F1); no file outside F1 changed.
 
 ### Review Cycles
 
-0
+1
 
 ### Follow-ups
 
