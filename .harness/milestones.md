@@ -362,7 +362,7 @@ Cycle 1: PASS — tier Mid, model sonnet, reason_code ORDINARY_IMPLEMENTATION; d
 
 ## M15 — A deep research run through the server API ends with a report citing only the pages it read
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -387,7 +387,13 @@ Pending.
 
 ### Baseline
 
+b48673499df9aa0d846bad7bbefe1548d57cb272 on m15-deep-research-skeleton
+
 ### Evidence
+
+- M15-T1 — Cheap (BOUNDED_LOW_RISK): attempt 1 PASS; verifier PASS (exit 0, `bun test src/ollama` 23 pass, typecheck clean; .harness/evidence/M15-T1-verifier.log).
+- M15-T2 — Top (ARCHITECTURE: research loop shape inside C6 across C7/C12 seams): not yet dispatched; next task (packet .harness/tasks/M15-T2.md).
+- M15-T3 — Mid (ORDINARY_IMPLEMENTATION): pending, depends on T2.
 
 ### Validation
 

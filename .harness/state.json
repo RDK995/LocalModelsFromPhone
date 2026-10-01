@@ -10176,10 +10176,13 @@
         "FR37"
       ],
       "traces": "AC28 (loop, format/num_ctx, malformed step, citation removal, quote check)",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
-      "baseline": null,
+      "baseline": {
+        "commit": "b48673499df9aa0d846bad7bbefe1548d57cb272",
+        "branch": "m15-deep-research-skeleton"
+      },
       "as_built": {
         "artifact": null,
         "result": "PENDING"
@@ -10210,7 +10213,73 @@
           "evidence": []
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M15-T1",
+          "scope": "C7: optional format/options.num_ctx/think/keep_alive on chat requests",
+          "packet": ".harness/tasks/M15-T1.md",
+          "criteria": [
+            "M15-AC2"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "optional request fields passed through a typed client; assertions stated in packet"
+          },
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS exit 0 (bun test src/ollama 23 pass; tsc clean); files within allowed; tests not weakened",
+              "artifacts": [
+                ".harness/evidence/M15-T1-worker.log",
+                ".harness/evidence/M15-T1-verifier.log"
+              ]
+            }
+          ],
+          "status": "ACCEPTED"
+        },
+        {
+          "id": "M15-T2",
+          "scope": "C6: server-driven research loop module with schema-constrained steps and citations by construction; unit tests",
+          "packet": ".harness/tasks/M15-T2.md",
+          "criteria": [
+            "M15-AC1",
+            "M15-AC2",
+            "M15-AC3",
+            "M15-AC4"
+          ],
+          "routing": {
+            "tier": "Top",
+            "model": "opus",
+            "reason_code": "ARCHITECTURE",
+            "detail": "designs the research loop shape (phases, step schemas, bounds, citation rules) inside C6 across the C7/C12 seams that M17/M19 build on"
+          },
+          "attempts": [],
+          "status": "PENDING"
+        },
+        {
+          "id": "M15-T3",
+          "scope": "C4/C6: deep_research request field wired to the research run; HTTP-level SSE test",
+          "packet": ".harness/tasks/M15-T3.md",
+          "criteria": [
+            "M15-AC1",
+            "M15-AC2",
+            "M15-AC4"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "wire an existing module behind one request field; clear test oracle"
+          },
+          "attempts": [],
+          "status": "PENDING"
+        }
+      ],
       "reviews": [],
       "findings": [],
       "validation": [],

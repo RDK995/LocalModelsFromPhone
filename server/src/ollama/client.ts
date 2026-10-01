@@ -58,8 +58,9 @@ export interface OllamaGenerateRequest {
 }
 
 /**
- * What callers may choose for a chat. keep_alive and stream are fixed by
- * `chat()` (I10), so they are not part of the request.
+ * What callers may choose for a chat. stream is fixed by
+ * `chat()` (I10), and keep_alive defaults to -1 (FR4), so they are not
+ * required. format, options, think, and keep_alive may be overridden per-request.
  */
 export interface OllamaChatRequest {
   model: string;
@@ -69,6 +70,10 @@ export interface OllamaChatRequest {
     tool_calls?: OllamaToolCall[];
     tool_name?: string;
   }>;
+  format?: Record<string, unknown> | "json";
+  options?: { num_ctx?: number; [k: string]: unknown };
+  think?: boolean;
+  keep_alive?: number | string;
 }
 
 export interface OllamaShowResponse {
@@ -248,15 +253,17 @@ export class OllamaClient {
    * {model, messages:[{role, content, ...}], keep_alive:-1, stream:true, think:true
    * when the model supports it, tools:[] when provided}: only model and messages come from the
    * caller, keep_alive:-1 keeps the resident model loaded indefinitely (FR4),
-   * `think` is decided by the server from `/api/show` (I9) — the caller
-   * never requests it, and `tools` is passed through when given and non-empty.
+   * `think` is decided by the server from `/api/show` (I9) or from the request if provided,
+   * and `tools` is passed through when given and non-empty.
+   * format, options, think, and keep_alive may be overridden per-request.
    */
   async *chat(
     request: OllamaChatRequest,
     signal?: AbortSignal,
     tools?: OllamaTool[]
   ): AsyncGenerator<OllamaChatResponse & { toolCalls?: OllamaToolCall[] }, void, unknown> {
-    const think = await this.supportsThinking(request.model);
+    const autoDetectedThink = await this.supportsThinking(request.model);
+    const think = request.think !== undefined ? request.think : autoDetectedThink;
     const body: Record<string, unknown> = {
       model: request.model,
       messages: request.messages.map((m) => {
@@ -269,10 +276,18 @@ export class OllamaClient {
         }
         return msg;
       }),
-      keep_alive: -1,
+      keep_alive: request.keep_alive !== undefined ? request.keep_alive : -1,
       stream: true,
       ...(think ? { think: true } : {}),
     };
+    // Add format if provided
+    if (request.format !== undefined) {
+      body.format = request.format;
+    }
+    // Add options if provided
+    if (request.options !== undefined) {
+      body.options = request.options;
+    }
     // Only include tools if provided and non-empty
     if (tools && tools.length > 0) {
       body.tools = tools;

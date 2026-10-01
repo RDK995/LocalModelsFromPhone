@@ -525,3 +525,17 @@ labels them "Asked the model to continue" / "Asked the model to answer now".
 Why: FR33 was added after this architecture was agreed; C6 already owns the tool-calling loop and
 the 10-call cap. Additive enum values on an existing event; no component boundary, technology or
 responsibility changes.
+
+### D-M15-1 — Deep research (FR34-FR40) realised inside existing components
+
+Milestone: M15 (planned 2026-10-01)
+Material: no
+Change: Requirement Coverage additions FR34 -> C1, C2, C3, C4, C5; FR35, FR36, FR37, FR38 -> C6
+(with C7 for `format`/`num_ctx`/`think`/`keep_alive` on chat requests and C12 for search/read
+execution and page numbering); FR39 -> C13, C14; FR40 -> C6, C12, C13. The server-driven research
+loop is a module of C6 (`server/src/generations/research.ts`), selected by an optional
+`deep_research` boolean on POST /v1/chat; the SSE `step` event's `kind` gains `"plan"` and
+`"write"`. Search-backend circuit breakers and the 24 h cache live in C13 (search service).
+Why: FR34-FR40 were added after this architecture was agreed. C6 already owns running a reply
+against the resident model, its event log, resume and cancellation; a deep research run is a reply.
+No new component, boundary or technology (still Ollama, Bun, the existing search service).

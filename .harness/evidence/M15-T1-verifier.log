@@ -1,0 +1,11 @@
+$ cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/ollama && bun run typecheck
+
+bun test v1.4.0 (1381054db)
+
+ 23 pass
+ 0 fail
+ 37 expect() calls
+Ran 23 tests across 1 file. [19.00ms]
+$ tsc --noEmit
+
+Exit Status: 0
