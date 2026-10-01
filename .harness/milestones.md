@@ -377,7 +377,7 @@ b48673499df9aa0d846bad7bbefe1548d57cb272 on m15-deep-research-skeleton
 
 ## M16 — The deep research run works on the real qwen3.5:35b-a3b on the Mac
 
-Status: IN_PROGRESS
+Status: BLOCKED
 
 ### Outcome
 
@@ -405,14 +405,31 @@ d4037fb0e9652dc2113bf33816bf63205c893d03 on m16-real-model-live-proof
 
 ### Evidence
 
-Phase 1 (handed off, CONTINUE). Accepted tasks:
-- M16-T2 (think setting + probe script): Mid (`sonnet`), routed ORDINARY_IMPLEMENTATION, attempt 3 PASS. Verifier: `cd server && bun test && bun run typecheck` exit 0, 219 pass 0 fail, tsc clean; files within allowed set; tests not weakened - `.harness/evidence/M16-T2-verifier.log`. Commit 79fa999. `ResearchSettings.think` (default `false`, provisional) sent as top-level `think` on every step request; `SCHEMAS`/`VALIDATORS` exported and shared with `server/scripts/probe-format-think.ts`.
+Accepted tasks:
+- M16-T1 (pull + list + swap-load): Cheap (`haiku`), BOUNDED_LOW_RISK. Attempt 1 CONTINUE (pull in progress) -> continuation 1 PASS. Verifier PASS (`ollama list | grep 'qwen3.5:35b-a3b' && ollama ps` exit 0; resident 100% GPU, Forever) - `.harness/evidence/M16-T1-live.log`, `.harness/evidence/M16-T1-verifier.log`. Commit 1c26bc3. Note for review: the server has no GET /v1/models (404); its installed-model list is GET /v1/state (server/src/http/server.ts ~line 452), which lists `qwen3.5:35b-a3b` (size_bytes 23869191742) and shows it resident with loaded_by_server=true after POST /v1/models/load (~line 467). M16-AC1's "(GET /v1/models)" names a route that does not exist; evidenced against the actual installed-model list.
+- M16-T2 (think setting + probe script): Mid (`sonnet`), ORDINARY_IMPLEMENTATION, attempt 3 PASS. Verifier: `cd server && bun test && bun run typecheck` exit 0, 219 pass - `.harness/evidence/M16-T2-verifier.log`. Commit 79fa999.
+- M16-T3 (explicit `think: false` reaches Ollama): Cheap (`haiku`), BOUNDED_LOW_RISK, attempt 1 PASS. Verifier: `cd server && bun test && bun run typecheck` exit 0, 221 pass, existing think tests unchanged - `.harness/evidence/M16-T3-verifier.log`. Commit 986af8f.
+- M16-T4 (live probe + default): Cheap (`haiku`), BOUNDED_LOW_RISK, attempt 1 PASS. Probe `bun run scripts/probe-format-think.ts --model qwen3.5:35b-a3b --calls 5`: think-on 7/7 schema-valid, think-off 7/7 schema-valid (one call per step schema: brief, plan, queries, select, note, gap, write; num_ctx 32768). Decision rule -> `DEFAULT_RESEARCH_SETTINGS.think = true`. Verifier: tests exit 0, 221 pass, both think values still covered - `.harness/evidence/M16-T4-probe.json`, `M16-T4-probe.log`, `M16-T4-verifier.log`. Commit 8bdee34.
 
-In flight / remaining (for the continuation):
-- M16-T1 (pull + list + swap-load): Cheap (`haiku`), BOUNDED_LOW_RISK, attempt 1 returned CONTINUE (not a failed rung; continuation 1 of 2 allowed). `ollama pull qwen3.5:35b-a3b` was left running in the background at 47% (11/23 GB, ~18 MB/s). The server was already running (PID 42026, :7789) and was not started by the worker. Worker reports the installed-model route may be named differently from "GET /v1/models" (it cited GET /v1/state and POST /v1/models/load) - the continuation must check the actual route names before judging M16-AC1. No evidence file yet. Next: a fresh Cheap worker with the T1 packet plus a handoff noting the pull state.
-- M16-T3 (new, needed): `OllamaClient.chat()` in server/src/ollama/client.ts drops `think: false` (`...(think ? { think: true } : {})`, ~line 281; think comes from the request or auto-detection ~lines 265-266), so the run's `think: false` cannot actually switch thinking off. Make an explicit `think: false` in the request reach Ollama, without changing ordinary chat/web replies that leave `think` unset. Test-first.
-- M16-T4: run `bun run scripts/probe-format-think.ts --model qwen3.5:35b-a3b --calls 5` from server/ against the resident model, save the JSON to evidence, and set `DEFAULT_RESEARCH_SETTINGS.think` to the setting the probe supports (M16-AC2).
-- M16-T5: live deep research through POST /v1/chat on the real model; capture the event stream; check status `complete`/`partial`, >=1 read page cited, every citation number resolves to a source of that reply (M16-AC3).
+Blocked:
+- M16-T5 (live deep research via POST /v1/chat, M16-AC3): Mid (`sonnet`), ORDINARY_IMPLEMENTATION, attempt 3 BLOCKED (environmental, not a failed rung). The running server on :7789 (LaunchAgent `com.harness.server`, pid 42026, started 2026-10-01 09:56:39, bun without watch) predates commits 79fa999/986af8f/8bdee34, so a live run would exercise old code. Packet reserves a LaunchAgent restart for a human. No evidence created.
+
+Human Escalation Contract:
+
+Problem:
+The live deep research run (M16-AC3) cannot be proven: the always-on server process was started before this milestone's code changes and does not reload them, so a run now would test old code.
+
+Requirement/milestone affected:
+M16-AC3 (task M16-T5); M16-AC1 and M16-AC2 are evidenced.
+
+Attempts made:
+1. M16-T5 Mid attempt 3 compared the server process start time (2026-10-01 09:56) with the newest server commits (2026-10-01 23:57 to 2026-10-02 00:32), found it stale, and identified it as LaunchAgent `com.harness.server` (KeepAlive, RunAtLoad).
+
+Remaining issue:
+The server must be restarted onto the current branch before M16-T5 can run.
+
+Recommended decision:
+Run `launchctl kickstart -k gui/$(id -u)/com.harness.server`, confirm `qwen3.5:35b-a3b` is still resident (reload it from the phone or via POST /v1/models/load if not), then resume M16 (re-dispatch M16-T5 with its packet unchanged). Alternatively, authorise the harness to perform that restart itself.
 
 ### Validation
 

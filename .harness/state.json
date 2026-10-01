@@ -69,7 +69,7 @@
       },
       "as_built": {
         "artifact": ".harness/as-built/M1.md",
-        "result": "RECORDED — 62/62 files attributed; components C1,C2,C3,C4,C6,C7,C8,C9,C10,C11; 12 edges; 2 claim mismatches (C5 claimed but not in diff, deferred to M2 per code comments; C3 present but not claimed)"
+        "result": "RECORDED \u2014 62/62 files attributed; components C1,C2,C3,C4,C6,C7,C8,C9,C10,C11; 12 edges; 2 claim mismatches (C5 claimed but not in diff, deferred to M2 per code comments; C3 present but not claimed)"
       },
       "criteria": [
         {
@@ -77,8 +77,8 @@
           "text": "With a model already resident in Ollama, sending a prompt from the Expo Go app over Tailscale Serve renders the reply incrementally, token by token, ending in a terminal complete state.",
           "status": "PASS",
           "evidence": [
-            "e2e-tailnet-proof.sh (live, tailnet URL :8443): 80 content events over ~6.5s ending done status complete — .harness/evidence/M1-T5b-verifier.log",
-            "server.test.ts chat streams content then complete — .harness/evidence/M1-T7-verifier.log",
+            "e2e-tailnet-proof.sh (live, tailnet URL :8443): 80 content events over ~6.5s ending done status complete \u2014 .harness/evidence/M1-T5b-verifier.log",
+            "server.test.ts chat streams content then complete \u2014 .harness/evidence/M1-T7-verifier.log",
             "On-phone Expo Go rendering: human check, not yet done",
             "HUMAN CHECK 2026-09-25 (after cycle-2 review, finding B): on the iPhone with Tailscale ON, Expo Go opened exp://ryans-mac-studio.tailc3648a.ts.net:8081, hung on 'Opening project', then showed 'Unmatched Route'. The app did not reach the chat or Settings screens; token paste, streaming and Stop could not be tried. FAIL.",
             "CYCLE-2 FIX (M1-C6, commit 1a7565e): cause of 'Unmatched Route' was that mobile/src/app had no index.tsx, so the root path Expo Go opens matched no screen. Added index.tsx redirecting to /setup (no token) or /chat (token); bundle host restarted; the tailnet-served bundle registers ./index.tsx. The ~20s 'Opening project' wait matches the first production bundle build (bundle-host.log: 'iOS Bundled 23140ms'). On-phone re-test by the human: pending.",
@@ -96,8 +96,8 @@
           "text": "A request to any server route without the correct bearer token returns 401; the Mac-side command produces the token, refuses to run if the token file is group- or world-readable, and the app's settings screen accepts a pasted token and uses it on the next request.",
           "status": "PASS",
           "evidence": [
-            "e2e: 7 routes 401 without and with wrong token via tailnet; token command mode 600, refuses 644/640/604 — .harness/evidence/M1-T5b-verifier.log",
-            "server.test.ts auth on every route; entry-smoke 7/7 — .harness/evidence/M1-T7-verifier.log",
+            "e2e: 7 routes 401 without and with wrong token via tailnet; token command mode 600, refuses 644/640/604 \u2014 .harness/evidence/M1-T5b-verifier.log",
+            "server.test.ts auth on every route; entry-smoke 7/7 \u2014 .harness/evidence/M1-T7-verifier.log",
             "App settings token paste: mobile tests (M1-T6); on-phone paste is a human check, not yet done",
             "HUMAN CHECK 2026-09-25 (after cycle-2 review, finding B): on the iPhone with Tailscale ON, Expo Go opened exp://ryans-mac-studio.tailc3648a.ts.net:8081, hung on 'Opening project', then showed 'Unmatched Route'. The app did not reach the chat or Settings screens; token paste, streaming and Stop could not be tried. FAIL.",
             "CYCLE-2 FIX (M1-C6, commit 1a7565e): cause of 'Unmatched Route' was that mobile/src/app had no index.tsx, so the root path Expo Go opens matched no screen. Added index.tsx redirecting to /setup (no token) or /chat (token); bundle host restarted; the tailnet-served bundle registers ./index.tsx. The ~20s 'Opening project' wait matches the first production bundle build (bundle-host.log: 'iOS Bundled 23140ms'). On-phone re-test by the human: pending.",
@@ -117,8 +117,8 @@
           "text": "Stop cancels generation on the Mac, verified against Ollama, and streaming output halts on the phone.",
           "status": "PASS",
           "evidence": [
-            "e2e: cancel over tailnet -> cancelled terminal event, no bytes after 3s, Ollama log stop: cancel task, runner CPU 2.24s -> 0.00s — .harness/evidence/M1-T5b-verifier.log",
-            "server.test.ts cancel aborts Ollama — .harness/evidence/M1-T7-verifier.log",
+            "e2e: cancel over tailnet -> cancelled terminal event, no bytes after 3s, Ollama log stop: cancel task, runner CPU 2.24s -> 0.00s \u2014 .harness/evidence/M1-T5b-verifier.log",
+            "server.test.ts cancel aborts Ollama \u2014 .harness/evidence/M1-T7-verifier.log",
             "Phone output halting: human check, not yet done",
             "HUMAN CHECK 2026-09-25 (after cycle-2 review, finding B): on the iPhone with Tailscale ON, Expo Go opened exp://ryans-mac-studio.tailc3648a.ts.net:8081, hung on 'Opening project', then showed 'Unmatched Route'. The app did not reach the chat or Settings screens; token paste, streaming and Stop could not be tried. FAIL.",
             "CYCLE-2 FIX (M1-C6, commit 1a7565e): cause of 'Unmatched Route' was that mobile/src/app had no index.tsx, so the root path Expo Go opens matched no screen. Added index.tsx redirecting to /setup (no token) or /chat (token); bundle host restarted; the tailnet-served bundle registers ./index.tsx. The ~20s 'Opening project' wait matches the first production bundle build (bundle-host.log: 'iOS Bundled 23140ms'). On-phone re-test by the human: pending.",
@@ -136,10 +136,10 @@
           "text": "The server and the app bundle are reachable from the phone over the tailnet and are not reachable from a device on the LAN or the public internet.",
           "status": "PASS",
           "evidence": [
-            "e2e: 7789 listens on 127.0.0.1 only; tailnet :8443 200; LAN 192.168.0.27 refuses 7789 and 8443; 8081 manifest via tailnet name 200 — .harness/evidence/M1-T5b-verifier.log",
+            "e2e: 7789 listens on 127.0.0.1 only; tailnet :8443 200; LAN 192.168.0.27 refuses 7789 and 8443; 8081 manifest via tailnet name 200 \u2014 .harness/evidence/M1-T5b-verifier.log",
             "GAP: LAN 8081 (Expo bundle host, binds *:8081) is currently REACHABLE; closing it needs a human-run sudo pf command; LAN-device check is a human check",
             "HUMAN CHECK 2026-09-25: after the human ran `sudo bash ops/scripts/install-pf-anchor.sh` (LaunchDaemon com.harness.pf-bundle-host installed, loader last exit 0), the human opened http://192.168.0.27:8081 in Safari on the iPhone with Tailscale OFF on the home Wi-Fi: it FAILED TO LOAD. Note: e2e-tailnet-proof.sh run on the Mac itself still reports LAN 192.168.0.27:8081 REACHABLE (HTTP 200) after install; the Mac-local probe may not exercise the LAN path (unconfirmed).",
-            "CYCLE-2 FIX (M1-C7, commit 1a248cf): the Mac-local LAN 8081 probe (routes over lo0, always REACHABLE) was replaced by checks that the pf LaunchDaemon's last exit is 0 and its loaded interface equals the current tailnet utun; live e2e exit 0 — .harness/evidence/M1-C7-verifier-2.log. The human LAN-device check above remains the LAN evidence.",
+            "CYCLE-2 FIX (M1-C7, commit 1a248cf): the Mac-local LAN 8081 probe (routes over lo0, always REACHABLE) was replaced by checks that the pf LaunchDaemon's last exit is 0 and its loaded interface equals the current tailnet utun; live e2e exit 0 \u2014 .harness/evidence/M1-C7-verifier-2.log. The human LAN-device check above remains the LAN evidence.",
             "Final review cycle 6 (sonnet, 650e350): PASS; independent re-run in .harness/evidence/M1-cycle6-review.log"
           ]
         }
@@ -2095,7 +2095,7 @@
       },
       "as_built": {
         "artifact": ".harness/as-built/M2a.md",
-        "result": "RECORDED — 10/12 files attributed; components C1,C4,C5 (C2,C3,C6,C7 as context); 6 edges; 2 claim mismatches (C2 claimed but no code changes, imported by C1; C7 claimed but no code changes, imported by C5)"
+        "result": "RECORDED \u2014 10/12 files attributed; components C1,C4,C5 (C2,C3,C6,C7 as context); 6 edges; 2 claim mismatches (C2 claimed but no code changes, imported by C1; C7 claimed but no code changes, imported by C5)"
       },
       "criteria": [
         {
@@ -2103,10 +2103,10 @@
           "text": "The app's model list matches Ollama GET /api/tags by real name and size, with no hardcoded model names.",
           "status": "PASS",
           "evidence": [
-            "Live over tailnet :8443 via the app's createAPIClient + toModelListView: names equal Ollama /api/tags in order, count=5; size_bytes equal exactly and size labels match; resident 'Loaded: devstral:24b' equals /api/ps (a model the server did not load); hardcoded-name grep over mobile/src and server/src clean — .harness/evidence/M2a-T3-verifier.log",
-            "server/src/models/manager.test.ts: models mapped verbatim from made-up names; resident from ps with loaded_by_server false; null when ps empty; 503 ollama_down path — .harness/evidence/M2a-T1-verifier.log",
-            "mobile/src/ui/modelList.test.ts: rows mirror arbitrary list, resident marking, Nothing loaded; runtime smoke renders Chat with Models link — .harness/evidence/M2a-T2-verifier.log",
-            "Reviewer cycle 1 re-ran the full milestone validation live: all green — .harness/evidence/M2a-review.log"
+            "Live over tailnet :8443 via the app's createAPIClient + toModelListView: names equal Ollama /api/tags in order, count=5; size_bytes equal exactly and size labels match; resident 'Loaded: devstral:24b' equals /api/ps (a model the server did not load); hardcoded-name grep over mobile/src and server/src clean \u2014 .harness/evidence/M2a-T3-verifier.log",
+            "server/src/models/manager.test.ts: models mapped verbatim from made-up names; resident from ps with loaded_by_server false; null when ps empty; 503 ollama_down path \u2014 .harness/evidence/M2a-T1-verifier.log",
+            "mobile/src/ui/modelList.test.ts: rows mirror arbitrary list, resident marking, Nothing loaded; runtime smoke renders Chat with Models link \u2014 .harness/evidence/M2a-T2-verifier.log",
+            "Reviewer cycle 1 re-ran the full milestone validation live: all green \u2014 .harness/evidence/M2a-review.log"
           ]
         }
       ],
@@ -2367,7 +2367,7 @@
       },
       "as_built": {
         "artifact": ".harness/as-built/M2b.md",
-        "result": "RECORDED — 13/17 files attributed; components C1,C2,C4,C5,C7; 4 edges; no claim mismatches"
+        "result": "RECORDED \u2014 13/17 files attributed; components C1,C2,C4,C5,C7; 4 edges; no claim mismatches"
       },
       "criteria": [
         {
@@ -2375,9 +2375,9 @@
           "text": "Loading model A then model B leaves only B resident in GET /api/ps; unloading leaves nothing resident.",
           "status": "PASS",
           "evidence": [
-            "Live over tailnet :8443 via the app's createAPIClient + runModelAction + toModelListView: load A (devstral:24b) -> /api/ps exactly [A], 'Loaded: A', loaded_by_server true; load B (qwen3.6:27b) -> /api/ps exactly [B]; unload -> /api/ps [] and 'Nothing loaded' — .harness/evidence/M2b-T3a-verifier.log",
-            "server/src/models/manager.test.ts + server.test.ts: swap unloads every other resident model first, unload, async 202 — .harness/evidence/M2b-T1-verifier.log",
-            "mobile/src/ui tests: Load/Unload actions poll GET /v1/state to idle — .harness/evidence/M2b-T2-verifier.log"
+            "Live over tailnet :8443 via the app's createAPIClient + runModelAction + toModelListView: load A (devstral:24b) -> /api/ps exactly [A], 'Loaded: A', loaded_by_server true; load B (qwen3.6:27b) -> /api/ps exactly [B]; unload -> /api/ps [] and 'Nothing loaded' \u2014 .harness/evidence/M2b-T3a-verifier.log",
+            "server/src/models/manager.test.ts + server.test.ts: swap unloads every other resident model first, unload, async 202 \u2014 .harness/evidence/M2b-T1-verifier.log",
+            "mobile/src/ui tests: Load/Unload actions poll GET /v1/state to idle \u2014 .harness/evidence/M2b-T2-verifier.log"
           ]
         },
         {
@@ -2385,8 +2385,8 @@
           "text": "A model loaded from the phone remains resident in GET /api/ps after 10 minutes idle and after a chat reply completes.",
           "status": "PASS",
           "evidence": [
-            "Live: after a chat reply to B completed (terminal done event) /api/ps still exactly [B] with expires_at year 2319 (keep_alive -1 held); after 600 s idle with no Ollama requests /api/ps still exactly [B] — .harness/evidence/M2b-T3a-verifier.log",
-            "server tests: load issues keep_alive -1 — .harness/evidence/M2b-T1-verifier.log"
+            "Live: after a chat reply to B completed (terminal done event) /api/ps still exactly [B] with expires_at year 2319 (keep_alive -1 held); after 600 s idle with no Ollama requests /api/ps still exactly [B] \u2014 .harness/evidence/M2b-T3a-verifier.log",
+            "server tests: load issues keep_alive -1 \u2014 .harness/evidence/M2b-T1-verifier.log"
           ]
         },
         {
@@ -2394,9 +2394,9 @@
           "text": "A failed load, such as out of memory, leaves nothing resident and the app shows the failure reason.",
           "status": "PASS",
           "evidence": [
-            "Live: installed probe (smallest model + mismatched-shape LoRA adapter) loaded through the app client -> Ollama HTTP 500 'llama-server process has terminated: exit status 1'; /v1/state operation idle with error, resident null; /api/ps empty; view 'Nothing loaded' and failureMessage 'Load failed: llama-server process has terminated: exit status 1' — .harness/evidence/M2b-T3b-verifier.log. Failure class is a runner load failure, not out-of-memory (OOM could not be induced on Ollama 0.32.14: .harness/evidence/M2b-T3b-worker.log)",
-            "server tests: out-of-memory, not-found, unreachable and generic failure reasons mapped and resident cleared — .harness/evidence/M2b-T1-verifier.log",
-            "mobile/src/ui tests: failure message rendered from operation.error — .harness/evidence/M2b-T2-verifier.log"
+            "Live: installed probe (smallest model + mismatched-shape LoRA adapter) loaded through the app client -> Ollama HTTP 500 'llama-server process has terminated: exit status 1'; /v1/state operation idle with error, resident null; /api/ps empty; view 'Nothing loaded' and failureMessage 'Load failed: llama-server process has terminated: exit status 1' \u2014 .harness/evidence/M2b-T3b-verifier.log. Failure class is a runner load failure, not out-of-memory (OOM could not be induced on Ollama 0.32.14: .harness/evidence/M2b-T3b-worker.log)",
+            "server tests: out-of-memory, not-found, unreachable and generic failure reasons mapped and resident cleared \u2014 .harness/evidence/M2b-T1-verifier.log",
+            "mobile/src/ui tests: failure message rendered from operation.error \u2014 .harness/evidence/M2b-T2-verifier.log"
           ]
         }
       ],
@@ -2571,7 +2571,7 @@
               "tier": "Mid",
               "model": "sonnet",
               "verdict": "INTERRUPTED",
-              "note": "40-turn limit, no report, nothing persisted in repo; left probe model m2b-failed-load-probe (FROM nemotron3:33b blob, num_ctx 131072) and nothing resident — orchestrator removed the probe and restored devstral:24b keep_alive -1"
+              "note": "40-turn limit, no report, nothing persisted in repo; left probe model m2b-failed-load-probe (FROM nemotron3:33b blob, num_ctx 131072) and nothing resident \u2014 orchestrator removed the probe and restored devstral:24b keep_alive -1"
             },
             {
               "attempt": 3,
@@ -2920,7 +2920,7 @@
       },
       "as_built": {
         "artifact": ".harness/as-built/M2c.md",
-        "result": "RECORDED — 15/15 files attributed; components C1,C2,C4,C5,C6; 4 edges; no claim mismatches"
+        "result": "RECORDED \u2014 15/15 files attributed; components C1,C2,C4,C5,C6; 4 edges; no claim mismatches"
       },
       "criteria": [
         {
@@ -2928,9 +2928,9 @@
           "text": "Swapping or unloading while a reply is in flight, or while the resident model was not loaded by this server, requires explicit confirmation, and cancelling the confirmation leaves state unchanged.",
           "status": "PASS",
           "evidence": [
-            "HTTP (real routes, bearer auth) server/src/http/server.test.ts: POST /v1/models/load and /unload return 409 {error:confirmation_required, message, reasons} for reply_in_progress and not_loaded_by_server; follow-up GET /v1/state shows operation idle and the same resident (cancel leaves state unchanged); confirm:true -> 202 and an in-flight /v1/chat reply ends done {status:cancelled}; non-boolean confirm -> 400 — .harness/evidence/M2c-T1-verifier.log",
-            "Unit server/src/models/manager.test.ts: each reason alone and both, refusal issues no Ollama call, leaves operation idle and does not cancel the reply; confirmed ordering cancel -> released -> unload -> load; overlapping requests not both accepted — .harness/evidence/M2c-T1-verifier.log",
-            "Phone mobile/src/api/client.test.ts, mobile/src/ui/modelActions.test.ts, mobile/src/ui/confirmation.test.ts: typed ConfirmationRequiredError with reasons; decline makes exactly one start call, no poll, resolves cancelled; confirm retries with confirm:true then polls; warning text per reason with best-guess label — .harness/evidence/M2c-T2-verifier.log. Alert wiring in mobile/src/app/models.tsx is read, not unit-testable (.tsx)."
+            "HTTP (real routes, bearer auth) server/src/http/server.test.ts: POST /v1/models/load and /unload return 409 {error:confirmation_required, message, reasons} for reply_in_progress and not_loaded_by_server; follow-up GET /v1/state shows operation idle and the same resident (cancel leaves state unchanged); confirm:true -> 202 and an in-flight /v1/chat reply ends done {status:cancelled}; non-boolean confirm -> 400 \u2014 .harness/evidence/M2c-T1-verifier.log",
+            "Unit server/src/models/manager.test.ts: each reason alone and both, refusal issues no Ollama call, leaves operation idle and does not cancel the reply; confirmed ordering cancel -> released -> unload -> load; overlapping requests not both accepted \u2014 .harness/evidence/M2c-T1-verifier.log",
+            "Phone mobile/src/api/client.test.ts, mobile/src/ui/modelActions.test.ts, mobile/src/ui/confirmation.test.ts: typed ConfirmationRequiredError with reasons; decline makes exactly one start call, no poll, resolves cancelled; confirm retries with confirm:true then polls; warning text per reason with best-guess label \u2014 .harness/evidence/M2c-T2-verifier.log. Alert wiring in mobile/src/app/models.tsx is read, not unit-testable (.tsx)."
           ]
         }
       ],
@@ -3093,7 +3093,7 @@
       "validation": [
         {
           "command": "cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/e2e-tailnet-proof.sh && (cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh) && (cd ops && bun test src/token && bash scripts/verify-ops-install.sh) && (cd mobile && bun run typecheck && bun test src/api src/ui src/chat src/app-routing && bun run lint && bun run smoke:runtime && bash scripts/model-list-proof.sh && bash scripts/model-swap-proof.sh && bash scripts/model-failed-load-proof.sh && npx expo export --platform ios && rm -rf dist)",
-          "note": "same broad chain as M2b (about 12 minutes: model-swap-proof idles 600 s); the live proofs now pass confirm: true and must still pass against the redeployed server — they restart com.harness.server and com.harness.bundle-host and evict then restore the resident model; run nothing else against the Mac concurrently",
+          "note": "same broad chain as M2b (about 12 minutes: model-swap-proof idles 600 s); the live proofs now pass confirm: true and must still pass against the redeployed server \u2014 they restart com.harness.server and com.harness.bundle-host and evict then restore the resident model; run nothing else against the Mac concurrently",
           "artifacts": [
             ".harness/evidence/M2c-T1-verifier.log",
             ".harness/evidence/M2c-T2-verifier.log",
@@ -3129,7 +3129,7 @@
       },
       "as_built": {
         "artifact": ".harness/as-built/M3.md",
-        "result": "RECORDED — 17/23 files attributed; components C1,C3; 13 edges; no claim mismatches"
+        "result": "RECORDED \u2014 17/23 files attributed; components C1,C3; 13 edges; no claim mismatches"
       },
       "criteria": [
         {
@@ -3137,9 +3137,9 @@
           "text": "Conversations can be created, opened and deleted, and are listed newest first.",
           "status": "PASS",
           "evidence": [
-            "Unit mobile/src/store/conversationStore.test.ts: create/get/delete, list newest first, write-through persistence, corrupt entries skipped — .harness/evidence/M3-T1-verifier.log",
-            "Unit mobile/src/ui/conversationList.test.ts + mobile/src/app/conversations.tsx (list newest first, New chat, open, delete) — .harness/evidence/M3-T2-verifier.log",
-            "Runtime smoke (bundled app, faked native modules incl. AsyncStorage): token present lands on Conversations; Conversations -> New chat -> Chat drive — .harness/evidence/M3-T2b-verifier.log"
+            "Unit mobile/src/store/conversationStore.test.ts: create/get/delete, list newest first, write-through persistence, corrupt entries skipped \u2014 .harness/evidence/M3-T1-verifier.log",
+            "Unit mobile/src/ui/conversationList.test.ts + mobile/src/app/conversations.tsx (list newest first, New chat, open, delete) \u2014 .harness/evidence/M3-T2-verifier.log",
+            "Runtime smoke (bundled app, faked native modules incl. AsyncStorage): token present lands on Conversations; Conversations -> New chat -> Chat drive \u2014 .harness/evidence/M3-T2b-verifier.log"
           ]
         },
         {
@@ -3147,8 +3147,8 @@
           "text": "A follow-up prompt in the same conversation demonstrably uses context from an earlier turn.",
           "status": "PASS",
           "evidence": [
-            "Live tailnet proof mobile/scripts/conversation-proof.sh Step 3: turn-2 request recorded at client.chat contains turn-1 user and assistant messages; reply contains the run-time random code word — .harness/evidence/M3-T3-verifier.log",
-            "Unit mobile/src/chat/conversationSession.test.ts: full history sent on every send — .harness/evidence/M3-T2-verifier.log"
+            "Live tailnet proof mobile/scripts/conversation-proof.sh Step 3: turn-2 request recorded at client.chat contains turn-1 user and assistant messages; reply contains the run-time random code word \u2014 .harness/evidence/M3-T3-verifier.log",
+            "Unit mobile/src/chat/conversationSession.test.ts: full history sent on every send \u2014 .harness/evidence/M3-T2-verifier.log"
           ]
         },
         {
@@ -3156,8 +3156,8 @@
           "text": "Each assistant reply displays the model name that produced it, including after a mid-conversation model switch.",
           "status": "PASS",
           "evidence": [
-            "Live proof Step 5: same conversation, reply before swap stored with devstral:24b, reply after swap-load stored with qwen3.6:27b, first still devstral:24b — .harness/evidence/M3-T3-verifier.log",
-            "Unit conversationSession.test.ts per-reply model from done event; chat.tsx renders each assistant reply's model label — .harness/evidence/M3-T2-verifier.log"
+            "Live proof Step 5: same conversation, reply before swap stored with devstral:24b, reply after swap-load stored with qwen3.6:27b, first still devstral:24b \u2014 .harness/evidence/M3-T3-verifier.log",
+            "Unit conversationSession.test.ts per-reply model from done event; chat.tsx renders each assistant reply's model label \u2014 .harness/evidence/M3-T2-verifier.log"
           ]
         },
         {
@@ -3165,8 +3165,8 @@
           "text": "Sending with no model resident is blocked with a prompt to load one.",
           "status": "PASS",
           "evidence": [
-            "Live proof Step 6: after unload /api/ps empty; send blocked with 'No model loaded — load one on the Models screen to send.'; zero client.chat calls; no assistant message added — .harness/evidence/M3-T3-verifier.log",
-            "Unit conversationSession.test.ts blocked path; chat.tsx Load-a-model button — .harness/evidence/M3-T2-verifier.log"
+            "Live proof Step 6: after unload /api/ps empty; send blocked with 'No model loaded \u2014 load one on the Models screen to send.'; zero client.chat calls; no assistant message added \u2014 .harness/evidence/M3-T3-verifier.log",
+            "Unit conversationSession.test.ts blocked path; chat.tsx Load-a-model button \u2014 .harness/evidence/M3-T2-verifier.log"
           ]
         },
         {
@@ -3174,8 +3174,8 @@
           "text": "Force-quitting and reopening Expo Go shows the same conversations and messages as before.",
           "status": "PASS",
           "evidence": [
-            "Storage-layer proxy, live proof Step 7: a fresh store over the same file-backed StoragePort sees identical conversation, message order, contents and model labels — .harness/evidence/M3-T3-verifier.log",
-            "Unit conversationStore.test.ts: new store over same StoragePort reloads persisted conversations — .harness/evidence/M3-T1-verifier.log",
+            "Storage-layer proxy, live proof Step 7: a fresh store over the same file-backed StoragePort sees identical conversation, message order, contents and model labels \u2014 .harness/evidence/M3-T3-verifier.log",
+            "Unit conversationStore.test.ts: new store over same StoragePort reloads persisted conversations \u2014 .harness/evidence/M3-T1-verifier.log",
             "HUMAN STEP PENDING: on-device Expo Go force-quit and reopen shows the same conversations and messages (see Follow-ups)"
           ]
         }
@@ -3540,7 +3540,7 @@
       },
       "as_built": {
         "artifact": ".harness/as-built/M4a.md",
-        "result": "RECORDED — 13/13 files attributed; components C1,C6,C7,NEW-chatItems; 6 edges; 2 claim mismatches (claimed C3 had no file changes; NEW-chatItems not claimed)"
+        "result": "RECORDED \u2014 13/13 files attributed; components C1,C6,C7,NEW-chatItems; 6 edges; 2 claim mismatches (claimed C3 had no file changes; NEW-chatItems not claimed)"
       },
       "criteria": [
         {
@@ -3548,9 +3548,9 @@
           "text": "For a model that emits reasoning output, the app shows it in a collapsed, expandable section separate from the answer.",
           "status": "PASS",
           "evidence": [
-            "Server: think:true only for models whose /api/show capabilities include \"thinking\"; thinking SSE events before content, replayable — server/src/ollama/client.test.ts, server/src/generations/manager.test.ts (.harness/evidence/M4a-T1-verifier.log)",
-            "Live tailnet: qwen3.6:27b streams thinking before content; stored thinking and content separate, content \"42\"; devstral:24b zero thinking events — mobile/scripts/thinking-proof.sh (.harness/evidence/M4a-T5-verifier.log)",
-            "Bundled app: thinking shown behind \"Show thinking\", text hidden until tapped, then its own section with \"Hide thinking\" — runtime-smoke --token=stream steps 2-3 (.harness/evidence/M4a-T4-verifier.log); toggle helpers unit-tested (.harness/evidence/M4a-T2-verifier.log)"
+            "Server: think:true only for models whose /api/show capabilities include \"thinking\"; thinking SSE events before content, replayable \u2014 server/src/ollama/client.test.ts, server/src/generations/manager.test.ts (.harness/evidence/M4a-T1-verifier.log)",
+            "Live tailnet: qwen3.6:27b streams thinking before content; stored thinking and content separate, content \"42\"; devstral:24b zero thinking events \u2014 mobile/scripts/thinking-proof.sh (.harness/evidence/M4a-T5-verifier.log)",
+            "Bundled app: thinking shown behind \"Show thinking\", text hidden until tapped, then its own section with \"Hide thinking\" \u2014 runtime-smoke --token=stream steps 2-3 (.harness/evidence/M4a-T4-verifier.log); toggle helpers unit-tested (.harness/evidence/M4a-T2-verifier.log)"
           ]
         },
         {
@@ -3558,7 +3558,7 @@
           "text": "After Send, the user's prompt appears in the conversation immediately, before any reply token arrives.",
           "status": "PASS",
           "evidence": [
-            "Bundled app: prompt text in the committed tree after Send while the fake /v1/chat body has sent no byte — runtime-smoke --token=stream step 1; fails against pre-M4a chat.tsx (.harness/evidence/M4a-T4-verifier.log)",
+            "Bundled app: prompt text in the committed tree after Send while the fake /v1/chat body has sent no byte \u2014 runtime-smoke --token=stream step 1; fails against pre-M4a chat.tsx (.harness/evidence/M4a-T4-verifier.log)",
             "chat.tsx sets the pending turn before its first await (verifier lines 126-138, .harness/evidence/M4a-T3-verifier.log); buildChatItems unit tests (.harness/evidence/M4a-T2-verifier.log)"
           ]
         },
@@ -3567,7 +3567,7 @@
           "text": "A streaming reply renders incrementally in its final place in the conversation; on completion it stays where it is, with no separate streaming area whose text then moves into the conversation.",
           "status": "PASS",
           "evidence": [
-            "Bundled app: exactly one node holds the reply while streaming and after done; same list position; same enclosing <Text> Fabric node (tag 158) before and after completion — runtime-smoke --token=stream step 4 (.harness/evidence/M4a-T4-verifier.log)",
+            "Bundled app: exactly one node holds the reply while streaming and after done; same list position; same enclosing <Text> Fabric node (tag 158) before and after completion \u2014 runtime-smoke --token=stream step 4 (.harness/evidence/M4a-T4-verifier.log)",
             "buildChatItems keeps the same keys at the same indices through Send -> streaming -> persisted, never duplicating an id (.harness/evidence/M4a-T2-verifier.log); single list, no separate streaming block in chat.tsx (.harness/evidence/M4a-T3-verifier.log)"
           ]
         }
@@ -3955,7 +3955,7 @@
       },
       "as_built": {
         "artifact": ".harness/as-built/M4b.md",
-        "result": "RECORDED — 6/6 files attributed; components C2,NEW-resume-proof; 4 edges; 3 claim mismatches (C1 and C6 claimed but not modified in diff; NEW-resume-proof observed but not claimed)"
+        "result": "RECORDED \u2014 6/6 files attributed; components C2,NEW-resume-proof; 4 edges; 3 claim mismatches (C1 and C6 claimed but not modified in diff; NEW-resume-proof observed but not claimed)"
       },
       "criteria": [
         {
@@ -4154,7 +4154,7 @@
       },
       "as_built": {
         "artifact": ".harness/as-built/M4c.md",
-        "result": "RECORDED — 5/5 files attributed; components C2,NEW-background-proof; 4 edges; 3 claim mismatches (C1, C3 and C6 claimed but not modified in diff)"
+        "result": "RECORDED \u2014 5/5 files attributed; components C2,NEW-background-proof; 4 edges; 3 claim mismatches (C1, C3 and C6 claimed but not modified in diff)"
       },
       "criteria": [
         {
@@ -4445,7 +4445,7 @@
       },
       "as_built": {
         "artifact": ".harness/as-built/M5b.md",
-        "result": "RECORDED — 15/17 files attributed; components C1,C2,C5; 7 edges; 2 claim mismatches (C4 claimed but not modified; C5 modified but not claimed, covered by D-M5b-1)"
+        "result": "RECORDED \u2014 15/17 files attributed; components C1,C2,C5; 7 edges; 2 claim mismatches (C4 claimed but not modified; C5 modified but not claimed, covered by D-M5b-1)"
       },
       "criteria": [
         {
@@ -4902,7 +4902,7 @@
           "text": "POST /v1/read on the search service (127.0.0.1:7790) with a real public article URL returns 200 with its main text as markdown (boilerplate removed) and truncated false; a page longer than the size limit comes back truncated true with a truncation marker.",
           "status": "PASS",
           "evidence": [
-            "Cycle-2 review PASS (sonnet): live read of Ada_Lovelace_Day 200, truncated false, boilerplate absent; World_War_II truncated true — .harness/evidence/M6-review-c2.log"
+            "Cycle-2 review PASS (sonnet): live read of Ada_Lovelace_Day 200, truncated false, boilerplate absent; World_War_II truncated true \u2014 .harness/evidence/M6-review-c2.log"
           ]
         },
         {
@@ -4910,7 +4910,7 @@
           "text": "POST /v1/read refuses with 400 blocked_destination each of http://127.0.0.1:7789, http://localhost, a 100.x tailnet address, a 192.168.x.x address, http://[::1], and a hostname that resolves to 127.0.0.1; the check is made on the address actually connected to (no DNS-rebinding gap).",
           "status": "PASS",
           "evidence": [
-            "Cycle-2 review PASS (sonnet): every listed destination 400 blocked_destination; sentinel listener received zero requests — .harness/evidence/M6-review-c2.log"
+            "Cycle-2 review PASS (sonnet): every listed destination 400 blocked_destination; sentinel listener received zero requests \u2014 .harness/evidence/M6-review-c2.log"
           ]
         },
         {
@@ -4918,7 +4918,7 @@
           "text": "A public URL that redirects to any blocked destination is refused (every redirect hop re-checked), and a non-http(s) scheme returns 400 bad_url.",
           "status": "PASS",
           "evidence": [
-            "Cycle-2 review PASS (sonnet): both redirect-to-blocked cases 400 blocked_destination; file:// and ftp:// 400 bad_url — .harness/evidence/M6-review-c2.log"
+            "Cycle-2 review PASS (sonnet): both redirect-to-blocked cases 400 blocked_destination; file:// and ftp:// 400 bad_url \u2014 .harness/evidence/M6-review-c2.log"
           ]
         },
         {
@@ -4926,7 +4926,7 @@
           "text": "Non-text content returns 415 unsupported_content, and a fetch exceeding its time limit returns 504 timeout instead of hanging.",
           "status": "PASS",
           "evidence": [
-            "Cycle-2 review PASS (sonnet): image/png 415; slow fetch 504 in 15.0 s — .harness/evidence/M6-review-c2.log"
+            "Cycle-2 review PASS (sonnet): image/png 415; slow fetch 504 in 15.0 s \u2014 .harness/evidence/M6-review-c2.log"
           ]
         }
       ],
@@ -5180,7 +5180,7 @@
       },
       "as_built": {
         "artifact": ".harness/as-built/M7a.md",
-        "result": "RECORDED — 9/9 files attributed; components C9,C13,C14,C15; 3 edges; no claim mismatches"
+        "result": "RECORDED \u2014 9/9 files attributed; components C9,C13,C14,C15; 3 edges; no claim mismatches"
       },
       "criteria": [
         {
@@ -5329,7 +5329,7 @@
       "planned_validation": "Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/install-search-helper.sh && (cd search && bun test && bun run typecheck && bash scripts/search-proof.sh)`",
       "follow_ups": [
         "R7 resolved 2026-09-29 (M7a-T1): ddgs 9.16.0 and playwright 1.63.0 install and run on Homebrew Python 3.14.7; live ddgs search returned results. No deviation needed.",
-        "M7a-T2: helper {error} → 503 search_unavailable is implemented now (I17 contract); M7c's both-backends-fail criterion builds on it. No search time limit / 504 yet (M7c).",
+        "M7a-T2: helper {error} \u2192 503 search_unavailable is implemented now (I17 contract); M7c's both-backends-fail criterion builds on it. No search time limit / 504 yet (M7c).",
         "M7a-T2: results missing a string title/snippet are kept with \"\" (entries without url dropped); reviewer to confirm acceptable.",
         "M7a-T1: Playwright downloaded Chromium plus the headless-shell variant; M7b should use p.chromium.executable_path, not a hard-coded path.",
         "M7a-T3: search-proof.sh depends on live ddgs results from a home IP (3 query attempts per case); engine blocking could make it flaky.",
@@ -5371,7 +5371,7 @@
       },
       "as_built": {
         "artifact": ".harness/as-built/M7b.md",
-        "result": "RECORDED — C14 observed; C13, C15 context; 1 claim mismatch: C13 claimed but not observed (no changes in search/src/)"
+        "result": "RECORDED \u2014 C14 observed; C13, C15 context; 1 claim mismatch: C13 claimed but not observed (no changes in search/src/)"
       },
       "criteria": [
         {
@@ -5382,7 +5382,7 @@
             ".harness/evidence/M7b-T2-verifier.log",
             ".harness/evidence/M7b-T3-verifier.log",
             ".harness/evidence/M7b-T1-verifier.log",
-            "Cycle-2 review PASS (sonnet): full validation exit 0 — .harness/evidence/M7b-review.log"
+            "Cycle-2 review PASS (sonnet): full validation exit 0 \u2014 .harness/evidence/M7b-review.log"
           ]
         }
       ],
@@ -5698,7 +5698,7 @@
       },
       "as_built": {
         "artifact": ".harness/as-built/M7c.md",
-        "result": "RECORDED — C13, C14 observed; 3 edges; 4 of 8 files attributed; no claim mismatches"
+        "result": "RECORDED \u2014 C13, C14 observed; 3 edges; 4 of 8 files attributed; no claim mismatches"
       },
       "criteria": [
         {
@@ -5709,7 +5709,7 @@
             ".harness/evidence/M7c-T3-verifier.log",
             ".harness/evidence/M7c-T1-verifier.log",
             ".harness/evidence/M7c-T2-verifier.log",
-            "Cycle-1 review PASS (opus): full validation exit 0 — .harness/evidence/M7c-review.log"
+            "Cycle-1 review PASS (opus): full validation exit 0 \u2014 .harness/evidence/M7c-review.log"
           ]
         }
       ],
@@ -5947,7 +5947,7 @@
       },
       "as_built": {
         "artifact": ".harness/as-built/M8.md",
-        "result": "RECORDED — C9, C13 observed; 3 edges; 6 of 6 files attributed; no claim mismatches"
+        "result": "RECORDED \u2014 C9, C13 observed; 3 edges; 6 of 6 files attributed; no claim mismatches"
       },
       "criteria": [
         {
@@ -5957,7 +5957,7 @@
           "evidence": [
             ".harness/evidence/M8-T3-verifier.log",
             ".harness/evidence/M8-T1-verifier.log",
-            "Cycle-1 review PASS (sonnet): full validation exit 0 — .harness/evidence/M8-review.log"
+            "Cycle-1 review PASS (sonnet): full validation exit 0 \u2014 .harness/evidence/M8-review.log"
           ]
         },
         {
@@ -5966,7 +5966,7 @@
           "status": "PASS",
           "evidence": [
             ".harness/evidence/M8-T3-verifier.log",
-            "Cycle-1 review PASS (sonnet): full validation exit 0 — .harness/evidence/M8-review.log"
+            "Cycle-1 review PASS (sonnet): full validation exit 0 \u2014 .harness/evidence/M8-review.log"
           ]
         },
         {
@@ -5976,7 +5976,7 @@
           "evidence": [
             ".harness/evidence/M8-T3-verifier.log",
             ".harness/evidence/M8-T2-verifier.log",
-            "Cycle-1 review PASS (sonnet): full validation exit 0 — .harness/evidence/M8-review.log"
+            "Cycle-1 review PASS (sonnet): full validation exit 0 \u2014 .harness/evidence/M8-review.log"
           ]
         }
       ],
@@ -6200,7 +6200,7 @@
       },
       "as_built": {
         "artifact": ".harness/as-built/M9.md",
-        "result": "RECORDED — C4, C5, C6, C7, C12 observed; 6 edges; 14 of 16 files attributed; no claim mismatches"
+        "result": "RECORDED \u2014 C4, C5, C6, C7, C12 observed; 6 edges; 14 of 16 files attributed; no claim mismatches"
       },
       "criteria": [
         {
@@ -6208,7 +6208,7 @@
           "text": "GET /v1/state reports each model's tools capability from Ollama /api/show, and POST /v1/chat with web:true for a resident model without tools returns 409 tools_unsupported (proven with a stubbed capability check if every installed model has tools).",
           "status": "PASS",
           "evidence": [
-            "Cycle-1 review PASS (sonnet): bun test 148 pass, typecheck clean, live proof exit 0 — .harness/evidence/M9-review.log, .harness/evidence/M9-review-live.log"
+            "Cycle-1 review PASS (sonnet): bun test 148 pass, typecheck clean, live proof exit 0 \u2014 .harness/evidence/M9-review.log, .harness/evidence/M9-review-live.log"
           ]
         },
         {
@@ -6216,7 +6216,7 @@
           "text": "With web:true, a prompt asking for current information against the live resident model makes the server offer web_search and read_page with a note of the current date; the SSE stream carries at least one step event (started, then its final status), a sources event before done, and the final answer.",
           "status": "PASS",
           "evidence": [
-            "Cycle-1 review PASS (sonnet): bun test 148 pass, typecheck clean, live proof exit 0 — .harness/evidence/M9-review.log, .harness/evidence/M9-review-live.log"
+            "Cycle-1 review PASS (sonnet): bun test 148 pass, typecheck clean, live proof exit 0 \u2014 .harness/evidence/M9-review.log, .harness/evidence/M9-review-live.log"
           ]
         },
         {
@@ -6224,7 +6224,7 @@
           "text": "With web absent or false, the Ollama chat request carries no tools and the search service receives no request.",
           "status": "PASS",
           "evidence": [
-            "Cycle-1 review PASS (sonnet): bun test 148 pass, typecheck clean, live proof exit 0 — .harness/evidence/M9-review.log, .harness/evidence/M9-review-live.log"
+            "Cycle-1 review PASS (sonnet): bun test 148 pass, typecheck clean, live proof exit 0 \u2014 .harness/evidence/M9-review.log, .harness/evidence/M9-review-live.log"
           ]
         },
         {
@@ -6232,7 +6232,7 @@
           "text": "A reply is capped at 10 tool calls: after the 10th the tools are withdrawn and the model gives its answer.",
           "status": "PASS",
           "evidence": [
-            "Cycle-1 review PASS (sonnet): bun test 148 pass, typecheck clean, live proof exit 0 — .harness/evidence/M9-review.log, .harness/evidence/M9-review-live.log"
+            "Cycle-1 review PASS (sonnet): bun test 148 pass, typecheck clean, live proof exit 0 \u2014 .harness/evidence/M9-review.log, .harness/evidence/M9-review-live.log"
           ]
         }
       ],
@@ -6633,7 +6633,7 @@
       },
       "as_built": {
         "artifact": ".harness/as-built/M10.md",
-        "result": "RECORDED — 16/18 files attributed; components C1,C2,C3; 5 edges; claim mismatches NONE"
+        "result": "RECORDED \u2014 16/18 files attributed; components C1,C2,C3; 5 edges; claim mismatches NONE"
       },
       "criteria": [
         {
@@ -6641,7 +6641,7 @@
           "text": "Each conversation has a web-search switch, off by default (including for conversations created before this change), and its state survives force-quitting and reopening Expo Go.",
           "status": "PASS",
           "evidence": [
-            "Review cycle 2 (sonnet): PASS, validation re-run exit 0 — .harness/evidence/M10-cycle2-review.log"
+            "Review cycle 2 (sonnet): PASS, validation re-run exit 0 \u2014 .harness/evidence/M10-cycle2-review.log"
           ]
         },
         {
@@ -6649,7 +6649,7 @@
           "text": "The switch is disabled with an explanation when the resident model lacks the tools capability (proven with a stubbed capability check if no installed model lacks it), and changing it while a reply is in progress takes effect from the next prompt.",
           "status": "PASS",
           "evidence": [
-            "Review cycle 2 (sonnet): PASS, validation re-run exit 0 — .harness/evidence/M10-cycle2-review.log"
+            "Review cycle 2 (sonnet): PASS, validation re-run exit 0 \u2014 .harness/evidence/M10-cycle2-review.log"
           ]
         },
         {
@@ -6657,7 +6657,7 @@
           "text": "With the switch on, a prompt asking for today's news shows each web step live on the phone (e.g. Searching: <query>, Reading: <domain>), then the final answer, and the steps collapse into an expandable section after completion.",
           "status": "PASS",
           "evidence": [
-            "Review cycle 2 (sonnet): PASS, validation re-run exit 0 — .harness/evidence/M10-cycle2-review.log"
+            "Review cycle 2 (sonnet): PASS, validation re-run exit 0 \u2014 .harness/evidence/M10-cycle2-review.log"
           ]
         },
         {
@@ -6665,7 +6665,7 @@
           "text": "An answer that used the web ends with a source list whose links open in Safari.",
           "status": "PASS",
           "evidence": [
-            "Review cycle 2 (sonnet): PASS, validation re-run exit 0 — .harness/evidence/M10-cycle2-review.log"
+            "Review cycle 2 (sonnet): PASS, validation re-run exit 0 \u2014 .harness/evidence/M10-cycle2-review.log"
           ]
         }
       ],
@@ -7163,7 +7163,7 @@
       },
       "as_built": {
         "artifact": ".harness/as-built/M10b.md",
-        "result": "RECORDED — 5/7 files attributed; components C1; 0 edges; claim mismatches NONE"
+        "result": "RECORDED \u2014 5/7 files attributed; components C1; 0 edges; claim mismatches NONE"
       },
       "criteria": [
         {
@@ -7175,7 +7175,7 @@
             "Live proof check 2 (14 of 28 live prefixes ended inside unterminated markup; all parse without error and show no ** or ](; every prefix parses) - .harness/evidence/M10b-T3-verifier.log",
             "Live proof check 3 (pre-change saved conversation in existing persisted format loaded by a fresh store renders with no raw markdown) - .harness/evidence/M10b-T3-verifier.log",
             "Screen wiring: chat.tsx renders assistant content (streaming and saved share the path) via MarkdownText; static tests in mobile/src/ui/markdownText.test.ts - .harness/evidence/M10b-T2-verifier.log",
-            "Review cycle 1 (sonnet): PASS, validation re-run exit 0 incl. live proof — .harness/evidence/M10b-review.log"
+            "Review cycle 1 (sonnet): PASS, validation re-run exit 0 incl. live proof \u2014 .harness/evidence/M10b-review.log"
           ]
         }
       ],
@@ -7396,7 +7396,7 @@
       },
       "as_built": {
         "artifact": ".harness/as-built/M10c1.md",
-        "result": "RECORDED — 13/14 files attributed; components C4,C12,C13; 3 edges; claim mismatches NONE"
+        "result": "RECORDED \u2014 13/14 files attributed; components C4,C12,C13; 3 edges; claim mismatches NONE"
       },
       "criteria": [
         {
@@ -7692,7 +7692,7 @@
       },
       "as_built": {
         "artifact": ".harness/as-built/M10c2.md",
-        "result": "RECORDED — 14/14 files attributed; components C1,C2,C3; 4 edges; claim mismatches NONE"
+        "result": "RECORDED \u2014 14/14 files attributed; components C1,C2,C3; 4 edges; claim mismatches NONE"
       },
       "criteria": [
         {
@@ -7981,7 +7981,7 @@
       "as_built": {
         "artifact": ".harness/as-built/M10c3.md",
         "result": "RECORDED",
-        "summary": ".harness/as-built/M10c3.md — RECORDED — 6/6 files attributed; components C1; 0 edges; claim mismatches NONE"
+        "summary": ".harness/as-built/M10c3.md \u2014 RECORDED \u2014 6/6 files attributed; components C1; 0 edges; claim mismatches NONE"
       },
       "criteria": [
         {
@@ -8485,7 +8485,7 @@
         "Source: owner-reported table follow-up recorded under M10c1 (.harness/archive/M10c1.md, Follow-ups).",
         "Architecture deviation D-M10c3-1 (Material: no) records the Requirement Coverage addition FR29 -> C1.",
         "M10c3-AC5 owed: owner phone observation in Expo Go (3+-column table as one card per row, 2-column table as aligned grid, no sideways scrolling) cannot be claimed Mac-side.",
-        "Decided (human, 2026-09-30, review cycle 1 Finding 1): a row the model wrote without a column separator (e.g. \"trend — description | source\" under a 3-column header) is padded, not re-split - it lines up and loses no text, but the source may sit under the 2nd heading with the last column empty. No dash/colon/full-width-pipe splitting heuristic (rejected). FR29, AC23 and M10c3-AC1 amended to say so.",
+        "Decided (human, 2026-09-30, review cycle 1 Finding 1): a row the model wrote without a column separator (e.g. \"trend \u2014 description | source\" under a 3-column header) is padded, not re-split - it lines up and loses no text, but the source may sit under the 2nd heading with the last column empty. No dash/colon/full-width-pipe splitting heuristic (rejected). FR29, AC23 and M10c3-AC1 amended to say so.",
         "Surplus-cell join separator differs: parser joins with \" | \" (markdown.ts fitRow), tableLayout defensive path joins with \" \" text node; the parser path is the one reached in practice.",
         "milestones.md is 615+ lines; archiving not possible this phase: only settled unarchived milestone is M10c2 (most recently settled, protected).",
         "M10c3-AC5 attempt 2 owed from the owner after fully closing and reopening Expo Go (steps in milestones.md Evidence). If it fails again after a confirmed fresh load, the review cap (2 cycles) is spent: escalate with the raw markdown of that answer.",
@@ -8530,7 +8530,7 @@
       "as_built": {
         "artifact": ".harness/as-built/M10c4.md",
         "result": "RECORDED",
-        "summary": ".harness/as-built/M10c4.md — RECORDED — 5/5 files attributed; components C1, C2, C3, C6, C12; 7 edges; claim mismatches NONE"
+        "summary": ".harness/as-built/M10c4.md \u2014 RECORDED \u2014 5/5 files attributed; components C1, C2, C3, C6, C12; 7 edges; claim mismatches NONE"
       },
       "criteria": [
         {
@@ -8559,7 +8559,7 @@
         },
         {
           "id": "M10c4-AC4",
-          "text": "Unit tests (app): [n], [1][3], [1, 3] and 【n】 marks render as page n's logo (FR27 logo and fallback rules) opening its exact saved URL, with the mark not shown; an unknown number, a mark in a reply without numbered sources (a reply saved before this change), and a mark inside inline code or a code block stay plain text; a half-streamed [2 renders without error; a reopened saved reply resolves the same logos as the live one; FR27 link logos are unchanged.",
+          "text": "Unit tests (app): [n], [1][3], [1, 3] and \u3010n\u3011 marks render as page n's logo (FR27 logo and fallback rules) opening its exact saved URL, with the mark not shown; an unknown number, a mark in a reply without numbered sources (a reply saved before this change), and a mark inside inline code or a code block stay plain text; a half-streamed [2 renders without error; a reopened saved reply resolves the same logos as the live one; FR27 link logos are unchanged.",
           "status": "PASS",
           "evidence": [
             "mobile: markdown.test.ts numbered-citation parse tests (forms, [2](url) stays link, inline code/fence, half-streamed [2); inlineLink.test.ts presentCitation (resolve, unknown n, old reply); sourceLinks.test.ts sourceByNumber; markdownText.test.ts cite renders SourceLogo (source-text test); client.test.ts keeps integer n; conversationStore.test.ts reopened reply keeps n; streamReducer.test.ts. Commit a305a9e; .harness/evidence/M10c4-T5-verifier.log (independent RED: 6 fail + 2 errors at HEAD). Not reviewed."
@@ -8702,7 +8702,7 @@
               "base": "e6a75d2",
               "verdict": "FAIL",
               "artifact": ".harness/evidence/M10c4-T3-run3-proof.log",
-              "note": "162 pass, tsc clean; 3 live runs, nemotron3:33b, each diversity 3/3, links 0/3. Sources per reply rose from 5 to 8-10 (multiple searches and reads now happen). Remaining failures: 【】 and [n] footnote citations instead of markdown links, small retyping errors in long URLs (dropped path words, changed filenames, spaces inserted), links copied from inside page text. Diff saved as .harness/evidence/M10c4-T3-attempt4.patch."
+              "note": "162 pass, tsc clean; 3 live runs, nemotron3:33b, each diversity 3/3, links 0/3. Sources per reply rose from 5 to 8-10 (multiple searches and reads now happen). Remaining failures: \u3010\u3011 and [n] footnote citations instead of markdown links, small retyping errors in long URLs (dropped path words, changed filenames, spaces inserted), links copied from inside page text. Diff saved as .harness/evidence/M10c4-T3-attempt4.patch."
             },
             {
               "role": "verifier",
@@ -8772,7 +8772,7 @@
         },
         {
           "id": "M10c4-T5",
-          "scope": "App FR31: cite inline node for [n], [1][3], [1, 3], 【n...】; resolve to numbered saved source as SourceLogo; client keeps n",
+          "scope": "App FR31: cite inline node for [n], [1][3], [1, 3], \u3010n...\u3011; resolve to numbered saved source as SourceLogo; client keeps n",
           "packet": ".harness/tasks/M10c4-T5.md",
           "paths": [
             "mobile/src/ui/markdown.ts",
@@ -8795,7 +8795,7 @@
             "tier": "Mid",
             "model": "sonnet",
             "reason_code": "ORDINARY_IMPLEMENTATION",
-            "detail": "App FR31: cite inline node for [n], [1][3], [1, 3], 【n...】; resolve to numbered saved source as SourceLogo; client keeps"
+            "detail": "App FR31: cite inline node for [n], [1][3], [1, 3], \u3010n...\u3011; resolve to numbered saved source as SourceLogo; client keeps"
           },
           "tests": "cd mobile && bun test && bun run typecheck",
           "requirements": [
@@ -8930,11 +8930,11 @@
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
       ],
       "resolved_escalation": {
-        "problem": "M10c4-AC2's link bar (2 of 3 broad replies each linking >=3 distinct saved sources with no unmatched link) is not met by the resident model nemotron3:33b in any of 4 live runs (0/3 every time), across two wordings of the FR30 instructions. The diversity bar passes 3/3 every run. The model cites with 【】 or [n] footnotes instead of markdown links and retypes long URLs with small errors; FR30 forbids the server from checking, rewriting or re-prompting.",
+        "problem": "M10c4-AC2's link bar (2 of 3 broad replies each linking >=3 distinct saved sources with no unmatched link) is not met by the resident model nemotron3:33b in any of 4 live runs (0/3 every time), across two wordings of the FR30 instructions. The diversity bar passes 3/3 every run. The model cites with \u3010\u3011 or [n] footnotes instead of markdown links and retypes long URLs with small errors; FR30 forbids the server from checking, rewriting or re-prompting.",
         "affected": "M10c4 / M10c4-AC2 (FR30, AC24)",
         "attempts": [
           "T1 (Mid): FR30 wording added to systemNote, accepted (e3c3ae1). T2 live run 1: diversity 3/3, links 0/3 (one search only, same source linked repeatedly, a mangled host, URLs from inside page text).",
-          "T3 (Top, NO_TEST_ORACLE): step-by-step wording, 'copied letter for letter', 'never a link found inside page text', 'never 【】 or [1]', 'no spaces'. 3 live runs: sources per reply rose 5 -> 8-10, diversity 3/3 each, links 0/3 each.",
+          "T3 (Top, NO_TEST_ORACLE): step-by-step wording, 'copied letter for letter', 'never a link found inside page text', 'never \u3010\u3011 or [1]', 'no spaces'. 3 live runs: sources per reply rose 5 -> 8-10, diversity 3/3 each, links 0/3 each.",
           "Verifier recomputed every reply's counts with independent code: the 0/3 is real, not a counting error."
         ],
         "remaining": "No further rung on the ladder; more wording is unlikely to help because the remaining errors are the model not following formatting and copying instructions.",
@@ -8962,7 +8962,7 @@
       "as_built": {
         "artifact": ".harness/as-built/M10d.md",
         "result": "RECORDED",
-        "summary": ".harness/as-built/M10d.md — RECORDED — 5/5 files attributed (2 proof scripts are test harness); components C1; 1 edge; claim mismatches NONE"
+        "summary": ".harness/as-built/M10d.md \u2014 RECORDED \u2014 5/5 files attributed (2 proof scripts are test harness); components C1; 1 edge; claim mismatches NONE"
       },
       "criteria": [
         {
@@ -8972,7 +8972,7 @@
           "evidence": [
             "Unit tests: mobile/src/ui/sourceListModel.test.ts (header 'Sources (n)', starts collapsed, toggle both ways, one entry per source with distinct keys and own url, screenshot-shaped 6-source fixture incl. www.wsj.com/wsj.com pair, empty title, newline title, long URL, identical-URL pair; empty list renders nothing; SourceList.tsx separate TouchableOpacity rows with SourceLogo + title calling onOpenSource(entry.url); useState(false), no storage; chat.tsx renders SourceList). T1 434938a, .harness/evidence/M10d-T1-verifier.log. Not reviewed.",
             "Mac-side live proof: mobile/scripts/sources-list-proof.sh, runs 2026-09-30 22:01 (worker, 10 sources, 9/9 hosts image; .harness/evidence/M10d-T2-worker.log) and 22:05 (verifier, 6 sources, 4/4 hosts image; .harness/evidence/M10d-T2-proof.log, -replies.json), both PASSED, model nemotron3:33b unchanged. T2 f00e328. Not reviewed.",
-            "Owner phone screenshots (provided 2026-09-30 22:13-22:14, owner reports \"Source list looks good\"): .harness/evidence/M10d-AC1-owner-phone.png (answer ending in a folded \"Sources (21) ▼\" line, nothing listed) and .harness/evidence/M10d-AC1-owner-phone-expanded.png (\"Sources (21) ▲\" open, separate rows each a site logo or globe then a page title, none run together). Owner-reported steps 5-6 (Safari open, re-folded after reopen) are not separately pictured."
+            "Owner phone screenshots (provided 2026-09-30 22:13-22:14, owner reports \"Source list looks good\"): .harness/evidence/M10d-AC1-owner-phone.png (answer ending in a folded \"Sources (21) \u25bc\" line, nothing listed) and .harness/evidence/M10d-AC1-owner-phone-expanded.png (\"Sources (21) \u25b2\" open, separate rows each a site logo or globe then a page title, none run together). Owner-reported steps 5-6 (Safari open, re-folded after reopen) are not separately pictured."
           ]
         }
       ],
@@ -9180,7 +9180,7 @@
       },
       "as_built": {
         "artifact": ".harness/as-built/M10e.md",
-        "result": "RECORDED — 4/4 files attributed; components C1; 0 edges; no claim mismatches"
+        "result": "RECORDED \u2014 4/4 files attributed; components C1; 0 edges; no claim mismatches"
       },
       "criteria": [
         {
@@ -9349,7 +9349,7 @@
       },
       "as_built": {
         "artifact": ".harness/as-built/M11.md",
-        "result": "RECORDED — 6/6 files attributed; components C1, C2, C3, C6, NEW-web-resume-proof; 6 edges; no claim mismatches"
+        "result": "RECORDED \u2014 6/6 files attributed; components C1, C2, C3, C6, NEW-web-resume-proof; 6 edges; no claim mismatches"
       },
       "criteria": [
         {
@@ -9367,7 +9367,7 @@
           "text": "Persisted conversations contain each web reply's steps and sources but no page text or full search results, and a follow-up prompt sends prior answers with their source lists without re-sending page text.",
           "status": "PASS",
           "evidence": [
-            "Unit: mobile/src/chat/conversationSession.test.ts 'web history and persistence (M11)' (T1 7127ae7): follow-up sends prior web answer with '\\n\\nSources:\\n[n] title — url' block via exported historyContent, plain messages unchanged, only role/content; persisted web reply steps/sources equal streamed and keys subset of allowed set. RED on baseline confirmed by verifier with baseline conversationSession.ts + stub export; GREEN 27/437 pass. .harness/evidence/M11-T1-red.log, M11-T1-green.log, M11-T1-verifier.log.",
+            "Unit: mobile/src/chat/conversationSession.test.ts 'web history and persistence (M11)' (T1 7127ae7): follow-up sends prior web answer with '\\n\\nSources:\\n[n] title \u2014 url' block via exported historyContent, plain messages unchanged, only role/content; persisted web reply steps/sources equal streamed and keys subset of allowed set. RED on baseline confirmed by verifier with baseline conversationSession.ts + stub export; GREEN 27/437 pass. .harness/evidence/M11-T1-red.log, M11-T1-green.log, M11-T1-verifier.log.",
             "Live: web-resume-proof Check C (persisted reply has steps 3 and sources 5, allowed keys only, no tool messages, stored size = content+thinking+steps+sources+small metadata) and Check D (follow-up body: prior answer carries Sources: block with every URL, user/assistant roles only, body 860 < bound 1839). .harness/evidence/M11-T4-proof.log. Not reviewed."
           ]
         },
@@ -9549,7 +9549,7 @@
       },
       "as_built": {
         "artifact": ".harness/as-built/M12.md",
-        "result": "RECORDED — 3/4 files attributed; components C6, C12, C13, C14; 3 edges; no claim mismatches"
+        "result": "RECORDED \u2014 3/4 files attributed; components C6, C12, C13, C14; 3 edges; no claim mismatches"
       },
       "criteria": [
         {
@@ -9714,7 +9714,7 @@
       },
       "as_built": {
         "artifact": ".harness/as-built/M13.md",
-        "result": "RECORDED — 4/5 files attributed; components C1, C4, C13; 8 edges; 5 claim mismatches (C12/C14 claimed but only tested indirectly; C4 and C6 exercised but unclaimed; no new edges)"
+        "result": "RECORDED \u2014 4/5 files attributed; components C1, C4, C13; 8 edges; 5 claim mismatches (C12/C14 claimed but only tested indirectly; C4 and C6 exercised but unclaimed; no new edges)"
       },
       "criteria": [
         {
@@ -9942,7 +9942,7 @@
       },
       "as_built": {
         "artifact": ".harness/as-built/M14.md",
-        "result": "RECORDED — 8/8 files attributed; components C1, C2, C3, C6, C12; 1 edge; claim mismatches NONE (C12 observed but unclaimed)"
+        "result": "RECORDED \u2014 8/8 files attributed; components C1, C2, C3, C6, C12; 1 edge; claim mismatches NONE (C12 observed but unclaimed)"
       },
       "criteria": [
         {
@@ -9955,10 +9955,10 @@
         },
         {
           "id": "M14-AC2",
-          "text": "Server tests: quiet three times gives an \"Asked the model to answer now\" round with no tools offered; a quiet tools-withdrawn round (after the answer-now round, and after the 10-call cap) ends `complete` with the FR33 note \"No answer was produced — the model stopped without answering. Try asking again.\" as the answer text plus steps and sources.",
+          "text": "Server tests: quiet three times gives an \"Asked the model to answer now\" round with no tools offered; a quiet tools-withdrawn round (after the answer-now round, and after the 10-call cap) ends `complete` with the FR33 note \"No answer was produced \u2014 the model stopped without answering. Try asking again.\" as the answer text plus steps and sources.",
           "status": "PASS",
           "evidence": [
-            "Server HTTP: server/src/http/webQuiet.test.ts (T1 b7551dd): 'AC2: quiet three times -> answer-now round without tools, then answer' (4th Ollama request has no tools, last message says answer now, step kind answer_now id answer-now); 'AC2: quiet after the answer-now round ends with the exact note'; 'AC2: quiet after the 10-call cap ends with the note, steps and sources' (content is exactly 'No answer was produced — the model stopped without answering. Try asking again.', sources then done complete). .harness/evidence/M14-T1-verifier.log"
+            "Server HTTP: server/src/http/webQuiet.test.ts (T1 b7551dd): 'AC2: quiet three times -> answer-now round without tools, then answer' (4th Ollama request has no tools, last message says answer now, step kind answer_now id answer-now); 'AC2: quiet after the answer-now round ends with the exact note'; 'AC2: quiet after the 10-call cap ends with the note, steps and sources' (content is exactly 'No answer was produced \u2014 the model stopped without answering. Try asking again.', sources then done complete). .harness/evidence/M14-T1-verifier.log"
           ]
         },
         {
@@ -10185,7 +10185,7 @@
       },
       "as_built": {
         "artifact": ".harness/as-built/M15.md",
-        "result": "RECORDED — 10/10 files attributed; components C4, C6, C7, C12; 5 edges; claim mismatches NONE"
+        "result": "RECORDED \u2014 10/10 files attributed; components C4, C6, C7, C12; 5 edges; claim mismatches NONE"
       },
       "criteria": [
         {
@@ -10503,7 +10503,7 @@
       "architecture": "C6, C7, C11, C12, C13",
       "requirements": [],
       "traces": "AC29 (first live question), Constraints (format with thinking unverified)",
-      "status": "IN_PROGRESS",
+      "status": "BLOCKED",
       "review_cycles": 0,
       "review_override": null,
       "baseline": "d4037fb0e9652dc2113bf33816bf63205c893d03 on m16-real-model-live-proof",
@@ -10515,14 +10515,23 @@
         {
           "id": "M16-AC1",
           "text": "`qwen3.5:35b-a3b` is downloaded on the Mac with `ollama pull`, appears in the server's installed-model list (GET /v1/models) and loads resident through the server's swap-load.",
-          "status": "PENDING",
-          "evidence": []
+          "status": "EVIDENCED",
+          "evidence": [
+            ".harness/evidence/M16-T1-live.log",
+            ".harness/evidence/M16-T1-verifier.log",
+            "note: installed-model list route is GET /v1/state; GET /v1/models does not exist"
+          ]
         },
         {
           "id": "M16-AC2",
           "text": "A live probe against the resident `qwen3.5:35b-a3b` records whether `format`-constrained replies are schema-valid with thinking on and with thinking off (at least 5 calls each, using the run's step schemas), and deep research uses the setting the probe supports; the result and the chosen setting are recorded in the evidence.",
-          "status": "PENDING",
-          "evidence": []
+          "status": "EVIDENCED",
+          "evidence": [
+            ".harness/evidence/M16-T4-probe.json",
+            ".harness/evidence/M16-T4-probe.log",
+            ".harness/evidence/M16-T4-verifier.log",
+            "chosen DEFAULT_RESEARCH_SETTINGS.think=true (commit 8bdee34)"
+          ]
         },
         {
           "id": "M16-AC3",
@@ -10548,9 +10557,20 @@
               "model": "haiku",
               "result": "CONTINUE",
               "detail": "pull running in background at 47%; no evidence yet; route names to confirm (worker cites GET /v1/state, POST /v1/models/load)"
+            },
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "continuation": 1,
+              "evidence": ".harness/evidence/M16-T1-verifier.log",
+              "commit": "1c26bc3",
+              "detail": "installed-model list is GET /v1/state (GET /v1/models does not exist, 404); swap-load POST /v1/models/load"
             }
           ],
-          "status": "IN_PROGRESS"
+          "status": "ACCEPTED"
         },
         {
           "id": "M16-T2",
@@ -10576,39 +10596,71 @@
         },
         {
           "id": "M16-T3",
-          "packet": null,
-          "status": "TODO",
+          "packet": ".harness/tasks/M16-T3.md",
+          "status": "ACCEPTED",
           "detail": "OllamaClient.chat drops think:false; make explicit false reach Ollama",
           "routing": {
-            "tier": "Mid",
-            "model": "sonnet",
-            "reason_code": "ORDINARY_IMPLEMENTATION",
-            "detail": "shared Ollama client change; must not alter ordinary chat think behaviour (provisional, set when packet written)"
-          }
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "small isolated change in chat() body construction; settled by unit tests"
+          },
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M16-T3-verifier.log",
+              "commit": "986af8f"
+            }
+          ]
         },
         {
           "id": "M16-T4",
-          "packet": null,
-          "status": "TODO",
+          "packet": ".harness/tasks/M16-T4.md",
+          "status": "ACCEPTED",
           "detail": "run live probe; set DEFAULT_RESEARCH_SETTINGS.think from result (AC2)",
           "routing": {
             "tier": "Cheap",
             "model": "haiku",
             "reason_code": "BOUNDED_LOW_RISK",
-            "detail": "run existing probe, set one default from its stated result (provisional)"
-          }
+            "detail": "run existing probe, set one default by a stated decision rule"
+          },
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M16-T4-verifier.log",
+              "commit": "8bdee34",
+              "detail": "think-on 7/7 valid, think-off 7/7 valid (one call per step schema, 7 steps); default think=true"
+            }
+          ]
         },
         {
           "id": "M16-T5",
-          "packet": null,
-          "status": "TODO",
+          "packet": ".harness/tasks/M16-T5.md",
+          "status": "BLOCKED",
           "detail": "live deep research via POST /v1/chat (AC3)",
           "routing": {
             "tier": "Mid",
             "model": "sonnet",
             "reason_code": "ORDINARY_IMPLEMENTATION",
-            "detail": "live run with event-stream capture and citation resolution check (provisional)"
-          }
+            "detail": "live run with event-stream capture and citation resolution check"
+          },
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "BLOCKED",
+              "detail": "running server (LaunchAgent com.harness.server, pid 42026, started 2026-10-01 09:56) predates T2-T4 commits; restart needs human: launchctl kickstart -k gui/$(id -u)/com.harness.server. Not a failed rung."
+            }
+          ]
         }
       ],
       "reviews": [],
@@ -10621,7 +10673,16 @@
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
       ],
-      "ordering_decision": "Human decision 2026-10-01: build deep research (FR34-FR40) now, ahead of M5a; M5a stays BLOCKED and parked, its record unchanged, and is picked up after M15-M21."
+      "ordering_decision": "Human decision 2026-10-01: build deep research (FR34-FR40) now, ahead of M5a; M5a stays BLOCKED and parked, its record unchanged, and is picked up after M15-M21.",
+      "escalation": {
+        "problem": "The live deep research run (M16-AC3) cannot be tested: the always-on server process was started before this milestone's code changes and does not reload, so it would run old code.",
+        "affected": "M16-AC3 / task M16-T5",
+        "attempts": [
+          "M16-T5 Mid attempt 3 checked the server start time (2026-10-01 09:56) against the newest commits (T2-T4, 2026-10-01 23:57 to 2026-10-02 00:32) and found it stale; the server is managed by LaunchAgent com.harness.server, which the packet reserves for a human to restart."
+        ],
+        "remaining": "Restart the server so it runs the current branch, then re-dispatch M16-T5 unchanged.",
+        "recommended": "Run: launchctl kickstart -k gui/$(id -u)/com.harness.server ; then confirm qwen3.5:35b-a3b is still resident (re-load it from the phone or POST /v1/models/load if not) and resume M16."
+      }
     },
     "M17": {
       "id": "M17",
