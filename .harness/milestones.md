@@ -349,7 +349,7 @@ M10e-AC3:
 
 ### Review
 
-Pending.
+Cycle 1: CHANGES REQUIRED (scope RECORD_ONLY), tier Top/opus (AMBIGUOUS, T1 Top-routed), diff 1b139be..45a2911. AC1 PASS, AC2 PASS, AC3 FAIL. 0 BLOCKER, 1 IMPORTANT (F1: AC3 screenshot does not show the model name below the bubble), 0 OPTIONAL. Report .harness/reviews/M10e-cycle1.md; log .harness/evidence/M10e-review.log.
 
 ### Review Cycles
 

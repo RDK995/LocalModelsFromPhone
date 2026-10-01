@@ -9256,7 +9256,25 @@
           "status": "ACCEPTED"
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "CHANGES_REQUIRED",
+          "tier": "Top",
+          "model": "opus",
+          "reason_code": "AMBIGUOUS",
+          "diff_range": "1b139be..45a2911",
+          "artifact": ".harness/reviews/M10e-cycle1.md",
+          "review_log": ".harness/evidence/M10e-review.log",
+          "findings": "0 BLOCKER, 1 IMPORTANT (F1: AC3 screenshot does not show the model name), 0 OPTIONAL",
+          "per_criterion": {
+            "M10e-AC1": "PASS",
+            "M10e-AC2": "PASS",
+            "M10e-AC3": "FAIL"
+          },
+          "correction": "record-only (evidence only; no code change)"
+        }
+      ],
       "findings": [],
       "validation": [
         {
