@@ -405,6 +405,15 @@ d4037fb0e9652dc2113bf33816bf63205c893d03 on m16-real-model-live-proof
 
 ### Evidence
 
+Phase 1 (handed off, CONTINUE). Accepted tasks:
+- M16-T2 (think setting + probe script): Mid (`sonnet`), routed ORDINARY_IMPLEMENTATION, attempt 3 PASS. Verifier: `cd server && bun test && bun run typecheck` exit 0, 219 pass 0 fail, tsc clean; files within allowed set; tests not weakened - `.harness/evidence/M16-T2-verifier.log`. Commit 79fa999. `ResearchSettings.think` (default `false`, provisional) sent as top-level `think` on every step request; `SCHEMAS`/`VALIDATORS` exported and shared with `server/scripts/probe-format-think.ts`.
+
+In flight / remaining (for the continuation):
+- M16-T1 (pull + list + swap-load): Cheap (`haiku`), BOUNDED_LOW_RISK, attempt 1 returned CONTINUE (not a failed rung; continuation 1 of 2 allowed). `ollama pull qwen3.5:35b-a3b` was left running in the background at 47% (11/23 GB, ~18 MB/s). The server was already running (PID 42026, :7789) and was not started by the worker. Worker reports the installed-model route may be named differently from "GET /v1/models" (it cited GET /v1/state and POST /v1/models/load) - the continuation must check the actual route names before judging M16-AC1. No evidence file yet. Next: a fresh Cheap worker with the T1 packet plus a handoff noting the pull state.
+- M16-T3 (new, needed): `OllamaClient.chat()` in server/src/ollama/client.ts drops `think: false` (`...(think ? { think: true } : {})`, ~line 281; think comes from the request or auto-detection ~lines 265-266), so the run's `think: false` cannot actually switch thinking off. Make an explicit `think: false` in the request reach Ollama, without changing ordinary chat/web replies that leave `think` unset. Test-first.
+- M16-T4: run `bun run scripts/probe-format-think.ts --model qwen3.5:35b-a3b --calls 5` from server/ against the resident model, save the JSON to evidence, and set `DEFAULT_RESEARCH_SETTINGS.think` to the setting the probe supports (M16-AC2).
+- M16-T5: live deep research through POST /v1/chat on the real model; capture the event stream; check status `complete`/`partial`, >=1 read page cited, every citation number resolves to a source of that reply (M16-AC3).
+
 ### Validation
 
 ### Review
@@ -417,6 +426,9 @@ Pending.
 
 ### Follow-ups
 
+
+- `bun run typecheck` in server/ covers only `src/**`; `server/scripts/` (incl. the new probe) is not typechecked by the project command.
+- `check-state.py` reports pre-existing missing artifacts: `.harness/evidence/M13-T4-verifier.log`, `.harness/as-built/M13.md`, `M14.md`, `M15.md`, `.harness/reviews/M15-cycle1.md` (not caused by M16).
 
 ## M17 — A deep research run always ends within about 8 minutes with its status shown
 

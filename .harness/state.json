@@ -10541,7 +10541,15 @@
             "reason_code": "BOUNDED_LOW_RISK",
             "detail": "mechanical live pull and server checks; settled by command output"
           },
-          "attempts": [],
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "CONTINUE",
+              "detail": "pull running in background at 47%; no evidence yet; route names to confirm (worker cites GET /v1/state, POST /v1/models/load)"
+            }
+          ],
           "status": "IN_PROGRESS"
         },
         {
@@ -10553,14 +10561,63 @@
             "reason_code": "ORDINARY_IMPLEMENTATION",
             "detail": "think setting threaded into step requests plus probe script reusing step schemas"
           },
-          "attempts": [],
-          "status": "IN_PROGRESS"
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M16-T2-verifier.log",
+              "commit": "79fa999"
+            }
+          ],
+          "status": "ACCEPTED"
+        },
+        {
+          "id": "M16-T3",
+          "packet": null,
+          "status": "TODO",
+          "detail": "OllamaClient.chat drops think:false; make explicit false reach Ollama",
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "shared Ollama client change; must not alter ordinary chat think behaviour (provisional, set when packet written)"
+          }
+        },
+        {
+          "id": "M16-T4",
+          "packet": null,
+          "status": "TODO",
+          "detail": "run live probe; set DEFAULT_RESEARCH_SETTINGS.think from result (AC2)",
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "run existing probe, set one default from its stated result (provisional)"
+          }
+        },
+        {
+          "id": "M16-T5",
+          "packet": null,
+          "status": "TODO",
+          "detail": "live deep research via POST /v1/chat (AC3)",
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "live run with event-stream capture and citation resolution check (provisional)"
+          }
         }
       ],
       "reviews": [],
       "findings": [],
       "validation": [],
-      "follow_ups": [],
+      "follow_ups": [
+        "server typecheck excludes server/scripts/",
+        "pre-existing missing artifacts reported by check-state (M13/M14/M15 as-built, M15 cycle1 review, M13-T4 verifier log)"
+      ],
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
       ],
