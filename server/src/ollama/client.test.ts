@@ -256,6 +256,48 @@ describe("OllamaClient chat think capability", () => {
       server.stop(true);
     }
   });
+
+  it("sends think:false when request.think is explicitly false (thinking-capable model)", async () => {
+    const { server, chatBodies } = fakeOllamaWithShow(["completion", "thinking"]);
+    try {
+      const client = new OllamaClient(`http://127.0.0.1:${server.port}`);
+      await drain(
+        client.chat({ model: "thinker", messages: [{ role: "user", content: "hi" }], think: false })
+      );
+      expect(chatBodies).toEqual([
+        {
+          model: "thinker",
+          messages: [{ role: "user", content: "hi" }],
+          keep_alive: -1,
+          stream: true,
+          think: false,
+        },
+      ]);
+    } finally {
+      server.stop(true);
+    }
+  });
+
+  it("sends think:false when request.think is explicitly false (non-thinking model)", async () => {
+    const { server, chatBodies } = fakeOllamaWithShow(["completion"]);
+    try {
+      const client = new OllamaClient(`http://127.0.0.1:${server.port}`);
+      await drain(
+        client.chat({ model: "plain", messages: [{ role: "user", content: "hi" }], think: false })
+      );
+      expect(chatBodies).toEqual([
+        {
+          model: "plain",
+          messages: [{ role: "user", content: "hi" }],
+          keep_alive: -1,
+          stream: true,
+          think: false,
+        },
+      ]);
+    } finally {
+      server.stop(true);
+    }
+  });
 });
 
 describe("OllamaClient chat optional fields", () => {

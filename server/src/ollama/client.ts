@@ -253,8 +253,10 @@ export class OllamaClient {
    * {model, messages:[{role, content, ...}], keep_alive:-1, stream:true, think:true
    * when the model supports it, tools:[] when provided}: only model and messages come from the
    * caller, keep_alive:-1 keeps the resident model loaded indefinitely (FR4),
-   * `think` is decided by the server from `/api/show` (I9) or from the request if provided,
-   * and `tools` is passed through when given and non-empty.
+   * `think` is decided by the server from `/api/show` (I9) or from the request if provided.
+   * When request.think is explicitly set (true or false), that value is always sent; when undefined,
+   * think:true is sent if /api/show reports 'thinking' capability, otherwise no think key is sent.
+   * `tools` is passed through when given and non-empty.
    * format, options, think, and keep_alive may be overridden per-request.
    */
   async *chat(
@@ -263,7 +265,6 @@ export class OllamaClient {
     tools?: OllamaTool[]
   ): AsyncGenerator<OllamaChatResponse & { toolCalls?: OllamaToolCall[] }, void, unknown> {
     const autoDetectedThink = await this.supportsThinking(request.model);
-    const think = request.think !== undefined ? request.think : autoDetectedThink;
     const body: Record<string, unknown> = {
       model: request.model,
       messages: request.messages.map((m) => {
@@ -278,7 +279,7 @@ export class OllamaClient {
       }),
       keep_alive: request.keep_alive !== undefined ? request.keep_alive : -1,
       stream: true,
-      ...(think ? { think: true } : {}),
+      ...(request.think !== undefined ? { think: request.think } : autoDetectedThink ? { think: true } : {}),
     };
     // Add format if provided
     if (request.format !== undefined) {
