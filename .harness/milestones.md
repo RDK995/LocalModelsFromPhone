@@ -362,7 +362,7 @@ Cycle 1: PASS — tier Mid, model sonnet, reason_code ORDINARY_IMPLEMENTATION; d
 
 ## M15 — A deep research run through the server API ends with a report citing only the pages it read
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -393,9 +393,12 @@ b48673499df9aa0d846bad7bbefe1548d57cb272 on m15-deep-research-skeleton
 
 - M15-T1 — Cheap (BOUNDED_LOW_RISK): attempt 1 PASS; verifier PASS (exit 0, `bun test src/ollama` 23 pass, typecheck clean; .harness/evidence/M15-T1-verifier.log).
 - M15-T2 — Top (ARCHITECTURE: research loop shape inside C6 across C7/C12 seams): attempt 4 PASS; verifier PASS (exit 0, `bun test && bun run typecheck` 207 pass 0 fail, tsc clean; files within allowed list; tests not weakened; .harness/evidence/M15-T2-verifier.log, worker log .harness/evidence/M15-T2-worker.log). Adds runResearch() in server/src/generations/research.ts, C12 search()/read() helpers and step kinds plan/write.
-- M15-T3 — Mid (ORDINARY_IMPLEMENTATION): next task (packet .harness/tasks/M15-T3.md).
+- M15-T3 — Mid (ORDINARY_IMPLEMENTATION): attempt 3 PASS; verifier PASS (exit 0 run without a pipe, `bun test && bun run typecheck` 209 pass 0 fail across 12 files, tsc clean; files within allowed list incl. additive shared/api.ts; tests not weakened; .harness/evidence/M15-T3-verifier.log). Commit 20230d5.
+- Criteria mapping (worker/verifier evidence, for the reviewer to confirm): M15-AC1 -> research.test.ts "runs brief -> plan -> searches -> reads -> notes -> gap -> write..." and deepResearch.test.ts (POST /v1/chat + SSE: step order, sources first-read numbering, done complete); M15-AC2 -> research.test.ts "every request is a narrow, schema-constrained request...", gap-check enough:true/enough:false/repeat-only cap tests, deepResearch.test.ts Ollama body checks; M15-AC3 -> research.test.ts malformed-retry, fail-every-step, and page-text-injection tests; M15-AC4 -> research.test.ts citation/URL/quote-removal test and deepResearch.test.ts cleaned final content.
 
 ### Validation
+
+- Milestone validation: `cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck` (last verifier run exit 0, 209 pass, 0 fail; .harness/evidence/M15-T3-verifier.log). Diff: `git diff b48673499df9aa0d846bad7bbefe1548d57cb272 HEAD`.
 
 ### Review
 
@@ -407,8 +410,10 @@ Pending.
 
 ### Follow-ups
 
-- Architecture does not yet list FR34-FR40 in Requirement Coverage; record D-M15-1 (deep research loop realised inside C6, server/src/generations/, using C12 and C7) as a non-material deviation in this milestone.
+- Architecture does not yet list FR34-FR40 in Requirement Coverage; record D-M15-1 (deep research loop realised inside C6, server/src/generations/, using C12 and C7) as a non-material deviation in this milestone. (Recorded: D-M15-1 in .harness/architecture.md.)
 - M15-T2 worker choices for the reviewer to confirm: a skipped select step reads the top unread server-parsed results; query repeats are skipped across the whole run, not per sub-question; the gap check emits no step event; a skipped write step reports `failed` while a fallback report still streams; thinking is not streamed as `thinking` events during a run.
+- POST /v1/chat still requires the model to support tool calling when `web: true`, even for deep research (no tools are offered in a research run); revisit in M16/M18.
+- Research settings are server defaults only; no per-request or config override yet.
 - Page text in a note step is bounded only by C13's own limit; a per-page character cap against num_ctx may be needed (M16 live run will show).
 
 ## M16 — The deep research run works on the real qwen3.5:35b-a3b on the Mac

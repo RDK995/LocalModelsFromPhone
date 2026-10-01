@@ -10176,7 +10176,7 @@
         "FR37"
       ],
       "traces": "AC28 (loop, format/num_ctx, malformed step, citation removal, quote check)",
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -10192,25 +10192,41 @@
           "id": "M15-AC1",
           "text": "Server tests with a scripted fake Ollama and fake search/page backends: POST /v1/chat with web on and deep research requested runs brief -> plan (server-set sub-question count) -> for each sub-question at least the server-set minimum number of searches (exact repeats after normalising skipped), reads of pages chosen only from server-parsed result URLs, notes -> gap check -> one write call, and ends `complete` with the report as the answer; its phases stream live as web steps (\"Planning\", \"Searching: <query>\", \"Reading: <domain>\", \"Writing report\") and its sources are the pages read.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "server/src/generations/research.test.ts",
+            "server/src/http/deepResearch.test.ts",
+            ".harness/evidence/M15-T3-verifier.log"
+          ]
         },
         {
           "id": "M15-AC2",
           "text": "Server tests: every Ollama request in a run carries a JSON-schema `format` and the same explicit `num_ctx`, keeps the model resident, and contains only the stable instructions, brief, plan, capped rolling notes and latest result - no raw page text other than the page currently being noted, and no model thinking; the model judging it has enough may end a sub-question early but a server cap always bounds it.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "server/src/generations/research.test.ts",
+            "server/src/http/deepResearch.test.ts",
+            "server/src/ollama/client.test.ts",
+            ".harness/evidence/M15-T3-verifier.log"
+          ]
         },
         {
           "id": "M15-AC3",
           "text": "Server tests: a malformed or empty JSON step is retried a bounded number of times and then skipped, and the run continues to a report; page text instructing the model to do something can influence only notes and the choice among server-parsed URLs (no other URL is read and no other action is taken).",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "server/src/generations/research.test.ts",
+            ".harness/evidence/M15-T3-verifier.log"
+          ]
         },
         {
           "id": "M15-AC4",
           "text": "Server tests: each distinct page read gets a number in first-read order (FR31 numbering and distinctness); a report `[n]` with no read page, and any URL the model types into the report, are removed before the report is streamed as final; a note whose quote does not substring-match the page's stored text (after whitespace normalisation) is dropped before writing.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "server/src/generations/research.test.ts",
+            "server/src/http/deepResearch.test.ts",
+            ".harness/evidence/M15-T3-verifier.log"
+          ]
         }
       ],
       "tasks": [
@@ -10288,15 +10304,41 @@
             "reason_code": "ORDINARY_IMPLEMENTATION",
             "detail": "wire an existing module behind one request field; clear test oracle"
           },
-          "attempts": [],
-          "status": "PENDING"
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "verifier": "PASS exit 0 (bun test 209 pass 0 fail; tsc clean); files within allowed; tests not weakened",
+              "artifacts": [
+                ".harness/evidence/M15-T3-worker.log",
+                ".harness/evidence/M15-T3-verifier.log"
+              ]
+            }
+          ],
+          "status": "ACCEPTED"
         }
       ],
       "reviews": [],
       "findings": [],
-      "validation": [],
+      "validation": [
+        {
+          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck",
+          "note": "reviewer runs once; fake Ollama and fake search/page backends only, no live services; last verifier run exit 0, 209 pass, 0 fail. Diff: git diff b48673499df9aa0d846bad7bbefe1548d57cb272 HEAD.",
+          "artifacts": [
+            ".harness/evidence/M15-T1-verifier.log",
+            ".harness/evidence/M15-T2-verifier.log",
+            ".harness/evidence/M15-T3-verifier.log"
+          ]
+        }
+      ],
       "follow_ups": [
-        "Architecture does not yet list FR34-FR40 in Requirement Coverage; record D-M15-1 (deep research loop realised inside C6, server/src/generations/, using C12 and C7) as a non-material deviation in this milestone."
+        "Architecture does not yet list FR34-FR40 in Requirement Coverage; record D-M15-1 (deep research loop realised inside C6, server/src/generations/, using C12 and C7) as a non-material deviation in this milestone. (Recorded: D-M15-1.)",
+        "M15-T2 worker choices for the reviewer to confirm: skipped select step reads top unread server-parsed results; query repeats skipped run-wide; gap check emits no step event; skipped write reports failed while a fallback report streams; thinking not streamed during a run.",
+        "POST /v1/chat still requires tool-calling capability when web is true, even for deep research; revisit in M16/M18.",
+        "Research settings are server defaults only; no per-request or config override yet.",
+        "Page text in a note step is bounded only by C13's limit; a per-page cap against num_ctx may be needed (M16 live run)."
       ],
       "complexity_signals": [
         "SUBSYSTEMS_GT_3"
