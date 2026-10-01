@@ -9163,7 +9163,7 @@
         "FR32"
       ],
       "traces": "AC26",
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 1,
       "review_override": null,
       "baseline": {
@@ -9171,8 +9171,8 @@
         "branch": "m10e-answer-fits-bubble"
       },
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M10e.md",
+        "result": "RECORDED — 4/4 files attributed; components C1; 0 edges; no claim mismatches"
       },
       "criteria": [
         {
@@ -9195,7 +9195,7 @@
         {
           "id": "M10e-AC3",
           "text": "The owner's phone screenshot of a new web answer, taken after the phone has loaded the new code, shows the answer at full width, entirely inside its bubble, with \"Sources (n)\" and the model name below it.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "OWED - owner phone screenshot. Bundle host com.harness.bundle-host restarted 2026-09-30 22:48:53 (43 s after commit 3240b95), running from mobile/ on m10e-answer-fits-bubble, HTTP 200 on :8081 (T2; .harness/evidence/M10e-T2-bundle-host.log, M10e-T2-verifier.log). Owner steps: (1) swipe Expo Go away so it fully quits; (2) reopen Expo Go and open the project (downloads the new bundle; if the old look persists, shake and tap Reload); (3) with Web search on, ask for today's top news as a bulleted list; (4) pass = the grey answer bubble is wide (about 85% of the screen) while streaming and when finished, every line of text is inside the bubble, \"Sources (n)\" is below the text inside the bubble and the model name below the bubble, nothing overlaps; (5) optionally reopen the chat and check again; save as .harness/evidence/M10e-AC3-owner-phone.png.",
             "Owner phone screenshot 2026-10-01 06:54, .harness/evidence/M10e-AC3-owner-phone.png: finished web reply (bulleted news list, Web search on) after loading the new code; grey bubble wide, every line inside it, \"Sources (8)\" below the text inside the bubble. The model name line is not in frame (screenshot ends at the bubble's bottom edge above the input bar).",
@@ -9282,6 +9282,25 @@
             ".harness/milestones.md"
           ],
           "files_outside_findings": "none; evidence records only, answering F1"
+        },
+        {
+          "cycle": 2,
+          "verdict": "PASS",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "REVIEW_FLOOR",
+          "diff_range": "94d0858..11501e9",
+          "artifact": null,
+          "review_log": ".harness/evidence/M10e-review.log",
+          "findings": "0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL",
+          "per_criterion": {
+            "M10e-AC1": "PASS",
+            "M10e-AC2": "PASS",
+            "M10e-AC3": "PASS"
+          },
+          "resolved_findings": [
+            "F1"
+          ]
         }
       ],
       "findings": [],

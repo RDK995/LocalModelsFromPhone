@@ -300,7 +300,7 @@ Cycle 1: PASS (tier Mid, reviewer sonnet, reason ROUTED_MID; diff ba6d032..9753b
 
 ## M10e — Every answer fits its bubble at full width, with "Sources (n)" and the model name below it
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -314,13 +314,13 @@ C1
 
 ### As-Built
 
-Pending.
+.harness/as-built/M10e.md — RECORDED — 4/4 files attributed; components C1; 0 edges; no claim mismatches
 
 ### Acceptance Criteria
 
 - [x] **M10e-AC1**: A test reproduces an answer shaped like the 2026-09-30 22:32 phone screenshot (a web reply whose body is a bulleted list of news items, with a Sources list) and shows, for both the live-streaming and the reopened-saved forms, that the answer takes the full bubble width and nothing overlaps the answer text, with "Sources (n)" and the model name below it; the diagnosed cause of the squeeze and overflow is recorded.
 - [x] **M10e-AC2**: The existing FR26-FR31 rendering tests pass unchanged (none edited or weakened), and mobile typecheck, tests and lint pass.
-- [ ] **M10e-AC3**: The owner's phone screenshot of a new web answer, taken after the phone has loaded the new code, shows the answer at full width, entirely inside its bubble, with "Sources (n)" and the model name below it.
+- [x] **M10e-AC3**: The owner's phone screenshot of a new web answer, taken after the phone has loaded the new code, shows the answer at full width, entirely inside its bubble, with "Sources (n)" and the model name below it.
 
 ### Baseline
 
@@ -352,6 +352,7 @@ M10e-AC3:
 
 Cycle 1: CHANGES REQUIRED (scope RECORD_ONLY), tier Top/opus (AMBIGUOUS, T1 Top-routed), diff 1b139be..45a2911. AC1 PASS, AC2 PASS, AC3 FAIL. 0 BLOCKER, 1 IMPORTANT (F1: AC3 screenshot does not show the model name below the bubble), 0 OPTIONAL. Report .harness/reviews/M10e-cycle1.md; log .harness/evidence/M10e-review.log.
 Fix cycle 1 Pre-correction: 94d0858b6084af89e6ec5a436b2cccc43f92de96 (cycle 1 review records committed). Correction is record-only: second owner screenshot added as AC3 evidence (F1); no file outside F1 changed.
+Cycle 2: PASS, tier Mid/sonnet (review floor; correction contained no routed tasks), diff 94d0858..11501e9 (correction scope). AC1 PASS, AC2 PASS, AC3 PASS (judged on .harness/evidence/M10e-AC3-owner-phone-2.png). 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL. F1 resolved.
 
 ### Review Cycles
 
