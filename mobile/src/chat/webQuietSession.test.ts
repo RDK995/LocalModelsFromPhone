@@ -7,7 +7,8 @@
 import { describe, it, expect, mock } from "bun:test";
 import { APIClient } from "@/api/client";
 import type { StreamEvent } from "@/api/client";
-import { buildChatItems, stepLabel } from "@/ui/chatItems";
+import { buildChatItems, stepLabel, type PendingTurn } from "@/ui/chatItems";
+import { applyStreamEvent, type StreamAccumulator } from "@/ui/streamReducer";
 import { createConversationStore } from "@/store/conversationStore";
 import { createMemoryStorage } from "@/store/storagePort";
 import {
@@ -230,5 +231,114 @@ describe("sendInConversation: new web step kinds (M14)", () => {
     expect(searchLabel).toBe("Searching: test");
     expect(continueLabel).toBe("Asked the model to continue");
     expect(answerNowLabel).toBe("Asked the model to answer now");
+  });
+
+  it("shows 'Asked the model to continue' and 'Asked the model to answer now' step labels WHILE reply is streaming", async () => {
+    const store = createConversationStore(createMemoryStorage());
+    const c = await store.create();
+    await store.setWebSearch(c.id, true);
+    const bodies: Array<Record<string, unknown>> = [];
+
+    const callbacksTracker = newCallbacks();
+    let resolveAfterFourEvents: (() => void) | null = null;
+    const eventsReady = new Promise<void>((resolve) => {
+      resolveAfterFourEvents = resolve;
+    });
+
+    let sse: ReturnType<typeof controlledSseResponse> | null = null;
+
+    const client = streamingClient(() => {
+      sse = controlledSseResponse("gen-live-steps");
+
+      // Push step events immediately
+      sse.push(
+        'event: step\ndata: {"step_id":"c1","kind":"continue","status":"started"}\n\n'
+      );
+      sse.push(
+        'event: step\ndata: {"step_id":"c1","kind":"continue","status":"done"}\n\n'
+      );
+      sse.push(
+        'event: step\ndata: {"step_id":"a1","kind":"answer_now","status":"started"}\n\n'
+      );
+      sse.push(
+        'event: step\ndata: {"step_id":"a1","kind":"answer_now","status":"done"}\n\n'
+      );
+
+      // Stream stays open - don't push done or close yet
+      return sse.response;
+    }, bodies);
+
+    // Wrap onEvent to track when 4 events have arrived
+    const originalOnEvent = callbacksTracker.callbacks.onEvent;
+    const wrappedOnEvent = (event: StreamEvent) => {
+      originalOnEvent(event);
+      if (callbacksTracker.events.length === 4) {
+        resolveAfterFourEvents?.();
+      }
+    };
+    const callbacks = {
+      ...callbacksTracker.callbacks,
+      onEvent: wrappedOnEvent,
+    };
+
+    // Start the send
+    const sendPromise = sendInConversation(
+      client,
+      store,
+      c.id,
+      "test",
+      callbacks
+    );
+
+    // Wait for 4 events to arrive and be processed
+    await eventsReady;
+
+    // Build accumulator from the received events while stream is still open
+    let accumulator: StreamAccumulator = {
+      thinking: "",
+      content: "",
+      steps: [],
+      sources: [],
+    };
+    for (const event of callbacksTracker.events) {
+      accumulator = applyStreamEvent(accumulator, event);
+    }
+
+    // Create pending turn with the in-flight state (still streaming)
+    const pending: PendingTurn = {
+      userMessageId: "user-test-id",
+      prompt: "test",
+      assistantMessageId: "asst-test-id",
+      accumulator,
+      blocked: false,
+    };
+
+    // Build items to see the in-flight view
+    const items = buildChatItems([], pending);
+    const assistantItem = items[1]; // user at 0, assistant at 1
+
+    // Assert the assistant item shows streaming while the reply is in flight
+    expect(assistantItem.streaming).toBe(true);
+    expect(assistantItem.steps).toHaveLength(2);
+
+    // Assert step labels are correct for the new step kinds
+    const continueLabel = stepLabel(assistantItem.steps![0]);
+    const answerNowLabel = stepLabel(assistantItem.steps![1]);
+
+    expect(continueLabel).toBe("Asked the model to continue");
+    expect(answerNowLabel).toBe("Asked the model to answer now");
+
+    // Now complete the stream to finish the send
+    expect(sse).not.toBeNull();
+    sse!.push('event: content\ndata: {"text":"completed"}\n\n');
+    sse!.push(doneEvent("llama3"));
+    sse!.close();
+
+    // Wait for send to complete
+    await sendPromise;
+
+    // Verify send completed successfully
+    expect(callbacksTracker.completed).toBe(1);
+    expect(callbacksTracker.errored).toBeNull();
   });
 });

@@ -1,0 +1,47 @@
+bun test v1.4.0 (1381054db)
+
+src/chat/webQuietSession.test.ts:
+133 |     }, bodies);
+134 |     await sendInConversation(client, store, c.id, "continue", newCallbacks().callbacks);
+135 | 
+136 |     // Check stored message
+137 |     const reply = (await store.get(c.id))!.messages[1];
+138 |     expect(reply.steps).toEqual([{ step_id: "c1", kind: "continue", status: "done" }]);
+                              ^
+error: expect(received).toEqual(expected)
+
+- [
+-   {
+-     "kind": "continue",
+-     "status": "done",
+-     "step_id": "c1",
+-   },
+- ]
++ undefined
+
+- Expected  - 7
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/chat/webQuietSession.test.ts:138:25)
+(fail) sendInConversation: new web step kinds (M14) > persists continue step with answer and shows 'Asked the model to continue' in chat items [2.51ms]
+207 |     }, bodies);
+208 |     await sendInConversation(client, store, c.id, "test query", newCallbacks().callbacks);
+209 | 
+210 |     // Check stored message has all steps
+211 |     const reply = (await store.get(c.id))!.messages[1];
+212 |     expect(reply.steps).toHaveLength(3);
+                              ^
+error: expect(received).toHaveLength(expected)
+
+Expected length: 3
+Received length: 2
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/chat/webQuietSession.test.ts:212:25)
+(fail) sendInConversation: new web step kinds (M14) > reopened saved conversation shows both continue and answer_now steps with correct labels [0.29ms]
+(fail) sendInConversation: new web step kinds (M14) > shows 'Asked the model to continue' and 'Asked the model to answer now' step labels WHILE reply is streaming [5000.00ms]
+  ^ this test timed out after 5000ms.
+
+ 1 pass
+ 3 fail
+ 9 expect() calls
+Ran 4 tests across 1 file. [5.01s]
