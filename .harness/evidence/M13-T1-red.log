@@ -1,0 +1,48 @@
+RED: removed client timeout from post() (signal: AbortSignal.any([signal, timeout]) -> signal) in server/src/web/tools.ts
+bun test v1.4.0 (1381054db)
+
+src/http/webFailure.test.ts:
+(fail) Web failures and time limits never hang the reply (M13 FR24, AC16) > (b) search held past the client time limit [5001.21ms]
+  ^ this test timed out after 5000ms.
+
+# Unhandled error between tests
+-------------------------------
+184 |           web: true,
+185 |         });
+186 |         expect(chat.status).toBe(200);
+187 |         const genId = chat.headers.get("x-generation-id")!;
+188 |         const text = await Promise.race([chat.text(), sleep(5000).then(() => "TIMEOUT")]);
+189 |         expect(Date.now() - started).toBeLessThan(5000);
+                                           ^
+error: expect(received).toBeLessThan(expected)
+
+Expected: < 5000
+Received: 5003
+
+-------------------------------
+
+(fail) Web failures and time limits never hang the reply (M13 FR24, AC16) > (c) page read held past the client time limit [5001.77ms]
+  ^ this test timed out after 5000ms.
+
+# Unhandled error between tests
+-------------------------------
+184 |           web: true,
+185 |         });
+186 |         expect(chat.status).toBe(200);
+187 |         const genId = chat.headers.get("x-generation-id")!;
+188 |         const text = await Promise.race([chat.text(), sleep(5000).then(() => "TIMEOUT")]);
+189 |         expect(Date.now() - started).toBeLessThan(5000);
+                                           ^
+error: expect(received).toBeLessThan(expected)
+
+Expected: < 5000
+Received: 5007
+
+-------------------------------
+
+
+ 2 pass
+ 2 fail
+ 2 errors
+ 34 expect() calls
+Ran 4 tests across 1 file. [10.03s]
