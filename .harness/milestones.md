@@ -362,7 +362,7 @@ Cycle 1: PASS — tier Mid, model sonnet, reason_code ORDINARY_IMPLEMENTATION; d
 
 ## M15 — A deep research run through the server API ends with a report citing only the pages it read
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -376,14 +376,14 @@ C4, C6, C7, C12
 
 ### As-Built
 
-Pending.
+.harness/as-built/M15.md — RECORDED — 10/10 files attributed; components C4, C6, C7, C12; 5 edges; claim mismatches NONE
 
 ### Acceptance Criteria
 
-- [ ] **M15-AC1**: Server tests with a scripted fake Ollama and fake search/page backends: POST /v1/chat with web on and deep research requested runs brief -> plan (server-set sub-question count) -> for each sub-question at least the server-set minimum number of searches (exact repeats after normalising skipped), reads of pages chosen only from server-parsed result URLs, notes -> gap check -> one write call, and ends `complete` with the report as the answer; its phases stream live as web steps ("Planning", "Searching: <query>", "Reading: <domain>", "Writing report") and its sources are the pages read.
-- [ ] **M15-AC2**: Server tests: every Ollama request in a run carries a JSON-schema `format` and the same explicit `num_ctx`, keeps the model resident, and contains only the stable instructions, brief, plan, capped rolling notes and latest result - no raw page text other than the page currently being noted, and no model thinking; the model judging it has enough may end a sub-question early but a server cap always bounds it.
-- [ ] **M15-AC3**: Server tests: a malformed or empty JSON step is retried a bounded number of times and then skipped, and the run continues to a report; page text instructing the model to do something can influence only notes and the choice among server-parsed URLs (no other URL is read and no other action is taken).
-- [ ] **M15-AC4**: Server tests: each distinct page read gets a number in first-read order (FR31 numbering and distinctness); a report `[n]` with no read page, and any URL the model types into the report, are removed before the report is streamed as final; a note whose quote does not substring-match the page's stored text (after whitespace normalisation) is dropped before writing.
+- [x] **M15-AC1**: Server tests with a scripted fake Ollama and fake search/page backends: POST /v1/chat with web on and deep research requested runs brief -> plan (server-set sub-question count) -> for each sub-question at least the server-set minimum number of searches (exact repeats after normalising skipped), reads of pages chosen only from server-parsed result URLs, notes -> gap check -> one write call, and ends `complete` with the report as the answer; its phases stream live as web steps ("Planning", "Searching: <query>", "Reading: <domain>", "Writing report") and its sources are the pages read.
+- [x] **M15-AC2**: Server tests: every Ollama request in a run carries a JSON-schema `format` and the same explicit `num_ctx`, keeps the model resident, and contains only the stable instructions, brief, plan, capped rolling notes and latest result - no raw page text other than the page currently being noted, and no model thinking; the model judging it has enough may end a sub-question early but a server cap always bounds it.
+- [x] **M15-AC3**: Server tests: a malformed or empty JSON step is retried a bounded number of times and then skipped, and the run continues to a report; page text instructing the model to do something can influence only notes and the choice among server-parsed URLs (no other URL is read and no other action is taken).
+- [x] **M15-AC4**: Server tests: each distinct page read gets a number in first-read order (FR31 numbering and distinctness); a report `[n]` with no read page, and any URL the model types into the report, are removed before the report is streamed as final; a note whose quote does not substring-match the page's stored text (after whitespace normalisation) is dropped before writing.
 
 ### Baseline
 
@@ -409,6 +409,7 @@ b48673499df9aa0d846bad7bbefe1548d57cb272 on m15-deep-research-skeleton
   - Corrections: F1 -> M15-T4 (commit 30003f2); F2, F3, F4 -> M15-T5 (commit f1e2785). Validation after corrections: verifier exit 0, 217 pass, 0 fail, tsc clean (.harness/evidence/M15-T5-verifier.log).
   - Correction diff: `git diff 703442411430b4f3e3ea7b84591e2b99da031ba5 HEAD`. Files changed (code): server/src/generations/research.ts, server/src/generations/research.test.ts; plus .harness/ records, packets and evidence only.
   - Files outside those the findings named: none (Findings 1-4 all name research.ts / research.test.ts).
+- Cycle 2: PASS — tier Mid (sonnet), reason: correction diff holds only Mid/Cheap tasks (M15-T4, M15-T5). Diff reviewed: 703442411430b4f3e3ea7b84591e2b99da031ba5..6fc67d8; all four criteria re-graded. Per criterion: AC1 PASS, AC2 PASS, AC3 PASS, AC4 PASS. Findings: none. Validation re-run: 217 pass, 0 fail, tsc clean (.harness/evidence/M15-review.log). F1-F4 resolved.
 
 ### Review Cycles
 

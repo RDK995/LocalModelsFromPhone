@@ -10176,7 +10176,7 @@
         "FR37"
       ],
       "traces": "AC28 (loop, format/num_ctx, malformed step, citation removal, quote check)",
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 1,
       "review_override": null,
       "baseline": {
@@ -10184,48 +10184,52 @@
         "branch": "m15-deep-research-skeleton"
       },
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M15.md",
+        "result": "RECORDED — 10/10 files attributed; components C4, C6, C7, C12; 5 edges; claim mismatches NONE"
       },
       "criteria": [
         {
           "id": "M15-AC1",
           "text": "Server tests with a scripted fake Ollama and fake search/page backends: POST /v1/chat with web on and deep research requested runs brief -> plan (server-set sub-question count) -> for each sub-question at least the server-set minimum number of searches (exact repeats after normalising skipped), reads of pages chosen only from server-parsed result URLs, notes -> gap check -> one write call, and ends `complete` with the report as the answer; its phases stream live as web steps (\"Planning\", \"Searching: <query>\", \"Reading: <domain>\", \"Writing report\") and its sources are the pages read.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "server/src/generations/research.test.ts",
             "server/src/http/deepResearch.test.ts",
-            ".harness/evidence/M15-T3-verifier.log"
+            ".harness/evidence/M15-T3-verifier.log",
+            "Review cycle 2 PASS (sonnet), validation re-run 217 pass, tsc clean: .harness/evidence/M15-review.log"
           ]
         },
         {
           "id": "M15-AC2",
           "text": "Server tests: every Ollama request in a run carries a JSON-schema `format` and the same explicit `num_ctx`, keeps the model resident, and contains only the stable instructions, brief, plan, capped rolling notes and latest result - no raw page text other than the page currently being noted, and no model thinking; the model judging it has enough may end a sub-question early but a server cap always bounds it.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "server/src/generations/research.test.ts",
             "server/src/http/deepResearch.test.ts",
             "server/src/ollama/client.test.ts",
-            ".harness/evidence/M15-T3-verifier.log"
+            ".harness/evidence/M15-T3-verifier.log",
+            "Review cycle 2 PASS (sonnet), validation re-run 217 pass, tsc clean: .harness/evidence/M15-review.log"
           ]
         },
         {
           "id": "M15-AC3",
           "text": "Server tests: a malformed or empty JSON step is retried a bounded number of times and then skipped, and the run continues to a report; page text instructing the model to do something can influence only notes and the choice among server-parsed URLs (no other URL is read and no other action is taken).",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "server/src/generations/research.test.ts",
-            ".harness/evidence/M15-T3-verifier.log"
+            ".harness/evidence/M15-T3-verifier.log",
+            "Review cycle 2 PASS (sonnet), validation re-run 217 pass, tsc clean: .harness/evidence/M15-review.log"
           ]
         },
         {
           "id": "M15-AC4",
           "text": "Server tests: each distinct page read gets a number in first-read order (FR31 numbering and distinctness); a report `[n]` with no read page, and any URL the model types into the report, are removed before the report is streamed as final; a note whose quote does not substring-match the page's stored text (after whitespace normalisation) is dropped before writing.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "server/src/generations/research.test.ts",
             "server/src/http/deepResearch.test.ts",
-            ".harness/evidence/M15-T3-verifier.log"
+            ".harness/evidence/M15-T3-verifier.log",
+            "Review cycle 2 PASS (sonnet), validation re-run 217 pass, tsc clean: .harness/evidence/M15-review.log"
           ]
         }
       ],
@@ -10415,13 +10419,30 @@
             "server/src/generations/research.test.ts"
           ],
           "files_outside_findings": "none; both code files are the ones Findings 1-4 name (research.ts, research.test.ts); other changes are .harness records only"
+        },
+        {
+          "cycle": 2,
+          "verdict": "PASS",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "CORRECTION_DIFF_MID_CHEAP_ONLY",
+          "diff_range": "703442411430b4f3e3ea7b84591e2b99da031ba5..6fc67d8",
+          "artifact": null,
+          "review_log": ".harness/evidence/M15-review.log",
+          "findings": "0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL",
+          "per_criterion": {
+            "M15-AC1": "PASS",
+            "M15-AC2": "PASS",
+            "M15-AC3": "PASS",
+            "M15-AC4": "PASS"
+          }
         }
       ],
       "findings": [
         {
           "id": "F1",
           "severity": "IMPORTANT",
-          "status": "CORRECTED",
+          "status": "RESOLVED",
           "summary": "research.ts loop breaks on query===null before readChosen(); a sub-question below minSearches reads nothing",
           "source": ".harness/reviews/M15-cycle1.md",
           "corrected_by": "M15-T4"
@@ -10429,7 +10450,7 @@
         {
           "id": "F2",
           "severity": "IMPORTANT",
-          "status": "CORRECTED",
+          "status": "RESOLVED",
           "summary": "M15-AC4 distinctness (same page reached twice) has no test",
           "source": ".harness/reviews/M15-cycle1.md",
           "corrected_by": "M15-T5"
@@ -10437,7 +10458,7 @@
         {
           "id": "F3",
           "severity": "OPTIONAL",
-          "status": "CORRECTED",
+          "status": "RESOLVED",
           "summary": "cleanReport leaves unread numbers in grouped citations and scheme-less www. URLs",
           "source": ".harness/reviews/M15-cycle1.md",
           "corrected_by": "M15-T5"
@@ -10445,7 +10466,7 @@
         {
           "id": "F4",
           "severity": "OPTIONAL",
-          "status": "CORRECTED",
+          "status": "RESOLVED",
           "summary": "quote check lowercases; FR35/FR37 specify whitespace normalisation only",
           "source": ".harness/reviews/M15-cycle1.md",
           "corrected_by": "M15-T5"
