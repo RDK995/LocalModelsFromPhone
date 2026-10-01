@@ -1,0 +1,13 @@
+=== Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck ===
+=== Date: Thu  1 Oct 2026 22:14:20 BST ===
+=== Current git commit: f885e347c223ac717331addb634b674ac737b09f ===
+
+bun test v1.4.0 (1381054db)
+
+ 207 pass
+ 0 fail
+ 1129 expect() calls
+Ran 207 tests across 11 files. [3.50s]
+$ tsc --noEmit
+
+=== Exit Status: 0 ===

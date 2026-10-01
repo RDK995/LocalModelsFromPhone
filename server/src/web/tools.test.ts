@@ -373,6 +373,88 @@ describe("createWebTools", () => {
   });
 });
 
+describe("createWebTools structured search()/read() (deep research helper)", () => {
+  it("search() returns {title,url,snippet} results and the same events as web_search", async () => {
+    const f = fakeSearch(() =>
+      json(200, { results: [{ title: "A", url: "https://a.example/", snippet: "sa" }, { url: "https://b.example/" }] }),
+    );
+    try {
+      const w = createWebTools({ baseUrl: f.baseUrl });
+      const out = await w.search("cats", new AbortController().signal);
+      expect(out.results).toEqual([
+        { title: "A", url: "https://a.example/", snippet: "sa" },
+        { title: "", url: "https://b.example/", snippet: "" },
+      ]);
+      expect(steps(out.events).map((s) => [s.data.kind, s.data.status, s.data.query])).toEqual([
+        ["search", "started", "cats"],
+        ["search", "done", "cats"],
+      ]);
+      expect(out.events.filter((e) => e.type === "source").length).toBe(2);
+      expect(f.seen[0]).toEqual({ path: "/v1/search", body: { query: "cats", max_results: 5 } });
+    } finally {
+      f.server.stop(true);
+    }
+  });
+
+  it("search() failure returns no results and a failed step", async () => {
+    const f = fakeSearch(() => json(504, { error: "timeout" }));
+    try {
+      const out = await createWebTools({ baseUrl: f.baseUrl }).search("x", new AbortController().signal);
+      expect(out.results).toEqual([]);
+      expect(steps(out.events).map((s) => s.data.status)).toEqual(["started", "failed"]);
+    } finally {
+      f.server.stop(true);
+    }
+  });
+
+  it("read() returns the numbered page text and the same events as read_page", async () => {
+    const f = fakeSearch(() =>
+      json(200, { final_url: "https://final.example/p", title: "T", markdown: "Body text", truncated: true }),
+    );
+    try {
+      const out = await createWebTools({ baseUrl: f.baseUrl }).read(
+        "https://start.example/p",
+        new AbortController().signal,
+        () => 3,
+      );
+      expect(out.page).toEqual({ n: 3, title: "T", url: "https://final.example/p", text: "Body text", truncated: true });
+      expect(steps(out.events).map((s) => [s.data.kind, s.data.status, s.data.url])).toEqual([
+        ["read", "started", "https://start.example/p"],
+        ["read", "done", "https://start.example/p"],
+      ]);
+      expect(out.events.find((e) => e.type === "source")).toEqual({
+        type: "source",
+        data: { title: "T", url: "https://final.example/p", n: 3 },
+      });
+    } finally {
+      f.server.stop(true);
+    }
+  });
+
+  it("read() failure returns no page, a failed step and does not number", async () => {
+    const f = fakeSearch(() => json(400, { error: "blocked_destination" }));
+    try {
+      let numbered = 0;
+      const out = await createWebTools({ baseUrl: f.baseUrl }).read("http://10.0.0.1/", new AbortController().signal, () => ++numbered);
+      expect(out.page).toBeNull();
+      expect(numbered).toBe(0);
+      expect(steps(out.events).map((s) => s.data.status)).toEqual(["started", "failed"]);
+    } finally {
+      f.server.stop(true);
+    }
+  });
+
+  it("execute() return shape is unchanged (only toolResult and events)", async () => {
+    const f = fakeSearch(() => json(200, { results: [{ title: "A", url: "https://a.example/", snippet: "s" }] }));
+    try {
+      const out = await createWebTools({ baseUrl: f.baseUrl }).execute(call("web_search", { query: "q" }), new AbortController().signal);
+      expect(Object.keys(out).sort()).toEqual(["events", "toolResult"]);
+    } finally {
+      f.server.stop(true);
+    }
+  });
+});
+
 describe("createWebTools icon()", () => {
   const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 1, 2, 3]);
   const fakeFetch = (impl: (url: string) => Promise<Response> | Response) =>

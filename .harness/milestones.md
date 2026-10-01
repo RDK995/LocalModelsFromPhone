@@ -392,8 +392,8 @@ b48673499df9aa0d846bad7bbefe1548d57cb272 on m15-deep-research-skeleton
 ### Evidence
 
 - M15-T1 — Cheap (BOUNDED_LOW_RISK): attempt 1 PASS; verifier PASS (exit 0, `bun test src/ollama` 23 pass, typecheck clean; .harness/evidence/M15-T1-verifier.log).
-- M15-T2 — Top (ARCHITECTURE: research loop shape inside C6 across C7/C12 seams): not yet dispatched; next task (packet .harness/tasks/M15-T2.md).
-- M15-T3 — Mid (ORDINARY_IMPLEMENTATION): pending, depends on T2.
+- M15-T2 — Top (ARCHITECTURE: research loop shape inside C6 across C7/C12 seams): attempt 4 PASS; verifier PASS (exit 0, `bun test && bun run typecheck` 207 pass 0 fail, tsc clean; files within allowed list; tests not weakened; .harness/evidence/M15-T2-verifier.log, worker log .harness/evidence/M15-T2-worker.log). Adds runResearch() in server/src/generations/research.ts, C12 search()/read() helpers and step kinds plan/write.
+- M15-T3 — Mid (ORDINARY_IMPLEMENTATION): next task (packet .harness/tasks/M15-T3.md).
 
 ### Validation
 
@@ -408,6 +408,8 @@ Pending.
 ### Follow-ups
 
 - Architecture does not yet list FR34-FR40 in Requirement Coverage; record D-M15-1 (deep research loop realised inside C6, server/src/generations/, using C12 and C7) as a non-material deviation in this milestone.
+- M15-T2 worker choices for the reviewer to confirm: a skipped select step reads the top unread server-parsed results; query repeats are skipped across the whole run, not per sub-question; the gap check emits no step event; a skipped write step reports `failed` while a fallback report still streams; thinking is not streamed as `thinking` events during a run.
+- Page text in a note step is bounded only by C13's own limit; a per-page character cap against num_ctx may be needed (M16 live run will show).
 
 ## M16 — The deep research run works on the real qwen3.5:35b-a3b on the Mac
 

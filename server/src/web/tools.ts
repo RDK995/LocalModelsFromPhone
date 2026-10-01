@@ -18,7 +18,7 @@ export type StepEvent = {
   type: "step";
   data: {
     step_id: string;
-    kind: "search" | "read" | "continue" | "answer_now";
+    kind: "search" | "read" | "continue" | "answer_now" | "plan" | "write";
     status: "started" | "done" | "failed" | "unavailable";
     query?: string;
     url?: string;
@@ -28,6 +28,12 @@ export type StepEvent = {
 
 export type SourceEvent = { type: "source"; data: { title: string; url: string; n?: number } };
 export type WebEvent = StepEvent | SourceEvent;
+
+/** One web_search result, as parsed by the server (structured helper for deep research). */
+export type SearchResult = { title: string; url: string; snippet: string };
+
+/** A page read successfully: its number (when numbered), final URL and main text. */
+export type ReadPage = { n?: number; title: string; url: string; text: string; truncated: boolean };
 
 export type WebToolsOptions = {
   baseUrl?: string;
@@ -132,19 +138,22 @@ export function createWebTools(opts: WebToolsOptions = {}) {
     const o = await post("/v1/search", { query, max_results: 5 }, signal);
 
     if (o.kind === "http" && o.status >= 200 && o.status < 300) {
-      const results: { url?: string; title?: string; snippet?: string }[] = Array.isArray(o.body?.results)
+      const raw: { url?: string; title?: string; snippet?: string }[] = Array.isArray(o.body?.results)
         ? o.body.results
         : [];
+      const results: SearchResult[] = raw.map((r) => ({
+        title: typeof r?.title === "string" ? r.title : "",
+        url: typeof r?.url === "string" ? r.url : "",
+        snippet: typeof r?.snippet === "string" ? r.snippet : "",
+      }));
       events.push({ type: "step", data: { step_id, kind: "search", status: "done", query } });
       for (const r of results) {
-        events.push({ type: "source", data: { title: r.title ?? "", url: r.url ?? "" } });
+        events.push({ type: "source", data: { title: r.title, url: r.url } });
       }
       const toolResult = results.length
-        ? results
-            .map((r, i) => `${i + 1}. ${r.title ?? ""}\n   ${r.url ?? ""}\n   ${r.snippet ?? ""}`)
-            .join("\n")
+        ? results.map((r, i) => `${i + 1}. ${r.title}\n   ${r.url}\n   ${r.snippet}`).join("\n")
         : `No results found for "${query}".`;
-      return { toolResult, events };
+      return { toolResult, events, results };
     }
 
     const code = errorCode(o, `http_${o.kind === "http" ? o.status : "error"}`);
@@ -156,7 +165,7 @@ export function createWebTools(opts: WebToolsOptions = {}) {
     const toolResult = unavailable
       ? `Web search is unavailable right now (${code}). Answer from what you already have and say that search was unavailable.`
       : `Web search failed (${code}). Answer from what you already have and say that search failed.`;
-    return { toolResult, events };
+    return { toolResult, events, results: [] as SearchResult[] };
   }
 
   async function readPage(url: string, signal: AbortSignal, numberPage?: (finalUrl: string) => number) {
@@ -174,11 +183,14 @@ export function createWebTools(opts: WebToolsOptions = {}) {
       const n = numberPage?.(finalUrl);
       events.push({ type: "source", data: n === undefined ? { title, url: finalUrl } : { title, url: finalUrl, n } });
       const label = n === undefined ? "" : `Page [${n}] - cite this page as [${n}]\n`;
-      let toolResult = `${label}Title: ${title}\nURL: ${finalUrl}\n\n${typeof b.markdown === "string" ? b.markdown : ""}`;
+      const text = typeof b.markdown === "string" ? b.markdown : "";
+      let toolResult = `${label}Title: ${title}\nURL: ${finalUrl}\n\n${text}`;
       if (b.truncated === true) {
         toolResult += "\n\n[Note: the page content was truncated; only the first part is shown.]";
       }
-      return { toolResult, events };
+      const page: ReadPage = { title, url: finalUrl, text, truncated: b.truncated === true };
+      if (n !== undefined) page.n = n;
+      return { toolResult, events, page };
     }
 
     const code = errorCode(o, `http_${o.kind === "http" ? o.status : "error"}`);
@@ -186,6 +198,7 @@ export function createWebTools(opts: WebToolsOptions = {}) {
     return {
       toolResult: `The page could not be read (${code}). Answer from what you already have and say the page could not be read.`,
       events,
+      page: null as ReadPage | null,
     };
   }
 
@@ -215,6 +228,22 @@ export function createWebTools(opts: WebToolsOptions = {}) {
 
   return {
     icon,
+
+    /** Structured web_search for the deep research loop: same request, events and rules as `execute`. */
+    async search(query: string, signal: AbortSignal): Promise<{ results: SearchResult[]; events: WebEvent[] }> {
+      const { results, events } = await webSearch(query, signal);
+      return { results, events };
+    },
+
+    /** Structured read_page for the deep research loop: same request, events and rules as `execute`. */
+    async read(
+      url: string,
+      signal: AbortSignal,
+      numberPage?: (finalUrl: string) => number,
+    ): Promise<{ page: ReadPage | null; events: WebEvent[] }> {
+      const { page, events } = await readPage(url, signal, numberPage);
+      return { page, events };
+    },
 
     tools(): WebTool[] {
       return structuredClone(toolDefs);
@@ -246,13 +275,15 @@ export function createWebTools(opts: WebToolsOptions = {}) {
         if (typeof args.query !== "string" || args.query.trim() === "") {
           return { toolResult: "Error: web_search requires a non-empty string argument 'query'.", events: [] };
         }
-        return webSearch(args.query, signal);
+        const { toolResult, events } = await webSearch(args.query, signal);
+        return { toolResult, events };
       }
       if (name === "read_page") {
         if (typeof args.url !== "string" || args.url.trim() === "") {
           return { toolResult: "Error: read_page requires a non-empty string argument 'url'.", events: [] };
         }
-        return readPage(args.url, signal, numberPage);
+        const { toolResult, events } = await readPage(args.url, signal, numberPage);
+        return { toolResult, events };
       }
       return {
         toolResult: `Error: unknown tool '${String(name)}'. Available tools: web_search, read_page.`,
