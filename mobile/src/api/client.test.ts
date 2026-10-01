@@ -20,7 +20,12 @@ import {
   OLLAMA_DOWN_MESSAGE,
 } from "./errorMessages";
 
-const BASE_URL = "http://localhost:7789";
+import {
+  applyStreamEvent,
+  initialStreamAccumulator,
+} from "../ui/streamReducer";
+
+const BASE_URL ="http://localhost:7789";
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -1492,6 +1497,133 @@ describe("APIClient dropped-connection resume (FR11)", () => {
     expect(completed).toBe(true);
     expect(events.map((e) => e.type)).toEqual(["content", "content", "done"]);
     expect(fetchMock.calls.length).toBe(3);
+  });
+
+  it("(l) a drop mid web reply resumes and delivers every step, content, sources and done exactly once (M11-AC1)", async () => {
+    const initial = resumableSseResponse({ generationId: "gen-w" });
+    const resumed = resumableSseResponse({ generationId: "gen-w" });
+    const clock = fakeClock();
+
+    const fetchMock = sequentialFetch([
+      () => initial.response,
+      () => resumed.response,
+    ]);
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as FetchImpl, {
+      sleep: clock.sleep,
+      now: clock.now,
+    });
+    client.setToken("t");
+
+    const events: StreamEvent[] = [];
+    const errors: Error[] = [];
+    let completeCount = 0;
+
+    const chatPromise = client.chat(
+      { model: "m", messages: [{ role: "user", content: "hi" }], web: true },
+      {
+        onEvent: (event) => events.push(event),
+        onError: (e) => errors.push(e),
+        onComplete: () => {
+          completeCount += 1;
+        },
+      }
+    );
+
+    await waitFor(() => fetchMock.calls.length >= 1, "initial chat request");
+    initial.push(
+      sseEvent("gen-w-1", "step", {
+        step_id: "s1",
+        kind: "search",
+        status: "started",
+        query: "cats",
+      })
+    );
+    initial.push(
+      sseEvent("gen-w-2", "step", {
+        step_id: "s1",
+        kind: "search",
+        status: "done",
+        query: "cats",
+      })
+    );
+    await waitFor(() => events.length === 2, "both search steps delivered");
+
+    initial.fail();
+    await waitFor(() => clock.sleeps.length === 1, "backoff wait requested");
+    clock.release();
+    await waitFor(() => fetchMock.calls.length === 2, "resume GET request");
+
+    const resumeCall = fetchMock.calls[1]!;
+    expect(resumeCall.url).toBe(`${BASE_URL}/v1/generations/gen-w/events`);
+    const resumeHeaders = resumeCall.init?.headers as Record<string, string>;
+    expect(resumeHeaders["Last-Event-ID"]).toBe("gen-w-2");
+
+    // Replay overlaps the already-delivered seq 2, then the rest of the reply.
+    resumed.push(
+      sseEvent("gen-w-2", "step", {
+        step_id: "s1",
+        kind: "search",
+        status: "done",
+        query: "cats",
+      })
+    );
+    resumed.push(
+      sseEvent("gen-w-3", "step", {
+        step_id: "s2",
+        kind: "read",
+        status: "started",
+        url: "https://a",
+      })
+    );
+    resumed.push(
+      sseEvent("gen-w-4", "step", {
+        step_id: "s2",
+        kind: "read",
+        status: "done",
+        url: "https://a",
+      })
+    );
+    resumed.push(sseEvent("gen-w-5", "content", { text: "Cats " }));
+    resumed.push(sseEvent("gen-w-6", "content", { text: "purr." }));
+    resumed.push(
+      sseEvent("gen-w-7", "sources", {
+        items: [{ title: "A", url: "https://a", n: 1 }],
+      })
+    );
+    resumed.push(
+      sseEvent("gen-w-8", "done", {
+        status: "complete",
+        model: "m",
+        eval_count: 3,
+        tokens_per_second: 1,
+      })
+    );
+
+    await chatPromise;
+
+    expect(errors).toEqual([]);
+    expect(completeCount).toBe(1);
+    expect(fetchMock.calls.length).toBe(2);
+    // Seqs 1..8, each exactly once, in order.
+    expect(events.map((e) => e.type)).toEqual([
+      "step",
+      "step",
+      "step",
+      "step",
+      "content",
+      "content",
+      "sources",
+      "done",
+    ]);
+
+    const acc = events.reduce(applyStreamEvent, initialStreamAccumulator);
+    expect(acc.steps.map((s) => [s.step_id, s.kind, s.status])).toEqual([
+      ["s1", "search", "done"],
+      ["s2", "read", "done"],
+    ]);
+    expect(acc.content).toBe("Cats purr.");
+    expect(acc.sources).toEqual([{ title: "A", url: "https://a", n: 1 }]);
   });
 });
 

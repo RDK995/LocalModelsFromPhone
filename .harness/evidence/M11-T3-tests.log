@@ -1,0 +1,14 @@
+commit 7127ae738ba444c93bdeac34be1c3c1e2cc2b5c4
+bun test v1.4.0 (1381054db)
+
+ 56 pass
+ 0 fail
+ 179 expect() calls
+Ran 56 tests across 1 file. [78.00ms]
+$ tsc --noEmit
+bun test v1.4.0 (1381054db)
+
+ 438 pass
+ 0 fail
+ 12037 expect() calls
+Ran 438 tests across 28 files. [231.00ms]
