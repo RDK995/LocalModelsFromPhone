@@ -1,0 +1,105 @@
+bun test v1.4.0 (1381054db)
+
+src/ui/chatItems.test.ts:
+357 |     const step: StepEventData = {
+358 |       step_id: "s1",
+359 |       kind: "search",
+360 |       status: "unavailable",
+361 |     };
+362 |     expect(stepLabel(step)).toBe("Search unavailable");
+                                  ^
+error: expect(received).toBe(expected)
+
+Expected: "Search unavailable"
+Received: "Search offline"
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/chatItems.test.ts:362:29)
+(fail) stepLabel > returns 'Search unavailable' for unavailable search [0.20ms]
+
+src/ui/webFailureDisplay.test.ts:
+46 | 
+47 |     // Steps should be included
+48 |     expect(assistantItem).toHaveProperty("steps", steps);
+49 | 
+50 |     // The label should be "Search unavailable"
+51 |     expect(stepLabel(steps[0])).toBe("Search unavailable");
+                                     ^
+error: expect(received).toBe(expected)
+
+Expected: "Search unavailable"
+Received: "Search offline"
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/webFailureDisplay.test.ts:51:33)
+(fail) Web failure display: unavailable and failed steps with answer > shows 'Search unavailable' and answer text when unavailable search step precedes done [0.17ms]
+176 | 
+177 |     // All steps should be included
+178 |     expect(assistantItem).toHaveProperty("steps", steps);
+179 | 
+180 |     // First step label
+181 |     expect(stepLabel(steps[0])).toBe("Search unavailable");
+                                      ^
+error: expect(received).toBe(expected)
+
+Expected: "Search unavailable"
+Received: "Search offline"
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/webFailureDisplay.test.ts:181:33)
+(fail) Web failure display: unavailable and failed steps with answer > shows multiple steps including unavailable and failed alongside completed answer [0.07ms]
+
+ 440 pass
+ 3 fail
+ 12053 expect() calls
+Ran 443 tests across 29 files. [233.00ms]
+bun test v1.4.0 (1381054db)
+
+src/ui/webFailureDisplay.test.ts:
+46 | 
+47 |     // Steps should be included
+48 |     expect(assistantItem).toHaveProperty("steps", steps);
+49 | 
+50 |     // The label should be "Search unavailable"
+51 |     expect(stepLabel(steps[0])).toBe("Search unavailable");
+                                     ^
+error: expect(received).toBe(expected)
+
+Expected: "Search unavailable"
+Received: "Search not available"
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/webFailureDisplay.test.ts:51:33)
+(fail) Web failure display: unavailable and failed steps with answer > shows 'Search unavailable' and answer text when unavailable search step precedes done [0.53ms]
+176 | 
+177 |     // All steps should be included
+178 |     expect(assistantItem).toHaveProperty("steps", steps);
+179 | 
+180 |     // First step label
+181 |     expect(stepLabel(steps[0])).toBe("Search unavailable");
+                                      ^
+error: expect(received).toBe(expected)
+
+Expected: "Search unavailable"
+Received: "Search not available"
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/webFailureDisplay.test.ts:181:33)
+(fail) Web failure display: unavailable and failed steps with answer > shows multiple steps including unavailable and failed alongside completed answer [0.07ms]
+
+src/chat/webFailureSession.test.ts:
+145 |     expect(assistantItem.streaming).toBe(false);
+146 |     // The step label should show "Search unavailable"
+147 |     expect(assistantItem).toHaveProperty("steps");
+148 |     if (assistantItem.steps && assistantItem.steps.length > 0) {
+149 |       const label = stepLabel(assistantItem.steps[0]);
+150 |       expect(label).toBe("Search unavailable");
+                          ^
+error: expect(received).toBe(expected)
+
+Expected: "Search unavailable"
+Received: "Search not available"
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/chat/webFailureSession.test.ts:150:21)
+(fail) sendInConversation: web steps unavailable/failed (M13) > persists unavailable search step with answer and shows 'Search unavailable' in chat items [2.64ms]
+
+ 5 pass
+ 3 fail
+ 37 expect() calls
+Ran 8 tests across 2 files. [10.00ms]
+---
