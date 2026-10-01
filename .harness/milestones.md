@@ -286,52 +286,7 @@ Pressing Stop while a reply is searching or reading a page cancels the reply and
 
 Owns: none owned (FR23 Stop clause, owned by M11). Traces to: AC17 (Stop), FR23 (Stop cancels search).
 
-### Architecture
-
-C6, C12, C13, C14
-
-### As-Built
-
-.harness/as-built/M12.md — RECORDED — 3/4 files attributed; components C6, C12, C13, C14; 3 edges; no claim mismatches
-
-### Acceptance Criteria
-
-- [x] **M12-AC1**: Stop during an in-flight search or page read ends it on the Mac (search helper process killed or page fetch aborted in the search service) and the reply stops.
-
-### Baseline
-
-d8db7d58c91f580d09137d0a02ccdb7b4a71f05d on m12-stop-ends-web-search
-
-### Evidence
-
-Tasks (implementation phase 2026-10-01; all entered at Mid, ORDINARY_IMPLEMENTATION):
-- M12-T1 search service: client abort kills helper group / closes page fetch upstream - Mid attempt 3, PASS, verifier PASS; commit 5d96d02
-- M12-T2 server: cancel during web_search/read_page aborts search-service request, reply ends cancelled - Mid attempt 3, PASS; verifier FAIL only for a concurrent T3 file in the tree (misattribution, all T2 checks passed) - accepted; commit b7f266c
-- M12-T3 live proof server/scripts/web-stop-proof.sh - Mid attempt 3, PASS, verifier re-ran live, exit 0; commit 77cb283
-
-Per criterion (not reviewed):
-- M12-AC1:
-  - Search service: search/src/http/stop.test.ts (T1 5d96d02): POST /v1/search with a fake helper (sh + sleep 300 child, helper time limit 120 s), client abort -> helper and child pids dead within 3 s; POST /v1/read with a local upstream holding the body (page-read timeout 60 s, existing resolve/isAllowedAddress test seam, SSRF guard untouched), client abort -> upstream connection closed within 3 s. Passed on baseline (no production change); RED independently reproduced by verifier by replacing req.signal with new AbortController().signal in search/src/http/server.ts (0 pass 2 fail). search bun test 161 pass, typecheck 0. .harness/evidence/M12-T1-red.log, M12-T1-verifier.log.
-  - Server: server/src/http/webStop.test.ts (T2 b7f266c): for web_search and read_page, fake Ollama issues the tool call, a real Bun.serve fake search service holds the request; after it arrives, POST /v1/generations/{id}/cancel -> 200 {status:cancelled}; fake service sees abort within 2 s (client timeout 120 s); stream and event log are exactly one done status=cancelled, no content/sources/step events, unchanged 200 ms later; next POST /v1/chat 200. RED independently reproduced by verifier by dropping the reply signal from AbortSignal.any in server/src/web/tools.ts (both fail). server bun test 174 pass, typecheck 0. .harness/evidence/M12-T2-red.log, M12-T2-verifier.log.
-  - Live: server/scripts/web-stop-proof.sh (T3 77cb283), real server/search service/Ollama (nemotron3:33b): helper 'helper/search.py --query' seen alive (pid 41556 in verifier run, 40984 in worker run) before cancel; cancel -> helper and its process group gone 59 ms after cancel (61 ms worker run); stream ends done status=cancelled with no content/sources after cancel; GET /v1/state 200 and a new chat admitted. Verifier's own run exit 0 on attempt 1 of 5; no helper left running. .harness/evidence/M12-T3-verifier.log, M12-T3-proof-worker.log. Not reviewed.
-
-### Validation
-
-`cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd server && bun test && bun run typecheck) && (cd search && bun test && bun run typecheck) && bash server/scripts/web-stop-proof.sh` - for the reviewer to run once. Verifier runs: search 161 pass + typecheck 0; server 174 pass + typecheck 0; live proof exit 0 (needs real Ollama with a web-capable resident model and the search service; restarts the server LaunchAgents and restores the resident model). Artifacts: .harness/evidence/M12-T1-verifier.log, M12-T2-verifier.log, M12-T3-verifier.log.
-
-### Review
-
-Cycle 1: PASS — tier Mid, model sonnet, reason_code ORDINARY_IMPLEMENTATION; diff d8db7d5..8330d17 (full milestone); per-criterion M12-AC1=PASS; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL; no report file (PASS); validation log .harness/evidence/M12-review.log.
-
-### Review Cycles
-
-0
-
-### Follow-ups
-
-- Size check at pickup: 1 criterion, real entry point present (POST /v1/generations/{id}/cancel); signals CONCURRENCY_LIFECYCLE + IMPLEMENTATION_PLUS_LIVE_PROOF would normally require a split, but with one criterion no split conserves the criteria unchanged; run as planned (planner's recorded seam decision). In practice the abort chain already existed; M12 added tests and live proof only, no production change.
-- The server emits a web tool's step(started) only together with its done step after the tool call returns (events batched from webTools.execute, appended in manager.ts ~L212), so the phone cannot show 'searching...' while a search is in flight. Outside M12-AC1.
-- Live proof exercises the search helper path only (no Playwright/Chromium children were alive at cancel, and page-read abort is not observable via the process table live); page-read abort is proven by search/src/http/stop.test.ts and server/src/http/webStop.test.ts.
+Detail: `.harness/archive/M12.md`
 
 ## M13 — Search failures and time limits never hang a web reply, and no hosted search is used
 
@@ -389,6 +344,52 @@ Cycle 1: PASS — tier Mid, model sonnet, reason_code ORDINARY_IMPLEMENTATION; d
 - No production change was needed: failure and time-limit handling already existed (M7c, C12, C1); M13 added tests and live proofs.
 - Live time-limit proof covers search only; there is no existing hook to hang a page read live, so the page-read time limit is proven by server/src/http/webFailure.test.ts case (c).
 - no-hosted-api-check.sh Part B matches by resolved IP; a page served from a CDN address shared with a hosted-API hostname could false-FAIL. It also needs the model to choose read_page (retried up to 3 times).
+
+## M14 — A web reply always ends with an answer
+
+Status: IN_PROGRESS
+
+### Outcome
+
+When a web reply's model round goes quiet (no answer text, no tool call; thinking does not count), the server prods it to carry on with the tools still offered (at most 2 prods), then gives one tools-withdrawn "answer now" round, and if that also goes quiet ends the reply `complete` with the FR33 note as its answer plus its steps and sources; each prod and the answer-now round are web steps that stream live, are saved and show again when reopened. Prods are not saved, not re-sent and not counted toward the 10-call cap; switch-off replies, Stop/resume and time limits are unchanged. Planned 2026-10-01 from FR33/AC27 (owner's 2026-10-01 20:15 screenshot: 7 web steps, 14 sources, no answer). Human decision 2026-10-01: build this now, ahead of M5a; M5a stays BLOCKED and parked, its record unchanged, and is picked up after M14. Size check at pickup: 5 criteria; real entry point POST /v1/chat; one operational-complexity signal IMPLEMENTATION_PLUS_LIVE_PROOF (seam check: the live part is a regression run of an ordinary web reply plus the existing M13 proof, no lifecycle change; the quiet behaviour itself is proven by scripted tests as agreed in AC27) - not split.
+
+Owns: FR33. Traces to: AC27.
+
+### Architecture
+
+C1, C2, C3, C6
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M14-AC1**: Server tests with a scripted fake Ollama (POST /v1/chat, web on): a round shaped like the 2026-10-01 20:15 screenshot (thinking only, no content, no tool call, tools offered) is followed by a prod with tools still offered; quiet once then answer, quiet once then a tool call then answer, and quiet twice then answer each end with that answer; whitespace-only content counts as quiet; prods are not counted toward the 10-call cap.
+- [ ] **M14-AC2**: Server tests: quiet three times gives an "Asked the model to answer now" round with no tools offered; a quiet tools-withdrawn round (after the answer-now round, and after the 10-call cap) ends `complete` with the FR33 note "No answer was produced — the model stopped without answering. Try asking again." as the answer text plus steps and sources.
+- [ ] **M14-AC3**: Server tests: a switch-off empty reply is unchanged; prod messages do not appear in the saved conversation or in the next prompt's messages; Stop during a prodded round cancels as before.
+- [ ] **M14-AC4**: App tests show the two new step lines ("Asked the model to continue", "Asked the model to answer now") live while streaming and in a reopened saved reply.
+- [ ] **M14-AC5**: Live on the Mac: an ordinary web reply with the owner's usual model still completes with steps, sources and an answer, and the existing M13 web-failure proof (server/scripts/web-failure-proof.sh) still passes.
+
+### Baseline
+
+5786b3c727238758c073a499b678c4cb8757c095 on m14-web-reply-always-answers
+
+### Evidence
+
+### Validation
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+- AC27's owner observation (retrying the transfer question from the screenshot on the phone) is observation, not a gate; it is not an M14 criterion.
 
 ## M5a — Always-on server and bundle host
 
