@@ -9332,7 +9332,7 @@
         "FR23"
       ],
       "traces": "AC17 (resume), AC18 (persistence)",
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -9348,19 +9348,29 @@
           "id": "M11-AC1",
           "text": "Killing the connection during a web reply and reconnecting yields the complete steps and answer with no gaps and no duplicates.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "Server: server/src/http/webReplyInProgress.test.ts (T2 56126e9) holds the fake web tool mid-search, reconnects GET /v1/generations/{id}/events with Last-Event-ID at the first step: log seqs 0-6 contiguous (step x4, content, sources, done), resumed == full log from seq 1, prefix+resumed == full replay, second reconnect same tail; characterisation, passed on baseline; verifier PASS (server 172 pass, typecheck 0).",
+            "Client: mobile/src/api/client.test.ts test (l) (T3 89278f1): drop after step(started)/step(done), resume sends Last-Event-ID gen-w-2, overlapping seq filtered, onEvent gets 8 events once in order, applyStreamEvent fold gives s1/s2 done, full content, sources; characterisation; verifier PASS (.harness/evidence/M11-T3-verifier.log, mobile 438 pass).",
+            "Live: mobile/scripts/web-resume-proof.sh (T4 84f11dd), real server/Ollama/search, verifier's own run exit 0: Check B dropped prefix has steps and no done, app resumed via Last-Event-ID, prefix+resumed seqs == full replay (1716 vs 1716), steps folded equal, content equal. .harness/evidence/M11-T4-proof.log. Not reviewed."
+          ]
         },
         {
           "id": "M11-AC2",
           "text": "Persisted conversations contain each web reply's steps and sources but no page text or full search results, and a follow-up prompt sends prior answers with their source lists without re-sending page text.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "Unit: mobile/src/chat/conversationSession.test.ts 'web history and persistence (M11)' (T1 7127ae7): follow-up sends prior web answer with '\\n\\nSources:\\n[n] title — url' block via exported historyContent, plain messages unchanged, only role/content; persisted web reply steps/sources equal streamed and keys subset of allowed set. RED on baseline confirmed by verifier with baseline conversationSession.ts + stub export; GREEN 27/437 pass. .harness/evidence/M11-T1-red.log, M11-T1-green.log, M11-T1-verifier.log.",
+            "Live: web-resume-proof Check C (persisted reply has steps 3 and sources 5, allowed keys only, no tool messages, stored size = content+thinking+steps+sources+small metadata) and Check D (follow-up body: prior answer carries Sources: block with every URL, user/assistant roles only, body 860 < bound 1839). .harness/evidence/M11-T4-proof.log. Not reviewed."
+          ]
         },
         {
           "id": "M11-AC3",
           "text": "While a reply is searching, sending another prompt is refused as a reply in progress, and a swap or unload requires the busy confirmation.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "Server: webReplyInProgress.test.ts with web tool held: POST /v1/chat -> 409 generation_in_flight; POST /v1/models/load (other model) and /v1/models/unload without confirm -> 409 confirmation_required with reply_in_progress, no client call made. confirm=true path covered by existing server.test.ts 'a confirmed {label} returns 202...' (lines ~1543-1575).",
+            "Live: web-resume-proof Check A after first step event: second chat 409 generation_in_flight; unload and swap to qwen3.8:27b need confirmation incl. reply_in_progress (also not_loaded_by_server, model loaded outside this server); nothing confirmed. .harness/evidence/M11-T4-proof.log. Not reviewed."
+          ]
         }
       ],
       "tasks": [
@@ -9374,9 +9384,22 @@
             "reason_code": "ORDINARY_IMPLEMENTATION",
             "detail": "phone history builder change plus tests; format fixed by packet"
           },
-          "attempts": [],
-          "commit": null,
-          "status": "PENDING"
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "verifier": "PASS",
+              "artifacts": [
+                ".harness/evidence/M11-T1-red.log",
+                ".harness/evidence/M11-T1-green.log",
+                ".harness/evidence/M11-T1-verifier.log"
+              ]
+            }
+          ],
+          "commit": "7127ae7",
+          "status": "ACCEPTED"
         },
         {
           "id": "M11-T2",
@@ -9388,9 +9411,20 @@
             "reason_code": "ORDINARY_IMPLEMENTATION",
             "detail": "server tests with fakes; fix only if exposed"
           },
-          "attempts": [],
-          "commit": null,
-          "status": "PENDING"
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "verifier": "PASS",
+              "artifacts": [
+                ".harness/evidence/M11-T2-tests.log"
+              ]
+            }
+          ],
+          "commit": "56126e9",
+          "status": "ACCEPTED"
         },
         {
           "id": "M11-T3",
@@ -9402,9 +9436,21 @@
             "reason_code": "ORDINARY_IMPLEMENTATION",
             "detail": "client resume test on existing fakes; fix only if exposed"
           },
-          "attempts": [],
-          "commit": null,
-          "status": "PENDING"
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "verifier": "PASS",
+              "artifacts": [
+                ".harness/evidence/M11-T3-tests.log",
+                ".harness/evidence/M11-T3-verifier.log"
+              ]
+            }
+          ],
+          "commit": "89278f1",
+          "status": "ACCEPTED"
         },
         {
           "id": "M11-T4",
@@ -9416,16 +9462,48 @@
             "reason_code": "ORDINARY_IMPLEMENTATION",
             "detail": "live proof script modelled on existing proofs"
           },
-          "attempts": [],
-          "commit": null,
-          "status": "PENDING"
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "verifier": "PASS",
+              "artifacts": [
+                ".harness/evidence/M11-T4-proof.log"
+              ]
+            }
+          ],
+          "commit": "84f11dd",
+          "status": "ACCEPTED"
         }
       ],
       "reviews": [],
       "findings": [],
-      "validation": [],
+      "validation": [
+        {
+          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/http/webReplyInProgress.test.ts && bun test && bun run typecheck",
+          "exit_status": 0,
+          "result": "1 pass; 172 pass; typecheck 0 (verifier)",
+          "artifact": ".harness/evidence/M11-T2-tests.log"
+        },
+        {
+          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun test src/api/client.test.ts && bun run typecheck && bun test",
+          "exit_status": 0,
+          "result": "56 pass; typecheck 0; 438 pass (verifier)",
+          "artifact": ".harness/evidence/M11-T3-verifier.log"
+        },
+        {
+          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bash scripts/web-resume-proof.sh",
+          "exit_status": 0,
+          "result": "all live checks PASS, Mac restored (verifier run)",
+          "artifact": ".harness/evidence/M11-T4-proof.log"
+        }
+      ],
       "planned_validation": "cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd server && bun test && bun run typecheck) && (cd mobile && bun run typecheck && bun test && bash scripts/web-resume-proof.sh)",
-      "follow_ups": [],
+      "follow_ups": [
+        "Live proof depends on the model choosing to search and on the search service being up; nemotron3:33b once looped in thinking (25,000+ thinking events, no content, 300s timeout) on 'today's top news headlines' - prompt in web-resume-proof.ts tightened. A reply-length/thinking cap is outside M11."
+      ],
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
       ]

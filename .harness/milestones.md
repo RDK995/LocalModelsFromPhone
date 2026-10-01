@@ -321,7 +321,7 @@ Cycle 2: PASS, tier Mid/sonnet (review floor; correction contained no routed tas
 
 ## M11 — Web replies are saved, resume after a drop, and keep page text out of later prompts
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -349,17 +349,21 @@ Pending.
 
 ### Evidence
 
-Task plan (implementation phase 1, 2026-10-01; no task dispatched yet - handed off at turn budget):
-- M11-T1 Mid (ORDINARY_IMPLEMENTATION): follow-up history carries prior answers' source lists; persisted web reply holds steps+sources only (AC2). Packet .harness/tasks/M11-T1.md
-- M11-T2 Mid: server HTTP tests - searching reply refuses chat (409) and needs busy confirmation; Last-Event-ID replay exact (AC3, AC1). Packet .harness/tasks/M11-T2.md
-- M11-T3 Mid: phone client drop/resume mid web reply, each event once (AC1). Packet .harness/tasks/M11-T3.md
-- M11-T4 Mid: live proof mobile/scripts/web-resume-proof.sh (AC1-AC3), after T1-T3. Packet .harness/tasks/M11-T4.md
-Reconnaissance at baseline: gap found in mobile/src/chat/conversationSession.ts lines 113-116 (history drops stored sources); server event log, in-progress slot and busy confirmation already span the tool stage (to be proven by T2). T1 and T2 can run in parallel; T3 after T1 (both mobile); T4 last.
+Tasks (implementation phase, continuation 1, 2026-10-01; all entered at Mid, ORDINARY_IMPLEMENTATION):
+- M11-T1 follow-up history carries prior web answers' source lists; persisted web reply steps+sources only - Mid attempt 3, PASS, verifier PASS; commit 7127ae7
+- M11-T2 server HTTP test: searching web reply refuses chat, needs busy confirmation; Last-Event-ID replay exact - Mid attempt 3, PASS (characterisation, passed on baseline, no source change), verifier PASS; commit 56126e9
+- M11-T3 client test: drop mid web reply resumes with each event once - Mid attempt 3, PASS (characterisation, no client.ts change), verifier PASS; commit 89278f1
+- M11-T4 live proof mobile/scripts/web-resume-proof.sh/.ts - Mid attempt 3, PASS, verifier re-ran live, exit 0; commit 84f11dd
+
+Per criterion (not reviewed):
+- M11-AC1: server/src/http/webReplyInProgress.test.ts (log seqs 0-6 contiguous, resumed == full log after Last-Event-ID, prefix+resumed == full replay); mobile/src/api/client.test.ts test (l) (Last-Event-ID gen-w-2, overlap filtered, 8 events once in order, fold gives both steps done, content, sources); live Check B (prefix+resumed seqs == full replay 1716 vs 1716, steps and content equal). .harness/evidence/M11-T2-tests.log, M11-T3-verifier.log, M11-T4-proof.log
+- M11-AC2: mobile/src/chat/conversationSession.test.ts "web history and persistence (M11)" (Sources block via exported historyContent, RED on baseline confirmed by verifier; persisted keys subset of allowed set); live Check C (steps 3, sources 5, allowed keys, no tool messages, no page text) and Check D (follow-up carries Sources: block with every URL, body 860 < bound 1839). .harness/evidence/M11-T1-red.log, M11-T1-green.log, M11-T1-verifier.log, M11-T4-proof.log
+- M11-AC3: webReplyInProgress.test.ts (chat 409 generation_in_flight; load/unload 409 confirmation_required incl. reply_in_progress while tool held; confirm=true covered by existing server.test.ts "a confirmed {label} returns 202..."); live Check A (second chat 409; unload and swap to qwen3.8:27b need confirmation incl. reply_in_progress). .harness/evidence/M11-T4-proof.log
 
 
 ### Validation
 
-Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd server && bun test && bun run typecheck) && (cd mobile && bun run typecheck && bun test && bash scripts/web-resume-proof.sh)`
+`cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd server && bun test && bun run typecheck) && (cd mobile && bun run typecheck && bun test && bash scripts/web-resume-proof.sh)` - for the reviewer to run once. Verifier runs: server 172 pass + typecheck 0; mobile 438 pass + typecheck 0; live proof exit 0 (needs real Ollama, a web-capable model and the search service; restarts the server LaunchAgents and restores the resident model).
 
 ### Review
 
@@ -371,7 +375,7 @@ Pending.
 
 ### Follow-ups
 
-None.
+- Live proof depends on the model choosing to search and the search service being up. nemotron3:33b once looped in thinking (25,000+ thinking events, no content, 300s timeout) on "today's top news headlines"; the proof prompt was tightened. A reply-length/thinking cap is outside M11.
 
 ## M12 — Stop during a web search ends it on the Mac
 
