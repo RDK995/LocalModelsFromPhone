@@ -324,7 +324,7 @@ Cycle 1: PASS — tier Mid, model sonnet, reason_code ORDINARY_IMPLEMENTATION; d
 
 ## M12 — Stop during a web search ends it on the Mac
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -342,7 +342,7 @@ Pending.
 
 ### Acceptance Criteria
 
-- [ ] **M12-AC1**: Stop during an in-flight search or page read ends it on the Mac (search helper process killed or page fetch aborted in the search service) and the reply stops.
+- [x] **M12-AC1**: Stop during an in-flight search or page read ends it on the Mac (search helper process killed or page fetch aborted in the search service) and the reply stops.
 
 ### Baseline
 
@@ -350,10 +350,20 @@ d8db7d58c91f580d09137d0a02ccdb7b4a71f05d on m12-stop-ends-web-search
 
 ### Evidence
 
+Tasks (implementation phase 2026-10-01; all entered at Mid, ORDINARY_IMPLEMENTATION):
+- M12-T1 search service: client abort kills helper group / closes page fetch upstream - Mid attempt 3, PASS, verifier PASS; commit 5d96d02
+- M12-T2 server: cancel during web_search/read_page aborts search-service request, reply ends cancelled - Mid attempt 3, PASS; verifier FAIL only for a concurrent T3 file in the tree (misattribution, all T2 checks passed) - accepted; commit b7f266c
+- M12-T3 live proof server/scripts/web-stop-proof.sh - Mid attempt 3, PASS, verifier re-ran live, exit 0; commit 77cb283
+
+Per criterion (not reviewed):
+- M12-AC1:
+  - Search service: search/src/http/stop.test.ts (T1 5d96d02): POST /v1/search with a fake helper (sh + sleep 300 child, helper time limit 120 s), client abort -> helper and child pids dead within 3 s; POST /v1/read with a local upstream holding the body (page-read timeout 60 s, existing resolve/isAllowedAddress test seam, SSRF guard untouched), client abort -> upstream connection closed within 3 s. Passed on baseline (no production change); RED independently reproduced by verifier by replacing req.signal with new AbortController().signal in search/src/http/server.ts (0 pass 2 fail). search bun test 161 pass, typecheck 0. .harness/evidence/M12-T1-red.log, M12-T1-verifier.log.
+  - Server: server/src/http/webStop.test.ts (T2 b7f266c): for web_search and read_page, fake Ollama issues the tool call, a real Bun.serve fake search service holds the request; after it arrives, POST /v1/generations/{id}/cancel -> 200 {status:cancelled}; fake service sees abort within 2 s (client timeout 120 s); stream and event log are exactly one done status=cancelled, no content/sources/step events, unchanged 200 ms later; next POST /v1/chat 200. RED independently reproduced by verifier by dropping the reply signal from AbortSignal.any in server/src/web/tools.ts (both fail). server bun test 174 pass, typecheck 0. .harness/evidence/M12-T2-red.log, M12-T2-verifier.log.
+  - Live: server/scripts/web-stop-proof.sh (T3 77cb283), real server/search service/Ollama (nemotron3:33b): helper 'helper/search.py --query' seen alive (pid 41556 in verifier run, 40984 in worker run) before cancel; cancel -> helper and its process group gone 59 ms after cancel (61 ms worker run); stream ends done status=cancelled with no content/sources after cancel; GET /v1/state 200 and a new chat admitted. Verifier's own run exit 0 on attempt 1 of 5; no helper left running. .harness/evidence/M12-T3-verifier.log, M12-T3-proof-worker.log. Not reviewed.
 
 ### Validation
 
-Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd server && bun test) && (cd search && bun test) && bash server/scripts/web-stop-proof.sh`
+`cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd server && bun test && bun run typecheck) && (cd search && bun test && bun run typecheck) && bash server/scripts/web-stop-proof.sh` - for the reviewer to run once. Verifier runs: search 161 pass + typecheck 0; server 174 pass + typecheck 0; live proof exit 0 (needs real Ollama with a web-capable resident model and the search service; restarts the server LaunchAgents and restores the resident model). Artifacts: .harness/evidence/M12-T1-verifier.log, M12-T2-verifier.log, M12-T3-verifier.log.
 
 ### Review
 
@@ -365,7 +375,9 @@ Pending.
 
 ### Follow-ups
 
-None.
+- Size check at pickup: 1 criterion, real entry point present (POST /v1/generations/{id}/cancel); signals CONCURRENCY_LIFECYCLE + IMPLEMENTATION_PLUS_LIVE_PROOF would normally require a split, but with one criterion no split conserves the criteria unchanged; run as planned (planner's recorded seam decision). In practice the abort chain already existed; M12 added tests and live proof only, no production change.
+- The server emits a web tool's step(started) only together with its done step after the tool call returns (events batched from webTools.execute, appended in manager.ts ~L212), so the phone cannot show 'searching...' while a search is in flight. Outside M12-AC1.
+- Live proof exercises the search helper path only (no Playwright/Chromium children were alive at cancel, and page-read abort is not observable via the process table live); page-read abort is proven by search/src/http/stop.test.ts and server/src/http/webStop.test.ts.
 
 ## M13 — Search failures and time limits never hang a web reply, and no hosted search is used
 
