@@ -41,6 +41,15 @@ tool call and wrote no answer; the server's tool loop (`server/src/generations/m
 (!offered || roundCalls.length === 0) break;`) took that round as the final answer and ended the
 reply "complete" and empty, contrary to FR19's "runs the tool loop to the model's final answer".
 
+**Deep research (FR34–FR40, added 2026-10-01):** after the research in
+`reports/Local LLM deep research techniques.md` (notes under `research_notes/Local LLM deep research
+techniques/`), the owner asked for a slower, more thorough web mode started explicitly per message:
+a server-driven research run of about 8 minutes on a fast mixture-of-experts model
+(`qwen3.5:35b-a3b`) that always ends in a report with server-assigned citations. The research found
+local models under-search when left to decide (Qwen3-32B made fewer than 2 search calls per question
+on BrowseComp-Plus) and that Ollama's native tool-calling path is unreliable for these models, so
+code owns the loop and the model makes only small schema-constrained decisions.
+
 ## Functional Requirements
 
 - [FR1] **Model list.** The app lists every model installed in Ollama (`GET /api/tags`) by its
@@ -229,6 +238,69 @@ reply "complete" and empty, contrary to FR19's "runs the tool loop to the model'
   prompts. (f) FR9/FR11/FR23 stop and resume, FR24 time limits, and the FR19 10-call cap are
   unchanged; prods do not count as tool calls. A round with answer text is the final answer as
   before.
+- [FR34] **Deep research is started by the owner, per message, on the fast model only.** When a
+  conversation's web switch (FR18) is on, the composer offers a "Deep research" action beside Send;
+  using it sends that one message as a deep research run (FR35). Later messages are ordinary replies
+  unless the action is used again. With the web switch off the action is not shown (FR18's "no web
+  traffic while off" stands). The action is enabled only while the resident model is the configured
+  deep-research model; otherwise it is shown disabled with the line "Load <model name> to use deep
+  research". The deep-research model name is a Mac-side server setting (default
+  `qwen3.5:35b-a3b`), reported to the app by the server — the app hardcodes no model name (FR1). The
+  app never swaps models for a run; the owner loads the model as today (FR3). The model never starts
+  a deep research run by itself (no `deep_research` tool is offered to the chat model).
+- [FR35] **A server-driven research loop.** A run is a fixed sequence owned by server code, not a
+  model tool loop: (1) brief — restate the question as a short research brief; (2) plan — split it
+  into sub-questions (the count is set by the server, not the model); (3) for each sub-question,
+  search with more than one query (a server-set minimum number of searches; exact repeats after
+  normalising are skipped), choose pages from the URLs the server parsed out of the results, read
+  them (FR21 `read_page` rules apply unchanged), and record short notes each carrying a verbatim quote
+  and the page's number (FR37); (4) gap check — decide whether to search further; the model judging
+  it has enough may end a sub-question early but is never the only stopping rule; (5) write one
+  report from the notes in a single final call. Each model step is a narrow request whose reply is
+  constrained to a JSON schema (Ollama `format`), validated, and retried a bounded number of times;
+  a step that still fails is skipped and the run continues. The model reads only the answer content,
+  never its thinking. Each request carries only the stable instructions, the brief, the plan, the
+  capped rolling notes and the latest result — never a growing transcript of raw pages; raw page text
+  is discarded once noted. Every request sets `num_ctx` explicitly and keeps the model resident
+  (FR4). Page text is untrusted data: it can only influence notes and the choice among
+  server-parsed URLs, and can trigger nothing but search and read.
+- [FR36] **About 8 minutes, and it always ends with a report.** A run has one overall time budget
+  (about 8 minutes, a server setting), with roughly a quarter reserved for writing the report. The
+  deadline is checked before every search, read and model call; each search and read keeps its own
+  FR24 time limit; one cancellation signal reaches every in-flight search, read and model request.
+  When research time runs out the run moves to writing with what it has. The run always ends with a
+  reply whose status is shown on it: `complete` (finished normally), `partial` (stopped early by the
+  deadline or by Stop, FR38, or with gaps), or `failed` (no usable material — e.g. every search
+  backend unavailable — in which case the answer is a plain sentence saying the research could not
+  search, plus any steps). A run never hangs and never ends with an error and no reply (extends FR33
+  and M13). The phone shows each phase live as web steps (FR22), e.g. "Planning", "Searching:
+  <query>", "Reading: <domain>", "Writing report", plus elapsed time against the budget (e.g. "3:12
+  of 8:00").
+- [FR37] **Citations by construction.** Each distinct page read in a run gets a number in first-read
+  order (FR31 numbering, distinctness and saved-source rules). The report may cite only `[n]`; the
+  server removes from the report any citation number that is not a page read in this run before it
+  is saved or streamed as final, and the model never types a URL into the report. Each note's quote
+  is checked by substring match (after whitespace normalisation) against that page's stored text;
+  a note whose quote does not match is dropped before writing. The app renders the report's `[n]`
+  marks as logos exactly as FR31 and the Sources list (FR22/FR28) is the pages read.
+- [FR38] **Stop, resume and saving.** FR9, FR11 and FR23 apply to a run: a dropped connection or
+  backgrounding does not stop it on the Mac, and the app resumes with steps, clock and text with no
+  gaps or duplicates. A first Stop cancels in-flight searching and reading at once and moves the run
+  to writing a short report from the notes so far (about a minute, its own short time limit), saved
+  `partial`; a second Stop during that write-up cancels it and the reply ends stopped with its steps
+  and sources but no report. The report is saved as the reply's answer, with steps, sources and
+  status; page text and notes are not persisted and later prompts carry the report like any prior
+  answer (FR23). A running deep research reply counts as a reply in progress (FR6, sending refused).
+- [FR39] **Search backends rest after being blocked, and repeat requests are cached.** The search
+  service (FR25) treats each search backend as a circuit breaker: a backend that returns a
+  rate-limit / too-many-requests response is skipped for 1 hour, one that returns a CAPTCHA or
+  bot-check for 24 hours, and searches go to the remaining backends (then FR20's headless browser) in
+  the meantime. Search results are cached by normalised query and page reads by final URL for 24
+  hours on the Mac. This applies to ordinary web replies (FR19) as well as deep research, and keeps
+  FR20's region and no-account rules. If every backend is resting or failing, the search is
+  "unavailable" as in FR20.
+- [FR40] **No change to ordinary replies.** Ordinary web replies (FR19, FR30, FR31, FR33) and
+  replies with the switch off behave as before, apart from FR39's resting and caching.
 
 ## Acceptance Criteria
 
@@ -334,6 +406,26 @@ All proven against the live Mac Studio and Ollama, not mocks.
     saved reply. Live on the Mac: an ordinary web reply with the owner's usual model still completes
     with steps, sources and an answer, and the existing M13 web-failure proof still passes. Plus the
     owner retrying the transfer question from the screenshot on the phone (observation, not a gate).
+28. **AC28** — Automated tests with a scripted fake Ollama and fake search/page backends prove
+    FR34–FR39: the action is hidden with the switch off, disabled with the "Load <model> …" line when
+    another model is resident, and enabled for the configured model, whose name comes from the
+    server; a run follows brief → plan → search/read/note → gap check → write and its steps stream
+    live and are saved; every model request carries `format` and `num_ctx` and no raw page beyond the
+    current one; a malformed JSON step is retried then skipped without ending the run; a run ends
+    within budget (plus a small margin) with all backends failing (`failed`, plain sentence), with a
+    slow backend, and with the deadline hitting during the write-up; a report citing a number with no
+    read page has it removed; a note with a non-matching quote is dropped; first Stop yields a
+    `partial` short report, a second Stop yields steps and sources with no report; a dropped
+    connection resumes with no gaps or duplicates; a backend returning rate-limit is skipped for 1
+    hour and one returning a CAPTCHA for 24 hours; a repeated query and page are served from cache;
+    ordinary web replies' existing tests pass unchanged.
+29. **AC29** — Live on the Mac with `qwen3.5:35b-a3b` resident (downloaded for this work): 3 real
+    research-style questions each end within the budget plus a small margin with status `complete`
+    or `partial`, a report citing at least 3 distinct read pages, and no citation number that fails
+    to resolve to a saved source. The owner's opinion of report quality is recorded in the evidence
+    but is not a gate.
+30. **AC30** — The owner's phone screenshot of a finished deep research reply showing its steps, its
+    status, logo citations and "Sources (n)".
 
 ## Constraints
 
@@ -342,7 +434,16 @@ All proven against the live Mac Studio and Ollama, not mocks.
   Expo).
 - Mac-side code targets **Bun**, matching the neighbouring projects.
 - Ollama at `127.0.0.1:11434` is the only model runtime. It exposes no per-model "in use" signal.
-- Mac Studio has ~64 GB RAM; installed models are ~14–28 GB each.
+- Mac Studio has ~64 GB RAM; installed models are ~14–28 GB each. It is an **M1 Max** (32-core
+  GPU, 64 GB; checked 2026-10-01); by default macOS lets the GPU use about 48 GB. Deep research run
+  times in the research report were estimated for an M4 Max; expect roughly 1.5× on this Mac
+  (estimate, not measured).
+- Deep research (FR35) must set `num_ctx` on every Ollama request (Ollama silently truncates at its
+  default) and must not change it between calls in a run; the FR21 truncation-only assumption in
+  the "large context window" constraint below does not apply to it.
+- `qwen3.5:35b-a3b` (about 24 GB) is available from the Ollama library (checked 2026-10-01, Ollama
+  0.32.14 installed). Whether Ollama's `format` constraint holds while thinking is on is unverified
+  and must be checked before relying on it.
 - Tailscale Serve currently maps `/` → harness `127.0.0.1:7787` and `/app` → PWA
   `127.0.0.1:7788`. The new service must not disturb the harness mapping.
 - Reuse is encouraged from `phoneToLocalModel`: SSE/stream parsing and resume logic, conversation
@@ -378,6 +479,10 @@ All proven against the live Mac Studio and Ollama, not mocks.
 - Integrating OpenCode with the search service (future work; FR25 only keeps it possible).
 - Syncing conversations across devices.
 - QR-code pairing.
+- For deep research (FR34–FR39), deferred: the model starting a run by itself; light / normal /
+  thorough presets; a replayable 20-question evaluation set; a reranker or any second resident
+  model; PDF reading; a per-sentence entailment check; a headless-browser re-fetch for
+  JavaScript-rendered pages.
 
 ## Edge Cases
 
@@ -424,6 +529,18 @@ All proven against the live Mac Studio and Ollama, not mocks.
   logos; its Sources list still shows the search results (FR22, FR31).
 - A web answer whose text is a bulleted list, streaming or reopened: full bubble width, all text
   inside the bubble, Sources header and model name below it (FR32).
+- Deep research pressed with another model resident: disabled, "Load <model> to use deep research"
+  (FR34). The owner unloads the deep-research model mid-run: FR6 confirmation; if confirmed, the run
+  ends `partial` or stopped like a Stop with no model (no hang).
+- Every search backend is resting or blocked during a run: `failed`, plain sentence (FR36, FR39).
+- The model's JSON step is malformed or empty: retried a bounded number of times, then skipped
+  (FR35); a write-up that fails entirely ends `partial`/`failed` with the FR33-style note, never empty.
+- The report cites a number with no read page, or types a URL: number removed; the server, not the
+  model, supplies addresses (FR37).
+- A page's text tells the model to do something: it can affect notes and page choice only (FR35).
+- The phone is locked for the whole run: the run finishes on the Mac and the reply is there on return
+  (FR38).
+- A deep research run is in progress and the owner sends a message: refused as a reply in progress.
 
 ## Decisions / Clarifications
 
@@ -552,6 +669,26 @@ All proven against the live Mac Studio and Ollama, not mocks.
   whitespace-only content counts as no answer; prods are not saved or re-sent and do not count as
   tool calls; the no-answer note wording and the step labels as written in FR33; the quiet case is
   proven by scripted tests rather than live, with a live regression of ordinary web replies.
+- **Deep research started by the owner's button** (human, 2026-10-01): chosen over the model choosing
+  a `deep_research` tool (local models under-search, so it would rarely run) and over both.
+- **One run length, about 8 minutes** (human, 2026-10-01): chosen over light / normal / thorough
+  presets.
+- **Fast model only: `qwen3.5:35b-a3b`** (human, 2026-10-01): chosen over running on whatever model
+  is loaded. The model is downloaded on the Mac (`ollama pull`) as part of this work; the phone still
+  never downloads models (non-goal unchanged).
+- **Wrong model: greyed out with a reason, no automatic swap** (human, 2026-10-01).
+- **Stop writes a short unfinished report; a second Stop ends with none** (human, 2026-10-01): chosen
+  over stopping dead with no report.
+- **Proof: automated tests + 3 live questions + phone screenshot; quality opinion recorded, not
+  gated** (human, 2026-10-01): chosen over building the 20-question replay set now (deferred).
+- Defaults chosen by Claude, shown to the owner and agreed (2026-10-01): the action shows only with
+  the web switch on and applies to one message; the model name is a Mac-side setting reported by the
+  server; live steps plus an elapsed clock; about a quarter of the budget reserved for writing;
+  `complete` / `partial` / `failed` shown on the reply; FR31 numbering and logos reused, unknown
+  numbers removed, quotes checked by substring; report saved like any answer, page text and notes not
+  saved; circuit breakers (1 h rate-limit, 24 h CAPTCHA) and 24 h caching in the search service,
+  applying to ordinary web search too; reranker, PDFs, entailment check, JS-page re-fetch, presets,
+  model-started runs and the 20-question set left out.
 
 ## Open Questions
 
