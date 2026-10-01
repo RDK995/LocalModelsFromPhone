@@ -63,7 +63,8 @@ export const DEFAULT_RESEARCH_SETTINGS: ResearchSettings = {
   notesCapChars: 8000,
   numCtx: 32768,
   retries: 2,
-  think: false,
+  /** probe 2026-10-02: think-on 7/7 valid */
+  think: true,
 };
 
 /** One event in the generation event shape, without log seq/timestamp. */

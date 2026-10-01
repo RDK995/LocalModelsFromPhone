@@ -1,0 +1,171 @@
+VERIFICATION REPORT FOR M16-T4
+
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck
+
+Exit Status:
+0
+
+Output:
+ 221 pass
+ 0 fail
+ 1277 expect() calls
+Ran 221 tests across 12 files. [3.53s]
+$ tsc --noEmit
+
+================================================================================
+PROBE OUTPUT ANALYSIS
+
+Probe JSON (/Users/ryankenny/Projects/CodingHarnessv2/.harness/evidence/M16-T4-probe.json):
+
+Model: qwen3.5:35b-a3b
+num_ctx: 32768
+callsPerSetting: 5
+
+Per-setting valid/total:
+- think:true: 7/7 valid
+- think:false: 7/7 valid
+
+Per-step breakdown (both settings):
+- brief: 1/1 valid (both settings)
+- plan: 1/1 valid (both settings)
+- queries: 1/1 valid (both settings)
+- select: 1/1 valid (both settings)
+- note: 1/1 valid (both settings)
+- gap: 1/1 valid (both settings)
+- write: 1/1 valid (both settings)
+
+Failures: none (empty arrays for both settings)
+
+Probe Log (/Users/ryankenny/Projects/CodingHarnessv2/.harness/evidence/M16-T4-probe.log):
+- Exit status: 0
+- Stderr: (none)
+- Decision rule applied: "chosen think = true because EVERY think-on call was schema-valid (7/7 valid)"
+
+EXPLANATION OF --calls 5 YIELDING 7 CALLS PER SETTING:
+
+From server/scripts/probe-format-think.ts (line 128-129):
+  for (let i = 0; i < Math.max(calls, stepNames.length); i++) {
+    const step = stepNames[i % stepNames.length]!; // cycle; at least one call per step
+
+The loop runs Math.max(calls, stepNames.length) iterations per setting:
+- calls = 5 (from --calls 5 argument)
+- stepNames.length = 7 (seven steps: brief, plan, queries, select, note, gap, write)
+- Math.max(5, 7) = 7
+
+So the loop runs 7 times per setting, cycling through the 7 steps. Each iteration makes
+exactly one call (line 130), for a total of 7 calls per setting. This ensures at least
+one call per step (guaranteed by the "cycle; at least one call per step" comment) while
+respecting the --calls parameter as a minimum.
+
+CALL COVERAGE AND SCHEMA VERIFICATION:
+
+Per-step breakdown shows exactly 1 call per step per setting (7 steps total). Each call
+used one of the run's real step schemas (from SCHEMAS in research.ts) with format set:
+- All 7 steps in the probe (brief, plan, queries, select, note, gap, write) correspond
+  to the SCHEMAS object keys verified in research.ts
+- Each call's response was validated against VALIDATORS[step] (line 112 in probe script)
+- callsPerSetting field correctly reflects the --calls argument value (5)
+
+PROBE OUTPUT APPEARS REAL (NOT FABRICATED):
+
+Evidence:
+1. Model: qwen3.5:35b-a3b matches requested model and matches resident Ollama model
+   (confirmed via `ollama ps`: qwen3.5:35b-a3b running with 22 GB, 100% GPU)
+2. num_ctx: 32768 matches DEFAULT_RESEARCH_SETTINGS.numCtx
+3. Per-step breakdown matches the STEPS object in probe-format-think.ts (7 steps)
+4. All calls were valid (7/7 for both settings) - no JSON parse errors, no schema violations
+5. Failures array is empty (no truncated error samples visible), which is consistent with
+   perfect validation rate
+6. The validation flow (parse JSON, validate against VALIDATORS) followed the actual
+   probe script's callOnce() function logic
+
+================================================================================
+FILES CHANGED VERIFICATION
+
+Modified files outside .harness/:
+- server/src/generations/research.ts (allowed)
+- server/src/generations/research.test.ts (allowed)
+
+New/modified .harness/ files:
+- .harness/evidence/M16-T4-probe.json (allowed, artifact from probe)
+- .harness/evidence/M16-T4-probe.log (allowed, artifact from probe)
+- .harness/evidence/M16-T4-verifier.log (this file, verifier evidence)
+
+================================================================================
+TEST CHANGES ANALYSIS
+
+server/src/generations/research.ts diff:
+- Only change: DEFAULT_RESEARCH_SETTINGS.think
+  From: think: false
+  To: think: true
+- Comment added: "/** probe 2026-10-02: think-on 7/7 valid */"
+- No other lines modified in the file
+- Status: ALLOWED (packet specifies only DEFAULT_RESEARCH_SETTINGS.think and comment)
+
+server/src/generations/research.test.ts diff:
+- Line 198: Test renamed from "sends think:false on every step request by default"
+            to "sends think:true on every step request by default"
+- Line 203: Assertion changed from expect(req.think).toBe(false)
+            to expect(req.think).toBe(true)
+- Line 209: Test renamed from "sends think:true on every step request when the setting is on"
+            to "sends think:false on every step request when the setting is off"
+- Line 211: Test input changed from { ...BASE, think: true }
+            to { ...BASE, think: false }
+- Line 213: Assertion changed from expect(req.think).toBe(true)
+            to expect(req.think).toBe(false)
+- Status: ALLOWED (packet specifies exactly these two test changes in step 3)
+
+TESTS NOT WEAKENED:
+- First test (lines 198-207): Now asserts think:true for default, covers true value
+- Second test (lines 209-214): Now asserts think:false for override, covers false value
+- Both true and false values remain covered by the test suite
+- All assertions remain; no tests deleted, renamed to skip patterns, or replaced with
+  weaker comparisons
+- Test count: 221 pass (no tests were removed)
+
+================================================================================
+ACCEPTANCE CRITERIA VERIFICATION
+
+Criterion 1: "Probe JSON saved, showing >= 5 calls per setting, per-setting valid/total"
+Evidence: .harness/evidence/M16-T4-probe.json contains:
+  - callsPerSetting: 5 (matches --calls argument)
+  - settings["think:true"]: valid: 7, total: 7 (exceeds >= 5 requirement)
+  - settings["think:false"]: valid: 7, total: 7 (exceeds >= 5 requirement)
+  - perStep breakdown for all steps included
+Result: PASSES
+
+Criterion 2: "DEFAULT_RESEARCH_SETTINGS.think matches decision rule; provisional
+comment replaced by one-line comment citing probe result (e.g. 'probe 2026-10-02: think-on 10/10 valid')"
+Evidence: server/src/generations/research.ts shows:
+  - think: true (changed from false)
+  - Comment: "/** probe 2026-10-02: think-on 7/7 valid */"
+  - Decision rule applied: "EVERY think-on call was schema-valid (7/7 valid)" -> set think = true
+  - Comment follows the format from the criterion example
+Result: PASSES
+
+Criterion 3: "cd server && bun test && bun run typecheck passes"
+Evidence: Command output shows:
+  - 221 pass, 0 fail
+  - tsc --noEmit completed with exit 0
+  - No errors in either bun test or bun run typecheck
+Result: PASSES
+
+================================================================================
+DISCREPANCIES WITH WORKER'S CLAIM
+
+Worker claimed:
+- "probe ran with `--calls 5`, reports think:true 7/7 valid and think:false 7/7 valid"
+  ✓ Verified: Probe JSON shows exactly this
+
+- "set DEFAULT_RESEARCH_SETTINGS.think = true with a probe comment"
+  ✓ Verified: research.ts line 65 shows think: true with comment "probe 2026-10-02: think-on 7/7 valid"
+
+- "changed the two think tests in research.test.ts (default now asserts true; second test now exercises think:false asserting false)"
+  ✓ Verified: Both tests updated as specified
+
+- "claims `cd server && bun test && bun run typecheck` exit 0, 221 pass"
+  ✓ Verified: Tests show exactly 221 pass, exit 0
+
+No discrepancies found. Worker's claim matches observed output.
+

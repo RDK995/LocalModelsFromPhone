@@ -1,0 +1,4 @@
+Probe script executed successfully
+Exit status: 0
+Stderr: (none)
+chosen think = true because EVERY think-on call was schema-valid (7/7 valid)
