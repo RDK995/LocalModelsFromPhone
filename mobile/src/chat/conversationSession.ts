@@ -65,6 +65,21 @@ export function newMessageId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 }
 
+/**
+ * The content sent in history for a stored message. An assistant message with
+ * sources carries its source list (title + URL) after the answer, so a
+ * follow-up sees what the answer was based on; page text is never stored, so
+ * never re-sent (FR23). Messages without sources are sent as stored.
+ */
+export function historyContent(message: Message): string {
+  const sources = message.sources;
+  if (message.role !== "assistant" || !sources || sources.length === 0) {
+    return message.content;
+  }
+  const lines = sources.map((s, i) => `[${s.n ?? i + 1}] ${s.title} — ${s.url}`);
+  return `${message.content}\n\nSources:\n${lines.join("\n")}`;
+}
+
 type StateAndChatClient = Pick<APIClient, "getState" | "chat">;
 
 export interface SendInConversationCallbacks {
@@ -112,7 +127,7 @@ export async function sendInConversation(
 
   const history: ChatRequest["messages"] = conversation.messages.map((m) => ({
     role: m.role,
-    content: m.content,
+    content: historyContent(m),
   }));
   history.push({ role: "user", content: prompt });
 

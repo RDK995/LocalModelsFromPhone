@@ -1,0 +1,35 @@
+bun test v1.4.0 (1381054db)
+
+src/chat/conversationSession.test.ts:
+775 |     await store.appendMessage(c.id, { id: "m3", role: "user", content: "q2", status: "complete" });
+776 |     await store.appendMessage(c.id, { id: "m4", role: "assistant", content: "plain", status: "complete" });
+777 |     const bodies: Array<{ messages: Array<Record<string, unknown>> }> = [];
+778 |     const client = captureClient(() => completedChatResponse("ok", "llama3"), bodies);
+779 |     await sendInConversation(client, store, c.id, "follow-up", newCallbacks().callbacks);
+780 |     expect(bodies[0].messages).toEqual([
+                                     ^
+error: expect(received).toEqual(expected)
+
+@@ -6,9 +6,3 @@
+    {
+-     "content": 
+- "web answer
+- 
+- Sources:
+- [3] A — https://a.test
+- [2] B — https://b.test"
+- ,
++     "content": "web answer",
+      "role": "assistant",
+
+- Expected  - 7
++ Received  + 1
+
+      at <anonymous> (/private/tmp/claude-501/-Users-ryankenny-Projects-CodingHarnessv2/bb21b15b-5932-4c75-a8b6-22a10828b8d5/scratchpad/mobile-baseline/src/chat/conversationSession.test.ts:780:32)
+(fail) sendInConversation: web history and persistence (M11) > sends a prior answer with its Sources block, and other messages unchanged [2.57ms]
+
+ 0 pass
+ 26 filtered out
+ 1 fail
+ 1 expect() calls
+Ran 1 test across 1 file. [10.00ms]

@@ -15,6 +15,7 @@ import { createConversationStore } from "@/store/conversationStore";
 import { createMemoryStorage } from "@/store/storagePort";
 import {
   BLOCKED_MESSAGE,
+  historyContent,
   newMessageId,
   sendInConversation,
   titleFromPrompt,
@@ -732,5 +733,94 @@ describe("sendInConversation: web switch and web steps (M10)", () => {
     const reply = (await store.get(c.id))!.messages[1];
     expect("steps" in reply).toBe(false);
     expect("sources" in reply).toBe(false);
+  });
+});
+
+describe("sendInConversation: web history and persistence (M11)", () => {
+  function captureClient(
+    respond: () => Response,
+    bodies: Array<{ messages: Array<Record<string, unknown>> }>
+  ): APIClient {
+    const fetchMock = mock(async (url: string, init?: RequestInit) => {
+      if (url.endsWith("/v1/state")) {
+        return stateResponse({ name: "llama3" }, [{ name: "llama3", size_bytes: 1, tools: true }]);
+      }
+      if (url.endsWith("/v1/chat")) {
+        bodies.push(JSON.parse(init!.body as string));
+        return respond();
+      }
+      throw new Error(`unexpected request: ${url}`);
+    });
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+    return client;
+  }
+
+  it("sends a prior answer with its Sources block, and other messages unchanged", async () => {
+    const store = createConversationStore(createMemoryStorage());
+    const c = await store.create();
+    await store.appendMessage(c.id, { id: "m1", role: "user", content: "q1", status: "complete" });
+    await store.appendMessage(c.id, {
+      id: "m2",
+      role: "assistant",
+      content: "web answer",
+      status: "complete",
+      steps: [{ step_id: "s1", kind: "search", status: "done", query: "q" }],
+      thinking: "hmm",
+      sources: [
+        { title: "A", url: "https://a.test", n: 3 },
+        { title: "B", url: "https://b.test" },
+      ],
+    });
+    await store.appendMessage(c.id, { id: "m3", role: "user", content: "q2", status: "complete" });
+    await store.appendMessage(c.id, { id: "m4", role: "assistant", content: "plain", status: "complete" });
+    const bodies: Array<{ messages: Array<Record<string, unknown>> }> = [];
+    const client = captureClient(() => completedChatResponse("ok", "llama3"), bodies);
+    await sendInConversation(client, store, c.id, "follow-up", newCallbacks().callbacks);
+    expect(bodies[0].messages).toEqual([
+      { role: "user", content: "q1" },
+      {
+        role: "assistant",
+        content: "web answer\n\nSources:\n[3] A — https://a.test\n[2] B — https://b.test",
+      },
+      { role: "user", content: "q2" },
+      { role: "assistant", content: "plain" },
+      { role: "user", content: "follow-up" },
+    ]);
+  });
+
+  it("historyContent leaves empty or absent sources alone", () => {
+    const base = { id: "x", role: "assistant" as const, content: "c", status: "complete" as const };
+    expect(historyContent(base)).toBe("c");
+    expect(historyContent({ ...base, sources: [] })).toBe("c");
+  });
+
+  it("persists a web reply's steps and sources and nothing else from the web", async () => {
+    const store = createConversationStore(createMemoryStorage());
+    const c = await store.create();
+    await store.setWebSearch(c.id, true);
+    const bodies: Array<{ messages: Array<Record<string, unknown>> }> = [];
+    const client = captureClient(() => {
+      const s = controlledSseResponse("gen-web");
+      s.push("event: step\ndata: {\"step_id\":\"s1\",\"kind\":\"search\",\"status\":\"done\",\"query\":\"q\"}\n\n");
+      s.push("event: step\ndata: {\"step_id\":\"s2\",\"kind\":\"read\",\"status\":\"done\",\"url\":\"https://t.test\"}\n\n");
+      s.push("event: content\ndata: {\"text\":\"answer\"}\n\n");
+      s.push("event: sources\ndata: {\"items\":[{\"title\":\"T\",\"url\":\"https://t.test\",\"n\":1}]}\n\n");
+      s.push(doneEvent("llama3"));
+      s.close();
+      return s.response;
+    }, bodies);
+    await sendInConversation(client, store, c.id, "hi", newCallbacks().callbacks);
+    const reply = (await store.get(c.id))!.messages[1];
+    expect(reply.steps).toEqual([
+      { step_id: "s1", kind: "search", status: "done", query: "q" },
+      { step_id: "s2", kind: "read", status: "done", url: "https://t.test" },
+    ]);
+    expect(reply.sources).toEqual([{ title: "T", url: "https://t.test", n: 1 }]);
+    const allowed = new Set([
+      "id", "role", "content", "thinking", "model", "status",
+      "generation_id", "last_seq", "steps", "sources",
+    ]);
+    for (const key of Object.keys(reply)) expect(allowed.has(key)).toBe(true);
   });
 });
