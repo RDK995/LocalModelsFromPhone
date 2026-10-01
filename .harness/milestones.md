@@ -341,6 +341,7 @@ M10e-AC2:
 
 M10e-AC3:
 - OWED - owner phone screenshot. Bundle host com.harness.bundle-host restarted 2026-09-30 22:48:53 (43 s after commit 3240b95), running from mobile/ on m10e-answer-fits-bubble, HTTP 200 on :8081 (T2; .harness/evidence/M10e-T2-bundle-host.log, M10e-T2-verifier.log). Owner steps: (1) swipe Expo Go away so it fully quits; (2) reopen Expo Go and open the project (downloads the new bundle; if the old look persists, shake and tap Reload); (3) with Web search on, ask for today's top news as a bulleted list; (4) pass = the grey answer bubble is wide (about 85% of the screen) while streaming and when finished, every line of text is inside the bubble, "Sources (n)" is below the text inside the bubble and the model name below the bubble, nothing overlaps; (5) optionally reopen the chat and check again; save as .harness/evidence/M10e-AC3-owner-phone.png.
+- Owner phone screenshot 2026-10-01 06:54, .harness/evidence/M10e-AC3-owner-phone.png: finished web reply (bulleted news list, Web search on) after loading the new code; grey bubble wide, every line inside it, "Sources (8)" below the text inside the bubble. The model name line is not in frame (screenshot ends at the bubble's bottom edge above the input bar).
 
 ### Validation
 
@@ -359,6 +360,7 @@ Pending.
 - The comment above gridWidth in mobile/src/ui/tableLayout.ts and the comment near markdownText.test.ts:126 still say the assistant bubble shrink-wraps; now stale (bubble has a definite 85% width). The explicit gridWidth (282 <= inner 282.85) is now redundant but harmless. Outside T1's allowed files.
 - answerLayout.test.ts measures text with a fixed 0.5 x fontSize character width, not iOS text layout; it reproduces the mechanism, not exact device pixels. The owner screenshot (AC3) is the device proof.
 - Every assistant answer, even a one-word reply, is now a full 85%-wide bubble (intended by FR32; user bubbles unchanged).
+- Owner request 2026-10-01 (from the AC3 screenshot): add a little space between the end of a sentence and the inline source logo that follows it - the logo currently touches the last word. Not in FR32/AC26; needs a requirement before it is built.
 
 ## M11 — Web replies are saved, resume after a drop, and keep page text out of later prompts
 
