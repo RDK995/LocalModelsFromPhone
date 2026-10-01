@@ -10515,7 +10515,7 @@
         {
           "id": "M16-AC1",
           "text": "`qwen3.5:35b-a3b` is downloaded on the Mac with `ollama pull`, appears in the server's installed-model list (GET /v1/models) and loads resident through the server's swap-load.",
-          "status": "EVIDENCED",
+          "status": "PENDING",
           "evidence": [
             ".harness/evidence/M16-T1-live.log",
             ".harness/evidence/M16-T1-verifier.log",
@@ -10525,7 +10525,7 @@
         {
           "id": "M16-AC2",
           "text": "A live probe against the resident `qwen3.5:35b-a3b` records whether `format`-constrained replies are schema-valid with thinking on and with thinking off (at least 5 calls each, using the run's step schemas), and deep research uses the setting the probe supports; the result and the chosen setting are recorded in the evidence.",
-          "status": "EVIDENCED",
+          "status": "PENDING",
           "evidence": [
             ".harness/evidence/M16-T4-probe.json",
             ".harness/evidence/M16-T4-probe.log",
