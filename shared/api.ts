@@ -56,6 +56,7 @@ export interface ChatRequest {
     content: string;
   }>;
   web?: boolean;
+  deep_research?: boolean;
 }
 
 export interface OperationResponse {
@@ -87,7 +88,7 @@ export interface DoneEvent {
 
 export interface StepEventData {
   step_id: string;
-  kind: "search" | "read" | "continue" | "answer_now";
+  kind: "search" | "read" | "continue" | "answer_now" | "plan" | "write";
   status: "started" | "done" | "failed" | "unavailable";
   query?: string;
   url?: string;

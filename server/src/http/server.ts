@@ -214,7 +214,7 @@ function parseChatRequest(body: unknown): ChatRequest | string {
   if (typeof body !== "object" || body === null || Array.isArray(body)) {
     return "Request body must be a JSON object";
   }
-  const { model, messages, web } = body as Record<string, unknown>;
+  const { model, messages, web, deep_research } = body as Record<string, unknown>;
   if (typeof model !== "string" || model.length === 0) {
     return "model must be a non-empty string";
   }
@@ -223,6 +223,9 @@ function parseChatRequest(body: unknown): ChatRequest | string {
   }
   if (web !== undefined && typeof web !== "boolean") {
     return "web must be a boolean";
+  }
+  if (deep_research !== undefined && typeof deep_research !== "boolean") {
+    return "deep_research must be a boolean";
   }
   const parsed: ChatRequest["messages"] = [];
   for (let i = 0; i < messages.length; i++) {
@@ -239,7 +242,12 @@ function parseChatRequest(body: unknown): ChatRequest | string {
     }
     parsed.push({ role, content });
   }
-  return web === undefined ? { model, messages: parsed } : { model, messages: parsed, web };
+  return {
+    model,
+    messages: parsed,
+    ...(web === undefined ? {} : { web }),
+    ...(deep_research === undefined ? {} : { deep_research }),
+  };
 }
 
 /**

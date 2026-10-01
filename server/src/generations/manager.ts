@@ -17,6 +17,7 @@ import type {
 } from "../ollama/client";
 import { createWebTools, type WebEvent, type WebToolCall } from "../web/tools";
 import { createPageNumberer } from "../web/pageNumbers";
+import { runResearch, type ResearchWebTools } from "./research";
 import type {
   ChatRequest,
   ContentEvent,
@@ -92,9 +93,12 @@ export class GenerationManager {
   private generations: Map<string, GenerationRecord> = new Map();
   private ollamaClient: OllamaChatClient;
 
-  private webTools: GenerationWebTools;
+  private webTools: GenerationWebTools & Partial<ResearchWebTools>;
 
-  constructor(ollamaClient: OllamaChatClient, webTools: GenerationWebTools = createWebTools()) {
+  constructor(
+    ollamaClient: OllamaChatClient,
+    webTools: GenerationWebTools & Partial<ResearchWebTools> = createWebTools()
+  ) {
     this.ollamaClient = ollamaClient;
     this.webTools = webTools;
   }
@@ -126,11 +130,63 @@ export class GenerationManager {
     };
 
     const web = request.web === true;
+    if (web && request.deep_research === true) {
+      void this.runDeepResearch(genId, record, request);
+      return;
+    }
     if (web) {
       chatRequest.messages.unshift({ role: "system", content: this.webTools.systemNote(new Date()) });
     }
 
     void this.run(genId, record, chatRequest, web);
+  }
+
+  /**
+   * Run one deep research reply (FR35): the server-driven research module
+   * produces the events, which go to the log unchanged. Never rejects.
+   */
+  private async runDeepResearch(genId: string, record: GenerationRecord, request: ChatRequest): Promise<void> {
+    const signal = record.abortController.signal;
+    const question = [...request.messages].reverse().find((m) => m.role === "user")?.content ?? "";
+    let terminal: { type: "done" | "error"; data: string } | undefined;
+    try {
+      const { search, read } = this.webTools;
+      if (!search || !read) throw new Error("Deep research is unavailable: web tools lack search/read");
+      const events = runResearch({
+        model: request.model,
+        question,
+        client: this.ollamaClient,
+        webTools: { search: search.bind(this.webTools), read: read.bind(this.webTools) },
+        signal,
+      });
+      for await (const event of events) {
+        if (event.type === "done" || event.type === "error") {
+          terminal = { type: event.type, data: event.data };
+          break;
+        }
+        this.append(record, event.type, event.data);
+      }
+      if (!terminal) throw new Error("Research ended without a result");
+    } catch (error) {
+      if (signal.aborted) {
+        const cancelled: DoneEvent = { status: "cancelled", model: request.model, eval_count: 0, tokens_per_second: 0 };
+        terminal = { type: "done", data: JSON.stringify(cancelled) };
+      } else {
+        const failure: ErrorEvent = {
+          code: "generation_error",
+          message: error instanceof Error ? error.message : String(error),
+        };
+        terminal = { type: "error", data: JSON.stringify(failure) };
+      }
+    }
+
+    record.running = false;
+    if (this.activeGenId === genId) this.activeGenId = null;
+    this.append(record, terminal!.type, terminal!.data);
+    record.expiry = setTimeout(() => {
+      this.generations.delete(genId);
+    }, LOG_RETENTION_MS);
+    record.expiry.unref?.();
   }
 
   /**
