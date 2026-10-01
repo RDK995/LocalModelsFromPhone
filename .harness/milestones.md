@@ -335,7 +335,7 @@ Cycle 1: PASS — tier Mid, model sonnet, reason_code ORDINARY_IMPLEMENTATION; d
 
 ## M13 — Search failures and time limits never hang a web reply, and no hosted search is used
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -363,10 +363,17 @@ f3e67dfa9514b9446bf29567078819e11fe462fb on m13-search-failures-never-hang
 
 ### Evidence
 
+- M13-T1 — Mid (ORDINARY_IMPLEMENTATION): attempt 3 PASS. Commit 90da623.
+- M13-T2 — Cheap (BOUNDED_LOW_RISK): attempt 1 FAIL; attempt 2 PASS. Commit b0f13c2.
+- M13-T3 — Mid (ORDINARY_IMPLEMENTATION): attempt 3 PASS. Commit 70bbbb8.
+- M13-T4 — Mid (ORDINARY_IMPLEMENTATION): attempt 3 PASS. Commit 5e2e475.
+- M13-AC1: Server HTTP: server/src/http/webFailure.test.ts case (a) (T1 90da623): fake search service (real Bun.serve) answers /v1/search 503 search_unavailable -> stream and /events have search step status unavailable detail search_unavailable; fake Ollama's 2nd request carries the tool message saying search is unavailable; reply ends done (not error/cancelled) with the answer; next POST /v1/chat 200. server bun test 178 pass, typecheck 0 (verifier). .harness/evidence/M13-T1-verifier.log | App: mobile/src/chat/webFailureSession.test.ts (T2 b0f13c2) drives sendInConversation + real APIClient over fake fetch + real store with SSE step(search, unavailable) -> content -> done: stored message keeps the unavailable step and full answer, status complete, buildChatItems label 'Search unavailable'; plus mobile/src/ui/webFailureDisplay.test.ts (presentation layer). RED reproduced by verifier (string change fails the test). mobile bun test 446 pass. .harness/evidence/M13-T2-verifier.log, M13-T2-red.log | Live: server/scripts/web-failure-proof.sh check 1 (T3 70bbbb8): own search service with SEARCH_HELPER_FORCE_DDGS=fail SEARCH_HELPER_FORCE_BROWSER=fail, own server, real Ollama nemotron3:33b -> search step unavailable/search_unavailable, then non-empty answer, done complete (54.6 s verifier run), no helper left. Verifier run exit 0. .harness/evidence/M13-T3-verifier.log
+- M13-AC2: Server HTTP: server/src/http/webFailure.test.ts cases (b) /v1/search and (c) /v1/read held past a 400 ms client limit, (d) /v1/search 504 timeout -> step failed detail timeout (search and read), model's next request carries 'search failed' / 'could not be read' tool message, reply ends done with the answer in < 5 s, next chat 200. RED: removing the client timeout from AbortSignal.any in server/src/web/tools.ts fails (b),(c) at 5 s. .harness/evidence/M13-T1-red.log, M13-T1-verifier.log | App: mobile/src/chat/webFailureSession.test.ts streamed failed search (timeout) -> 'Searching: climate change (failed)' and failed read (timeout) -> '(failed)' read label, each beside the completed answer. .harness/evidence/M13-T2-verifier.log | Live: server/scripts/web-failure-proof.sh check 2: SEARCH_TIMEOUT_MS=8000 + SEARCH_HELPER_FORCE_BROWSER=hang -> search service 504 -> step failed detail timeout, then answer, done complete (21.2 s), no helper left. Page-read time limit is proven by the HTTP test only (no live hook to hang a page read). .harness/evidence/M13-T3-verifier.log
+- M13-AC3: search/scripts/no-hosted-api-check.sh (T4 5e2e475). Part A: self-test flags a planted api.tavily.com; scans tracked files (excl .harness, node_modules, the script), the com.harness.* LaunchAgent plists and the env of the running server/search service/ollama for tavily, exa, parallel.ai, serpapi, brave, bing, customsearch, jina, firecrawl, ollama.com/api/web_search|web_fetch, OLLAMA_API_KEY, *_API_KEY, SEARCH_API -> no hits. Part B: own search service 7795 + server 7796, live web reply with a search and a read step, lsof sampled ~100 ms on server, search tree and ollama: server loopback only, ollama no connection to ollama.com, none of 66 resolved hosted-API addresses seen, search tree did reach the public web (observed set printed). Verifier run exit 0. .harness/evidence/M13-T4-verifier.log, M13-T4-check.log
 
 ### Validation
 
-Planned (confirmed during implementation): `cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd server && bun test) && (cd mobile && bun test) && bash server/scripts/web-failure-proof.sh && bash search/scripts/no-hosted-api-check.sh`
+`cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd server && bun test && bun run typecheck) && (cd mobile && bun test) && bash server/scripts/web-failure-proof.sh && bash search/scripts/no-hosted-api-check.sh` — reviewer runs once; both scripts are live (real Ollama, own ports, ~2-5 min total).
 
 ### Review
 
@@ -379,6 +386,9 @@ Pending.
 ### Follow-ups
 
 - Size check at pickup: 3 criteria, real entry points (POST /v1/chat, live reply), one signal IMPLEMENTATION_PLUS_LIVE_PROOF; seam check: failure handling already exists (M7c search 503/504, C12 unavailable/failed steps, C1 'Search unavailable' label), so M13 is tests plus live proof - run as planned, not split.
+- No production change was needed: failure and time-limit handling already existed (M7c, C12, C1); M13 added tests and live proofs.
+- Live time-limit proof covers search only; there is no existing hook to hang a page read live, so the page-read time limit is proven by server/src/http/webFailure.test.ts case (c).
+- no-hosted-api-check.sh Part B matches by resolved IP; a page served from a CDN address shared with a hosted-API hostname could false-FAIL. It also needs the model to choose read_page (retried up to 3 times).
 
 ## M5a — Always-on server and bundle host
 
