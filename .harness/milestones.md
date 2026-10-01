@@ -321,7 +321,7 @@ Cycle 2: PASS, tier Mid/sonnet (review floor; correction contained no routed tas
 
 ## M11 — Web replies are saved, resume after a drop, and keep page text out of later prompts
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -345,8 +345,16 @@ Pending.
 
 ### Baseline
 
+9d8270f6cd0e5f21f6d121fa10065f3aa51bbffb on m11-web-replies-saved-resume
 
 ### Evidence
+
+Task plan (implementation phase 1, 2026-10-01; no task dispatched yet - handed off at turn budget):
+- M11-T1 Mid (ORDINARY_IMPLEMENTATION): follow-up history carries prior answers' source lists; persisted web reply holds steps+sources only (AC2). Packet .harness/tasks/M11-T1.md
+- M11-T2 Mid: server HTTP tests - searching reply refuses chat (409) and needs busy confirmation; Last-Event-ID replay exact (AC3, AC1). Packet .harness/tasks/M11-T2.md
+- M11-T3 Mid: phone client drop/resume mid web reply, each event once (AC1). Packet .harness/tasks/M11-T3.md
+- M11-T4 Mid: live proof mobile/scripts/web-resume-proof.sh (AC1-AC3), after T1-T3. Packet .harness/tasks/M11-T4.md
+Reconnaissance at baseline: gap found in mobile/src/chat/conversationSession.ts lines 113-116 (history drops stored sources); server event log, in-progress slot and busy confirmation already span the tool stage (to be proven by T2). T1 and T2 can run in parallel; T3 after T1 (both mobile); T4 last.
 
 
 ### Validation

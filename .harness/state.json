@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M10e",
+  "current_milestone": "M11",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -9332,12 +9332,12 @@
         "FR23"
       ],
       "traces": "AC17 (resume), AC18 (persistence)",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
-        "commit": "",
-        "branch": ""
+        "commit": "9d8270f6cd0e5f21f6d121fa10065f3aa51bbffb",
+        "branch": "m11-web-replies-saved-resume"
       },
       "as_built": {
         "artifact": null,
@@ -9363,7 +9363,64 @@
           "evidence": []
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M11-T1",
+          "scope": "C2/C3: follow-up history carries prior answers source lists; persisted web reply has steps+sources only (AC2)",
+          "packet": ".harness/tasks/M11-T1.md",
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "phone history builder change plus tests; format fixed by packet"
+          },
+          "attempts": [],
+          "commit": null,
+          "status": "PENDING"
+        },
+        {
+          "id": "M11-T2",
+          "scope": "C6/C4: server HTTP tests: searching reply refuses chat and needs busy confirmation; Last-Event-ID replay of web reply exact (AC3, AC1 server half)",
+          "packet": ".harness/tasks/M11-T2.md",
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "server tests with fakes; fix only if exposed"
+          },
+          "attempts": [],
+          "commit": null,
+          "status": "PENDING"
+        },
+        {
+          "id": "M11-T3",
+          "scope": "C2: client drop/resume mid web reply delivers steps/content/sources once (AC1 client half)",
+          "packet": ".harness/tasks/M11-T3.md",
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "client resume test on existing fakes; fix only if exposed"
+          },
+          "attempts": [],
+          "commit": null,
+          "status": "PENDING"
+        },
+        {
+          "id": "M11-T4",
+          "scope": "C1-C3 live: web-resume-proof.sh against real server, Ollama, search (AC1, AC2, AC3); after T1-T3",
+          "packet": ".harness/tasks/M11-T4.md",
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "live proof script modelled on existing proofs"
+          },
+          "attempts": [],
+          "commit": null,
+          "status": "PENDING"
+        }
+      ],
       "reviews": [],
       "findings": [],
       "validation": [],
