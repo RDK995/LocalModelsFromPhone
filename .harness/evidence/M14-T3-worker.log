@@ -1,0 +1,91 @@
+M14-T3 Live Regression Test - Web Reply Still Answers After M14 Server Change
+================================================================================
+
+Test Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2 && bash server/scripts/web-chat-proof.sh && bash server/scripts/web-failure-proof.sh
+
+Resident Model: nemotron3:33b (tools-capable)
+
+================================================================================
+TEST 1: web-chat-proof.sh (M9 Live Proofs)
+================================================================================
+Exit Code: 0
+
+Objective: Verify an ordinary web reply still completes with steps, sources and answer
+after the M14 server change (commit b7551dd, FR33 quiet-round handling).
+
+Results:
+- Preflight: bun, Ollama, search service all available
+- Resident model: nemotron3:33b with tools capability verified
+
+Test AC1: GET /v1/state tools capability matching /api/show
+  Result: PASS
+  Details: All 5 installed models (nemotron3:33b, qwen3.8:27b, devstral:24b,
+           qwen3-coder:30b, qwen3.6:27b) correctly report tools capability
+
+Test AC3: web absent/false sends no tools, no date note, and the search service gets no request
+  Result: PASS
+
+Test AC2: web:true offers both tools with a dated system note; step, sources, content and done all live
+  Result: PASS (attempt 1 of 3 max)
+  Details:
+    - Steps emitted: 4
+    - Sources events: 1
+    - Answer characters: 70
+    - Stream properly ended with "done" event
+
+Overall Result: All M9 live proofs PASSED
+
+================================================================================
+TEST 2: web-failure-proof.sh (M13 Web Failure Proofs)
+================================================================================
+Exit Code: 0
+
+Objective: Verify existing M13 web-failure proof still passes (search failures don't hang reply).
+
+Results:
+- Resident model: nemotron3:33b with tools capability verified
+
+Check 1: Both search backends forced to fail (search_unavailable)
+  Result: PASS (attempt 1 of 4 max)
+  Details:
+    - Search step status correctly set to "unavailable"
+    - Reply streamed non-empty answer content
+    - Reply ended with done status=complete
+    - Reply completed in 18.0 s (under 240 s bound)
+    - No dangling helper processes
+
+Check 2: Search exceeds its time limit (8000 ms timeout)
+  Result: PASS (attempt 1 of 4 max)
+  Details:
+    - Search step status correctly set to "failed" with detail="timeout"
+    - Reply streamed non-empty answer content
+    - Reply ended with done status=complete
+    - Reply completed in 17.2 s (under 240 s bound)
+    - No dangling helper processes
+
+Overall Result: All M13 web failure checks PASSED
+
+================================================================================
+SUMMARY
+================================================================================
+
+Acceptance Criteria (M14-AC5):
+✓ bash server/scripts/web-chat-proof.sh exits 0
+  - Output shows web reply with:
+    * At least one step (4 emitted)
+    * Sources event (1 emitted)
+    * Non-empty answer text (70 characters)
+    * Proper "done complete" completion
+  - Resident model: nemotron3:33b
+
+✓ bash server/scripts/web-failure-proof.sh exits 0
+  - Both failure checks passed
+  - Web replies complete even with forced search failures
+  - Timeout handling works correctly
+
+RESULT: All acceptance criteria SATISFIED
+
+No code changes made. Scripts used resident model already in Ollama.
+All tracked files modified by scripts have been restored per task constraints.
+

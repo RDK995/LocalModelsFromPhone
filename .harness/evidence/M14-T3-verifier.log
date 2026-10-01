@@ -1,0 +1,46 @@
+=== M14-T3 Verification Run ===
+Date: 2026-10-01
+Commit: 417714d
+Command: bash server/scripts/web-chat-proof.sh and bash server/scripts/web-failure-proof.sh
+
+=== Test 1: web-chat-proof.sh ===
+Exit Status: 0
+
+Key findings from output:
+- Resident model: nemotron3:33b
+- Steps: 4
+- Sources events: 1
+- Answer chars: 69
+- Result: PASS - M9-AC2: web:true offered both tools with a dated system note; step, sources, content and done all live
+- Result: PASS - M9-AC1: GET /v1/state reports each model's tools capability matching /api/show
+- Result: PASS - M9-AC3: web absent/false sends no tools, no date note, and the search service gets no request
+- Final: All M9 live proofs passed
+
+=== Test 2: web-failure-proof.sh ===
+Exit Status: 0
+
+Key findings from output:
+Check 1 (search backends forced to fail):
+- PASS: stream has a search step with status=unavailable
+- PASS: the reply then streamed non-empty answer content
+- PASS: ended done status=complete (not error, not cancelled)
+- PASS: reply completed in 17.6 s, under the 240 s bound
+- PASS: no new search helper process left running afterwards
+
+Check 2 (search exceeds its time limit):
+- PASS: stream has a search step with status=failed detail=timeout
+- PASS: the reply then streamed non-empty answer content
+- PASS: ended done status=complete (not error, not cancelled)
+- PASS: reply completed in 27.6 s, under the 240 s bound
+- PASS: no new search helper process left running afterwards
+
+- Final: All M13 web failure checks passed
+
+=== Tracked files restored ===
+- .harness/evidence/M13-T3-proof.log
+- .harness/evidence/M9-T5-ollama-proxy.jsonl
+- .harness/evidence/M9-T5-sse.log
+
+=== Verification Complete ===
+Both validation commands exited 0.
+Acceptance criteria verified.
