@@ -402,7 +402,8 @@ b48673499df9aa0d846bad7bbefe1548d57cb272 on m15-deep-research-skeleton
 
 ### Review
 
-Pending.
+- Cycle 1: CHANGES REQUIRED, scope SUBSTANTIVE (.harness/reviews/M15-cycle1.md; validation re-run .harness/evidence/M15-review.log, 209 pass, tsc clean). Diff reviewed: b48673499df9aa0d846bad7bbefe1548d57cb272..7034424. Per criterion: AC1 PASS, AC2 PASS, AC3 PASS, AC4 FAIL. Findings: F1 IMPORTANT, F2 IMPORTANT, F3 OPTIONAL, F4 OPTIONAL.
+  - Pre-correction: 703442411430b4f3e3ea7b84591e2b99da031ba5
 
 ### Review Cycles
 
