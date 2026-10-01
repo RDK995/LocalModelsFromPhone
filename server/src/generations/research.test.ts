@@ -195,6 +195,24 @@ describe("runResearch", () => {
     expect(JSON.parse(last(events).data).status).toBe("complete");
   });
 
+  it("sends think:false on every step request by default", async () => {
+    const fc = fakeClient();
+    await collect(fc.client, fakeWeb().tools, BASE);
+    expect(fc.requests.length).toBeGreaterThan(5);
+    for (const { req } of fc.requests) {
+      expect(req.think).toBe(false);
+      expect(typeof req.format).toBe("object");
+      expect(req.options?.num_ctx).toBe(4096);
+    }
+  });
+
+  it("sends think:true on every step request when the setting is on", async () => {
+    const fc = fakeClient();
+    await collect(fc.client, fakeWeb().tools, { ...BASE, think: true });
+    expect(fc.requests.length).toBeGreaterThan(5);
+    for (const { req } of fc.requests) expect(req.think).toBe(true);
+  });
+
   it("every request is a narrow, schema-constrained request with fixed num_ctx, resident model and no tools", async () => {
     const fc = fakeClient();
     const web = fakeWeb();

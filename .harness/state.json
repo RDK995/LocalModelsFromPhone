@@ -10503,10 +10503,10 @@
       "architecture": "C6, C7, C11, C12, C13",
       "requirements": [],
       "traces": "AC29 (first live question), Constraints (format with thinking unverified)",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
-      "baseline": null,
+      "baseline": "d4037fb0e9652dc2113bf33816bf63205c893d03 on m16-real-model-live-proof",
       "as_built": {
         "artifact": null,
         "result": "PENDING"
@@ -10531,7 +10531,32 @@
           "evidence": []
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M16-T1",
+          "packet": ".harness/tasks/M16-T1.md",
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "mechanical live pull and server checks; settled by command output"
+          },
+          "attempts": [],
+          "status": "IN_PROGRESS"
+        },
+        {
+          "id": "M16-T2",
+          "packet": ".harness/tasks/M16-T2.md",
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "think setting threaded into step requests plus probe script reusing step schemas"
+          },
+          "attempts": [],
+          "status": "IN_PROGRESS"
+        }
+      ],
       "reviews": [],
       "findings": [],
       "validation": [],

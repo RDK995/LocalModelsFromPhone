@@ -1,0 +1,76 @@
+VERIFIER RUN: M16-T2
+
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck
+
+Date: 2026-10-01
+Current commit: d4037fb (M15 DONE)
+
+Test Output:
+============
+bun test v1.4.0 (1381054db)
+
+ 219 pass
+ 0 fail
+ 1275 expect() calls
+Ran 219 tests across 12 files. [3.56s]
+$ tsc --noEmit
+
+Exit Status: 0
+
+========================================
+VERIFIER ADDITIONAL CHECKS
+========================================
+
+PROBE SCRIPT TYPECHECK:
+bunx tsc --noEmit with ES2022 target configured
+Result: No errors specific to scripts/probe-format-think.ts (pre-existing errors in manager.ts unrelated)
+
+VALIDATORS REFACTOR VERIFICATION:
+Comparing git diff for research.ts:
+- SCHEMAS moved from `const` to `export const` (line ~93)
+- VALIDATORS newly exported with identical logic to previous inline functions:
+  * brief: checks for non-empty brief, trims
+  * plan: checks for non-empty array of sub-questions
+  * queries: returns trimmed query array
+  * select: validates pages array
+  * note: validates notes array
+  * gap: validates enough boolean and optional next_query
+  * write: validates non-empty report
+- All modelStep calls replaced with VALIDATORS references (lines 333, 339, 372, 397, 423, 463, 481)
+- Behavior unchanged: same validation logic, same return types
+
+THINK PARAMETER IN OLLAMA CLIENT:
+File: server/src/ollama/client.ts
+Lines 265-266: Determine think value
+  const autoDetectedThink = await this.supportsThinking(request.model);
+  const think = request.think !== undefined ? request.think : autoDetectedThink;
+
+Line 281: Put into request body
+  ...(think ? { think: true } : {}),
+
+Note: think: false is NOT included in request body (only think: true is added)
+
+PROBE SCRIPT VERIFICATION:
+File: server/scripts/probe-format-think.ts
+- Line 14: Imports SCHEMAS and VALIDATORS from research.ts (same objects)
+- Line 94: Uses DEFAULT_RESEARCH_SETTINGS.numCtx (32768)
+- Line 78-116: callOnce function sends request with format: SCHEMAS[step]
+- Line 91: Includes explicit think value (both true and false sent as booleans)
+- Line 105: Parses JSON content
+- Line 112: Validates with VALIDATORS[step]
+- Line 128: Math.max(calls, 7) = at least 7 calls per setting (default calls=5, 7 steps)
+- Line 129: Cycles through stepNames[i % stepNames.length]
+- Line 141: Puts results in summary with per-setting and per-step breakdown
+- Line 145: process.exit(0) regardless of results
+
+TESTS ADDED TO research.test.ts:
+Line 198: "sends think:false on every step request by default"
+  - Collects with BASE settings (no think override)
+  - Verifies req.think === false for all requests
+  - Verifies format and options.num_ctx present
+
+Line 209: "sends think:true on every step request when the setting is on"
+  - Collects with { ...BASE, think: true }
+  - Verifies req.think === true for all requests
+
+NO TESTS WEAKENED - only new tests added
