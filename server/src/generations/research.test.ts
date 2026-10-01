@@ -405,4 +405,207 @@ describe("runResearch", () => {
     expect(events.some((e) => e.type === "content")).toBe(false);
     expect(fc.of("write").length).toBe(0);
   });
+
+  // Part A: AC4 distinctness tests
+  it("reads a page only once when it appears in multiple search results across sub-questions", async () => {
+    const fc = fakeClient({
+      queries: (_r, n) => JSON.stringify({ queries: n === 0 ? ["alpha"] : ["beta"] }),
+      select: () => JSON.stringify({ pages: [1, 2] }),
+    });
+    const web = fakeWeb();
+    // Override search to make different sub-questions return some overlapping results
+    const originalSearch = web.tools.search.bind(web.tools);
+    web.tools.search = async (query, signal) => {
+      const result = await originalSearch(query, signal);
+      if (query === "alpha") {
+        // First sub-question: shared page + alpha-1
+        result.results = [
+          { title: "Shared Page", url: "https://shared.example/page", snippet: "shared" },
+          { title: "Alpha 1", url: "https://alpha.example/1", snippet: "alpha 1" },
+        ];
+      } else if (query === "beta") {
+        // Second sub-question: shared page (duplicate) + beta-1
+        result.results = [
+          { title: "Shared Page", url: "https://shared.example/page", snippet: "shared" },
+          { title: "Beta 1", url: "https://beta.example/1", snippet: "beta 1" },
+        ];
+      }
+      return result;
+    };
+    const events = await collect(fc.client, web.tools, {
+      subQuestionCount: 2,
+      minSearches: 1,
+      maxSearches: 1,
+      pagesPerSubQuestion: 2,
+    });
+
+    // The shared URL should appear only once in the reads
+    const sharedReads = web.reads.filter((url) => url === "https://shared.example/page");
+    expect(sharedReads.length).toBe(1);
+
+    // Should have exactly 3 note steps (one per distinct page)
+    expect(fc.of("note").length).toBe(3);
+
+    // Sources should have exactly 3 items in first-read order: shared (1), alpha-1 (2), beta-1 (3)
+    const sources = JSON.parse(events.find((e) => e.type === "sources")!.data).items;
+    expect(sources.length).toBe(3);
+    expect(sources).toEqual([
+      { title: "Title https://shared.example/page", url: "https://shared.example/page", n: 1 },
+      { title: "Title https://alpha.example/1", url: "https://alpha.example/1", n: 2 },
+      { title: "Title https://beta.example/1", url: "https://beta.example/1", n: 3 },
+    ]);
+  });
+
+  it("does not create duplicate notes when a read redirects to an already-read page", async () => {
+    const fc = fakeClient({
+      queries: (_r, n) => JSON.stringify({ queries: n === 0 ? ["alpha"] : ["beta"] }),
+      select: () => JSON.stringify({ pages: [1, 2] }),
+    });
+    const web = fakeWeb();
+
+    // Override read to simulate redirects: reading a redirect URL returns the final URL
+    let readIdCounter = 0;
+    const defaultPageText = (url: string) => `Fact sentence for ${url}. Some more words. RAW-MARKER ${url} end.`;
+    const redirectMap: Record<string, string> = {
+      "https://redirect-c.example/1": "https://alpha.example/1",  // C redirects to A
+      "https://redirect-d.example/1": "https://beta.example/1",   // D redirects to B
+    };
+
+    web.tools.read = async (url, signal, numberPage) => {
+      const finalUrl = redirectMap[url] || url;
+      readIdCounter++;
+      const step_id = `r${readIdCounter}`;
+      const n = numberPage(finalUrl);  // Call numberPage with final URL (simulating the read following redirects)
+      const title = `Title ${finalUrl}`;
+      const pageText = defaultPageText(finalUrl);
+      const events: WebEvent[] = [
+        { type: "step", data: { step_id, kind: "read", status: "started", url } },
+        { type: "step", data: { step_id, kind: "read", status: "done", url } },
+        { type: "source", data: { title, url: finalUrl, n } },
+      ];
+      web.reads.push(url);  // Track the requested URL, not the final URL
+      return { page: { n, title, url: finalUrl, text: pageText, truncated: false }, events };
+    };
+
+    // Override search to return redirect URLs in the second sub-question
+    const originalSearch = web.tools.search.bind(web.tools);
+    web.tools.search = async (query, signal) => {
+      const result = await originalSearch(query, signal);
+      if (query === "alpha") {
+        result.results = [
+          { title: "Alpha 1", url: "https://alpha.example/1", snippet: "alpha 1" },
+          { title: "Beta 1", url: "https://beta.example/1", snippet: "beta 1" },
+        ];
+      } else if (query === "beta") {
+        // Second sub-question returns URLs that redirect to the first sub-question's pages
+        result.results = [
+          { title: "Redirect C", url: "https://redirect-c.example/1", snippet: "redirects to alpha" },
+          { title: "Redirect D", url: "https://redirect-d.example/1", snippet: "redirects to beta" },
+        ];
+      }
+      return result;
+    };
+
+    const events = await collect(fc.client, web.tools, {
+      subQuestionCount: 2,
+      minSearches: 1,
+      maxSearches: 1,
+      pagesPerSubQuestion: 2,
+    });
+
+    // Should have read 4 URLs: alpha, beta, redirect-c, redirect-d
+    expect(web.reads.length).toBe(4);
+
+    // Should have exactly 2 note steps (one per distinct final page: alpha-1 and beta-1)
+    expect(fc.of("note").length).toBe(2);
+
+    // Sources should have exactly 2 items with sequential n=[1, 2]
+    const sources = JSON.parse(events.find((e) => e.type === "sources")!.data).items;
+    expect(sources.length).toBe(2);
+    expect(sources).toEqual([
+      { title: "Title https://alpha.example/1", url: "https://alpha.example/1", n: 1 },
+      { title: "Title https://beta.example/1", url: "https://beta.example/1", n: 2 },
+    ]);
+  });
+
+  // Part B: cleanReport handling grouped citations and scheme-less hosts tests
+  it("removes citations to grouped/ranged brackets and unread members individually", async () => {
+    const fc = fakeClient({
+      write: () =>
+        JSON.stringify({
+          report: "Text [1, 9] here. More [1-3] and [1–9] text. Also [7, 9] removed. Include [1] [2].",
+        }),
+    });
+    const web = fakeWeb();
+    const events = await collect(fc.client, web.tools, { subQuestionCount: 1, minSearches: 2, maxSearches: 2, pagesPerSubQuestion: 2 });
+
+    const report = contentText(events);
+    // With pages 1,2 read:
+    // [1, 9] should become [1] (only 1 is read, 9 is not)
+    // [1-3] should become [1][2] (1 and 2 are read, 3 is not)
+    // [1–9] (en-dash) should similarly become [1][2]
+    // [7, 9] has no read members, should be removed entirely
+    // [1] [2] should remain as is
+    expect(report).toBe("Text [1] here. More [1][2] and [1][2] text. Also removed. Include [1] [2].");
+    expect(report).not.toContain("[9]");
+    expect(report).not.toContain("[7]");
+    expect(report).not.toContain("[3]");
+  });
+
+  it("removes scheme-less URLs starting with www.", async () => {
+    const fc = fakeClient({
+      write: () =>
+        JSON.stringify({
+          report: "Check www.example.com/path and www.test.org/file.html for info. Also [1] is good.",
+        }),
+    });
+    const web = fakeWeb();
+    const events = await collect(fc.client, web.tools, { subQuestionCount: 1, minSearches: 2, maxSearches: 2, pagesPerSubQuestion: 2 });
+
+    const report = contentText(events);
+    expect(report).toBe("Check and for info. Also [1] is good.");
+    expect(report).not.toContain("www.example.com");
+    expect(report).not.toContain("www.test.org");
+  });
+
+  // Part C: quote matching with whitespace-only normalization tests
+  it("drops a quote that differs from page text only in letter case", async () => {
+    const fc = fakeClient({
+      note: (req) => {
+        const m = text(req).match(/Fact sentence for (\S+?)\./);
+        const url = m ? m[1] : "none";
+        return JSON.stringify({
+          notes: [
+            { quote: `FACT SENTENCE FOR ${url}`, claim: `case-mismatch claim about ${url}` },
+            { quote: `Fact sentence for ${url}`, claim: `correct claim about ${url}` },
+          ],
+        });
+      },
+    });
+    const web = fakeWeb();
+    const events = await collect(fc.client, web.tools, { subQuestionCount: 1, minSearches: 2, maxSearches: 2, pagesPerSubQuestion: 2 });
+
+    const writeReq = text(fc.of("write")[0]!.req);
+    expect(writeReq).toContain("correct claim");
+    expect(writeReq).not.toContain("case-mismatch claim");
+  });
+
+  it("keeps a quote that differs from page text only in whitespace", async () => {
+    const fc = fakeClient({
+      note: (req) => {
+        const m = text(req).match(/Fact sentence for (\S+?)\./);
+        const url = m ? m[1] : "none";
+        return JSON.stringify({
+          notes: [
+            { quote: `Fact  sentence  for  ${url}`, claim: `whitespace claim about ${url}` },
+          ],
+        });
+      },
+    });
+    const web = fakeWeb();
+    const events = await collect(fc.client, web.tools, { subQuestionCount: 1, minSearches: 2, maxSearches: 2, pagesPerSubQuestion: 2 });
+
+    const writeReq = text(fc.of("write")[0]!.req);
+    expect(writeReq).toContain("whitespace claim");
+  });
 });

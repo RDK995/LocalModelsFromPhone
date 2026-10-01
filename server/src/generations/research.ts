@@ -132,6 +132,11 @@ export function normaliseText(s: string): string {
   return s.toLowerCase().replace(/\s+/g, " ").trim();
 }
 
+/** trim, collapse whitespace only (quote matching per FR35/FR37). */
+function normaliseWhitespace(s: string): string {
+  return s.replace(/\s+/g, " ").trim();
+}
+
 /** Wrap untrusted web text as data; it cannot close its own marker. */
 function untrusted(label: string, body: string): string {
   const safe = body.replace(/<\/?untrusted_data[^>]*>/gi, "");
@@ -140,13 +145,52 @@ function untrusted(label: string, body: string): string {
 
 /**
  * FR37: drop `[n]` citations of pages not read in this run and any http(s)
- * URL the model typed (a markdown link keeps its text).
+ * URL the model typed (a markdown link keeps its text). Also handle grouped
+ * citations [1, 9] and ranges [1-9]/[1–9], removing scheme-less www. URLs.
  */
 export function cleanReport(report: string, readNumbers: Set<number>): string {
+  // First pass: handle grouped citations [1, 9] and ranges [1-9] / [1–9]
+  report = report.replace(/\[([^\]]+)\]/g, (match, content) => {
+    // Check if it's a range like "1-9" or "1–9" (en-dash)
+    const rangeMatch = content.match(/^\s*(\d+)\s*[-–]\s*(\d+)\s*$/);
+    if (rangeMatch) {
+      const start = parseInt(rangeMatch[1], 10);
+      const end = parseInt(rangeMatch[2], 10);
+      const parts: string[] = [];
+      for (let i = start; i <= end; i++) {
+        if (readNumbers.has(i)) {
+          parts.push(`[${i}]`);
+        }
+      }
+      return parts.join("");
+    }
+
+    // Check if it's grouped like "1, 9" or "1,9"
+    const numbers = content.split(/[\s,;]+/).filter((n: string) => /^\d+$/.test(n));
+    if (numbers.length > 1 || (numbers.length === 1 && content.includes(","))) {
+      const parts: string[] = [];
+      for (const numStr of numbers) {
+        const n = parseInt(numStr, 10);
+        if (readNumbers.has(n)) {
+          parts.push(`[${n}]`);
+        }
+      }
+      return parts.join("");
+    }
+
+    // Single number: keep original behavior
+    if (numbers.length === 1) {
+      return readNumbers.has(parseInt(numbers[0]!, 10)) ? match : "";
+    }
+
+    // Not a citation pattern, leave as-is
+    return match;
+  });
+
   return report
     .replace(/\[([^\]]*)\]\(\s*<?https?:\/\/[^)]*\)/gi, "$1")
     .replace(/<?https?:\/\/[^\s)\]>]+>?/gi, "")
-    .replace(/\[(\d+)\]/g, (m, d: string) => (readNumbers.has(Number(d)) ? m : ""))
+    .replace(/<?www\.[^\s)\]>]+>?/gi, "") // Remove scheme-less www. URLs
     .replace(/\(\s*\)/g, "")
     .replace(/[ \t]{2,}/g, " ")
     .replace(/[ \t]+([.,;:!?])/g, "$1")
@@ -364,8 +408,9 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
           );
           for (const item of found ?? []) {
             if (!isObj(item) || !nonEmpty(item.quote) || !nonEmpty(item.claim)) continue;
-            const quote = normaliseText(item.quote);
-            if (!pageText.includes(quote)) continue; // FR37: unverifiable quote dropped
+            const pageTextNorm = normaliseWhitespace(page.text);
+            const quote = normaliseWhitespace(item.quote);
+            if (!pageTextNorm.includes(quote)) continue; // FR37: unverifiable quote dropped
             notes.push({ n, quote: item.quote.replace(/\s+/g, " ").trim(), claim: item.claim.trim() });
           }
         }
