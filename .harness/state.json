@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M11",
+  "current_milestone": "M12",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -9532,12 +9532,12 @@
       "architecture": "C6, C12, C13, C14",
       "requirements": [],
       "traces": "AC17 (Stop), FR23 (Stop cancels search)",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
-        "commit": "",
-        "branch": ""
+        "commit": "d8db7d58c91f580d09137d0a02ccdb7b4a71f05d",
+        "branch": "m12-stop-ends-web-search"
       },
       "as_built": {
         "artifact": null,
