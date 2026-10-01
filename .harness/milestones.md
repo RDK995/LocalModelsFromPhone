@@ -298,52 +298,7 @@ When both search backends fail the reply still completes and the app shows searc
 
 Owns: FR24. Traces to: AC16 (both fail, time limit), AC18 (no hosted API).
 
-### Architecture
-
-C1, C12, C13, C14
-
-### As-Built
-
-.harness/as-built/M13.md — RECORDED — 4/5 files attributed; components C1, C4, C13; 8 edges; 5 claim mismatches (C12/C14 claimed but only tested indirectly; C4 and C6 exercised but unclaimed; no new edges)
-
-### Acceptance Criteria
-
-- [x] **M13-AC1**: With both search backends forced to fail, the web reply still completes with an answer and the app shows that search was unavailable.
-- [x] **M13-AC2**: A search or page read exceeding its time limit is shown as a failed step, the model is told it failed, and the reply completes without hanging.
-- [x] **M13-AC3**: No hosted search or fetch API or key is configured or called: code and config inspection, plus an outbound-connection check during a live web reply.
-
-### Baseline
-
-f3e67dfa9514b9446bf29567078819e11fe462fb on m13-search-failures-never-hang
-
-### Evidence
-
-- M13-T1 — Mid (ORDINARY_IMPLEMENTATION): attempt 3 PASS. Commit 90da623.
-- M13-T2 — Cheap (BOUNDED_LOW_RISK): attempt 1 FAIL; attempt 2 PASS. Commit b0f13c2.
-- M13-T3 — Mid (ORDINARY_IMPLEMENTATION): attempt 3 PASS. Commit 70bbbb8.
-- M13-T4 — Mid (ORDINARY_IMPLEMENTATION): attempt 3 PASS. Commit 5e2e475.
-- M13-AC1: Server HTTP: server/src/http/webFailure.test.ts case (a) (T1 90da623): fake search service (real Bun.serve) answers /v1/search 503 search_unavailable -> stream and /events have search step status unavailable detail search_unavailable; fake Ollama's 2nd request carries the tool message saying search is unavailable; reply ends done (not error/cancelled) with the answer; next POST /v1/chat 200. server bun test 178 pass, typecheck 0 (verifier). .harness/evidence/M13-T1-verifier.log | App: mobile/src/chat/webFailureSession.test.ts (T2 b0f13c2) drives sendInConversation + real APIClient over fake fetch + real store with SSE step(search, unavailable) -> content -> done: stored message keeps the unavailable step and full answer, status complete, buildChatItems label 'Search unavailable'; plus mobile/src/ui/webFailureDisplay.test.ts (presentation layer). RED reproduced by verifier (string change fails the test). mobile bun test 446 pass. .harness/evidence/M13-T2-verifier.log, M13-T2-red.log | Live: server/scripts/web-failure-proof.sh check 1 (T3 70bbbb8): own search service with SEARCH_HELPER_FORCE_DDGS=fail SEARCH_HELPER_FORCE_BROWSER=fail, own server, real Ollama nemotron3:33b -> search step unavailable/search_unavailable, then non-empty answer, done complete (54.6 s verifier run), no helper left. Verifier run exit 0. .harness/evidence/M13-T3-verifier.log
-- M13-AC2: Server HTTP: server/src/http/webFailure.test.ts cases (b) /v1/search and (c) /v1/read held past a 400 ms client limit, (d) /v1/search 504 timeout -> step failed detail timeout (search and read), model's next request carries 'search failed' / 'could not be read' tool message, reply ends done with the answer in < 5 s, next chat 200. RED: removing the client timeout from AbortSignal.any in server/src/web/tools.ts fails (b),(c) at 5 s. .harness/evidence/M13-T1-red.log, M13-T1-verifier.log | App: mobile/src/chat/webFailureSession.test.ts streamed failed search (timeout) -> 'Searching: climate change (failed)' and failed read (timeout) -> '(failed)' read label, each beside the completed answer. .harness/evidence/M13-T2-verifier.log | Live: server/scripts/web-failure-proof.sh check 2: SEARCH_TIMEOUT_MS=8000 + SEARCH_HELPER_FORCE_BROWSER=hang -> search service 504 -> step failed detail timeout, then answer, done complete (21.2 s), no helper left. Page-read time limit is proven by the HTTP test only (no live hook to hang a page read). .harness/evidence/M13-T3-verifier.log
-- M13-AC3: search/scripts/no-hosted-api-check.sh (T4 5e2e475). Part A: self-test flags a planted api.tavily.com; scans tracked files (excl .harness, node_modules, the script), the com.harness.* LaunchAgent plists and the env of the running server/search service/ollama for tavily, exa, parallel.ai, serpapi, brave, bing, customsearch, jina, firecrawl, ollama.com/api/web_search|web_fetch, OLLAMA_API_KEY, *_API_KEY, SEARCH_API -> no hits. Part B: own search service 7795 + server 7796, live web reply with a search and a read step, lsof sampled ~100 ms on server, search tree and ollama: server loopback only, ollama no connection to ollama.com, none of 66 resolved hosted-API addresses seen, search tree did reach the public web (observed set printed). Verifier run exit 0. .harness/evidence/M13-T4-verifier.log, M13-T4-check.log
-
-### Validation
-
-`cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd server && bun test && bun run typecheck) && (cd mobile && bun test) && bash server/scripts/web-failure-proof.sh && bash search/scripts/no-hosted-api-check.sh` — reviewer runs once; both scripts are live (real Ollama, own ports, ~2-5 min total).
-
-### Review
-
-Cycle 1: PASS — tier Mid, model sonnet, reason_code ORDINARY_IMPLEMENTATION; diff f3e67df..f5f213e (full milestone); per-criterion M13-AC1=PASS, M13-AC2=PASS, M13-AC3=PASS; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL; no report file (PASS); validation log .harness/evidence/M13-review.log.
-
-### Review Cycles
-
-0
-
-### Follow-ups
-
-- Size check at pickup: 3 criteria, real entry points (POST /v1/chat, live reply), one signal IMPLEMENTATION_PLUS_LIVE_PROOF; seam check: failure handling already exists (M7c search 503/504, C12 unavailable/failed steps, C1 'Search unavailable' label), so M13 is tests plus live proof - run as planned, not split.
-- No production change was needed: failure and time-limit handling already existed (M7c, C12, C1); M13 added tests and live proofs.
-- Live time-limit proof covers search only; there is no existing hook to hang a page read live, so the page-read time limit is proven by server/src/http/webFailure.test.ts case (c).
-- no-hosted-api-check.sh Part B matches by resolved IP; a page served from a CDN address shared with a hosted-API hostname could false-FAIL. It also needs the model to choose read_page (retried up to 3 times).
+Detail: `.harness/archive/M13.md`
 
 ## M14 — A web reply always ends with an answer
 
@@ -404,6 +359,294 @@ Cycle 1: PASS — tier Mid, model sonnet, reason_code ORDINARY_IMPLEMENTATION; d
 - AC27's owner observation (retrying the transfer question from the screenshot on the phone) is observation, not a gate; it is not an M14 criterion.
 - The live proof scripts copy logs into tracked evidence (M9-T5-*, M13-T3-proof.log) on every run; workers restored them. Consider making the scripts write to their own milestone's path or an untracked location.
 - The note is emitted as a single content event not counted in contentChunks (affects only the eval_count fallback).
+
+## M15 — A deep research run through the server API ends with a report citing only the pages it read
+
+Status: TODO
+
+### Outcome
+
+Walking skeleton of deep research: a chat sent through POST /v1/chat with web on and deep research requested is run by server code (not a model tool loop) as brief -> plan -> search/read/note per sub-question -> gap check -> one write call, each model step a narrow JSON-schema-constrained Ollama request with an explicit num_ctx, and ends with a report whose [n] citations are only pages read in this run. Planned 2026-10-01 from FR34-FR40/AC28-AC30. Human decision 2026-10-01: build deep research (FR34-FR40) now, ahead of M5a; M5a stays BLOCKED and parked, its record unchanged, and is picked up after M15-M21. Size check: 4 criteria; real entry point POST /v1/chat; one operational-complexity signal SUBSYSTEMS_GT_3 (C4, C6, C7, C12; seam check: C4 only accepts one request field and C7 only passes `format`/`num_ctx` through, and cutting either off leaves no entry point) - not split.
+
+Owns: FR35, FR37. Traces to: AC28 (loop, format/num_ctx, malformed step, citation removal, quote check).
+
+### Architecture
+
+C4, C6, C7, C12
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M15-AC1**: Server tests with a scripted fake Ollama and fake search/page backends: POST /v1/chat with web on and deep research requested runs brief -> plan (server-set sub-question count) -> for each sub-question at least the server-set minimum number of searches (exact repeats after normalising skipped), reads of pages chosen only from server-parsed result URLs, notes -> gap check -> one write call, and ends `complete` with the report as the answer; its phases stream live as web steps ("Planning", "Searching: <query>", "Reading: <domain>", "Writing report") and its sources are the pages read.
+- [ ] **M15-AC2**: Server tests: every Ollama request in a run carries a JSON-schema `format` and the same explicit `num_ctx`, keeps the model resident, and contains only the stable instructions, brief, plan, capped rolling notes and latest result - no raw page text other than the page currently being noted, and no model thinking; the model judging it has enough may end a sub-question early but a server cap always bounds it.
+- [ ] **M15-AC3**: Server tests: a malformed or empty JSON step is retried a bounded number of times and then skipped, and the run continues to a report; page text instructing the model to do something can influence only notes and the choice among server-parsed URLs (no other URL is read and no other action is taken).
+- [ ] **M15-AC4**: Server tests: each distinct page read gets a number in first-read order (FR31 numbering and distinctness); a report `[n]` with no read page, and any URL the model types into the report, are removed before the report is streamed as final; a note whose quote does not substring-match the page's stored text (after whitespace normalisation) is dropped before writing.
+
+### Baseline
+
+### Evidence
+
+### Validation
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+- Architecture does not yet list FR34-FR40 in Requirement Coverage; record D-M15-1 (deep research loop realised inside C6, server/src/generations/, using C12 and C7) as a non-material deviation in this milestone.
+
+## M16 — The deep research run works on the real qwen3.5:35b-a3b on the Mac
+
+Status: TODO
+
+### Outcome
+
+The deep-research model is downloaded on the Mac (`ollama pull qwen3.5:35b-a3b`), the unverified question of whether Ollama's `format` constraint holds with thinking on is settled by a live probe, and one real question run through the server API ends with a cited report. Proves the riskiest integration (real model + real search) right after the skeleton. Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; the implementation is only the think setting the probe supports) - not split.
+
+Owns: none owned. Traces to: AC29 (first live question), Constraints (format with thinking unverified).
+
+### Architecture
+
+C6, C7, C11, C12, C13
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M16-AC1**: `qwen3.5:35b-a3b` is downloaded on the Mac with `ollama pull`, appears in the server's installed-model list (GET /v1/models) and loads resident through the server's swap-load.
+- [ ] **M16-AC2**: A live probe against the resident `qwen3.5:35b-a3b` records whether `format`-constrained replies are schema-valid with thinking on and with thinking off (at least 5 calls each, using the run's step schemas), and deep research uses the setting the probe supports; the result and the chosen setting are recorded in the evidence.
+- [ ] **M16-AC3**: Live on the Mac: one real research-style question sent through POST /v1/chat as deep research ends with status `complete` or `partial`, a report citing at least 1 read page, and no citation number that fails to resolve to a source of that reply.
+
+### Baseline
+
+### Evidence
+
+### Validation
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+
+## M17 — A deep research run always ends within about 8 minutes with its status shown
+
+Status: TODO
+
+### Outcome
+
+A run has one overall time budget (server setting, about 8 minutes) with about a quarter reserved for writing, checked before every search, read and model call, with one cancellation signal reaching everything in flight; it always ends with a reply marked `complete`, `partial` or `failed`, never hangs and never ends with an error and no reply. Operational-complexity signal: CONCURRENCY_LIFECYCLE (one signal; deadline and cancellation ownership inside the run) - not split.
+
+Owns: FR36. Traces to: AC28 (all backends failing, slow backend, deadline during write-up).
+
+### Architecture
+
+C6, C12, C13
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M17-AC1**: Server tests (fake Ollama and backends, shortened budget setting): the deadline is checked before every search, read and model call; when research time (budget minus the writing reserve of about a quarter) runs out the run moves to writing with what it has and ends `partial`; the run's events carry its status and elapsed time against the budget.
+- [ ] **M17-AC2**: Server tests: with every search backend failing the run ends within the budget plus a small margin as `failed`, with a plain sentence saying the research could not search as its answer, plus its steps.
+- [ ] **M17-AC3**: Server tests: with a slow search backend the run ends within the budget plus a small margin (each search and read keeps its FR24 time limit and one cancellation signal reaches every in-flight search, read and model request); with the deadline hitting during the write-up it ends within the budget plus a small margin as `partial` with a non-empty answer (the FR33-style note if the write-up produced nothing).
+
+### Baseline
+
+### Evidence
+
+### Validation
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+
+## M18 — The phone offers Deep research only when the configured model is loaded, and shows the run live
+
+Status: TODO
+
+### Outcome
+
+With the web switch on, the composer shows a "Deep research" action beside Send, enabled only while the resident model is the deep-research model the server reports (a Mac-side setting, default `qwen3.5:35b-a3b`); using it sends that one message as a run, whose phases, elapsed clock, status, logo citations and Sources show live and when reopened. Operational-complexity signal: SUBSYSTEMS_GT_3 (C1-C5; seam check: the server part is reporting one setting and refusing one request shape, and without it the app has nothing to gate on) - not split.
+
+Owns: FR34. Traces to: AC28 (action hidden/disabled/enabled, model name from server, steps live and saved).
+
+### Architecture
+
+C1, C2, C3, C4, C5
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M18-AC1**: Server tests: the server's state reports the configured deep-research model name (Mac-side setting, default `qwen3.5:35b-a3b`); a deep research request with web off, or when the resident model is not the configured one, is refused with a plain error and no run; the chat model is never offered a `deep_research` tool.
+- [ ] **M18-AC2**: App tests: the "Deep research" action beside Send is hidden with the web switch off, shown disabled with "Load <model name> to use deep research" when another model is resident, and enabled when the configured model (name from the server, none hardcoded) is resident; using it sends that one message as a run and the next message is an ordinary reply.
+- [ ] **M18-AC3**: App tests: a run's phase steps and elapsed clock ("m:ss of 8:00") show live; the finished reply shows its status (`complete`/`partial`/`failed`), its `[n]` marks as logos (FR31) and "Sources (n)" of the pages read, and reopens the same from storage.
+
+### Baseline
+
+### Evidence
+
+### Validation
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+
+## M19 — Stop, resume and saving work for a deep research run
+
+Status: TODO
+
+### Outcome
+
+FR9, FR11 and FR23 apply to a run: it survives a dropped connection or backgrounding and resumes with no gaps or duplicates; a first Stop writes a short `partial` report from the notes so far, a second Stop ends it with steps and sources but no report; the report is saved like any answer, page text and notes are not. Operational-complexity signal: CONCURRENCY_LIFECYCLE (one signal; two-stage Stop and resume ownership) - not split.
+
+Owns: FR38. Traces to: AC28 (first and second Stop, dropped-connection resume).
+
+### Architecture
+
+C1, C2, C3, C5, C6
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M19-AC1**: Server tests: a first Stop during searching or reading cancels in-flight searches and reads at once and the run writes a short report from the notes so far under its own short time limit (about a minute), ending `partial`; a second Stop during that write-up cancels it and the reply ends stopped with its steps and sources but no report.
+- [ ] **M19-AC2**: Server tests: a dropped connection does not stop the run and resuming from the last seen event yields steps, clock and text with no gaps or duplicates; while a run is in progress a new message is refused as a reply in progress, and unloading the model mid-run needs the FR6 confirmation and, if confirmed, ends the run `partial` or stopped without hanging.
+- [ ] **M19-AC3**: App tests: a deep research reply is saved with its report as the answer plus steps, sources and status; page text and notes are not persisted; the next prompt carries the report like any prior answer; a second-Stop reply reopens with its steps and sources and no report; backgrounding and returning resumes without gaps or duplicates.
+
+### Baseline
+
+### Evidence
+
+### Validation
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+
+## M20 — Search backends rest after being blocked, and repeated searches and page reads come from cache
+
+Status: TODO
+
+### Outcome
+
+The search service treats each backend as a circuit breaker (rate-limit: skipped 1 hour; CAPTCHA/bot-check: 24 hours) and caches search results by normalised query and page reads by final URL for 24 hours, for ordinary web replies as well as deep research; ordinary replies are otherwise unchanged (FR40). Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; the live part is re-running the existing proofs) - not split.
+
+Owns: FR39, FR40. Traces to: AC28 (rate-limit 1 h, CAPTCHA 24 h, cache, ordinary replies unchanged).
+
+### Architecture
+
+C12, C13, C14
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M20-AC1**: Search service tests through its HTTP search API with faked backends and a controlled clock: a backend returning rate-limit / too-many-requests is skipped for 1 hour and one returning a CAPTCHA or bot-check for 24 hours, searches go to the remaining backends then the headless browser meanwhile, and with every backend resting or failing the search is "unavailable" as in FR20.
+- [ ] **M20-AC2**: Search service tests: a repeated search (after query normalisation) and a repeated page read (by final URL) within 24 hours are served from the Mac-side cache without contacting a backend or the page; after 24 hours they are fetched again.
+- [ ] **M20-AC3**: Ordinary web replies go through the same breakers and cache; all existing ordinary-web and switch-off tests pass unchanged, and the existing live proofs (server/scripts/web-chat-proof.sh, server/scripts/web-failure-proof.sh) still pass.
+
+### Baseline
+
+### Evidence
+
+### Validation
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+
+## M21 — Three real research questions answered on the Mac, and the owner's phone screenshot
+
+Status: TODO
+
+### Outcome
+
+The finished feature proven live: three real research-style questions run on `qwen3.5:35b-a3b` each end within budget with a report citing at least three distinct read pages, and the owner photographs a finished deep research reply on the phone. Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; proof only) - not split.
+
+Owns: none owned. Traces to: AC29, AC30.
+
+### Architecture
+
+C1, C6, C11, C12, C13
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M21-AC1**: Live on the Mac with `qwen3.5:35b-a3b` resident: 3 real research-style questions each end within the budget plus a small margin with status `complete` or `partial`, a report citing at least 3 distinct read pages, and no citation number that fails to resolve to a saved source; the owner's opinion of report quality is recorded in the evidence (not a gate).
+- [ ] **M21-AC2**: The owner's phone screenshot of a finished deep research reply showing its steps, its status, logo citations and "Sources (n)" is saved under .harness/evidence/.
+
+### Baseline
+
+### Evidence
+
+### Validation
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
 
 ## M5a — Always-on server and bundle host
 
