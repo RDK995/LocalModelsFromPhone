@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M12",
+  "current_milestone": "M13",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -9697,12 +9697,12 @@
         "FR24"
       ],
       "traces": "AC16 (both fail, time limit), AC18 (no hosted API)",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
-        "commit": "",
-        "branch": ""
+        "commit": "f3e67dfa9514b9446bf29567078819e11fe462fb",
+        "branch": "m13-search-failures-never-hang"
       },
       "as_built": {
         "artifact": null,
@@ -9733,7 +9733,9 @@
       "findings": [],
       "validation": [],
       "planned_validation": "cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd server && bun test) && (cd mobile && bun test) && bash server/scripts/web-failure-proof.sh && bash search/scripts/no-hosted-api-check.sh",
-      "follow_ups": [],
+      "follow_ups": [
+        "Size check at pickup: 3 criteria, real entry points (POST /v1/chat, live reply), one signal IMPLEMENTATION_PLUS_LIVE_PROOF; seam check: failure handling already exists (M7c search 503/504, C12 unavailable/failed steps, C1 'Search unavailable' label), so M13 is tests plus live proof - run as planned, not split."
+      ],
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
       ]
