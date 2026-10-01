@@ -347,7 +347,7 @@ Cycle 1: PASS — tier Mid, model sonnet, reason_code ORDINARY_IMPLEMENTATION; d
 
 ## M14 — A web reply always ends with an answer
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -361,15 +361,15 @@ C1, C2, C3, C6
 
 ### As-Built
 
-Pending.
+.harness/as-built/M14.md — RECORDED — 8/8 files attributed; components C1, C2, C3, C6, C12; 1 edge; claim mismatches NONE (C12 observed but unclaimed)
 
 ### Acceptance Criteria
 
-- [ ] **M14-AC1**: Server tests with a scripted fake Ollama (POST /v1/chat, web on): a round shaped like the 2026-10-01 20:15 screenshot (thinking only, no content, no tool call, tools offered) is followed by a prod with tools still offered; quiet once then answer, quiet once then a tool call then answer, and quiet twice then answer each end with that answer; whitespace-only content counts as quiet; prods are not counted toward the 10-call cap.
-- [ ] **M14-AC2**: Server tests: quiet three times gives an "Asked the model to answer now" round with no tools offered; a quiet tools-withdrawn round (after the answer-now round, and after the 10-call cap) ends `complete` with the FR33 note "No answer was produced — the model stopped without answering. Try asking again." as the answer text plus steps and sources.
-- [ ] **M14-AC3**: Server tests: a switch-off empty reply is unchanged; prod messages do not appear in the saved conversation or in the next prompt's messages; Stop during a prodded round cancels as before.
-- [ ] **M14-AC4**: App tests show the two new step lines ("Asked the model to continue", "Asked the model to answer now") live while streaming and in a reopened saved reply.
-- [ ] **M14-AC5**: Live on the Mac: an ordinary web reply with the owner's usual model still completes with steps, sources and an answer, and the existing M13 web-failure proof (server/scripts/web-failure-proof.sh) still passes.
+- [x] **M14-AC1**: Server tests with a scripted fake Ollama (POST /v1/chat, web on): a round shaped like the 2026-10-01 20:15 screenshot (thinking only, no content, no tool call, tools offered) is followed by a prod with tools still offered; quiet once then answer, quiet once then a tool call then answer, and quiet twice then answer each end with that answer; whitespace-only content counts as quiet; prods are not counted toward the 10-call cap.
+- [x] **M14-AC2**: Server tests: quiet three times gives an "Asked the model to answer now" round with no tools offered; a quiet tools-withdrawn round (after the answer-now round, and after the 10-call cap) ends `complete` with the FR33 note "No answer was produced — the model stopped without answering. Try asking again." as the answer text plus steps and sources.
+- [x] **M14-AC3**: Server tests: a switch-off empty reply is unchanged; prod messages do not appear in the saved conversation or in the next prompt's messages; Stop during a prodded round cancels as before.
+- [x] **M14-AC4**: App tests show the two new step lines ("Asked the model to continue", "Asked the model to answer now") live while streaming and in a reopened saved reply.
+- [x] **M14-AC5**: Live on the Mac: an ordinary web reply with the owner's usual model still completes with steps, sources and an answer, and the existing M13 web-failure proof (server/scripts/web-failure-proof.sh) still passes.
 
 ### Baseline
 
@@ -393,7 +393,7 @@ Pending.
 
 ### Review
 
-Pending.
+Cycle 1: PASS — tier Mid, model sonnet, reason_code ORDINARY_IMPLEMENTATION; diff 5786b3c..46efb4e (full milestone); per-criterion M14-AC1=PASS, M14-AC2=PASS, M14-AC3=PASS, M14-AC4=PASS, M14-AC5=PASS; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL; no report file (PASS); validation logs .harness/evidence/M14-review.log, .harness/evidence/M14-review-live.log.
 
 ### Review Cycles
 
