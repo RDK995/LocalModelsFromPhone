@@ -321,7 +321,7 @@ Cycle 2: PASS, tier Mid/sonnet (review floor; correction contained no routed tas
 
 ## M11 — Web replies are saved, resume after a drop, and keep page text out of later prompts
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -335,13 +335,13 @@ C1, C2, C3, C6
 
 ### As-Built
 
-Pending.
+.harness/as-built/M11.md — RECORDED — 6/6 files attributed; components C1, C2, C3, C6, NEW-web-resume-proof; 6 edges; no claim mismatches
 
 ### Acceptance Criteria
 
-- [ ] **M11-AC1**: Killing the connection during a web reply and reconnecting yields the complete steps and answer with no gaps and no duplicates.
-- [ ] **M11-AC2**: Persisted conversations contain each web reply's steps and sources but no page text or full search results, and a follow-up prompt sends prior answers with their source lists without re-sending page text.
-- [ ] **M11-AC3**: While a reply is searching, sending another prompt is refused as a reply in progress, and a swap or unload requires the busy confirmation.
+- [x] **M11-AC1**: Killing the connection during a web reply and reconnecting yields the complete steps and answer with no gaps and no duplicates.
+- [x] **M11-AC2**: Persisted conversations contain each web reply's steps and sources but no page text or full search results, and a follow-up prompt sends prior answers with their source lists without re-sending page text.
+- [x] **M11-AC3**: While a reply is searching, sending another prompt is refused as a reply in progress, and a swap or unload requires the busy confirmation.
 
 ### Baseline
 
@@ -367,7 +367,7 @@ Per criterion (not reviewed):
 
 ### Review
 
-Pending.
+Cycle 1: PASS — tier Mid, model sonnet, reason_code ORDINARY_IMPLEMENTATION; diff 9d8270f..961092d (full milestone); per-criterion M11-AC1=PASS, M11-AC2=PASS, M11-AC3=PASS; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL; no report file (PASS); validation log .harness/evidence/M11-review.log.
 
 ### Review Cycles
 

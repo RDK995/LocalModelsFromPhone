@@ -9332,7 +9332,7 @@
         "FR23"
       ],
       "traces": "AC17 (resume), AC18 (persistence)",
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -9340,14 +9340,14 @@
         "branch": "m11-web-replies-saved-resume"
       },
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M11.md",
+        "result": "RECORDED — 6/6 files attributed; components C1, C2, C3, C6, NEW-web-resume-proof; 6 edges; no claim mismatches"
       },
       "criteria": [
         {
           "id": "M11-AC1",
           "text": "Killing the connection during a web reply and reconnecting yields the complete steps and answer with no gaps and no duplicates.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "Server: server/src/http/webReplyInProgress.test.ts (T2 56126e9) holds the fake web tool mid-search, reconnects GET /v1/generations/{id}/events with Last-Event-ID at the first step: log seqs 0-6 contiguous (step x4, content, sources, done), resumed == full log from seq 1, prefix+resumed == full replay, second reconnect same tail; characterisation, passed on baseline; verifier PASS (server 172 pass, typecheck 0).",
             "Client: mobile/src/api/client.test.ts test (l) (T3 89278f1): drop after step(started)/step(done), resume sends Last-Event-ID gen-w-2, overlapping seq filtered, onEvent gets 8 events once in order, applyStreamEvent fold gives s1/s2 done, full content, sources; characterisation; verifier PASS (.harness/evidence/M11-T3-verifier.log, mobile 438 pass).",
@@ -9357,7 +9357,7 @@
         {
           "id": "M11-AC2",
           "text": "Persisted conversations contain each web reply's steps and sources but no page text or full search results, and a follow-up prompt sends prior answers with their source lists without re-sending page text.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "Unit: mobile/src/chat/conversationSession.test.ts 'web history and persistence (M11)' (T1 7127ae7): follow-up sends prior web answer with '\\n\\nSources:\\n[n] title — url' block via exported historyContent, plain messages unchanged, only role/content; persisted web reply steps/sources equal streamed and keys subset of allowed set. RED on baseline confirmed by verifier with baseline conversationSession.ts + stub export; GREEN 27/437 pass. .harness/evidence/M11-T1-red.log, M11-T1-green.log, M11-T1-verifier.log.",
             "Live: web-resume-proof Check C (persisted reply has steps 3 and sources 5, allowed keys only, no tool messages, stored size = content+thinking+steps+sources+small metadata) and Check D (follow-up body: prior answer carries Sources: block with every URL, user/assistant roles only, body 860 < bound 1839). .harness/evidence/M11-T4-proof.log. Not reviewed."
@@ -9366,7 +9366,7 @@
         {
           "id": "M11-AC3",
           "text": "While a reply is searching, sending another prompt is refused as a reply in progress, and a swap or unload requires the busy confirmation.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "Server: webReplyInProgress.test.ts with web tool held: POST /v1/chat -> 409 generation_in_flight; POST /v1/models/load (other model) and /v1/models/unload without confirm -> 409 confirmation_required with reply_in_progress, no client call made. confirm=true path covered by existing server.test.ts 'a confirmed {label} returns 202...' (lines ~1543-1575).",
             "Live: web-resume-proof Check A after first step event: second chat 409 generation_in_flight; unload and swap to qwen3.8:27b need confirmation incl. reply_in_progress (also not_loaded_by_server, model loaded outside this server); nothing confirmed. .harness/evidence/M11-T4-proof.log. Not reviewed."
@@ -9478,7 +9478,24 @@
           "status": "ACCEPTED"
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "PASS",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "ORDINARY_IMPLEMENTATION",
+          "diff_range": "9d8270f..961092d",
+          "artifact": null,
+          "review_log": ".harness/evidence/M11-review.log",
+          "findings": "0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL",
+          "per_criterion": {
+            "M11-AC1": "PASS",
+            "M11-AC2": "PASS",
+            "M11-AC3": "PASS"
+          }
+        }
+      ],
       "findings": [],
       "validation": [
         {
