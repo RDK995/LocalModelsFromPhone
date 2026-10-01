@@ -324,7 +324,7 @@ Cycle 1: PASS — tier Mid, model sonnet, reason_code ORDINARY_IMPLEMENTATION; d
 
 ## M12 — Stop during a web search ends it on the Mac
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -338,7 +338,7 @@ C6, C12, C13, C14
 
 ### As-Built
 
-Pending.
+.harness/as-built/M12.md — RECORDED — 3/4 files attributed; components C6, C12, C13, C14; 3 edges; no claim mismatches
 
 ### Acceptance Criteria
 
@@ -367,7 +367,7 @@ Per criterion (not reviewed):
 
 ### Review
 
-Pending.
+Cycle 1: PASS — tier Mid, model sonnet, reason_code ORDINARY_IMPLEMENTATION; diff d8db7d5..8330d17 (full milestone); per-criterion M12-AC1=PASS; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL; no report file (PASS); validation log .harness/evidence/M12-review.log.
 
 ### Review Cycles
 
