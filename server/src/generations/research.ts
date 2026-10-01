@@ -371,6 +371,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
         }
       };
 
+      let readPassRan = false;
       while (searches < s.maxSearches) {
         const query = await nextQuery();
         if (query === null) break;
@@ -390,6 +391,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
         }
         if (searches < s.minSearches) continue;
 
+        readPassRan = true;
         yield* readChosen();
         if (searches >= s.maxSearches) break;
 
@@ -401,6 +403,11 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
         );
         if (!gap || gap.enough) break;
         if (nonEmpty(gap.next_query)) queue.unshift(gap.next_query);
+      }
+      // Ran out of new queries before minSearches: still read what was collected.
+      if (searches > 0 && !readPassRan) {
+        checkAbort();
+        yield* readChosen();
       }
     }
 
