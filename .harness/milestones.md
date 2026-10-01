@@ -347,7 +347,7 @@ Cycle 1: PASS — tier Mid, model sonnet, reason_code ORDINARY_IMPLEMENTATION; d
 
 ## M14 — A web reply always ends with an answer
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -377,7 +377,19 @@ Pending.
 
 ### Evidence
 
+- M14-T1 — Mid (ORDINARY_IMPLEMENTATION): attempt 3 PASS, verifier PASS. Commit b7551dd.
+- M14-T2 — Cheap (BOUNDED_LOW_RISK): attempt 1 PASS, verifier PASS (worker hit its turn limit; report delivered on resume, no rung spent). Commit 417714d.
+- M14-T2b — Cheap (BOUNDED_LOW_RISK): attempt 1 rejected by orchestrator and reverted (hand-built accumulator, no SSE parse or in-flight stream); attempt 2 PASS, verifier PASS. Commit dbc4e53.
+- M14-T3 — Cheap (BOUNDED_LOW_RISK): attempt 1 PASS, verifier PASS (re-ran both live scripts). Commit f276726.
+- M14-AC1: Server HTTP: server/src/http/webQuiet.test.ts (T1 b7551dd), POST /v1/chat web on, scripted fake Ollama: 'AC1: screenshot-shaped quiet round is prodded with tools still offered, then answered' (thinking-only round -> 2nd Ollama request carries tools and ends with the prod user message; step kind continue prod-1 started/done in stream and in GET /v1/generations/{id}/events replay); 'quiet, then a tool call, then answer'; 'quiet twice, then answer; prods are in order'; 'whitespace-only content counts as quiet'; 'prods do not count toward the 10-call cap' (2 prods + 10 tool calls all run). RED reproduced by verifier (manager.ts at HEAD: 1 pass 10 fail). server bun test 189 pass, typecheck 0. .harness/evidence/M14-T1-red.log, M14-T1-verifier.log
+- M14-AC2: Server HTTP: server/src/http/webQuiet.test.ts (T1 b7551dd): 'AC2: quiet three times -> answer-now round without tools, then answer' (4th Ollama request has no tools, last message says answer now, step kind answer_now id answer-now); 'AC2: quiet after the answer-now round ends with the exact note'; 'AC2: quiet after the 10-call cap ends with the note, steps and sources' (content is exactly 'No answer was produced — the model stopped without answering. Try asking again.', sources then done complete). .harness/evidence/M14-T1-verifier.log
+- M14-AC3: Server HTTP: server/src/http/webQuiet.test.ts (T1 b7551dd): 'AC3: switch-off empty reply is unchanged' (web false: no step, no note); 'AC3: prod text never reaches events or the next request' (no content/thinking event carries prod or answer-now text; next POST /v1/chat's Ollama request has only system note + client messages); 'AC3: Stop during a prodded round ends cancelled with no note'. Existing server tests unmodified. .harness/evidence/M14-T1-verifier.log
+- M14-AC4: App: mobile/src/chat/webQuietSession.test.ts (T2 417714d): sendInConversation + real APIClient over fake SSE + real store -> stored reply keeps continue/answer_now steps, status complete; reopened via store.get (storage read + isValidStep validation) -> buildChatItems labels exactly 'Asked the model to continue' / 'Asked the model to answer now' (and 'Searching: test' unchanged). RED by verifier (production files at 61054aa: 0 pass 3 fail). Production: STEP_KINDS in mobile/src/api/client.ts and mobile/src/store/conversationStore.ts, stepLabel in mobile/src/ui/chatItems.ts, kind union in shared/api.ts. .harness/evidence/M14-T2-red.log, M14-T2-verifier.log | Live (in-flight): webQuietSession.test.ts (T2b dbc4e53) pushes the four step events with the stream still open, accumulates onEvent events with the real applyStreamEvent into a PendingTurn, buildChatItems -> assistant item streaming=true with both exact labels, then done. RED by verifier: removing 'continue' from client STEP_KINDS makes it fail. mobile bun test 450 pass, mobile and server typecheck 0. .harness/evidence/M14-T2b-red.log, M14-T2b-verifier.log
+- M14-AC5: Live on the Mac (T3 f276726), resident model nemotron3:33b, own server from the M14 tree: server/scripts/web-chat-proof.sh exit 0 (steps=4 sources=1 answer_chars=70; M9-AC1/AC2/AC3 PASS, step, sources, content and done all live); server/scripts/web-failure-proof.sh exit 0 (unavailable and timeout checks PASS, done complete). Both re-run by the verifier, exit 0. .harness/evidence/M14-T3-verifier.log, M14-T3-verifier-web-chat-proof.log, M14-T3-verifier-web-failure-proof.log
+
 ### Validation
+
+`cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd server && bun test && bun run typecheck) && (cd mobile && bun test && bun run typecheck) && bash server/scripts/web-chat-proof.sh && bash server/scripts/web-failure-proof.sh` — reviewer runs once; the two scripts are live (real Ollama with a resident tools-capable model and the search service; each starts its own server), a few minutes total. Verifier runs: server 189 pass + typecheck 0; mobile 450 pass + typecheck 0; web-chat-proof exit 0; web-failure-proof exit 0. Artifacts: .harness/evidence/M14-T1-verifier.log, M14-T2-verifier.log, M14-T2b-verifier.log, M14-T3-verifier.log.
 
 ### Review
 
@@ -390,6 +402,8 @@ Pending.
 ### Follow-ups
 
 - AC27's owner observation (retrying the transfer question from the screenshot on the phone) is observation, not a gate; it is not an M14 criterion.
+- The live proof scripts copy logs into tracked evidence (M9-T5-*, M13-T3-proof.log) on every run; workers restored them. Consider making the scripts write to their own milestone's path or an untracked location.
+- The note is emitted as a single content event not counted in contentChunks (affects only the eval_count fallback).
 
 ## M5a — Always-on server and bundle host
 

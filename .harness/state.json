@@ -9926,7 +9926,7 @@
         "FR33"
       ],
       "traces": "AC27",
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -9942,39 +9942,198 @@
           "id": "M14-AC1",
           "text": "Server tests with a scripted fake Ollama (POST /v1/chat, web on): a round shaped like the 2026-10-01 20:15 screenshot (thinking only, no content, no tool call, tools offered) is followed by a prod with tools still offered; quiet once then answer, quiet once then a tool call then answer, and quiet twice then answer each end with that answer; whitespace-only content counts as quiet; prods are not counted toward the 10-call cap.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "Server HTTP: server/src/http/webQuiet.test.ts (T1 b7551dd), POST /v1/chat web on, scripted fake Ollama: 'AC1: screenshot-shaped quiet round is prodded with tools still offered, then answered' (thinking-only round -> 2nd Ollama request carries tools and ends with the prod user message; step kind continue prod-1 started/done in stream and in GET /v1/generations/{id}/events replay); 'quiet, then a tool call, then answer'; 'quiet twice, then answer; prods are in order'; 'whitespace-only content counts as quiet'; 'prods do not count toward the 10-call cap' (2 prods + 10 tool calls all run). RED reproduced by verifier (manager.ts at HEAD: 1 pass 10 fail). server bun test 189 pass, typecheck 0. .harness/evidence/M14-T1-red.log, M14-T1-verifier.log"
+          ]
         },
         {
           "id": "M14-AC2",
           "text": "Server tests: quiet three times gives an \"Asked the model to answer now\" round with no tools offered; a quiet tools-withdrawn round (after the answer-now round, and after the 10-call cap) ends `complete` with the FR33 note \"No answer was produced — the model stopped without answering. Try asking again.\" as the answer text plus steps and sources.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "Server HTTP: server/src/http/webQuiet.test.ts (T1 b7551dd): 'AC2: quiet three times -> answer-now round without tools, then answer' (4th Ollama request has no tools, last message says answer now, step kind answer_now id answer-now); 'AC2: quiet after the answer-now round ends with the exact note'; 'AC2: quiet after the 10-call cap ends with the note, steps and sources' (content is exactly 'No answer was produced — the model stopped without answering. Try asking again.', sources then done complete). .harness/evidence/M14-T1-verifier.log"
+          ]
         },
         {
           "id": "M14-AC3",
           "text": "Server tests: a switch-off empty reply is unchanged; prod messages do not appear in the saved conversation or in the next prompt's messages; Stop during a prodded round cancels as before.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "Server HTTP: server/src/http/webQuiet.test.ts (T1 b7551dd): 'AC3: switch-off empty reply is unchanged' (web false: no step, no note); 'AC3: prod text never reaches events or the next request' (no content/thinking event carries prod or answer-now text; next POST /v1/chat's Ollama request has only system note + client messages); 'AC3: Stop during a prodded round ends cancelled with no note'. Existing server tests unmodified. .harness/evidence/M14-T1-verifier.log"
+          ]
         },
         {
           "id": "M14-AC4",
           "text": "App tests show the two new step lines (\"Asked the model to continue\", \"Asked the model to answer now\") live while streaming and in a reopened saved reply.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "App: mobile/src/chat/webQuietSession.test.ts (T2 417714d): sendInConversation + real APIClient over fake SSE + real store -> stored reply keeps continue/answer_now steps, status complete; reopened via store.get (storage read + isValidStep validation) -> buildChatItems labels exactly 'Asked the model to continue' / 'Asked the model to answer now' (and 'Searching: test' unchanged). RED by verifier (production files at 61054aa: 0 pass 3 fail). Production: STEP_KINDS in mobile/src/api/client.ts and mobile/src/store/conversationStore.ts, stepLabel in mobile/src/ui/chatItems.ts, kind union in shared/api.ts. .harness/evidence/M14-T2-red.log, M14-T2-verifier.log",
+            "Live (in-flight): webQuietSession.test.ts (T2b dbc4e53) pushes the four step events with the stream still open, accumulates onEvent events with the real applyStreamEvent into a PendingTurn, buildChatItems -> assistant item streaming=true with both exact labels, then done. RED by verifier: removing 'continue' from client STEP_KINDS makes it fail. mobile bun test 450 pass, mobile and server typecheck 0. .harness/evidence/M14-T2b-red.log, M14-T2b-verifier.log"
+          ]
         },
         {
           "id": "M14-AC5",
           "text": "Live on the Mac: an ordinary web reply with the owner's usual model still completes with steps, sources and an answer, and the existing M13 web-failure proof (server/scripts/web-failure-proof.sh) still passes.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "Live on the Mac (T3 f276726), resident model nemotron3:33b, own server from the M14 tree: server/scripts/web-chat-proof.sh exit 0 (steps=4 sources=1 answer_chars=70; M9-AC1/AC2/AC3 PASS, step, sources, content and done all live); server/scripts/web-failure-proof.sh exit 0 (unavailable and timeout checks PASS, done complete). Both re-run by the verifier, exit 0. .harness/evidence/M14-T3-verifier.log, M14-T3-verifier-web-chat-proof.log, M14-T3-verifier-web-failure-proof.log"
+          ]
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M14-T1",
+          "scope": "C6: FR33 quiet-round prods, answer-now round and no-answer note in the web tool loop; server HTTP tests",
+          "packet": ".harness/tasks/M14-T1.md",
+          "criteria": [
+            "M14-AC1",
+            "M14-AC2",
+            "M14-AC3"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "change to C6 web tool loop with several branches; clear test oracle"
+          },
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "verifier": "PASS",
+              "artifacts": [
+                ".harness/evidence/M14-T1-red.log",
+                ".harness/evidence/M14-T1-worker.log",
+                ".harness/evidence/M14-T1-verifier.log"
+              ],
+              "note": "Exports NO_ANSWER_NOTE from manager.ts"
+            }
+          ],
+          "commit": "b7551dd",
+          "status": "ACCEPTED"
+        },
+        {
+          "id": "M14-T2",
+          "scope": "C1/C2/C3: accept, store and label continue/answer_now steps; streamed + reopened tests",
+          "packet": ".harness/tasks/M14-T2.md",
+          "criteria": [
+            "M14-AC4"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "two allow-lists, two labels, tests following M13 pattern"
+          },
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "artifacts": [
+                ".harness/evidence/M14-T2-red.log",
+                ".harness/evidence/M14-T2-worker.log",
+                ".harness/evidence/M14-T2-verifier.log"
+              ],
+              "note": "Worker hit its turn limit (INTERRUPTED, no rung spent); report delivered on resume. Labels asserted only after done, so live-while-streaming gap routed to M14-T2b."
+            }
+          ],
+          "commit": "417714d",
+          "status": "ACCEPTED"
+        },
+        {
+          "id": "M14-T2b",
+          "scope": "C1: test that both step lines show while the reply is still streaming",
+          "packet": ".harness/tasks/M14-T2b.md",
+          "criteria": [
+            "M14-AC4"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "test-only, assertion stated in packet"
+          },
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "NOT_RUN",
+              "artifacts": [],
+              "note": "Rejected by orchestrator and reverted: hand-built accumulator and PendingTurn, no SSE parse, no reducer, no in-flight stream."
+            },
+            {
+              "attempt": 2,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "artifacts": [
+                ".harness/evidence/M14-T2b-red.log",
+                ".harness/evidence/M14-T2b-worker.log",
+                ".harness/evidence/M14-T2b-verifier.log"
+              ],
+              "note": ""
+            }
+          ],
+          "commit": "dbc4e53",
+          "status": "ACCEPTED"
+        },
+        {
+          "id": "M14-T3",
+          "scope": "Live regression: web-chat-proof.sh and web-failure-proof.sh against the M14 tree",
+          "packet": ".harness/tasks/M14-T3.md",
+          "criteria": [
+            "M14-AC5"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "run two existing live scripts, no code change"
+          },
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "artifacts": [
+                ".harness/evidence/M14-T3-worker.log",
+                ".harness/evidence/M14-T3-verifier.log"
+              ],
+              "note": ""
+            }
+          ],
+          "commit": "f276726",
+          "status": "ACCEPTED"
+        }
+      ],
       "reviews": [],
       "findings": [],
-      "validation": [],
+      "validation": [
+        {
+          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2 && (cd server && bun test && bun run typecheck) && (cd mobile && bun test && bun run typecheck) && bash server/scripts/web-chat-proof.sh && bash server/scripts/web-failure-proof.sh",
+          "note": "reviewer runs once; the two scripts are live (real Ollama with a resident tools-capable model and the search service; each starts its own server on spare ports), a few minutes total.",
+          "artifacts": [
+            ".harness/evidence/M14-T1-verifier.log",
+            ".harness/evidence/M14-T2-verifier.log",
+            ".harness/evidence/M14-T2b-verifier.log",
+            ".harness/evidence/M14-T3-verifier.log"
+          ]
+        }
+      ],
       "follow_ups": [
-        "AC27's owner observation (retrying the transfer question from the screenshot on the phone) is observation, not a gate; it is not an M14 criterion."
+        "AC27's owner observation (retrying the transfer question from the screenshot on the phone) is observation, not a gate; it is not an M14 criterion.",
+        "The live proof scripts copy logs into tracked evidence (M9-T5-*, M13-T3-proof.log) on every run; workers restored them. Consider making the scripts write to their own milestone's path or an untracked location.",
+        "The note is emitted as a single content event not counted in contentChunks (affects only the eval_count fallback)."
       ],
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
