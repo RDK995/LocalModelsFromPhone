@@ -1,0 +1,95 @@
+=== M12-T1 VERIFICATION ===
+Date: 2026-10-01
+
+=== BASELINE TEST (before RED) ===
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/search && bun test && bun run typecheck
+Exit Status: 0
+Output: 161 pass, 0 fail, 437 expect() calls
+
+=== RED CONDITION (modified server.ts) ===
+Command: Temporarily replaced req.signal with new AbortController().signal in both:
+  - Line 49: handleSearch call to runHelper
+  - Line 129: handleRead call to fetchPage
+Then ran: cd /Users/ryankenny/Projects/CodingHarnessv2/search && bun test src/http/stop.test.ts
+
+Exit Status: 1
+Output:
+(fail) stop ends work on the Mac > POST /v1/search: client abort kills the helper and its child [8060.93ms]
+  ^ a beforeEach/afterEach hook timed out for this test.
+(fail) stop ends work on the Mac > POST /v1/read: client abort mid-body closes the upstream connection [5002.12ms]
+  ^ this test timed out after 5000ms.
+
+ 0 pass
+ 2 fail
+ 4 expect() calls
+
+Details:
+- First test: expect(received).toBe(expected) Expected: true Received: false at line 73
+  (helper and child processes were NOT killed because req.signal was replaced)
+- Second test: timed out because upstream connection was NOT closed (req.signal was replaced)
+
+=== RESTORATION AND FINAL TEST ===
+Restored original server.ts and ran full test suite again
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/search && bun test && bun run typecheck
+Exit Status: 0
+Output: 161 pass, 0 fail, 437 expect() calls
+
+=== FILES CHANGED ===
+- search/src/http/stop.test.ts (new file, 119 lines)
+  No production code changes required (req.signal already properly implemented)
+
+=== ACCEPTANCE CRITERIA VERIFICATION ===
+
+Criterion 1: Test for search helper kill on client abort
+  Evidence: search/src/http/stop.test.ts lines 37-74
+  - Starts HTTP server in-process with slow helper command (sleeps 300s)
+  - Helper time limit set to 120s (far above 3s assertion window)
+  - Sends POST /v1/search with AbortController
+  - Waits for helper to start (detects via pidFile)
+  - Asserts both helper and child processes alive before abort
+  - Aborts client request
+  - Asserts within 3s window that both processes are no longer alive
+  - Fails when req.signal is not propagated (RED condition confirmed)
+
+Criterion 2: Test for read upstream close on client abort
+  Evidence: search/src/http/stop.test.ts lines 76-117
+  - Creates fake upstream HTTP server via http.createServer
+  - Server sends headers but never completes body (infinite hold)
+  - Page-read time limit set to 60s (far above 3s assertion window)
+  - Sends POST /v1/read with AbortController targeting upstream
+  - Waits for upstream to start receiving request
+  - Aborts client request
+  - Asserts within 3s window that upstream observes connection closed (res.on("close"))
+  - Fails when req.signal is not propagated (RED condition confirmed)
+
+Criterion 3: Tests fail without req.signal propagation
+  Evidence: RED test output above shows both tests fail when req.signal replaced
+  - Search test: helper process not killed (timeout in cleanup)
+  - Read test: upstream connection not closed (test times out)
+
+Criterion 4: Existing tests unchanged
+  Evidence: 161 tests pass with no failures, no test modifications
+  - All existing tests in server.test.ts, timeout.test.ts, fetchPage.test.ts etc. pass
+  - No test files were modified
+  - No assertions were deleted or weakened
+
+=== SSRF GUARD VERIFICATION ===
+The read test (lines 95-99) properly uses the SSRF guard pattern:
+- Custom resolve function that returns 127.0.0.1 as allowed
+- Custom isAllowedAddress() that validates addresses
+- Tests the actual SSRF guard without weakening it
+- Pattern matches existing test patterns (server.test.ts, fetchPage.test.ts)
+
+=== PROCESS CLEANUP ===
+After full test run, no leftover sleep 300 processes remain (verified with ps aux)
+All cleanup functions execute properly even on test timeout
+
+=== CONCLUSION ===
+All acceptance criteria satisfied:
+✓ Search abort test with bounded kill assertion
+✓ Read abort test with bounded connection close assertion
+✓ Both tests fail when req.signal not propagated (RED demonstrated)
+✓ Existing tests pass unchanged
+✓ SSRF guard untouched
+✓ No production code changes needed
+✓ Process cleanup working properly

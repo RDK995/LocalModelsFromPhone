@@ -1,0 +1,26 @@
+bun test v1.4.0 (1381054db)
+
+src/http/stop.test.ts:
+68 |     expect(pids.length).toBe(2);
+69 |     expect(pids.every(alive)).toBe(true);
+70 | 
+71 |     ctl.abort();
+72 |     await req;
+73 |     expect(await eventually(() => pids.every((p) => !alive(p)), 3000)).toBe(true);
+                                                                            ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/stop.test.ts:73:72)
+killed 1 dangling process
+(fail) stop ends work on the Mac > POST /v1/search: client abort kills the helper and its child [8060.49ms]
+  ^ a beforeEach/afterEach hook timed out for this test.
+(fail) stop ends work on the Mac > POST /v1/read: client abort mid-body closes the upstream connection [5002.23ms]
+  ^ this test timed out after 5000ms.
+
+ 0 pass
+ 2 fail
+ 4 expect() calls
+Ran 2 tests across 1 file. [13.14s]
