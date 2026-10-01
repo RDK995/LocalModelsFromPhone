@@ -60,6 +60,16 @@ export interface GenerationWebTools {
 /** At most this many tool calls per reply (FR19). */
 const MAX_TOOL_CALLS = 10;
 
+/** At most this many prods per reply when a web round goes quiet (FR33). */
+const MAX_PRODS = 2;
+
+const PROD_MESSAGE =
+  "No answer has been given yet. If you need more information, call a tool; otherwise write your final answer now.";
+const ANSWER_NOW_MESSAGE =
+  "Answer now from the information you already have. Do not call any tools; write your final answer.";
+export const NO_ANSWER_NOTE =
+  "No answer was produced \u2014 the model stopped without answering. Try asking again.";
+
 /** How long a finished generation's log is kept for resume. */
 const LOG_RETENTION_MS = 10 * 60 * 1000;
 
@@ -148,11 +158,18 @@ export class GenerationManager {
     let toolCallCount = 0;
     const sources: SourcesEvent["items"] = [];
     const numberPage = createPageNumberer();
+    let prodsUsed = 0;
+    let answerNow = false;
+    const appendStep = (step_id: string, kind: "continue" | "answer_now") => {
+      for (const status of ["started", "done"] as const) {
+        this.append(record, "step", JSON.stringify({ step_id, kind, status }));
+      }
+    };
     try {
       let finalChunk: OllamaChatResponse | undefined;
 
       for (;;) {
-        const offered = web && toolCallCount < MAX_TOOL_CALLS;
+        const offered = web && !answerNow && toolCallCount < MAX_TOOL_CALLS;
         iterator = offered
           ? this.ollamaClient.chat(request, signal, this.webTools.tools())
           : this.ollamaClient.chat(request, signal);
@@ -183,6 +200,29 @@ export class GenerationManager {
             finalChunk = chunk;
             break;
           }
+        }
+
+        const quiet = roundCalls.length === 0 && roundContent.trim() === "";
+        if (web && quiet && !signal.aborted) {
+          // FR33: a quiet web round is never the end of the reply.
+          if (!offered) {
+            const note: ContentEvent = { text: NO_ANSWER_NOTE };
+            this.append(record, "content", JSON.stringify(note));
+            break;
+          }
+          iterator.return(undefined).catch(() => {});
+          iterator = undefined;
+          request.messages.push({ role: "assistant", content: roundContent });
+          if (prodsUsed < MAX_PRODS) {
+            prodsUsed++;
+            appendStep(`prod-${prodsUsed}`, "continue");
+            request.messages.push({ role: "user", content: PROD_MESSAGE });
+          } else {
+            answerNow = true;
+            appendStep("answer-now", "answer_now");
+            request.messages.push({ role: "user", content: ANSWER_NOW_MESSAGE });
+          }
+          continue;
         }
 
         if (!offered || roundCalls.length === 0) break;

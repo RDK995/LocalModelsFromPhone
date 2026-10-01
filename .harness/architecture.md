@@ -510,3 +510,18 @@ instructions C12 already gives the model with the current-date note (`server/src
 tool loop and its 10-call cap are unchanged, and no server-side check or re-prompt is added.
 Why: FR30 was added after this architecture was agreed; C12 already owns the model-facing web
 instructions (FR19 date note). No component boundary, technology or responsibility changes.
+
+### D-M14-1 — FR33 quiet-round handling in C6 and two new web step kinds
+
+Milestone: M14 (planned 2026-10-01)
+Material: no
+Change: Requirement Coverage addition FR33 -> C6 (with C1/C2/C3 for display and storage). C6's
+web tool loop detects a quiet round (blank content, no tool call), prods the model with tools still
+offered (at most 2 per reply, not counted toward the 10-call cap), then runs one tools-withdrawn
+answer-now round, and if that is quiet emits the FR33 note as the reply's content. The SSE `step`
+event's `kind` gains `"continue"` (a prod) and `"answer_now"` (the tools-withdrawn round), each
+emitted `started` then `done` with no query/url; C2 accepts them, C3 stores them in `steps`, C1
+labels them "Asked the model to continue" / "Asked the model to answer now".
+Why: FR33 was added after this architecture was agreed; C6 already owns the tool-calling loop and
+the 10-call cap. Additive enum values on an existing event; no component boundary, technology or
+responsibility changes.

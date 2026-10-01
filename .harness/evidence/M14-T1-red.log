@@ -1,0 +1,133 @@
+bun test v1.4.0 (1381054db)
+
+src/http/webQuiet.test.ts:
+122 | const lastMsg = (req: any) => req.messages[req.messages.length - 1];
+123 | 
+124 | describe("A quiet web round is prodded, answered-now, then given the note (M14 FR33)", () => {
+125 |   it("AC1: screenshot-shaped quiet round is prodded with tools still offered, then answered", async () => {
+126 |     const r = await run(["quiet", { answer: "the answer" }]);
+127 |     expect(r.requests.length).toBe(2);
+                                    ^
+error: expect(received).toBe(expected)
+
+Expected: 2
+Received: 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/webQuiet.test.ts:127:31)
+(fail) A quiet web round is prodded, answered-now, then given the note (M14 FR33) > AC1: screenshot-shaped quiet round is prodded with tools still offered, then answered [4.38ms]
+136 |     expect(steps(r.replay)).toEqual(s);
+137 |   });
+138 | 
+139 |   it("AC1: whitespace-only content counts as quiet", async () => {
+140 |     const r = await run(["blank", { answer: "ok" }]);
+141 |     expect(r.requests.length).toBe(2);
+                                    ^
+error: expect(received).toBe(expected)
+
+Expected: 2
+Received: 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/webQuiet.test.ts:141:31)
+(fail) A quiet web round is prodded, answered-now, then given the note (M14 FR33) > AC1: whitespace-only content counts as quiet [1.27ms]
+143 |     expect(steps(r.events).filter((x) => x.kind === "continue").length).toBe(2);
+144 |   });
+145 | 
+146 |   it("AC1: quiet, then a tool call, then answer", async () => {
+147 |     const r = await run(["quiet", "tool", { answer: "fin" }]);
+148 |     expect(r.requests.length).toBe(3);
+                                    ^
+error: expect(received).toBe(expected)
+
+Expected: 3
+Received: 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/webQuiet.test.ts:148:31)
+(fail) A quiet web round is prodded, answered-now, then given the note (M14 FR33) > AC1: quiet, then a tool call, then answer [1.05ms]
+152 |     expect(r.events.some((e) => e.event === "sources")).toBe(true);
+153 |   });
+154 | 
+155 |   it("AC1: quiet twice, then answer; prods are in order", async () => {
+156 |     const r = await run(["quiet", "quiet", { answer: "late" }]);
+157 |     expect(r.requests.length).toBe(3);
+                                    ^
+error: expect(received).toBe(expected)
+
+Expected: 3
+Received: 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/webQuiet.test.ts:157:31)
+(fail) A quiet web round is prodded, answered-now, then given the note (M14 FR33) > AC1: quiet twice, then answer; prods are in order [1.05ms]
+167 |     const rounds: Round[] = ["quiet", "quiet"];
+168 |     for (let i = 0; i < 10; i++) rounds.push("tool");
+169 |     rounds.push({ answer: "after cap" });
+170 |     const r = await run(rounds);
+171 |     // 2 quiet + 10 tool rounds + 1 after-cap round
+172 |     expect(r.requests.length).toBe(13);
+                                    ^
+error: expect(received).toBe(expected)
+
+Expected: 13
+Received: 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/webQuiet.test.ts:172:31)
+(fail) A quiet web round is prodded, answered-now, then given the note (M14 FR33) > AC1: prods do not count toward the 10-call cap [0.89ms]
+176 |     expect(steps(r.events).filter((x) => x.kind === "search" && x.status === "done").length).toBe(10);
+177 |   });
+178 | 
+179 |   it("AC2: quiet three times -> answer-now round without tools, then answer", async () => {
+180 |     const r = await run(["quiet", "quiet", "quiet", { answer: "forced" }]);
+181 |     expect(r.requests.length).toBe(4);
+                                    ^
+error: expect(received).toBe(expected)
+
+Expected: 4
+Received: 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/webQuiet.test.ts:181:31)
+(fail) A quiet web round is prodded, answered-now, then given the note (M14 FR33) > AC2: quiet three times -> answer-now round without tools, then answer [0.91ms]
+189 |     expect(steps(r.replay)).toEqual(s);
+190 |   });
+191 | 
+192 |   it("AC2: quiet after the answer-now round ends with the exact note", async () => {
+193 |     const r = await run(["quiet", "quiet", "quiet", "quiet"]);
+194 |     expect(r.requests.length).toBe(4);
+                                    ^
+error: expect(received).toBe(expected)
+
+Expected: 4
+Received: 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/webQuiet.test.ts:194:31)
+(fail) A quiet web round is prodded, answered-now, then given the note (M14 FR33) > AC2: quiet after the answer-now round ends with the exact note [0.96ms]
+204 |     for (let i = 0; i < 10; i++) rounds.push("tool");
+205 |     rounds.push("quiet");
+206 |     const r = await run(rounds);
+207 |     expect(r.requests.length).toBe(11);
+208 |     expect(r.done.status).toBe("complete");
+209 |     expect(contentOf(r.events)).toBe(NOTE);
+                                      ^
+error: expect(received).toBe(expected)
+
+Expected: "No answer was produced — the model stopped without answering. Try asking again."
+Received: ""
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/webQuiet.test.ts:209:33)
+(fail) A quiet web round is prodded, answered-now, then given the note (M14 FR33) > AC2: quiet after the 10-call cap ends with the note, steps and sources [1.82ms]
+117 |     s.server.stop(true);
+118 |   }
+119 | }
+120 | 
+121 | const steps = (events: ReturnType<typeof parseSSE>) => events.filter((e) => e.event === "step").map((e) => JSON.parse(e.data));
+122 | const lastMsg = (req: any) => req.messages[req.messages.length - 1];
+                                    ^
+TypeError: undefined is not an object (evaluating 'req.messages')
+      at lastMsg (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/webQuiet.test.ts:122:31)
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/webQuiet.test.ts:229:20)
+(fail) A quiet web round is prodded, answered-now, then given the note (M14 FR33) > AC3: prod text never reaches events or the next request [1.08ms]
+(fail) A quiet web round is prodded, answered-now, then given the note (M14 FR33) > AC3: Stop during a prodded round ends cancelled with no note [5003.16ms]
+  ^ this test timed out after 5000ms.
+
+ 1 pass
+ 10 fail
+ 14 expect() calls
+Ran 11 tests across 1 file. [5.03s]
