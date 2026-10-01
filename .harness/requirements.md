@@ -34,6 +34,13 @@ about half the screen width, with its text running out of the bubble over "Sourc
 model name. It was squeezed from the first streamed word and stayed broken after reopening the chat.
 A table answer three minutes later (22:35) rendered at full width with its row cards intact.
 
+**No-answer web reply fix (FR33, added 2026-10-01):** the owner's phone (20:15, model
+nemotron3:33b, web switch on) showed a reply with 7 web steps and 14 sources but no answer text —
+only thinking ending "Let's try to read that page." The model said it would read a page but made no
+tool call and wrote no answer; the server's tool loop (`server/src/generations/manager.ts`, `if
+(!offered || roundCalls.length === 0) break;`) took that round as the final answer and ended the
+reply "complete" and empty, contrary to FR19's "runs the tool loop to the model's final answer".
+
 ## Functional Requirements
 
 - [FR1] **Model list.** The app lists every model installed in Ollama (`GET /api/tags`) by its
@@ -203,6 +210,25 @@ A table answer three minutes later (22:35) rendered at full width with its row c
   name always sit below the answer text and never overlap it or any other text. The cause of the
   2026-09-30 22:32 squeezed/overflowing answer is diagnosed and covered by a test. No change to what
   the model is told, to the server, or to the FR29 card layout beyond keeping it inside the bubble.
+- [FR33] **A web reply always ends with an answer.** Applies to web replies only (switch on); a
+  reply with the switch off is unchanged. A model round "goes quiet" when it ends with no answer
+  text (empty or whitespace-only content) and no tool call; thinking does not count as an answer.
+  (a) When a round goes quiet while the tools are still offered (fewer than 10 tool calls used),
+  the server prods the model to carry on — tools still offered, so it may search, read or answer —
+  at most **2 prods per reply**. The prod is a server-side message (wording the server's choice: it
+  says no answer has been given yet and to call a tool if more information is needed, otherwise to
+  write the final answer now). (b) A quiet round after both prods are used gets one final round
+  with the tools withdrawn and the model told to answer from what it already has — the same as the
+  FR19 after-cap round. (c) If a round with the tools withdrawn (after the cap or after (b)) goes
+  quiet, the reply's answer text is the note "No answer was produced — the model stopped without
+  answering. Try asking again." and the reply ends `complete` with its steps and sources saved as
+  usual (FR22/FR23). (d) Each prod appears as a web step "Asked the model to continue", and the
+  tools-withdrawn round of (b) as "Asked the model to answer now"; these steps stream live, are
+  saved with the reply, and show again when it is reopened or resumed. (e) Prod messages are part
+  of that reply's tool loop only: they are not saved in the conversation and not sent with later
+  prompts. (f) FR9/FR11/FR23 stop and resume, FR24 time limits, and the FR19 10-call cap are
+  unchanged; prods do not count as tool calls. A round with answer text is the final answer as
+  before.
 
 ## Acceptance Criteria
 
@@ -294,6 +320,20 @@ All proven against the live Mac Studio and Ollama, not mocks.
     answer text; existing FR26-FR31 rendering tests pass unchanged. Plus the owner's phone
     screenshot of a new web answer (after the phone has loaded the new code) showing the answer
     full width, entirely inside its bubble, with "Sources (n)" and the model name below it.
+27. **AC27** — Server tests with a scripted fake Ollama (a real model cannot be made to go quiet on
+    demand; agreed with the owner 2026-10-01) prove FR33: a round shaped like the 2026-10-01 20:15
+    screenshot (`.harness/evidence/FR33-owner-phone-no-answer-2026-10-01-2015.png`: thinking only,
+    no content, no tool call, tools offered) is followed by a prod with tools still offered; quiet
+    once then answer, quiet once then a tool call then answer, and quiet twice then answer each end
+    with that answer; quiet three times gives an "Asked the model to answer now" round with no tools
+    offered; a quiet tools-withdrawn round (after (b), and after the 10-call cap) ends `complete`
+    with the FR33 note as the answer text plus steps and sources; whitespace-only content counts as
+    quiet; prods are not counted toward the 10-call cap; a switch-off empty reply is unchanged; prod
+    messages do not appear in the saved conversation or in the next prompt's messages; Stop during a
+    prodded round cancels as before. App tests show the two new step lines live and in a reopened
+    saved reply. Live on the Mac: an ordinary web reply with the owner's usual model still completes
+    with steps, sources and an answer, and the existing M13 web-failure proof still passes. Plus the
+    owner retrying the transfer question from the screenshot on the phone (observation, not a gate).
 
 ## Constraints
 
@@ -500,6 +540,18 @@ All proven against the live Mac Studio and Ollama, not mocks.
   text in a "What's happening" card line with an empty "Source:" line, i.e. numbers with no read page
   (2 web steps) in a row missing a cell separator, which is FR29/FR31 behaviour as specified. Owner
   to decide separately whether either needs action.
+- **Quiet model is prodded to keep going, search still allowed** (human, 2026-10-01, "Let it keep
+  searching"): chosen over one tools-off nudge then a note, and over only showing a note with no
+  retry.
+- **At most 2 prods, then a tools-off answer round, then a note** (human, 2026-10-01, "Yes, 2
+  prods"): bounds a model that keeps going quiet without calling tools, which would otherwise never
+  reach the 10-call cap. Chosen over 1 or 3 prods.
+- **Prods shown as web steps** (human, 2026-10-01, "Show it as a step"): chosen over a server-only
+  hidden prod, so a longer reply explains itself.
+- Defaults chosen by Claude, shown to the owner and agreed (2026-10-01): FR33 is web-only;
+  whitespace-only content counts as no answer; prods are not saved or re-sent and do not count as
+  tool calls; the no-answer note wording and the step labels as written in FR33; the quiet case is
+  proven by scripted tests rather than live, with a live regression of ordinary web replies.
 
 ## Open Questions
 
