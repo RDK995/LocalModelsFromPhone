@@ -394,6 +394,8 @@ b48673499df9aa0d846bad7bbefe1548d57cb272 on m15-deep-research-skeleton
 - M15-T1 — Cheap (BOUNDED_LOW_RISK): attempt 1 PASS; verifier PASS (exit 0, `bun test src/ollama` 23 pass, typecheck clean; .harness/evidence/M15-T1-verifier.log).
 - M15-T2 — Top (ARCHITECTURE: research loop shape inside C6 across C7/C12 seams): attempt 4 PASS; verifier PASS (exit 0, `bun test && bun run typecheck` 207 pass 0 fail, tsc clean; files within allowed list; tests not weakened; .harness/evidence/M15-T2-verifier.log, worker log .harness/evidence/M15-T2-worker.log). Adds runResearch() in server/src/generations/research.ts, C12 search()/read() helpers and step kinds plan/write.
 - M15-T3 — Mid (ORDINARY_IMPLEMENTATION): attempt 3 PASS; verifier PASS (exit 0 run without a pipe, `bun test && bun run typecheck` 209 pass 0 fail across 12 files, tsc clean; files within allowed list incl. additive shared/api.ts; tests not weakened; .harness/evidence/M15-T3-verifier.log). Commit 20230d5.
+- M15-T4 (cycle 1, F1) — Mid (ORDINARY_IMPLEMENTATION): attempt 3 PASS; verifier PASS (exit 0, 211 pass, tsc clean; .harness/evidence/M15-T4-verifier.log). Commit 30003f2. Tests: "a sub-question that runs out of new queries before minSearches still reads its collected results (every step fails)", "a later sub-question whose proposed queries were all run earlier still reads from its own search results" (default minSearches 2).
+- M15-T5 (cycle 1, F2-F4) — Cheap (BOUNDED_LOW_RISK): attempt 1 FAIL (tests green but redirect case missing and distinctness assertions vacuous; judged against packet), attempt 2 PASS; verifier PASS (exit 0, 217 pass, tsc clean; removing the readNumbers guard makes the redirect test fail, 4 vs 2 note steps; .harness/evidence/M15-T5-verifier.log). Commit f1e2785. AC4 distinctness tests: "reads a page only once when it appears in multiple search results across sub-questions", "does not create duplicate notes when a read redirects to an already-read page".
 - Criteria mapping (worker/verifier evidence, for the reviewer to confirm): M15-AC1 -> research.test.ts "runs brief -> plan -> searches -> reads -> notes -> gap -> write..." and deepResearch.test.ts (POST /v1/chat + SSE: step order, sources first-read numbering, done complete); M15-AC2 -> research.test.ts "every request is a narrow, schema-constrained request...", gap-check enough:true/enough:false/repeat-only cap tests, deepResearch.test.ts Ollama body checks; M15-AC3 -> research.test.ts malformed-retry, fail-every-step, and page-text-injection tests; M15-AC4 -> research.test.ts citation/URL/quote-removal test and deepResearch.test.ts cleaned final content.
 
 ### Validation
@@ -404,10 +406,13 @@ b48673499df9aa0d846bad7bbefe1548d57cb272 on m15-deep-research-skeleton
 
 - Cycle 1: CHANGES REQUIRED, scope SUBSTANTIVE (.harness/reviews/M15-cycle1.md; validation re-run .harness/evidence/M15-review.log, 209 pass, tsc clean). Diff reviewed: b48673499df9aa0d846bad7bbefe1548d57cb272..7034424. Per criterion: AC1 PASS, AC2 PASS, AC3 PASS, AC4 FAIL. Findings: F1 IMPORTANT, F2 IMPORTANT, F3 OPTIONAL, F4 OPTIONAL.
   - Pre-correction: 703442411430b4f3e3ea7b84591e2b99da031ba5
+  - Corrections: F1 -> M15-T4 (commit 30003f2); F2, F3, F4 -> M15-T5 (commit f1e2785). Validation after corrections: verifier exit 0, 217 pass, 0 fail, tsc clean (.harness/evidence/M15-T5-verifier.log).
+  - Correction diff: `git diff 703442411430b4f3e3ea7b84591e2b99da031ba5 HEAD`. Files changed (code): server/src/generations/research.ts, server/src/generations/research.test.ts; plus .harness/ records, packets and evidence only.
+  - Files outside those the findings named: none (Findings 1-4 all name research.ts / research.test.ts).
 
 ### Review Cycles
 
-0
+1
 
 ### Follow-ups
 
