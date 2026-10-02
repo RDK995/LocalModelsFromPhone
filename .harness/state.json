@@ -12139,7 +12139,7 @@
               "result": "PASS",
               "verifier": "PASS",
               "evidence": ".harness/evidence/M19g-T1-verifier.log",
-              "commit": null
+              "commit": "f192286"
             }
           ]
         },
@@ -12161,7 +12161,29 @@
               "result": "PASS (return not captured; previous orchestrator cut off)",
               "verifier": "PASS",
               "evidence": ".harness/evidence/M19g-T2-verifier.log",
-              "commit": null
+              "commit": "fc244b0"
+            }
+          ]
+        },
+        {
+          "id": "M19g-T3",
+          "title": "server logs deep_research_run_end with notes_kept; ac29-live-run records it",
+          "packet": ".harness/tasks/M19g-T3.md",
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "one additive structured log line beside the FR41 logger plus script read; fake-Ollama test oracle"
+          },
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M19g-T3-verifier.log",
+              "commit": "897de7e"
             }
           ]
         }
@@ -12169,14 +12191,17 @@
       "reviews": [],
       "findings": [],
       "validation": [],
-      "follow_ups": [],
+      "follow_ups": [
+        "deep_research_run_end is written only on the normal path to done; a cancelled or errored run writes none (notes_kept null for those runs)."
+      ],
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
       ],
       "ordering_decision": "Human decision 2026-10-02: build fast deep research (FR41-FR45) before M20; M20 and M21 stay TODO after M19b-M19h; M5a stays BLOCKED and parked, its record unchanged.",
       "planning_notes": [
         "AC29's three 'real research-style questions' are not fixed by requirements; chosen at planning 2026-10-02: (1) the M16 Raft vs Paxos question, (2) LFP vs NMC home batteries, (3) WebAssembly component model. The heat-pump question text was recovered verbatim from the 2026-10-02 Claude session that sent it (POST /v1/chat): 'How do heat pumps compare with gas boilers for heating a typical UK home in 2026? Cover running costs, installation costs, grants available and how well they work in cold weather.'",
-        "Shape/size check: 2 criteria, both through real entry points (Ollama /api/chat probe, server POST /v1/chat); one signal IMPLEMENTATION_PLUS_LIVE_PROOF, seam check: the only implementation is an evidence-capture script, not production code - not split."
+        "Shape/size check: 2 criteria, both through real entry points (Ollama /api/chat probe, server POST /v1/chat); one signal IMPLEMENTATION_PLUS_LIVE_PROOF, seam check: the only implementation is an evidence-capture script, not production code - not split.",
+        "2026-10-02 continuation 1: T2 found the server exposes no notes count, which AC2 requires recorded; T3 adds one additive log line (deep_research_run_end: notes_kept, pages_read, status, elapsed_ms) in research.ts - a small production change against the Outcome's 'no production change expected'; not an architecture deviation (no boundary, technology or ownership change). The server must be restarted again onto this code before the live AC29 runs (T4)."
       ]
     },
     "M19h": {

@@ -509,6 +509,8 @@ Pending.
 
 - T1 — restart + FR35 format probe   Cheap (haiku), attempt 1, PASS; verifier PASS (re-ran probe, exit 0). com.harness.server pid 2034 -> 2057 started 2026-10-02 21:08:52, after last server/ commit 30043cc (20:37 +01:00); health 401. Probe `--calls 5` runs max(5,7)=7 calls, one per step: think-off validity 7/7 (100%), think-on 7/7. M19g-AC1: .harness/evidence/M19g-T1-probe.log, M19g-T1-probe.json, M19g-T1-restart.log, M19g-T1-verifier.log.
 - T2 — ac29-live-run script         Mid (sonnet), attempt 3, PASS (worker return not captured: previous orchestrator cut off); verifier PASS: `bun test scripts/ac29-live-run.test.ts` 11 pass; `bun test && bun run typecheck` 360 pass, exit 0; `--check-only ../.harness/evidence/M16-T5-stream.txt --log /dev/null` cited_read_pages 4, unresolved [] (matches M16-T5-check.json). FR41 lines carry no run id or timestamp; selected by server.log byte offset from before POST to after `done`. Budget 480 s (server/src/generations/research.ts:106), margin 60 s. Gap: `notes_kept` is null - the server exposes no notes count; addressed by T3. .harness/evidence/M19g-T2-verifier.log.
+- T3 — notes-kept log line          Mid (sonnet), attempt 3, PASS; verifier PASS: ac29 test 14 pass; `bun test && bun run typecheck` 364 pass, exit 0; check-only exit 0, cited_read_pages 4, unresolved []. Additive `{"event":"deep_research_run_end","notes_kept","pages_read","status","elapsed_ms"}` logged before `done` (research.ts:1112, logRunEnd); test in server/src/http/deepResearchModelCalls.test.ts; ac29-live-run takes notes_kept from it. A small production change against the Outcome's "no production change expected" - not an architecture deviation (no boundary, technology or ownership change). .harness/evidence/M19g-T3-verifier.log.
+- Remaining: T4 - restart com.harness.server onto this code (T3 changed server/src), then run AC29 q1, q2, q3, heat live with ac29-live-run (packet .harness/tasks/M19g-T4.md), record per-run figures against M19g-AC2.
 
 ### Validation
 
@@ -521,6 +523,8 @@ Pending.
 0
 
 ### Follow-ups
+
+- `deep_research_run_end` is written only on the normal path to `done`; a cancelled or errored run writes none (notes_kept null for those runs).
 
 
 ## M19h — On the phone, a deep research reply rides out airplane mode and its clock never stalls
