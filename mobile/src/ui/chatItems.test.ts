@@ -545,6 +545,22 @@ describe("deep research items", () => {
     expect(item && "research" in item).toBe(false);
   });
 
+  it("AC3.3: a reopened deep research message with empty content builds items with steps and 'Sources (n)' without throwing", () => {
+    // Stopped deep research message: no content, but has steps and sources
+    const stoppedMessage = assistantMessage("a1", "", { steps: researchSteps, sources, status: "stopped" });
+
+    // Should not throw
+    const items = buildChatItems([stoppedMessage], null);
+    const [item] = items;
+
+    // Should have the steps and sources
+    expect(item?.steps).toEqual(researchSteps);
+    expect(item?.sources).toEqual(sources);
+    expect(item?.content).toBe("");
+    expect(sourceListHeader(item?.sources ?? [])).toBe("Sources (2)");
+    expect(item?.streaming).toBe(false);
+  });
+
   it("a streaming item exposes the live clock label from the latest clock", () => {
     const pending: PendingTurn = {
       userMessageId: "u",

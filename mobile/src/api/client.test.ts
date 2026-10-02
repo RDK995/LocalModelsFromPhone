@@ -1666,6 +1666,175 @@ describe("APIClient dropped-connection resume (FR11)", () => {
     expect(acc.content).toBe("Cats purr.");
     expect(acc.sources).toEqual([{ title: "A", url: "https://a", n: 1 }]);
   });
+
+  it("(m) AC3.4: a drop mid deep research resumes and delivers every step (with elapsed_ms) and the report exactly once, no gaps or duplicates, ending with research status", async () => {
+    const initial = resumableSseResponse({ generationId: "gen-dr" });
+    const resumed = resumableSseResponse({ generationId: "gen-dr" });
+    const clock = fakeClock();
+
+    const fetchMock = sequentialFetch([
+      () => initial.response,
+      () => resumed.response,
+    ]);
+
+    const client = new APIClient(BASE_URL, fetchMock as unknown as FetchImpl, {
+      sleep: clock.sleep,
+      now: clock.now,
+    });
+    client.setToken("t");
+
+    const events: StreamEvent[] = [];
+    const errors: Error[] = [];
+    let completeCount = 0;
+
+    const chatPromise = client.chat(
+      { model: "m", messages: [{ role: "user", content: "research x" }], deep_research: true, web: true },
+      {
+        onEvent: (event) => events.push(event),
+        onError: (e) => errors.push(e),
+        onComplete: () => {
+          completeCount += 1;
+        },
+      }
+    );
+
+    await waitFor(() => fetchMock.calls.length >= 1, "initial chat request");
+
+    // Send deep research steps with elapsed_ms and budget_ms
+    initial.push(
+      sseEvent("gen-dr-1", "step", {
+        step_id: "p",
+        kind: "plan",
+        status: "started",
+        elapsed_ms: 0,
+        budget_ms: 480000,
+      })
+    );
+    initial.push(
+      sseEvent("gen-dr-2", "step", {
+        step_id: "p",
+        kind: "plan",
+        status: "done",
+        elapsed_ms: 1000,
+        budget_ms: 480000,
+      })
+    );
+    initial.push(
+      sseEvent("gen-dr-3", "step", {
+        step_id: "s1",
+        kind: "search",
+        status: "done",
+        query: "test query",
+        elapsed_ms: 2000,
+        budget_ms: 480000,
+      })
+    );
+    await waitFor(() => events.length === 3, "plan and search steps delivered");
+
+    // Drop the stream mid-reply
+    initial.fail();
+    await waitFor(() => clock.sleeps.length === 1, "backoff wait requested");
+    clock.release();
+    await waitFor(() => fetchMock.calls.length === 2, "resume GET request");
+
+    const resumeCall = fetchMock.calls[1]!;
+    expect(resumeCall.url).toBe(`${BASE_URL}/v1/generations/gen-dr/events`);
+    const resumeHeaders = resumeCall.init?.headers as Record<string, string>;
+    expect(resumeHeaders["Last-Event-ID"]).toBe("gen-dr-3");
+
+    // Resumed stream re-sends seq 3 and continues with new events
+    resumed.push(
+      sseEvent("gen-dr-3", "step", {
+        step_id: "s1",
+        kind: "search",
+        status: "done",
+        query: "test query",
+        elapsed_ms: 2000,
+        budget_ms: 480000,
+      })
+    );
+    resumed.push(
+      sseEvent("gen-dr-4", "step", {
+        step_id: "r1",
+        kind: "read",
+        status: "done",
+        url: "https://example.com/page",
+        elapsed_ms: 3000,
+        budget_ms: 480000,
+      })
+    );
+    resumed.push(
+      sseEvent("gen-dr-5", "step", {
+        step_id: "w",
+        kind: "write",
+        status: "started",
+        elapsed_ms: 360000,
+        budget_ms: 480000,
+      })
+    );
+    resumed.push(
+      sseEvent("gen-dr-6", "step", {
+        step_id: "w",
+        kind: "write",
+        status: "done",
+        elapsed_ms: 400000,
+        budget_ms: 480000,
+      })
+    );
+    resumed.push(sseEvent("gen-dr-7", "content", { text: "Research report [1]." }));
+    resumed.push(
+      sseEvent("gen-dr-8", "sources", {
+        items: [{ title: "Example", url: "https://example.com/page", n: 1 }],
+      })
+    );
+    resumed.push(
+      sseEvent("gen-dr-9", "done", {
+        status: "complete",
+        model: "m",
+        eval_count: 5,
+        tokens_per_second: 1,
+        research: { status: "partial", elapsed_ms: 400000, budget_ms: 480000 },
+      })
+    );
+
+    await chatPromise;
+
+    expect(errors).toEqual([]);
+    expect(completeCount).toBe(1);
+    expect(fetchMock.calls.length).toBe(2);
+
+    // Verify all events delivered exactly once, in order
+    expect(events.map((e) => e.type)).toEqual([
+      "step",
+      "step",
+      "step",
+      "step",
+      "step",
+      "step",
+      "content",
+      "sources",
+      "done",
+    ]);
+
+    const acc = events.reduce(applyStreamEvent, initialStreamAccumulator);
+
+    // Verify all steps are present with elapsed_ms, no duplicates
+    // (write step appears with started and done but accumulator keeps final status per step_id)
+    expect(acc.steps).toHaveLength(4);
+    expect(acc.steps.map((s) => [s.step_id, s.kind, s.status, s.elapsed_ms])).toEqual([
+      ["p", "plan", "done", 1000],
+      ["s1", "search", "done", 2000],
+      ["r1", "read", "done", 3000],
+      ["w", "write", "done", 400000],
+    ]);
+
+    // Verify content and sources
+    expect(acc.content).toBe("Research report [1].");
+    expect(acc.sources).toEqual([{ title: "Example", url: "https://example.com/page", n: 1 }]);
+
+    // Verify research status from done event
+    expect(acc.research).toEqual({ status: "partial", elapsed_ms: 400000, budget_ms: 480000 });
+  });
 });
 
 describe("APIClient foreground resume (M4c, FR11/AC M4-AC3)", () => {

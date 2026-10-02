@@ -939,3 +939,175 @@ describe("sendInConversation: deep research run persistence (M18-T3)", () => {
     expect("research" in (await store.get(c.id))!.messages[1]!).toBe(false);
   });
 });
+
+describe("sendInConversation: deep research saving and stop (M19)", () => {
+  function drClient(
+    resident: string,
+    respond: () => Response,
+    bodies: Array<{ messages: Array<Record<string, unknown>> }>
+  ): APIClient {
+    const fetchMock = mock(async (url: string, init?: RequestInit) => {
+      if (url.endsWith("/v1/state")) {
+        return stateResponse({ name: resident }, [{ name: resident, size_bytes: 1, tools: true }], "qwen");
+      }
+      if (url.endsWith("/v1/chat")) {
+        bodies.push(JSON.parse(init!.body as string));
+        return respond();
+      }
+      throw new Error(`unexpected request: ${url}`);
+    });
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+    return client;
+  }
+
+  it("AC3.1: saves a deep research reply with report as content, steps, sources and research status; no page text or notes", async () => {
+    const storage = createMemoryStorage();
+    const store = createConversationStore(storage);
+    const c = await store.create();
+    await store.setWebSearch(c.id, true);
+    const bodies: Array<{ messages: Array<Record<string, unknown>> }> = [];
+    const client = drClient("qwen", () => {
+      const s = controlledSseResponse("gen-dr");
+      const step = (id: string, kind: string, status: string, extra: Record<string, unknown>, elapsed: number) =>
+        s.push(
+          `event: step\ndata: ${JSON.stringify({ step_id: id, kind, status, ...extra, elapsed_ms: elapsed, budget_ms: 480000 })}\n\n`
+        );
+      step("p", "plan", "started", {}, 0);
+      step("p", "plan", "done", {}, 1000);
+      step("s1", "search", "done", { query: "question 1" }, 2000);
+      step("r1", "read", "done", { url: "https://example.com/page1" }, 3000);
+      step("w", "write", "started", {}, 360000);
+      step("w", "write", "done", {}, 400000);
+      s.push("event: sources\ndata: {\"items\":[{\"title\":\"Example Page\",\"url\":\"https://example.com/page1\",\"n\":1}]}\n\n");
+      s.push("event: content\ndata: {\"text\":\"Research report with [1] citation.\"}\n\n");
+      s.push(
+        "event: done\ndata: {\"status\":\"complete\",\"model\":\"qwen\",\"eval_count\":1,\"tokens_per_second\":1,\"research\":{\"status\":\"partial\",\"elapsed_ms\":400000,\"budget_ms\":480000}}\n\n"
+      );
+      s.close();
+      return s.response;
+    }, bodies);
+
+    await sendInConversation(client, store, c.id, "research question", newCallbacks().callbacks, {
+      deepResearch: true,
+    });
+
+    const reply = (await store.get(c.id))!.messages[1]!;
+    expect(reply.content).toBe("Research report with [1] citation.");
+    expect(reply.steps).toEqual([
+      { step_id: "p", kind: "plan", status: "done", elapsed_ms: 1000, budget_ms: 480000 },
+      { step_id: "s1", kind: "search", status: "done", query: "question 1", elapsed_ms: 2000, budget_ms: 480000 },
+      { step_id: "r1", kind: "read", status: "done", url: "https://example.com/page1", elapsed_ms: 3000, budget_ms: 480000 },
+      { step_id: "w", kind: "write", status: "done", elapsed_ms: 400000, budget_ms: 480000 },
+    ]);
+    expect(reply.sources).toEqual([
+      { title: "Example Page", url: "https://example.com/page1", n: 1 },
+    ]);
+    expect(reply.research).toEqual({ status: "partial", elapsed_ms: 400000, budget_ms: 480000 });
+    expect(reply.status).toBe("complete");
+
+    // Assert only valid Message fields are stored
+    const allowed = new Set([
+      "id", "role", "content", "thinking", "model", "status",
+      "generation_id", "last_seq", "steps", "sources", "research",
+    ]);
+    for (const key of Object.keys(reply)) {
+      expect(allowed.has(key)).toBe(true);
+    }
+
+    // Verify reopening from fresh store returns same data
+    const reopened = (await createConversationStore(storage).get(c.id))!.messages[1];
+    expect(reopened).toEqual(reply);
+  });
+
+  it("AC3.2: the next send includes the report with sources appended, following FR23 history rule", async () => {
+    const store = createConversationStore(createMemoryStorage());
+    const c = await store.create();
+    await store.setWebSearch(c.id, true);
+    const bodies: Array<{ messages: Array<Record<string, unknown>> }> = [];
+
+    const client = drClient("qwen", () => {
+      const s = controlledSseResponse("gen-dr");
+      const step = (id: string, kind: string, status: string, extra: Record<string, unknown>, elapsed: number) =>
+        s.push(
+          `event: step\ndata: ${JSON.stringify({ step_id: id, kind, status, ...extra, elapsed_ms: elapsed, budget_ms: 480000 })}\n\n`
+        );
+      step("p", "plan", "done", {}, 1000);
+      step("s1", "search", "done", { query: "q" }, 2000);
+      step("r1", "read", "done", { url: "https://x.test/a" }, 3000);
+      step("w", "write", "done", {}, 400000);
+      s.push("event: sources\ndata: {\"items\":[{\"title\":\"X\",\"url\":\"https://x.test/a\",\"n\":1},{\"title\":\"Y\",\"url\":\"https://y.test/b\",\"n\":2}]}\n\n");
+      s.push("event: content\ndata: {\"text\":\"Report [1] and [2].\"}\n\n");
+      s.push(
+        "event: done\ndata: {\"status\":\"complete\",\"model\":\"qwen\",\"eval_count\":1,\"tokens_per_second\":1,\"research\":{\"status\":\"partial\",\"elapsed_ms\":400000,\"budget_ms\":480000}}\n\n"
+      );
+      s.close();
+      return s.response;
+    }, bodies);
+
+    // First send: deep research
+    await sendInConversation(client, store, c.id, "research x", newCallbacks().callbacks, {
+      deepResearch: true,
+    });
+    bodies.length = 0;
+
+    // Second send: plain message to verify history
+    await sendInConversation(client, store, c.id, "follow-up", newCallbacks().callbacks);
+
+    // Check that the second send includes the report with sources appended
+    expect(bodies[0].messages).toEqual([
+      { role: "user", content: "research x" },
+      {
+        role: "assistant",
+        content: "Report [1] and [2].\n\nSources:\n[1] X — https://x.test/a\n[2] Y — https://y.test/b",
+      },
+      { role: "user", content: "follow-up" },
+    ]);
+  });
+
+  it("AC3.3: a second-Stop stream is saved with status stopped, empty content, steps and sources; reopens from fresh store", async () => {
+    const storage = createMemoryStorage();
+    const store = createConversationStore(storage);
+    const c = await store.create();
+    await store.setWebSearch(c.id, true);
+    const bodies: Array<{ messages: Array<Record<string, unknown>> }> = [];
+
+    const client = drClient("qwen", () => {
+      const s = controlledSseResponse("gen-dr-stopped");
+      const step = (id: string, kind: string, status: string, extra: Record<string, unknown>, elapsed: number) =>
+        s.push(
+          `event: step\ndata: ${JSON.stringify({ step_id: id, kind, status, ...extra, elapsed_ms: elapsed, budget_ms: 480000 })}\n\n`
+        );
+      // Server sends steps and sources but no content, and done with status "cancelled"
+      step("p", "plan", "done", {}, 1000);
+      step("s1", "search", "done", { query: "q" }, 2000);
+      s.push("event: sources\ndata: {\"items\":[{\"title\":\"Z\",\"url\":\"https://z.test/c\",\"n\":1}]}\n\n");
+      s.push(
+        "event: done\ndata: {\"status\":\"cancelled\",\"model\":\"qwen\",\"eval_count\":0,\"tokens_per_second\":0}\n\n"
+      );
+      s.close();
+      return s.response;
+    }, bodies);
+
+    await sendInConversation(client, store, c.id, "stopped research", newCallbacks().callbacks, {
+      deepResearch: true,
+    });
+
+    const reply = (await store.get(c.id))!.messages[1]!;
+    expect(reply.status).toBe("stopped");
+    expect(reply.content).toBe("");
+    expect(reply.steps).toEqual([
+      { step_id: "p", kind: "plan", status: "done", elapsed_ms: 1000, budget_ms: 480000 },
+      { step_id: "s1", kind: "search", status: "done", query: "q", elapsed_ms: 2000, budget_ms: 480000 },
+    ]);
+    expect(reply.sources).toEqual([
+      { title: "Z", url: "https://z.test/c", n: 1 },
+    ]);
+    // No research field for a stopped reply (done event has no research field)
+    expect("research" in reply).toBe(false);
+
+    // Verify reopening from fresh store returns same data
+    const reopened = (await createConversationStore(storage).get(c.id))!.messages[1];
+    expect(reopened).toEqual(reply);
+  });
+});
