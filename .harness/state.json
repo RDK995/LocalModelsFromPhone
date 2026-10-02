@@ -11324,10 +11324,10 @@
         "FR42"
       ],
       "traces": "AC31 (log line per call, warm-up num_ctx, think value per step, num_predict only on thinking-off steps, thinking text detected, routine cap, plan/write guard re-issue)",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
-      "baseline": null,
+      "baseline": "ba44206ef3b643d83f13119555c295b8baa6ed3a on m19b-model-call-logging-thinking-caps",
       "as_built": {
         "artifact": null,
         "result": "PENDING"

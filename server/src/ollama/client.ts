@@ -55,6 +55,7 @@ export interface OllamaGenerateRequest {
   prompt?: string;
   keep_alive?: number;
   stream?: boolean;
+  options?: { num_ctx?: number; [k: string]: unknown };
 }
 
 /**
@@ -196,8 +197,10 @@ export class OllamaClient {
   /**
    * Load a model: keep it resident indefinitely (I9/I10).
    */
-  async load(name: string): Promise<void> {
-    await this.generate({ model: name, keep_alive: -1 });
+  async load(name: string, options?: OllamaGenerateRequest["options"]): Promise<void> {
+    await this.generate(
+      options === undefined ? { model: name, keep_alive: -1 } : { model: name, keep_alive: -1, options }
+    );
   }
 
   /**

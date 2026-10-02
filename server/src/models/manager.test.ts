@@ -39,6 +39,7 @@ function psProcess(name: string): OllamaPsProcess {
 class FakeOllama implements ModelManagerOllama {
   psModels: OllamaPsProcess[] = [];
   calls: Array<{ op: "load" | "unload"; name: string }> = [];
+  loadOptions: Array<{ num_ctx?: number } | undefined> = [];
   loadImpl: (name: string) => Promise<void> = async () => {};
   unloadImpl: (name: string) => Promise<void> = async () => {};
   /** Injected latency so `tags()`/`ps()` really await, letting overlapping calls interleave. */
@@ -76,8 +77,9 @@ class FakeOllama implements ModelManagerOllama {
     return result;
   }
 
-  async load(name: string): Promise<void> {
+  async load(name: string, options?: { num_ctx?: number }): Promise<void> {
     this.calls.push({ op: "load", name });
+    this.loadOptions.push(options);
     await this.loadImpl(name);
     if (!this.psModels.some((m) => m.name === name)) {
       this.psModels.push(psProcess(name));
@@ -322,6 +324,16 @@ describe("ModelManager", () => {
       await waitUntilIdle(manager);
 
       expect(ollama.calls).toEqual([{ op: "load", name: "target" }]);
+    });
+
+    it("passes the research num_ctx only when loading the research model (FR41)", async () => {
+      const ollama = new FakeOllama({ models: [tagModel("research", 4), tagModel("other", 4)] }, { models: [] });
+      const manager = new ModelManager(ollama, new FakeGenerations(null), FAST_TIMING, { model: "research", numCtx: 9999 });
+      await manager.load("research");
+      await waitUntilIdle(manager);
+      await manager.load("other", { confirm: true });
+      await waitUntilIdle(manager);
+      expect(ollama.loadOptions).toEqual([{ num_ctx: 9999 }, undefined]);
     });
 
     it("state reports operation:loading while the load is held, then idle", async () => {

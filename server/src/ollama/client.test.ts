@@ -63,6 +63,25 @@ describe("OllamaClient load/unload", () => {
     }
   });
 
+  it("load(name, {num_ctx}) sends options in the body; load(name) does not", async () => {
+    const bodies: unknown[] = [];
+    const server = fakeOllamaHttp(async (req) => {
+      bodies.push(await req.json());
+      return new Response("{}", { headers: { "Content-Type": "application/json" } });
+    });
+    try {
+      const client = new OllamaClient(`http://127.0.0.1:${server.port}`);
+      await client.load("llama3", { num_ctx: 4096 });
+      await client.load("llama3");
+      expect(bodies).toEqual([
+        { model: "llama3", keep_alive: -1, options: { num_ctx: 4096 } },
+        { model: "llama3", keep_alive: -1 },
+      ]);
+    } finally {
+      server.stop(true);
+    }
+  });
+
   it("unload() sends POST /api/generate {model, keep_alive:0}", async () => {
     const bodies: unknown[] = [];
     const server = fakeOllamaHttp(async (req) => {

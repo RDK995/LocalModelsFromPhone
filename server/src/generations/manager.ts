@@ -17,7 +17,7 @@ import type {
 } from "../ollama/client";
 import { createWebTools, type WebEvent, type WebToolCall } from "../web/tools";
 import { createPageNumberer } from "../web/pageNumbers";
-import { DEFAULT_RESEARCH_SETTINGS, runResearch, type ResearchSettings, type ResearchWebTools } from "./research";
+import { DEFAULT_RESEARCH_SETTINGS, logModelCall, runResearch, type ModelCallLog, type ResearchSettings, type ResearchWebTools } from "./research";
 import type {
   ChatRequest,
   ContentEvent,
@@ -99,14 +99,23 @@ export class GenerationManager {
 
   private researchSettings: Partial<ResearchSettings>;
 
+  private log: (line: ModelCallLog) => void;
+
   constructor(
     ollamaClient: OllamaChatClient,
     webTools: GenerationWebTools & Partial<ResearchWebTools> = createWebTools(),
-    researchSettings: Partial<ResearchSettings> = {}
+    researchSettings: Partial<ResearchSettings> = {},
+    logModelCallLine: (line: ModelCallLog) => void = logModelCall
   ) {
+    this.log = logModelCallLine;
     this.ollamaClient = ollamaClient;
     this.webTools = webTools;
     this.researchSettings = researchSettings;
+  }
+
+  /** The num_ctx every deep research request uses (FR41); also sent when its model is loaded. */
+  researchNumCtx(): number {
+    return { ...DEFAULT_RESEARCH_SETTINGS, ...this.researchSettings }.numCtx;
   }
 
   /**
@@ -168,6 +177,7 @@ export class GenerationManager {
         signal,
         stopSignal: record.stopController?.signal,
         settings: this.researchSettings,
+        log: this.log,
       });
       for await (const event of events) {
         if (event.type === "done" || event.type === "error") {

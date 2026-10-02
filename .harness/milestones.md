@@ -424,7 +424,7 @@ Cycle 1: PASS — tier Mid (sonnet; highest substantive task tier Mid: T1 Mid, T
 
 ## M19b — Every deep research model call is logged, thinks only at plan and write, and is time-capped
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -448,6 +448,8 @@ Pending.
 - [ ] **M19b-AC4**: Server tests: a plan or write call whose thinking exceeds its guard (server settings, defaults about 30 s for plan and about 60 s for write, the write guard fitting inside the FR36 write reserve) is cancelled and re-issued once with `think: false`, never truncating an answer; if the re-issue also fails, FR35's skip and FR36's write-up rules apply and the run still ends `complete`, `partial` or `failed`.
 
 ### Baseline
+
+ba44206ef3b643d83f13119555c295b8baa6ed3a on m19b-model-call-logging-thinking-caps (tree clean apart from the owner's untracked research report files, left untracked; server baseline `bun test` 273 pass, typecheck clean)
 
 ### Evidence
 

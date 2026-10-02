@@ -23,7 +23,7 @@ import type {
 export interface ModelManagerOllama {
   tags(): Promise<OllamaTagsResponse>;
   ps(): Promise<OllamaPsResponse>;
-  load(name: string): Promise<void>;
+  load(name: string, options?: { num_ctx?: number }): Promise<void>;
   unload(name: string): Promise<void>;
   show(name: string): Promise<{ capabilities?: string[] }>;
 }
@@ -163,7 +163,9 @@ export class ModelManager {
   constructor(
     private ollama: ModelManagerOllama,
     private generations: ModelManagerGenerations,
-    timing: Partial<ModelManagerTiming> = {}
+    timing: Partial<ModelManagerTiming> = {},
+    /** FR41: loading this model sends the research num_ctx so the first research call keeps the runner. */
+    private research: { model?: string; numCtx?: number } = {}
   ) {
     this.timing = { ...DEFAULT_TIMING, ...timing };
   }
@@ -290,7 +292,11 @@ export class ModelManager {
         await this.waitUntilCleared(toUnload);
       }
 
-      await this.ollama.load(name);
+      if (this.research.model !== undefined && name === this.research.model && this.research.numCtx !== undefined) {
+        await this.ollama.load(name, { num_ctx: this.research.numCtx });
+      } else {
+        await this.ollama.load(name);
+      }
       this.loadedByServer = name;
       this.finish({ kind: "idle" });
     } catch (error) {

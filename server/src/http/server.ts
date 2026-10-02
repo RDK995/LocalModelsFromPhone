@@ -37,7 +37,7 @@ const DEFAULT_PORT = 7789;
 export interface OllamaStateClient extends OllamaChatClient {
   tags(): Promise<OllamaTagsResponse>;
   ps(): Promise<OllamaPsResponse>;
-  load(name: string): Promise<void>;
+  load(name: string, options?: { num_ctx?: number }): Promise<void>;
   unload(name: string): Promise<void>;
   show(name: string): Promise<{ capabilities?: string[] }>;
 }
@@ -417,7 +417,7 @@ export function createServer({
   researchModel = DEFAULT_RESEARCH_MODEL,
 }: CreateServerOptions): ReturnType<typeof Bun.serve> {
   const genManager = manager ?? new GenerationManager(ollama);
-  const modelManager = models ?? new ModelManager(ollama, genManager);
+  const modelManager = models ?? new ModelManager(ollama, genManager, {}, { model: researchModel, numCtx: genManager.researchNumCtx() });
 
   const routes: Route[] = [
     {

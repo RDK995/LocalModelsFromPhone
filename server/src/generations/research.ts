@@ -20,7 +20,7 @@
  * ready to be appended to a generation log: step, content, sources, done.
  */
 
-import type { OllamaChatRequest } from "../ollama/client";
+import type { OllamaChatRequest, OllamaChatResponse } from "../ollama/client";
 import type { ReadPage, SearchResult, StepEvent, WebEvent } from "../web/tools";
 import { createPageNumberer, pageUrlKey } from "../web/pageNumbers";
 import type { ContentEvent, DoneEvent, SourcesEvent, StepEventData } from "@shared/api";
@@ -89,6 +89,30 @@ export interface ResearchRunOptions {
   /** FR38 first Stop: cancel the research phase now and write a short `partial` report. */
   stopSignal?: AbortSignal;
   settings?: Partial<ResearchSettings>;
+  /** FR41: receives one line per model request sent; defaults to `logModelCall`. */
+  log?: (line: ModelCallLog) => void;
+}
+
+export type ModelStepName = "brief" | "plan" | "queries" | "pages" | "notes" | "gap" | "write";
+
+/** FR41: one deep research model request (one attempt of one step). */
+export interface ModelCallLog {
+  step: ModelStepName;
+  think: boolean | undefined;
+  attempt: number;
+  wall_ms: number;
+  load_duration: number | null;
+  prompt_eval_count: number | null;
+  prompt_eval_duration: number | null;
+  eval_count: number | null;
+  eval_duration: number | null;
+  thinking_chars: number;
+  outcome: "ok" | "invalid" | "error" | "aborted";
+}
+
+/** Default logger: one JSON line on stdout. */
+export function logModelCall(line: ModelCallLog): void {
+  console.log(JSON.stringify({ event: "deep_research_model_call", ...line }));
 }
 
 export const NO_REPORT_NOTE =
@@ -242,6 +266,7 @@ export function cleanReport(report: string, readNumbers: Set<number>): string {
 export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<ResearchEvent, void, unknown> {
   const s: ResearchSettings = { ...DEFAULT_RESEARCH_SETTINGS, ...opts.settings };
   const { model, question, client, webTools, signal, stopSignal } = opts;
+  const log = opts.log ?? logModelCall;
   const startTime = Date.now();
   let evalCount = 0;
   let evalDurationNs = 0;
@@ -334,6 +359,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
    * the validated value, or null once the retries are spent (step skipped).
    */
   async function modelStep<T>(
+    name: ModelStepName,
     task: string,
     userContent: string,
     schema: Schema,
@@ -353,29 +379,62 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
     for (let attempt = 0; attempt <= s.retries; attempt++) {
       checkDeadline();
       let content = "";
+      let outcome: ModelCallLog["outcome"] = "error";
+      let thinkingChars = 0;
+      let last: Partial<OllamaChatResponse> | null = null;
+      const sentAt = Date.now();
       try {
-        for await (const chunk of client.chat(structuredClone(request), phaseSignal())) {
-          checkDeadline();
-          if (chunk.message?.content) content += chunk.message.content;
-          if (chunk.done) {
-            if (typeof chunk.eval_count === "number") evalCount += chunk.eval_count;
-            if (typeof chunk.eval_duration === "number") evalDurationNs += chunk.eval_duration;
-            break;
+        try {
+          for await (const chunk of client.chat(structuredClone(request), phaseSignal())) {
+            checkDeadline();
+            if (chunk.message?.content) content += chunk.message.content;
+            if (chunk.message?.thinking) thinkingChars += chunk.message.thinking.length;
+            if (chunk.done) {
+              last = chunk;
+              if (typeof chunk.eval_count === "number") evalCount += chunk.eval_count;
+              if (typeof chunk.eval_duration === "number") evalDurationNs += chunk.eval_duration;
+              break;
+            }
           }
+        } catch (error) {
+          if (signal.aborted) {
+            outcome = "aborted";
+            throw error;
+          }
+          if (error instanceof PhaseTimeUp || phaseOver()) {
+            outcome = "aborted";
+            throw new PhaseTimeUp(); // never retried
+          }
+          continue; // counts as a failed attempt
         }
-      } catch (error) {
-        if (signal.aborted) throw error;
-        if (error instanceof PhaseTimeUp || phaseOver()) throw new PhaseTimeUp(); // never retried
-        continue; // counts as a failed attempt
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(content.trim());
+        } catch {
+          outcome = "invalid";
+          continue;
+        }
+        const value = isObj(parsed) ? validate(parsed) : null;
+        if (value !== null) {
+          outcome = "ok";
+          return value;
+        }
+        outcome = "invalid";
+      } finally {
+        log({
+          step: name,
+          think: request.think,
+          attempt: attempt + 1,
+          wall_ms: Date.now() - sentAt,
+          load_duration: last?.load_duration ?? null,
+          prompt_eval_count: last?.prompt_eval_count ?? null,
+          prompt_eval_duration: last?.prompt_eval_duration ?? null,
+          eval_count: last?.eval_count ?? null,
+          eval_duration: last?.eval_duration ?? null,
+          thinking_chars: thinkingChars,
+          outcome,
+        });
       }
-      let parsed: unknown;
-      try {
-        parsed = JSON.parse(content.trim());
-      } catch {
-        continue;
-      }
-      const value = isObj(parsed) ? validate(parsed) : null;
-      if (value !== null) return value;
     }
     return null;
   }
@@ -400,6 +459,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
       planOpen = true;
       yield step({ step_id: "plan", kind: "plan", status: "started" });
       const b = await modelStep(
+        "brief",
         "Restate the user's question as a short research brief (one to three sentences).",
         `Question:\n${question}`,
         SCHEMAS.brief,
@@ -407,6 +467,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
       );
       if (b) brief = b;
       const p = await modelStep(
+        "plan",
         `Split the brief into exactly ${s.subQuestionCount} distinct sub-questions to research on the web.`,
         context(`Question:\n${question}`),
         SCHEMAS.plan,
@@ -440,6 +501,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
               proposals++;
               const done = runQueries.length ? `Searches already run: ${runQueries.join(" | ")}` : "No searches run yet.";
               const r = await modelStep(
+                "queries",
                 "Propose web search queries (short, varied wording and angles) for the current sub-question.",
                 context(`${label}\n${done}`),
                 SCHEMAS.queries,
@@ -465,6 +527,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
             .map((c, i) => `${i + 1}. ${c.title}\n   ${c.url}\n   ${c.snippet}`)
             .join("\n");
           const picked = await modelStep(
+            "pages",
             `Choose up to ${remaining} search results worth reading for the current sub-question, by their number in the list.`,
             context(`${label}\nSearch results:\n${untrusted("search results", listing)}`),
             SCHEMAS.select,
@@ -490,6 +553,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
             readKeys.add(pageUrlKey(page.url));
             const pageText = normaliseText(page.text);
             const found = await modelStep(
+              "notes",
               `Record short notes from page [${n}] that help answer the current sub-question. ` +
                 "Each note has a quote copied exactly from the page text and a short claim it supports.",
               context(`${label}\nPage [${n}] (${page.title}):\n${untrusted(`page ${n}`, page.text)}`),
@@ -532,6 +596,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
           if (searches >= s.maxSearches) break;
 
           const gap = await modelStep(
+            "gap",
             "Decide whether the notes are enough to answer the current sub-question. If not, give one new search query.",
             context(`${label}\nSearches already run: ${runQueries.join(" | ")}`),
             SCHEMAS.gap,
@@ -570,6 +635,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
       yield step({ step_id: "write", kind: "write", status: "started" });
       try {
         written = await modelStep(
+          "write",
           "Write the final report answering the brief, using only the notes. Cite pages only as [n] using the note numbers. Do not include URLs.",
           context("Write the report now."),
           SCHEMAS.write,
