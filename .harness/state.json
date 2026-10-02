@@ -12093,7 +12093,7 @@
       "architecture": "C4, C6, C7, C11, C12, C13",
       "requirements": [],
       "traces": "AC32, AC29 (pass bar)",
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": "8fcf6b9ebabed670d86d3a1fd14cccc230977638 on m19g-live-mac-proof",
@@ -12117,7 +12117,26 @@
           "id": "M19g-AC2",
           "text": "Live on the Mac with com.harness.server restarted on this code and `qwen3.5:35b-a3b` resident: the AC29 question set (3 real research-style questions plus the 2026-10-02 heat-pump question) is run through the server API with FR41 logging, and per run the total wall time, research-phase model calls, distinct pages read, notes kept, planning time and routine-call p50/p95 are recorded in evidence; each run ends within the budget plus a small margin with status `complete` or `partial`, a report citing at least 3 distinct read pages, and no citation number that fails to resolve to a saved source. Speed figures are recorded, not gated (reference targets: routine p50 < 10 s, planning < 40 s).",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            ".harness/evidence/M19g-T6-restart.log",
+            ".harness/evidence/M19g-T7-q1-result.json",
+            ".harness/evidence/M19g-T7-q1-stream.txt",
+            ".harness/evidence/M19g-T7-q1-fr41.log",
+            ".harness/evidence/M19g-T7-q1-run.log",
+            ".harness/evidence/M19g-T7-q2-result.json",
+            ".harness/evidence/M19g-T7-q2-stream.txt",
+            ".harness/evidence/M19g-T7-q2-fr41.log",
+            ".harness/evidence/M19g-T7-q2-run.log",
+            ".harness/evidence/M19g-T7-q3-result.json",
+            ".harness/evidence/M19g-T7-q3-stream.txt",
+            ".harness/evidence/M19g-T7-q3-fr41.log",
+            ".harness/evidence/M19g-T7-q3-run.log",
+            ".harness/evidence/M19g-T7-heat-result.json",
+            ".harness/evidence/M19g-T7-heat-stream.txt",
+            ".harness/evidence/M19g-T7-heat-fr41.log",
+            ".harness/evidence/M19g-T7-heat-run.log",
+            ".harness/evidence/M19g-T7-verifier.log"
+          ]
         }
       ],
       "tasks": [
@@ -12230,11 +12249,101 @@
               "commit": "22c9a00"
             }
           ]
+        },
+        {
+          "id": "M19g-T6",
+          "title": "restart com.harness.server onto the T5 code; confirm no deep research generation in flight",
+          "packet": ".harness/tasks/M19g-T6.md",
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "one existing restart command under standing permission plus read-only checks"
+          },
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M19g-T7-verifier.log",
+              "commit": "c89e370",
+              "detail": "pid 3614 -> 4781, start 2026-10-02 21:56:12 +01:00, after last server/ commit 21:53:11 +01:00; health 401; qwen3.5:35b-a3b in ollama ps; no ac29-live-run before or after"
+            }
+          ]
+        },
+        {
+          "id": "M19g-T7",
+          "title": "run one AC29 question live through the server API (one worker per question: q1, q2, q3, heat, sequential)",
+          "packet": ".harness/tasks/M19g-T7.md",
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "existing tested evidence script, one foreground run per worker; settled by exit status and result JSON"
+          },
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "question": "q1",
+              "result": "PASS",
+              "verifier": "PASS (check-only exit 0)",
+              "evidence": ".harness/evidence/M19g-T7-q1-result.json",
+              "commit": "c89e370",
+              "detail": "87ff5544 complete 203.786 s, 12 research calls, 6 pages, 18 notes, planning 32.286 s, p50 3.051 / p95 14.142 s, cited 5, unresolved []"
+            },
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "question": "q2",
+              "result": "PASS",
+              "verifier": "PASS (check-only exit 0)",
+              "evidence": ".harness/evidence/M19g-T7-q2-result.json",
+              "commit": "c89e370",
+              "detail": "66430539 complete 205.175 s, 11 research calls, 5 pages, 13 notes, planning 32.625 s, p50 3.279 / p95 15.865 s, cited 5, unresolved []"
+            },
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "question": "q3",
+              "result": "PASS",
+              "verifier": "PASS (check-only exit 0)",
+              "evidence": ".harness/evidence/M19g-T7-q3-result.json",
+              "commit": "c89e370",
+              "detail": "273b488d complete 206.906 s, 12 research calls, 6 pages, 12 notes, planning 32.701 s, p50 3.859 / p95 17.495 s, cited 6, unresolved []"
+            },
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "question": "heat",
+              "result": "PASS",
+              "verifier": "PASS (check-only exit 0)",
+              "evidence": ".harness/evidence/M19g-T7-heat-result.json",
+              "commit": "c89e370",
+              "detail": "89391a29 complete 223.522 s, 11 research calls, 6 pages, 16 notes, planning 32.707 s, p50 4.911 / p95 18.605 s, cited 5, unresolved []"
+            }
+          ]
         }
       ],
       "reviews": [],
       "findings": [],
-      "validation": [],
+      "validation": [
+        {
+          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck && for id in q1 q2 q3 heat; do bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M19g-T7-$id-stream.txt --log ../.harness/evidence/M19g-T7-$id-fr41.log || exit 1; done",
+          "note": "reviewer runs once; the live runs themselves are not repeatable offline - their captured streams and FR41 logs are re-checked by --check-only",
+          "artifacts": [
+            ".harness/evidence/M19g-T5-verifier.log",
+            ".harness/evidence/M19g-T7-verifier.log"
+          ],
+          "status": "PENDING_REVIEWER_RUN"
+        }
+      ],
       "follow_ups": [
         "deep_research_run_end is written only on the normal path to done; a cancelled or errored run writes none (notes_kept null for those runs).",
         "The M19g-T5 write-instruction fix makes [n] citations likely but not guaranteed (depends on the model following the instruction); if the live re-run still yields uncited reports, the options (reject-and-retry beyond FR42's single re-issue, or server-inserted citations) are requirement changes for the human.",

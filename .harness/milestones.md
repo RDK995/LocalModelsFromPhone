@@ -480,7 +480,7 @@ C1, C2, C3
 
 ## M19g — Faster deep research proven live on the Mac
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -512,9 +512,22 @@ Pending.
 - T3 — notes-kept log line          Mid (sonnet), attempt 3, PASS; verifier PASS: ac29 test 14 pass; `bun test && bun run typecheck` 364 pass, exit 0; check-only exit 0, cited_read_pages 4, unresolved []. Additive `{"event":"deep_research_run_end","notes_kept","pages_read","status","elapsed_ms"}` logged before `done` (research.ts:1112, logRunEnd); test in server/src/http/deepResearchModelCalls.test.ts; ac29-live-run takes notes_kept from it. A small production change against the Outcome's "no production change expected" - not an architecture deviation (no boundary, technology or ownership change). .harness/evidence/M19g-T3-verifier.log.
 - T4 — restart + AC29 live runs      Cheap (haiku), attempt 1, INTERRUPTED (worker hit turn limit, no return); not accepted. Restart OK (pid 2057 -> 3614 at 21:41:38). q1 completed: status complete, 175.503 s, 11 research-phase calls, 5 pages read, 13 notes, planning 32.533 s, routine p50 2.723 s / p95 17.551 s - but the report had zero `[n]` citations (cited_read_pages 0, pass false). q2/q3/heat: HTTP 409 generation_in_flight, self-inflicted (launched while q1 was in flight; the packet's `while kill -0` wait is rejected by a harness hook). M19g-T4-summary.md's "duplicate process" cause is wrong; the worker killed an unidentified PID 82117. Evidence kept as diagnosis input only: .harness/evidence/M19g-T4-*.
 - T5 — fix uncited write re-issue     Top (opus), attempt 4, PASS (commit 22c9a00) - routed Top: AMBIGUOUS (unclear live bug); verifier PASS: regression test red on f5dcda6 research.ts (cited [] vs [1,2,3,4]), green after; `bun test` 365 pass, typecheck exit 0; check-only M16-T5 cited_read_pages 4, unresolved []. Cause: the write instruction only constrained citation form; the think:false re-issue after the 60 s write guard wrote uncited prose (reproduced against Ollama directly). Fix: write instruction requires a `[n]` on every sentence that uses a note, with an example using a real note number (research.ts write step only). .harness/evidence/M19g-T5-diagnosis.md, M19g-T5-verifier.log.
-- Remaining: T6 - restart com.harness.server onto the T5 code, then run AC29 q1, q2, q3, heat live, strictly one at a time, one question per worker (each run takes ~3-8 min; run it as a single foreground Bash call with timeout 600000, no while/until polling - a harness hook rejects it). Record per-run figures against M19g-AC2. T4's packet is superseded.
+- T6 — restart onto T5 code          Cheap (haiku), attempt 1, PASS; verifier PASS. com.harness.server pid 3614 -> 4781 started 2026-10-02 21:56:12 +01:00, after last server/ commit 21:53:11 +01:00 (HEAD 1015056, includes T5 22c9a00); health 401; qwen3.5:35b-a3b in `ollama ps`; no ac29-live-run before or after. .harness/evidence/M19g-T6-restart.log.
+- T7 — AC29 live runs, one worker per question, sequential (no overlap: 20:57:04Z-21:13:07Z, 37-44 s gaps)   Cheap (haiku), attempt 1 each, PASS; verifier PASS (each run log `exit=0`; `--check-only` on each stream + FR41 log exit 0, same pass-bar values). Budget 480 s, limit with margin 540 s. All `complete`, all `unresolved_citations []`:
+
+  | run | generation | wall s | research calls | pages read | notes kept | planning s | routine p50 / p95 s | cited read pages |
+  | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+  | q1 | 87ff5544 | 203.786 | 12 | 6 | 18 | 32.286 | 3.051 / 14.142 | 5 |
+  | q2 | 66430539 | 205.175 | 11 | 5 | 13 | 32.625 | 3.279 / 15.865 | 5 |
+  | q3 | 273b488d | 206.906 | 12 | 6 | 12 | 32.701 | 3.859 / 17.495 | 6 |
+  | heat | 89391a29 | 223.522 | 11 | 6 | 16 | 32.707 | 4.911 / 18.605 | 5 |
+
+  M19g-AC2: .harness/evidence/M19g-T7-<q1|q2|q3|heat>-{result.json,stream.txt,fr41.log,run.log}, M19g-T7-verifier.log. Commit c89e370.
+- M19g-AC1: T1 evidence above (think-off format validity 7/7).
 
 ### Validation
+
+- `cd server && bun test && bun run typecheck`, then for each of q1 q2 q3 heat `bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M19g-T7-<id>-stream.txt --log ../.harness/evidence/M19g-T7-<id>-fr41.log` - all exit 0 at task level (.harness/evidence/M19g-T5-verifier.log: 365 pass, typecheck exit 0; .harness/evidence/M19g-T7-verifier.log). The live runs are not repeatable offline; their captured streams and FR41 logs are re-checked. The reviewer re-runs this.
 
 ### Review
 
