@@ -1,0 +1,40 @@
+{
+  "stream_file": "../.harness/evidence/M19g-T7-q3-stream.txt",
+  "note": "check-only: total_wall_s taken from done.research.elapsed_ms (0 when absent)",
+  "budget_s": 480,
+  "total_wall_s": 206.9,
+  "planning_s": 32.701,
+  "research_phase_calls": 12,
+  "routine_calls": 13,
+  "routine_p50_s": 3.859,
+  "routine_p95_s": 17.495,
+  "fr41_lines": 17,
+  "distinct_pages_read": 6,
+  "notes_kept": 12,
+  "final_status": "complete",
+  "cited_read_pages": 6,
+  "unresolved_citations": [],
+  "checks": {
+    "status_ok": {
+      "ok": true,
+      "value": "complete"
+    },
+    "within_budget": {
+      "ok": true,
+      "value": {
+        "total_wall_s": 206.9,
+        "limit_s": 540
+      }
+    },
+    "cited_read_pages_ok": {
+      "ok": true,
+      "value": 6
+    },
+    "no_unresolved_citations": {
+      "ok": true,
+      "value": []
+    }
+  },
+  "pass": true
+}
+check_exit=0

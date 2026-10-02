@@ -1,0 +1,240 @@
+: connected
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-0
+event: step
+data: {"step_id":"plan","kind":"plan","status":"started","elapsed_ms":0,"budget_ms":480000}
+
+: keep-alive
+
+: keep-alive
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-1
+event: step
+data: {"step_id":"plan","kind":"plan","status":"done","elapsed_ms":34312,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-2
+event: step
+data: {"step_id":"bca53d3a-2de4-4211-9b72-9fe84cf62186","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":34313,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-3
+event: step
+data: {"step_id":"bca53d3a-2de4-4211-9b72-9fe84cf62186","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":37585,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-4
+event: step
+data: {"step_id":"f84f49f9-b066-4878-a0c6-be1da3792b00","kind":"search","status":"started","query":"LFP vs NMC battery cost per kWh home storage 2024","elapsed_ms":37586,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-5
+event: step
+data: {"step_id":"f84f49f9-b066-4878-a0c6-be1da3792b00","kind":"search","status":"done","query":"LFP vs NMC battery cost per kWh home storage 2024","elapsed_ms":39940,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-6
+event: step
+data: {"step_id":"95c4ea06-659e-4200-af14-b54da6915496","kind":"search","status":"started","query":"levelized cost of storage LFP NMC residential batteries 2024","elapsed_ms":39941,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-7
+event: step
+data: {"step_id":"95c4ea06-659e-4200-af14-b54da6915496","kind":"search","status":"done","query":"levelized cost of storage LFP NMC residential batteries 2024","elapsed_ms":42956,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-8
+event: step
+data: {"step_id":"50a5e1e9-16e8-48d3-9e80-4ae23ecfd2cb","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":42957,"budget_ms":480000}
+
+: keep-alive
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-9
+event: step
+data: {"step_id":"50a5e1e9-16e8-48d3-9e80-4ae23ecfd2cb","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":46729,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-10
+event: step
+data: {"step_id":"507c3b91-78df-4057-a739-2c05a7419611","kind":"read","status":"started","url":"https://solartodo.com/knowledge/lfp-vs-nmc-battery-comparison-energy-storage-2026","elapsed_ms":46729,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-11
+event: step
+data: {"step_id":"adc15807-c961-45e4-8a1d-d53be96d3c6f","kind":"read","status":"started","url":"https://www.sciencedirect.com/science/article/pii/S2950264024000078","elapsed_ms":46729,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-12
+event: step
+data: {"step_id":"507c3b91-78df-4057-a739-2c05a7419611","kind":"read","status":"done","url":"https://solartodo.com/knowledge/lfp-vs-nmc-battery-comparison-energy-storage-2026","elapsed_ms":47786,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-13
+event: step
+data: {"step_id":"6ae7c503-cb5e-4eef-9ba2-7346582677f0","kind":"model","status":"started","detail":"Taking notes: solartodo.com","elapsed_ms":47978,"budget_ms":480000}
+
+: keep-alive
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-14
+event: step
+data: {"step_id":"6ae7c503-cb5e-4eef-9ba2-7346582677f0","kind":"model","status":"done","detail":"Taking notes: solartodo.com","elapsed_ms":62074,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-15
+event: step
+data: {"step_id":"2539ff6b-b4ae-4f77-81a9-a418795a6b83","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":62076,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-16
+event: step
+data: {"step_id":"2539ff6b-b4ae-4f77-81a9-a418795a6b83","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":65355,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-17
+event: step
+data: {"step_id":"6d2de064-7190-4e49-8311-dc0de90f1c18","kind":"search","status":"started","query":"LFP vs NMC cycle life comparison home energy storage","elapsed_ms":65356,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-18
+event: step
+data: {"step_id":"6d2de064-7190-4e49-8311-dc0de90f1c18","kind":"search","status":"done","query":"LFP vs NMC cycle life comparison home energy storage","elapsed_ms":66872,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-19
+event: step
+data: {"step_id":"725d47a4-0395-495d-9942-fc7179a83848","kind":"search","status":"started","query":"NMC battery calendar lifespan vs LFP residential systems","elapsed_ms":66873,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-20
+event: step
+data: {"step_id":"725d47a4-0395-495d-9942-fc7179a83848","kind":"search","status":"done","query":"NMC battery calendar lifespan vs LFP residential systems","elapsed_ms":69368,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-21
+event: step
+data: {"step_id":"2989a9a2-6d55-4b62-b282-20a55508391f","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":69369,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-22
+event: step
+data: {"step_id":"2989a9a2-6d55-4b62-b282-20a55508391f","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":71876,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-23
+event: step
+data: {"step_id":"e393fcf1-12e0-4e1c-bbd1-7cbab6e9abb6","kind":"read","status":"started","url":"https://savolture.com/blog/lfp-vs-nmc-home-batteries-comparison-2026/","elapsed_ms":71877,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-24
+event: step
+data: {"step_id":"8dc125b0-b926-404f-9a88-e2adb1d14cd4","kind":"read","status":"started","url":"https://batteryplanning.com/home-battery-chemistry-guide","elapsed_ms":71877,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-25
+event: step
+data: {"step_id":"e393fcf1-12e0-4e1c-bbd1-7cbab6e9abb6","kind":"read","status":"done","url":"https://savolture.com/blog/lfp-vs-nmc-home-batteries-comparison-2026/","elapsed_ms":72340,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-26
+event: step
+data: {"step_id":"8ce36e07-5255-4c97-a906-0ee6be0f28f2","kind":"model","status":"started","detail":"Taking notes: savolture.com","elapsed_ms":72427,"budget_ms":480000}
+
+: keep-alive
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-27
+event: step
+data: {"step_id":"8ce36e07-5255-4c97-a906-0ee6be0f28f2","kind":"model","status":"done","detail":"Taking notes: savolture.com","elapsed_ms":88292,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-28
+event: step
+data: {"step_id":"d19ace4b-5954-45af-bcd4-a17f465b8557","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":88292,"budget_ms":480000}
+
+: keep-alive
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-29
+event: step
+data: {"step_id":"d19ace4b-5954-45af-bcd4-a17f465b8557","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":91215,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-30
+event: step
+data: {"step_id":"4503908c-6397-49d9-81d2-3c850cfff36a","kind":"search","status":"started","query":"LFP vs NMC battery performance below 0C discharge capacity","elapsed_ms":91215,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-31
+event: step
+data: {"step_id":"4503908c-6397-49d9-81d2-3c850cfff36a","kind":"search","status":"done","query":"LFP vs NMC battery performance below 0C discharge capacity","elapsed_ms":92713,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-32
+event: step
+data: {"step_id":"48bd0e6f-27f8-43f7-bf97-a59a916dcbc9","kind":"search","status":"started","query":"lithium ion battery charging efficiency cold weather LFP NMC comparison","elapsed_ms":92714,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-33
+event: step
+data: {"step_id":"48bd0e6f-27f8-43f7-bf97-a59a916dcbc9","kind":"search","status":"done","query":"lithium ion battery charging efficiency cold weather LFP NMC comparison","elapsed_ms":94434,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-34
+event: step
+data: {"step_id":"47a47a6e-bac9-4052-a7a3-00ed82238ec4","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":94435,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-35
+event: step
+data: {"step_id":"47a47a6e-bac9-4052-a7a3-00ed82238ec4","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":96642,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-36
+event: step
+data: {"step_id":"335042d7-3fe8-4179-bfd9-0e17c622417a","kind":"read","status":"started","url":"https://evbattery.us/which-ev-battery-chemistry-works-best-in-cold-weather/","elapsed_ms":96642,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-37
+event: step
+data: {"step_id":"500b12e5-44a1-4446-8941-dbf3cbf3433e","kind":"read","status":"started","url":"https://1ecars.com/articles/choose-the-right-ev-battery/","elapsed_ms":96642,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-38
+event: step
+data: {"step_id":"335042d7-3fe8-4179-bfd9-0e17c622417a","kind":"read","status":"done","url":"https://evbattery.us/which-ev-battery-chemistry-works-best-in-cold-weather/","elapsed_ms":96951,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-39
+event: step
+data: {"step_id":"16386cbb-ed70-41f0-be66-824616ff2171","kind":"model","status":"started","detail":"Taking notes: evbattery.us","elapsed_ms":96992,"budget_ms":480000}
+
+: keep-alive
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-40
+event: step
+data: {"step_id":"16386cbb-ed70-41f0-be66-824616ff2171","kind":"model","status":"done","detail":"Taking notes: evbattery.us","elapsed_ms":110869,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-41
+event: step
+data: {"step_id":"adc15807-c961-45e4-8a1d-d53be96d3c6f","kind":"read","status":"failed","url":"https://www.sciencedirect.com/science/article/pii/S2950264024000078","detail":"fetch_failed","elapsed_ms":110870,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-42
+event: step
+data: {"step_id":"8dc125b0-b926-404f-9a88-e2adb1d14cd4","kind":"read","status":"done","url":"https://batteryplanning.com/home-battery-chemistry-guide","elapsed_ms":110870,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-43
+event: step
+data: {"step_id":"35a4767b-5efe-48ff-a19c-943853e7e3d7","kind":"model","status":"started","detail":"Taking notes: batteryplanning.com","elapsed_ms":110895,"budget_ms":480000}
+
+: keep-alive
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-44
+event: step
+data: {"step_id":"35a4767b-5efe-48ff-a19c-943853e7e3d7","kind":"model","status":"done","detail":"Taking notes: batteryplanning.com","elapsed_ms":122040,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-45
+event: step
+data: {"step_id":"500b12e5-44a1-4446-8941-dbf3cbf3433e","kind":"read","status":"done","url":"https://1ecars.com/articles/choose-the-right-ev-battery/","elapsed_ms":122041,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-46
+event: step
+data: {"step_id":"67ff0f36-bd4c-4109-9f21-d4b0b97a9180","kind":"model","status":"started","detail":"Taking notes: 1ecars.com","elapsed_ms":122126,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-47
+event: step
+data: {"step_id":"67ff0f36-bd4c-4109-9f21-d4b0b97a9180","kind":"model","status":"done","detail":"Taking notes: 1ecars.com","elapsed_ms":132286,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-48
+event: step
+data: {"step_id":"write","kind":"write","status":"started","elapsed_ms":132287,"budget_ms":480000}
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-49
+event: step
+data: {"step_id":"write","kind":"write","status":"done","elapsed_ms":205167,"budget_ms":480000}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-50
+event: content
+data: {"text":"Executive Summary: For home energy storage applications, Lithium Iron Phosphate (LFP) batteries generally offer superior economic value and safety due to lower costs and longer lifespans, while Nickel Manganese Cobalt (NMC) batteries retain an advantage in cold-weather performance. \n\nComparative Cost Metrics: In 2024, the average upfront cost for lithium-ion battery packs was $115/kWh, reflecting a trend of decreasing prices from previous years [1]. Specifically for Energy Storage Systems (ESS), LFP technology maintains a significant cost advantage of approximately 20–30% over NMC [1]. This is evidenced by installed capital expenditures, where LFP systems range from $250 to $400 per kWh compared to $300 to $450 per kWh for NMC systems [1]. Regarding levelized cost of storage, LFP offers a lifetime cost of $0.13 per kWh against $0.29 per kWh for NMC, driven by its extended operational life [2]. \n\nLifespan and Safety Characteristics: LFP batteries provide a significantly longer cycle life of 6,000 to 8,500 cycles compared to the 3,000 to 4,000 cycles typical for NMC systems [2]. Consequently, LFP cells degrade at less than half the rate of NMC chemistry under daily solar self-consumption and Time-of-Use load shifting scenarios [3]. In terms of calendar lifespan, LFP batteries maintain functional capacity well beyond 15 years, retaining roughly 70–72% of their original nameplate capacity without a sudden failure point [3]. Furthermore, LFP chemistry exhibits superior thermal safety, featuring a high thermal runaway onset threshold of 518°F (270°C) which eliminates self-sustaining fire propagation [4]. Unlike NMC, LFP maintains reliable capacity up to ambient temperatures of 45°C and survives temperature excursions up to 55°C without permanent damage [2]. \n\nCold-Weather Performance: In contrast to their safety and lifespan benefits, LFP batteries experience significant performance degradation in sub-zero temperatures due to a doubling or tripling of internal resistance compared to moderate conditions [5]. At -40°C, LFP batteries retain only 50–60% of their discharge capacity, dropping below the levels observed at higher freezing points where retention is approximately 50–60% [4]. NMC batteries, however, maintain superior performance in these conditions; they retain 65–75% of their capacity at -40°C compared to LFP's lower figures [4]. Additionally, NMC is generally considered better for cold climates because it experiences less range loss, charges faster, and provides more reliable state-of-charge data than LFP under freezing conditions [5]."}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-51
+event: sources
+data: {"items":[{"title":"LFP vs NMC Battery Technology Comparison for Energy Storage — 2026 Data Report","url":"https://solartodo.com/knowledge/lfp-vs-nmc-battery-comparison-energy-storage-2026","n":1},{"title":"Batteries domestiques LFP vs NMC : une comparaison complète pour 2026","url":"https://savolture.com/blog/lfp-vs-nmc-home-batteries-comparison-2026/","n":2},{"title":"Home Battery Chemistry Guide: LFP vs NMC Comparison & Thermal Safety","url":"https://batteryplanning.com/home-battery-chemistry-guide","n":3},{"title":"Which EV Battery Chemistry Works Best In Cold Weather","url":"https://evbattery.us/which-ev-battery-chemistry-works-best-in-cold-weather/","n":4},{"title":"EV Battery Chemistry for Cold Climates: Winter Performance","url":"https://1ecars.com/articles/choose-the-right-ev-battery/","n":5}]}
+
+id: 66430539-37c0-439e-81f8-2ceab9f452bd-52
+event: done
+data: {"status":"complete","model":"qwen3.5:35b-a3b","eval_count":3185,"tokens_per_second":45.70250322152425,"research":{"status":"complete","elapsed_ms":205168,"budget_ms":480000}}
+

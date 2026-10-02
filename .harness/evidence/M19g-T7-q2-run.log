@@ -1,0 +1,45 @@
+{
+  "id": "q2",
+  "question": "What are the trade-offs between LFP and NMC lithium battery chemistries for home battery storage, including cost, lifespan, safety and cold-weather performance?",
+  "generation_id": "66430539-37c0-439e-81f8-2ceab9f452bd",
+  "started_at": "2026-10-02T21:01:10.711Z",
+  "ended_at": "2026-10-02T21:04:35.886Z",
+  "fr41_selection": "server.log bytes written between just before the POST and after done (lines carry no run id)",
+  "saw_done": true,
+  "budget_s": 480,
+  "total_wall_s": 205.175,
+  "planning_s": 32.625,
+  "research_phase_calls": 11,
+  "routine_calls": 12,
+  "routine_p50_s": 3.279,
+  "routine_p95_s": 15.865,
+  "fr41_lines": 16,
+  "distinct_pages_read": 5,
+  "notes_kept": 13,
+  "final_status": "complete",
+  "cited_read_pages": 5,
+  "unresolved_citations": [],
+  "checks": {
+    "status_ok": {
+      "ok": true,
+      "value": "complete"
+    },
+    "within_budget": {
+      "ok": true,
+      "value": {
+        "total_wall_s": 205.175,
+        "limit_s": 540
+      }
+    },
+    "cited_read_pages_ok": {
+      "ok": true,
+      "value": 5
+    },
+    "no_unresolved_citations": {
+      "ok": true,
+      "value": []
+    }
+  },
+  "pass": true
+}
+exit=0
