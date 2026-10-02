@@ -173,6 +173,19 @@ export function logModelCall(line: ModelCallLog): void {
   console.log(JSON.stringify({ event: "deep_research_model_call", ...line }));
 }
 
+/** M19g: one line per run that reaches its `done` event, written just before it. */
+export interface RunEndLog {
+  notes_kept: number;
+  pages_read: number;
+  status: "complete" | "partial" | "failed";
+  elapsed_ms: number;
+}
+
+/** Default run-end logger: one JSON line on stdout. */
+export function logRunEnd(line: RunEndLog): void {
+  console.log(JSON.stringify({ event: "deep_research_run_end", ...line }));
+}
+
 export const NO_REPORT_NOTE =
   "No report was produced — the research could not be written up. Try asking again.";
 
@@ -1096,6 +1109,12 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
         budget_ms: budgetMs,
       },
     };
+    logRunEnd({
+      notes_kept: notes.length,
+      pages_read: readNumbers.size,
+      status: done.research!.status,
+      elapsed_ms: done.research!.elapsed_ms,
+    });
     yield ev("done", done);
   } catch (error) {
     if (!signal.aborted) throw error;

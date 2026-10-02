@@ -200,6 +200,32 @@ describe("deep research model-call logging and load num_ctx (M19b FR41)", () => 
     }
   });
 
+  it("writes exactly one deep_research_run_end line before done, with notes_kept, pages_read, status and elapsed_ms (M19g)", async () => {
+    const s = setup();
+    const spy = spyOn(console, "log").mockImplementation(() => {});
+    let text: string;
+    let lines: string[];
+    try {
+      text = await (await s.post(deepBody)).text();
+      lines = spy.mock.calls.map((c) => String(c[0]));
+    } finally {
+      spy.mockRestore();
+      s.server.stop(true);
+    }
+    const ends = lines.filter((l) => l.includes("deep_research_run_end")).map((l) => JSON.parse(l));
+    expect(ends.length).toBe(1);
+    const done = JSON.parse(parseSSE(text).filter((e) => e.event === "done").pop()!.data);
+    expect(Object.keys(ends[0]).sort()).toEqual(["elapsed_ms", "event", "notes_kept", "pages_read", "status"]);
+    expect(ends[0].event).toBe("deep_research_run_end");
+    expect(ends[0].status).toBe(done.research.status);
+    expect(typeof ends[0].elapsed_ms).toBe("number");
+    // Each fixture page carries exactly one valid note.
+    const distinctReads = new Set(s.reads).size;
+    expect(distinctReads).toBeGreaterThanOrEqual(2);
+    expect(ends[0].pages_read).toBe(distinctReads);
+    expect(ends[0].notes_kept).toBe(distinctReads);
+  });
+
   it("logs an invalid first reply as attempt 1 'invalid' and the retry as attempt 2 'ok'", async () => {
     const s = setup({
       chat: () => {

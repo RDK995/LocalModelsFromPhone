@@ -5,7 +5,9 @@ import {
   mergeEvents,
   nearestRank,
   parseSse,
+  buildResult,
   selectFr41Lines,
+  selectRunEndLine,
   type SseEvent,
 } from "./ac29-live-run";
 
@@ -108,5 +110,24 @@ describe("FR41 selection and metrics", () => {
     expect(m.routine_calls).toBe(5); // brief, queries, notes, notes, gap
     expect(m.routine_p50_s).toBe(6);
     expect(m.routine_p95_s).toBe(12);
+  });
+});
+
+describe("notes_kept from the deep_research_run_end line (M19g)", () => {
+  const runEnd = JSON.stringify({ event: "deep_research_run_end", notes_kept: 7, pages_read: 9, status: "complete", elapsed_ms: 1234 });
+  test("selectRunEndLine picks the run-end line verbatim, ignoring other lines", () => {
+    const log = [line("brief", false, 1000), "noise", runEnd].join("\n");
+    expect(selectRunEndLine(log)).toBe(runEnd);
+    expect(selectFr41Lines(log).length).toBe(1);
+  });
+  test("buildResult takes notes_kept from that line", () => {
+    const r = buildResult(events({}), [line("brief", false, 1000)], 10, {}, runEnd);
+    expect(r.notes_kept).toBe(7);
+    expect(r.notes_kept_reason).toBeUndefined();
+  });
+  test("buildResult reports null with a reason when no run-end line is in the window", () => {
+    const r = buildResult(events({}), [line("brief", false, 1000)], 10, {}, null);
+    expect(r.notes_kept).toBeNull();
+    expect(typeof r.notes_kept_reason).toBe("string");
   });
 });

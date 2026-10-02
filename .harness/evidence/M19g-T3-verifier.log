@@ -1,0 +1,134 @@
+VERIFICATION OF TASK M19g-T3
+============================
+
+Task: The server logs how many notes a deep research run kept, and ac29-live-run records it
+Packet: /Users/ryankenny/Projects/CodingHarnessv2/.harness/tasks/M19g-T3.md
+Date: 2026-10-02
+Verifier: Claude Haiku 4.5
+
+COMMAND 1: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test scripts/ac29-live-run.test.ts
+Exit Status: 0
+Output:
+  14 pass
+  0 fail
+  33 expect() calls
+  Ran 14 tests across 1 file. [9.00ms]
+
+COMMAND 2: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck
+Exit Status: 0
+Output (tail):
+  364 pass
+  0 fail
+  2505 expect() calls
+  Ran 364 tests across 24 files. [18.48s]
+  (typecheck completed with no errors)
+
+COMMAND 3: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M16-T5-stream.txt --log /dev/null
+Exit Status: 0
+Output:
+  cited_read_pages: 4
+  unresolved_citations: []
+  notes_kept: null (expected; run-end line not in old evidence file)
+  notes_kept_reason: "no deep_research_run_end line in the selected server.log window"
+  pass: true
+
+CHANGED FILES:
+- server/scripts/ac29-live-run.test.ts (allowed)
+- server/scripts/ac29-live-run.ts (allowed)
+- server/src/generations/research.ts (allowed)
+- server/src/http/deepResearchModelCalls.test.ts (allowed)
+
+IMPLEMENTATION VERIFICATION:
+
+1. RESEARCH.TS CHANGES (Additive Only):
+   Location: Lines 176-186 and 1112-1117
+   Added:
+   - RunEndLog interface with notes_kept, pages_read, status, elapsed_ms
+   - logRunEnd(line: RunEndLog) function
+   - Call to logRunEnd just before "yield ev("done", done)" at line 1112
+   No changes to: SSE event shapes, step names, prompts, budget, timing, FR41 line format
+
+2. NOTES_KEPT CALCULATION:
+   - Implementation: notes_kept = notes.length
+   - Verified in test: deepResearchModelCalls.test.ts line 225-226
+   - Test fixture builds distinct pages, one valid note per page
+   - Test asserts: distinctReads >= 2, notes_kept == distinctReads
+   - Result: PASS (fixture has non-zero known count)
+
+3. PAGES_READ CALCULATION:
+   - Implementation: pages_read = readNumbers.size
+   - readNumbers is a Set that adds each distinct page.n
+   - Verified in test: same test asserts pages_read == distinctReads
+   - Result: PASS
+
+4. LOG LINE FORMAT:
+   - Observed in test output: {"event":"deep_research_run_end","notes_kept":2,"pages_read":1,"status":"complete","elapsed_ms":7}
+   - Contains all required fields: notes_kept, pages_read, status, elapsed_ms
+   - Event name: "deep_research_run_end" (correct)
+   - Result: PASS
+
+5. LOGGING LOCATION:
+   - Called at research.ts line 1112 (confirmed)
+   - Just before "yield ev("done", done)" at line 1118 (confirmed)
+   - Only on normal path, not in catch block (confirmed)
+   - Uses final status from done.research.status (confirmed)
+   - Uses final elapsed_ms from done.research.elapsed_ms (confirmed)
+   - Result: PASS
+
+6. AC29-LIVE-RUN.TS IMPLEMENTATION:
+   - selectRunEndLine() function added (line 134-144)
+   - Selects run-end line from same byte-offset window as FR41 lines
+   - buildResult() updated to accept runEnd parameter
+   - notes_kept extracted from run-end line if present (line 178)
+   - run-end line written to fr41 output alongside FR41 lines (line 289)
+   - Both live() and checkOnly() pass run-end line to buildResult (lines 300, 315)
+   - Header comments updated to document new behavior
+   - Result: PASS
+
+7. AC29-LIVE-RUN.TEST.TS TESTS (New):
+   Test 1: "selectRunEndLine picks the run-end line verbatim, ignoring other lines"
+   - Verifies selectRunEndLine(log) returns the run-end line
+   - Verifies FR41 selection still returns 1 line (not including run-end)
+   Test 2: "buildResult takes notes_kept from that line"
+   - Verifies buildResult extracts notes_kept: 7 from run-end line
+   - Verifies no notes_kept_reason when line is present
+   Test 3: "buildResult reports null with a reason when no run-end line is in the window"
+   - Verifies buildResult sets notes_kept: null when runEnd is null
+   - Verifies notes_kept_reason is a string with explanation
+   - All 3 tests PASS
+
+8. DEEP_RESEARCH_MODEL_CALLS.TEST.TS TEST (New):
+   Test: "writes exactly one deep_research_run_end line before done, with notes_kept, pages_read, status and elapsed_ms (M19g)"
+   - Spies on console.log to capture output
+   - Filters for "deep_research_run_end" lines
+   - Asserts exactly 1 run-end line
+   - Asserts all required keys present: event, notes_kept, pages_read, status, elapsed_ms
+   - Asserts status matches done.research.status
+   - Asserts elapsed_ms is a number
+   - Asserts pages_read == distinct reads (>= 2 in fixture)
+   - Asserts notes_kept == distinct reads
+   - Result: PASS (test passes with fixture values)
+
+TESTS WEAKENED:
+NO - All changes are additive (new functions, new log line, new tests)
+No deleted test functions, no deleted assertions, no skip/xfail markers added
+
+ACCEPTANCE CRITERIA EXERCISED:
+
+M19g-AC2 (verbatim): "... per run the total wall time, research-phase model calls, distinct 
+pages read, notes kept, planning time and routine-call p50/p95 are recorded in evidence ..."
+
+Evidence of notes kept being recorded:
+- New log line emitted at research.ts line 1112 with notes_kept field
+- ac29-live-run extracts notes_kept from that line (line 178)
+- ac29-live-run.ts test verifies buildResult captures notes_kept from run-end line
+- deepResearchModelCalls.test.ts test verifies run-end line is emitted with correct notes_kept value
+- ac29-live-run test confirms notes_kept appears in output when run-end line present
+- ac29-live-run test confirms notes_kept_reason appears when line absent
+- Third validation command shows script correctly reports cited_read_pages: 4, unresolved: []
+
+Result: PASS - M19g-AC2 "notes kept" clause is exercised by:
+  1. deepResearchModelCalls.test.ts line 203-227: exercises emission and correctness
+  2. ac29-live-run.test.ts line 119-120: exercises extraction and null handling
+  3. ac29-live-run.ts implementation: exercises recording in output
+

@@ -14,7 +14,8 @@
  *   routine p50/p95 (s)   nearest-rank percentiles of wall times of FR41 lines sent with think=false whose step
  *                         is not plan or write (brief, queries, pages, notes, gap).
  *   distinct_pages_read   distinct urls of `step` events of kind read with status done.
- *   notes_kept            null: the server exposes no notes count (not in FR41 lines, step events or `done`).
+ *   notes_kept            `notes_kept` of the run's `deep_research_run_end` log line (research.ts logRunEnd, written just
+ *                         before `done`); null with a reason when that line is not in the window.
  *   pass bar              final status (done.research.status, else done.status) in {complete, partial};
  *                         total_wall_s <= budget_s + 60 (margin; no different M17 margin exists in server tests);
  *                         cited distinct read pages >= 3 (cited [n] that is in sources AND whose url had a done read step);
@@ -23,6 +24,7 @@
  * FR41 lines (server/src/generations/research.ts logModelCall) are JSON lines on stdout, event
  * "deep_research_model_call", with NO run id and NO timestamp. They are selected by the run's window:
  * the server.log byte offset taken just before the POST up to the end of the log after `done`.
+ * The `deep_research_run_end` line is selected from the same window and written to the fr41 log too.
  * (Only one run at a time is therefore valid.) Budget default 480 s (research.ts DEFAULT budgetMs).
  */
 import { appendFileSync, closeSync, existsSync, openSync, readFileSync, readSync, statSync, writeFileSync } from "node:fs";
@@ -129,6 +131,19 @@ export function selectFr41Lines(logText: string): string[] {
   });
 }
 
+/** The run-end line (`deep_research_run_end`) of a log, verbatim; the last one, or null. */
+export function selectRunEndLine(logText: string): string | null {
+  const found = logText.split("\n").filter((l) => {
+    if (!l.includes("deep_research_run_end")) return false;
+    try {
+      return JSON.parse(l).event === "deep_research_run_end";
+    } catch {
+      return false;
+    }
+  });
+  return found.length ? found[found.length - 1]! : null;
+}
+
 export function nearestRank(values: number[], p: number): number | null {
   if (values.length === 0) return null;
   const s = [...values].sort((a, b) => a - b);
@@ -160,7 +175,8 @@ export function budgetFromEvents(events: SseEvent[]): number {
   return DEFAULT_BUDGET_S;
 }
 
-export function buildResult(events: SseEvent[], fr41: string[], totalWallS: number, extra: Record<string, unknown>) {
+export function buildResult(events: SseEvent[], fr41: string[], totalWallS: number, extra: Record<string, unknown>, runEnd: string | null = null) {
+  const notesKept: number | null = runEnd ? (JSON.parse(runEnd).notes_kept ?? null) : null;
   const budgetS = budgetFromEvents(events);
   const bar = checkPassBar(events, totalWallS, budgetS);
   return {
@@ -170,8 +186,8 @@ export function buildResult(events: SseEvent[], fr41: string[], totalWallS: numb
     ...computeMetrics(fr41),
     fr41_lines: fr41.length,
     distinct_pages_read: distinctPagesRead(events),
-    notes_kept: null,
-    notes_kept_reason: "the server exposes no notes count (not in FR41 lines, step events or the done event)",
+    notes_kept: notesKept,
+    ...(notesKept === null ? { notes_kept_reason: "no deep_research_run_end line in the selected server.log window" } : {}),
     ...bar,
   };
 }
@@ -267,8 +283,11 @@ async function live(): Promise<number> {
   }
   const end = Date.now();
   const events = mergeEvents([], parseSse(readFileSync(streamPath, "utf8")));
-  const fr41 = selectFr41Lines(existsSync(SERVER_LOG) ? readFrom(SERVER_LOG, offset) : "");
-  writeFileSync(`${base}-fr41.log`, fr41.join("\n") + (fr41.length ? "\n" : ""));
+  const windowText = existsSync(SERVER_LOG) ? readFrom(SERVER_LOG, offset) : "";
+  const fr41 = selectFr41Lines(windowText);
+  const runEnd = selectRunEndLine(windowText);
+  const logged = runEnd ? [...fr41, runEnd] : fr41;
+  writeFileSync(`${base}-fr41.log`, logged.join("\n") + (logged.length ? "\n" : ""));
   const result = buildResult(events, fr41, (end - start) / 1000, {
     id,
     question,
@@ -277,7 +296,7 @@ async function live(): Promise<number> {
     ended_at: new Date(end).toISOString(),
     fr41_selection: "server.log bytes written between just before the POST and after done (lines carry no run id)",
     saw_done: sawDone,
-  });
+  }, runEnd);
   writeFileSync(`${base}-result.json`, JSON.stringify(result, null, 2) + "\n");
   console.log(JSON.stringify(result, null, 2));
   return result.pass ? 0 : 1;
@@ -286,13 +305,14 @@ async function live(): Promise<number> {
 function checkOnly(streamFile: string): number {
   const events = mergeEvents([], parseSse(readFileSync(streamFile, "utf8")));
   const logFile = arg("--log");
-  const fr41 = logFile ? selectFr41Lines(readFileSync(logFile, "utf8")) : [];
+  const logText = logFile ? readFileSync(logFile, "utf8") : "";
+  const fr41 = selectFr41Lines(logText);
   const done = events.filter((e) => e.type === "done").pop();
   const wall = done?.data?.research?.elapsed_ms !== undefined ? done.data.research.elapsed_ms / 1000 : 0;
   const result = buildResult(events, fr41, wall, {
     stream_file: streamFile,
     note: "check-only: total_wall_s taken from done.research.elapsed_ms (0 when absent)",
-  });
+  }, selectRunEndLine(logText));
   console.log(JSON.stringify(result, null, 2));
   return result.pass ? 0 : 1;
 }
