@@ -1,0 +1,28 @@
+=== M19g-T4 Server Restart Log ===
+Start time: 2026-10-02T20:41:35Z
+
+=== Old Process Info ===
+2057	-15	com.harness.server
+Old PID: 2057
+
+=== Server Code Info ===
+897de7e40f724c85ccf98c4ef609ef935b6f97a4 2026-10-02T21:40:41+01:00
+
+=== Restarting server ===
+
+=== Checking server readiness (first check) ===
+Not responding after 10s
+
+=== Checking server readiness (second check after wait) ===
+Still not responding
+
+=== New Process Info ===
+3614	-15	com.harness.server
+New PID: 3614
+
+=== Current HEAD ===
+f5dcda6ddaccd1caf67eabe2e26345967d93045b
+
+=== Ollama Models ===
+NAME               ID              SIZE     PROCESSOR    CONTEXT    UNTIL   
+qwen3.5:35b-a3b    3460ffeede54    23 GB    100% GPU     32768      Forever    

@@ -1,0 +1,9 @@
+{
+ "wall_ms": 6844,
+ "think": false,
+ "task": "Write the final report answering the brief, using only the notes. Cite as you write: every sentence that uses a note must end with that note's page number in square brackets, for example \"... as the page states [1].\" Use only the [n] numbers shown in the notes; never cite anything else. Do not include URLs.",
+ "prompt_eval_count": 626,
+ "eval_count": 296,
+ "thinking_chars": 0,
+ "content": "{\n  \"report\": \"Raft and Paxos are both consensus algorithms that utilize majority quorums to ensure safety during network partitions, as a majority of nodes must agree on each decision [1]. The core architectural difference lies in leader management: Raft relies on a leader elected via randomized timeouts to serialize writes, ensuring all client requests go through the single leader of a term [1]. In contrast, basic Paxos uses proposers and acceptors where any node can act as a proposer without a dedicated leader [2]. However, Multi-Paxos introduces a stable leader by electing a distinguished proposer to optimize performance [2]. A distinct requirement for Raft is that only a candidate with an up-to-date log can win an election and become leader, whereas basic Paxos does not strictly enforce this before operation [1][2]. Regarding complexity and maintainability, the original Paxos specification was notoriously hard to follow, leading to years of debate among researchers [3]. Raft was designed specifically for understandability and features a clearly specified state machine model, which leads to fewer implementation bugs compared to its counterparts [3][4]. While implementing Paxos correctly is difficult in practice, teams often pick Raft for its maintainability and developer productivity [4][3]. Finally, the choice between them depends on team priorities: Raft is preferable where clarity matters, while Multi-Paxos variants are sometimes selected for high-throughput systems [4][2].\"}"
+}

@@ -1,0 +1,8 @@
+src/http/deepResearchModelCalls.test.ts:
+{"event":"deep_research_run_end","notes_kept":4,"pages_read":6,"status":"complete","elapsed_ms":108}
+
+ 1 pass
+ 17 filtered out
+ 0 fail
+ 11 expect() calls
+Ran 1 test across 1 file. [126.00ms]

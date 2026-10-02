@@ -1,0 +1,30 @@
+src/http/deepResearchModelCalls.test.ts:
+{"event":"deep_research_run_end","notes_kept":4,"pages_read":6,"status":"complete","elapsed_ms":108}
+678 |       );
+679 |       expect(noted.size).toBeGreaterThanOrEqual(3);
+680 |       const sources = JSON.parse(events.find((e) => e.event === "sources")!.data).items as Array<{ n: number }>;
+681 |       const sourceNumbers = new Set(sources.map((x) => x.n));
+682 |       const cited = new Set([...content[0]!.matchAll(/\[(\d+)\]/g)].map((m) => Number(m[1])));
+683 |       expect([...cited].sort()).toEqual([...noted].sort());
+                                      ^
+error: expect(received).toEqual(expected)
+
+- [
+-   1,
+-   2,
+-   3,
+-   4,
+- ]
++ []
+
+- Expected  - 6
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/deepResearchModelCalls.test.ts:683:33)
+(fail) deep research write citations after the write guard (M19g-T5, FR37/FR42) > a think:false write re-issued after the guard still cites every read page that has notes as [n] resolving to sources [114.68ms]
+
+ 0 pass
+ 17 filtered out
+ 1 fail
+ 6 expect() calls
+Ran 1 test across 1 file. [126.00ms]

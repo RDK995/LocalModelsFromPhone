@@ -1,0 +1,154 @@
+# M19g-T5 Verifier Evidence
+
+## Verification Steps Completed
+
+### 1. Regression test on HEAD (f5dcda6)
+
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/http/deepResearchModelCalls.test.ts
+
+The regression test FAILED on HEAD with the expected behavior:
+
+Expected citations: [1, 2, 3, 4]
+Received citations: []
+
+Full error output:
+```
+error: expect(received).toEqual(expected)
+
+- [
+-   1,
+-   2,
+-   3,
+-   4,
+- ]
++ []
+
+- Expected  - 6
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/deepResearchModelCalls.test.ts:683:48)
+(fail) deep research write citations after the write guard (M19g-T5, FR37/FR42) > a think:false write re-issued after the guard still cites every read page that has notes as [n] resolving to sources [114.39ms]
+
+ 17 pass
+ 1 fail
+ 392 expect() calls
+Ran 18 tests across 1 file. [1146.00ms]
+```
+
+### 2. Regression test on current code (fixed)
+
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/http/deepResearchModelCalls.test.ts
+
+The regression test PASSED:
+
+```
+ 18 pass
+ 0 fail
+ 397 expect() calls
+Ran 18 tests across 1 file. [1131.00ms]
+```
+
+### 3. Full test suite
+
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test
+
+Result:
+```
+ 365 pass
+ 0 fail
+ 2516 expect() calls
+Ran 365 tests across 24 files. [18.55s]
+```
+
+Exit Status: 0
+
+### 4. Typecheck
+
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run typecheck
+
+Exit Status: 0
+Output: (no errors)
+
+### 5. M16-T5-stream.txt check-only test
+
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M16-T5-stream.txt --log /dev/null
+
+Result:
+- cited_read_pages: 4
+- unresolved_citations: []
+- pass: true
+
+### 6. Server PID verification
+
+Command: launchctl list com.harness.server
+
+Result: PID = 3614 (unchanged, as expected)
+
+### 7. Files Changed Verification
+
+Changed files (via git diff f5dcda6):
+- server/src/generations/research.ts (allowed)
+- server/src/http/deepResearchModelCalls.test.ts (allowed)
+
+All changes are within the Files Allowed To Change list.
+
+### 8. No Tests Weakened
+
+Verified no existing tests were:
+- Deleted
+- Renamed to stop matching
+- Had skip/xfail/ignore markers added
+- Had assertions deleted or loosened
+
+Only additions: new describe block with new test.
+
+### 9. Diagnosis File
+
+The task constraint required diagnosis before the fix. Verified:
+- File exists: .harness/evidence/M19g-T5-diagnosis.md
+- Documents the cause with evidence lines
+- Shows contrasts with earlier working run
+- Records diagnostic Ollama requests (within the 3-request limit)
+
+## Acceptance Criteria Exercised
+
+### M19g-AC2 (partial - this task): "...each run ends within the budget plus a small margin with status `complete` or `partial`, a report citing at least 3 distinct read pages, and no citation number that fails to resolve to a saved source..."
+
+- AC2 part 1 (citations): Exercised by the new regression test in describe block "deep research write citations after the write guard (M19g-T5, FR37/FR42)", specifically the test "a think:false write re-issued after the guard still cites every read page that has notes as [n] resolving to sources".
+  The test verifies:
+  * The report contains citations [n]
+  * Every cited [n] resolves to a source
+  * All noted pages are cited
+
+- AC2 part 2 (earlier runs still work): Exercised by the check-only test on M16-T5-stream.txt, confirming cited_read_pages 4 and unresolved_citations [].
+
+- AC2 part 3 (regression test fails-then-passes): Verified:
+  * Test fails on HEAD with no citations (empty array vs [1,2,3,4])
+  * Test passes on current code
+
+### FR37 (citation requirement): "the report cites pages as [n]; citations of pages not read in this run are dropped."
+
+- Exercised by the new test which verifies report contains [n] citations and all resolve to sources.
+
+### FR42 (think:true attempt followed by think:false re-issue): "plan and write run with thinking; a thinking guard cancels and re-issues once with think:false."
+
+- Exercised by the new test which:
+  * Hangs the first write call (simulates guard)
+  * Sends a second write call with think:false
+  * Verifies both calls have identical task instructions
+  * Verifies the re-issued call properly cites pages
+
+## Summary
+
+The verifier confirms:
+1. Regression test fails on HEAD f5dcda6 (no citations)
+2. Regression test passes on current code (citations present)
+3. Full server suite: 365 pass, 0 fail, exit 0
+4. Typecheck: exit 0
+5. No tests weakened
+6. No unauthorized server operations
+7. Server PID unchanged (3614)
+8. All changed files within allowed list
+9. Diagnosis file created with evidence
+10. M16-T5-stream.txt check still passes (earlier runs unaffected)
+

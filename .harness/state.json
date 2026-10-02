@@ -12186,13 +12186,59 @@
               "commit": "897de7e"
             }
           ]
+        },
+        {
+          "id": "M19g-T4",
+          "title": "restart com.harness.server onto current code; run AC29 q1, q2, q3, heat live with ac29-live-run, one at a time",
+          "packet": ".harness/tasks/M19g-T4.md",
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "existing restart command and tested evidence script; settled by script exit status and result JSON"
+          },
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "INTERRUPTED (worker hit its turn limit without a return)",
+              "verifier": "not run; orchestrator judged files directly",
+              "evidence": ".harness/evidence/M19g-T4-q1-result.json",
+              "detail": "Restart OK (pid 2057 -> 3614, 21:41:38). q1 ran to completion (complete, 175.503 s, 11 research-phase calls, 5 pages, 13 notes, planning 32.533 s, routine p50 2.723 s / p95 17.551 s) but the report has zero [n] citations: cited_read_pages 0, pass false. q2, q3, heat got HTTP 409 generation_in_flight because the worker launched them while q1 was still in flight (the packet's while-kill-0 wait is rejected by a harness hook); the worker's 'duplicate process' explanation in M19g-T4-summary.md is wrong, and it killed an unidentified PID 82117. Superseded by T5 (fix) and a re-run task."
+            }
+          ]
+        },
+        {
+          "id": "M19g-T5",
+          "title": "diagnose and fix uncited deep research report after the write thinking-guard re-issue",
+          "packet": ".harness/tasks/M19g-T5.md",
+          "routing": {
+            "tier": "Top",
+            "model": "opus",
+            "reason_code": "AMBIGUOUS",
+            "detail": "unclear live bug: cause of uncited report unknown at routing time"
+          },
+          "attempts": [
+            {
+              "attempt": 4,
+              "tier": "Top",
+              "model": "opus",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M19g-T5-verifier.log",
+              "commit": "pending"
+            }
+          ]
         }
       ],
       "reviews": [],
       "findings": [],
       "validation": [],
       "follow_ups": [
-        "deep_research_run_end is written only on the normal path to done; a cancelled or errored run writes none (notes_kept null for those runs)."
+        "deep_research_run_end is written only on the normal path to done; a cancelled or errored run writes none (notes_kept null for those runs).",
+        "The M19g-T5 write-instruction fix makes [n] citations likely but not guaranteed (depends on the model following the instruction); if the live re-run still yields uncited reports, the options (reject-and-retry beyond FR42's single re-issue, or server-inserted citations) are requirement changes for the human.",
+        "M19g-T4 worker killed an unidentified process PID 82117 (started 2026-10-01) while misdiagnosing the 409s; com.harness.search is now pid 3758 and listening on 7790. Owner may want to confirm nothing else was lost."
       ],
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"

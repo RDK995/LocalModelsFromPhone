@@ -624,3 +624,67 @@ describe("deep research call time limits (M19b FR42)", () => {
     }
   });
 });
+
+/**
+ * M19g-T5: live q1 (M19g-T4) ended complete with 13 notes from 5 pages but a report with no [n]. The
+ * write guard fired and the think:false re-issue followed a task that only restricted the citation
+ * form ("Cite pages only as [n]") without requiring one, so the model wrote uncited prose
+ * (reproduced against qwen3.5:35b-a3b in .harness/evidence/M19g-T5-diagnosis.md). This fake model
+ * behaves as observed: with thinking off it cites only when the task requires a [n] on every
+ * sentence and shows an example with a real note number; otherwise it writes the notes as prose.
+ */
+function literalWriter(request: any): AsyncGenerator<OllamaChatResponse> {
+  const user = request.messages[1].content as string;
+  const task = user.slice(user.lastIndexOf("Task: "));
+  const noteLines = [...user.matchAll(/^- \[(\d+)\] (.+?) \(quote: /gm)].map((m) => ({ n: Number(m[1]), claim: m[2]! }));
+  const exampleNumbers = [...task.matchAll(/\[(\d+)\]/g)].map((m) => Number(m[1]));
+  const demands = /every sentence/i.test(task) && exampleNumbers.some((n) => noteLines.some((l) => l.n === n));
+  const report = noteLines.map((l) => (demands ? `${l.claim} [${l.n}].` : `${l.claim}.`)).join(" ");
+  const content = JSON.stringify({ report });
+  return (async function* () {
+    yield chunk(content, false);
+    yield chunk("", true);
+  })();
+}
+
+describe("deep research write citations after the write guard (M19g-T5, FR37/FR42)", () => {
+  it("a think:false write re-issued after the guard still cites every read page that has notes as [n] resolving to sources", async () => {
+    let writes = 0;
+    const s = setup({
+      // Three sub-questions so the notes span at least three read pages (AC29's bar).
+      research: { writeGuardMs: 100, subQuestionCount: 3 },
+      chat: (request, signal) => {
+        const step = stepOf(request);
+        if (step === "plan") {
+          const content = JSON.stringify({ sub_questions: ["sq one", "sq two", "sq three"] });
+          return (async function* () {
+            yield chunk(content, false);
+            yield chunk("", true);
+          })();
+        }
+        if (step !== "write") return undefined;
+        writes++;
+        return writes === 1 ? hangUntilAbort(signal, true, () => {}) : literalWriter(request);
+      },
+    });
+    try {
+      const { done, content, events } = await runToDone(s);
+      const writeRequests = s.requests.filter((r) => stepOf(r) === "write");
+      expect(writeRequests.map((r) => r.think)).toEqual([true, false]);
+      // The re-issue carries the same task as the thinking attempt.
+      expect(writeRequests[1].messages).toEqual(writeRequests[0].messages);
+      const noted = new Set(
+        [...(writeRequests[1].messages[1].content as string).matchAll(/^- \[(\d+)\] /gm)].map((m) => Number(m[1]))
+      );
+      expect(noted.size).toBeGreaterThanOrEqual(3);
+      const sources = JSON.parse(events.find((e) => e.event === "sources")!.data).items as Array<{ n: number }>;
+      const sourceNumbers = new Set(sources.map((x) => x.n));
+      const cited = new Set([...content[0]!.matchAll(/\[(\d+)\]/g)].map((m) => Number(m[1])));
+      expect([...cited].sort((a, b) => a - b)).toEqual([...noted].sort((a, b) => a - b));
+      for (const n of cited) expect(sourceNumbers.has(n)).toBe(true);
+      expect(done.research.status).toBe("complete");
+    } finally {
+      s.server.stop(true);
+    }
+  });
+});

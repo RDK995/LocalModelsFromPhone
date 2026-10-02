@@ -1067,10 +1067,17 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
       writeCutShort = true; // final deadline passed before the write call: skip it
     } else if (!failed) {
       yield step({ step_id: "write", kind: "write", status: "started" });
+      // M19g-T5: the task must require a citation per sentence, with an example using a real note
+      // number. A task that only restricted the form ("Cite pages only as [n]") got uncited prose
+      // from the think:false re-issue after the write guard (live q1; .harness/evidence/M19g-T5-diagnosis.md).
+      const exampleN = notes.length ? notes[0]!.n : 1;
       try {
         written = await modelStep(
           "write",
-          "Write the final report answering the brief, using only the notes. Cite pages only as [n] using the note numbers. Do not include URLs.",
+          "Write the final report answering the brief, using only the notes. Cite as you write: every sentence that " +
+            "uses a note must end with that note's page number in square brackets, for example " +
+            `"... as the page states [${exampleN}]." Use only the [n] numbers shown in the notes; never cite anything else. ` +
+            "Do not include URLs.",
           context("Write the report now."),
           SCHEMAS.write,
           VALIDATORS.write
