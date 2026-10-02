@@ -356,59 +356,7 @@ With the web switch on, the composer shows a "Deep research" action beside Send,
 
 Owns: FR34. Traces to: AC28 (action hidden/disabled/enabled, model name from server, steps live and saved).
 
-### Architecture
-
-C1, C2, C3, C4, C5
-
-### As-Built
-
-`.harness/as-built/M18.md` — RECORDED: 26/26 files attributed; components C1, C2, C3, C4, C5; 8 edges; no claim mismatches.
-
-### Acceptance Criteria
-
-- [x] **M18-AC1**: Server tests: the server's state reports the configured deep-research model name (Mac-side setting, default `qwen3.5:35b-a3b`); a deep research request with web off, or when the resident model is not the configured one, is refused with a plain error and no run; the chat model is never offered a `deep_research` tool.
-- [x] **M18-AC2**: App tests: the "Deep research" action beside Send is hidden with the web switch off, shown disabled with "Load <model name> to use deep research" when another model is resident, and enabled when the configured model (name from the server, none hardcoded) is resident; using it sends that one message as a run and the next message is an ordinary reply.
-- [x] **M18-AC3**: App tests: a run's phase steps and elapsed clock ("m:ss of 8:00") show live; the finished reply shows its status (`complete`/`partial`/`failed`), its `[n]` marks as logos (FR31) and "Sources (n)" of the pages read, and reopens the same from storage.
-
-### Baseline
-
-983623f4619963eb458f13b2fba99b3775bfd00a on m18-deep-research-phone
-
-### Evidence
-
-Size check: 3 criteria; real entry point POST /v1/chat and GET /v1/state (M18-AC1); one signal SUBSYSTEMS_GT_3 already seam-checked at planning - run unsplit.
-
-Tasks (tier routing; attempt numbers per the ladder):
-- M18-T1 — server setting `PHONE_MODELS_RESEARCH_MODEL` (default `qwen3.5:35b-a3b`), `deep_research_model` on GET /v1/state, two POST /v1/chat refusals, no `deep_research` tool. Mid (sonnet), ORDINARY_IMPLEMENTATION, attempt 3, PASS; verifier PASS (`.harness/evidence/M18-T1-verifier.log`); commit bf90904.
-- M18-T2 — "Deep research" action beside Send (view-model, per-send flag, composer). Mid (sonnet), ORDINARY_IMPLEMENTATION, attempt 3: tests 466/0 and typecheck pass; packet command exit 1 only from 5 pre-existing eslint `quotes` errors in mobile/src/chat/webQuietSession.test.ts (unchanged since baseline), eslint clean on all changed files per verifier (`.harness/evidence/M18-T2-verifier.log`). Accepted by orchestrator judgement; commit 709b16a.
-- M18-T3 — live phases and clock, finished status, logos, Sources (n), reopen from storage. Mid (sonnet), ORDINARY_IMPLEMENTATION, attempt 3 BLOCKED on packet scope (mobile/src/api/client.ts dropped plan/write steps, elapsed/budget and done.research); packet amended, continuation 1 at the same tier PASS; verifier PASS (`.harness/evidence/M18-T3-verifier.log`); commit 88372e1.
-
-Per criterion (status left PENDING for review):
-- M18-AC1: server/src/http/deepResearchGate.test.ts (state reports the configured and default name; web-off refusal 400 `deep_research_needs_web`; other-model refusal 409 `deep_research_model_not_loaded`; neither starts a run nor calls Ollama chat; no `deep_research` tool in the web tools or the fake Ollama request); server/src/index.test.ts `parseResearchModel` (T1 log).
-- M18-AC2: mobile/src/ui/deepResearch.test.ts (hidden/disabled/enabled, non-default model name); chatController.test.ts exact request bodies and blocked cases; conversationSession.test.ts next send ordinary, flag not persisted; errorMessages.test.ts refusal codes (T2 log). chat.tsx wiring is display only (human on-device check under Follow-ups).
-- M18-AC3: chatItems.test.ts (Planning / Writing report labels, live clock label, persisted research, logos via parseInline/presentCitation, "Sources (2)"); deepResearch.test.ts ("3:12 of 8:00", status label); streamReducer.test.ts; client.test.ts (plan/write, elapsed/budget, done.research); conversationSession.test.ts scripted run persisted and reopened from a fresh store; conversationStore.test.ts research round-trip (T3 log).
-
-### Validation
-
-- `cd server && bun test && bun run typecheck` — PASS per verifier after T1 (258 pass, 0 fail; tsc clean). `.harness/evidence/M18-T1-verifier.log`
-- `cd mobile && bun test && bun run typecheck && npx eslint --max-warnings 0 <M18-changed mobile/src files>` — PASS per verifier after T3 (488 pass, 0 fail; tsc clean; eslint clean). `.harness/evidence/M18-T3-verifier.log`
-- `cd mobile && bun run lint` — FAIL, pre-existing at baseline (5 `quotes` errors in mobile/src/chat/webQuietSession.test.ts, untouched by M18); see Follow-ups.
-- Architecture deviation recorded: D-M18-1 (Material: no).
-
-### Review
-
-Cycle 1: PASS — tier Mid (sonnet; tasks T1–T3 all Mid), whole milestone 983623f..2bb57e9; per-criterion M18-AC1/AC2/AC3 PASS; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL; reviewer re-ran server bun test (258 pass, 0 fail) + typecheck, mobile bun test (488 pass, 0 fail) + typecheck + eslint on changed files (clean); confirmed repo-wide mobile lint failure is pre-existing (webQuietSession.test.ts, from M14 dbc4e53). Review log `.harness/evidence/M18-review.log`. No report file (PASS).
-
-### Review Cycles
-
-0
-
-### Follow-ups
-
-- Repo-wide mobile lint is red at baseline: 5 eslint `quotes` errors in mobile/src/chat/webQuietSession.test.ts lines 255, 258, 261, 264, 333 (not M18 work).
-- A blocked deep research send still shows the generic "Load a model" button under the deep-research explanation (it routes to Models and works; label is generic).
-- Human step (owner only): restart com.harness.server so the new setting and refusals are live, then on the phone check the Deep research button is hidden / disabled with "Load qwen3.5:35b-a3b to use deep research" / enabled, and that a run shows phases, clock, status, logos and Sources live and on reopen (screenshot). Not performed by the harness.
-
+Detail: `.harness/archive/M18.md`
 
 ## M19 — Stop, resume and saving work for a deep research run
 
@@ -474,6 +422,290 @@ Cycle 1: PASS — tier Mid (sonnet; highest substantive task tier Mid: T1 Mid, T
 - Repo-wide mobile lint still red from the pre-existing `quotes` errors in mobile/src/chat/webQuietSession.test.ts.
 
 
+## M19b — Every deep research model call is logged, thinks only at plan and write, and is time-capped
+
+Status: TODO
+
+### Outcome
+
+Through POST /v1/chat, every deep research model call writes one structured log line with the FR41 fields; loading the deep-research model sends the research num_ctx so the first research call does not rebuild the runner; brief, query proposal, page choice, notes and gap check are sent with think:false, an output cap, non-thinking sampling and a hard wall-clock cap; plan and write keep thinking, streamed, under a time guard and are re-issued once with think:false when it is exceeded. Planned 2026-10-02 from FR41-FR45 / AC31-AC33 (plus the FR40 and AC29 amendments). Human decision 2026-10-02: built before M20; M20 and M21 stay TODO after these milestones; M5a stays BLOCKED, untouched. Split at planning into M19b-M19h: the FR41-FR45 work as one milestone would carry 15+ criteria and signals CONCURRENCY_LIFECYCLE (per-call caps and guards, parallel prefetch, per-outage resume), IMPLEMENTATION_PLUS_LIVE_PROOF (AC32, AC33), SUBSYSTEMS_GT_3 (C1, C2, C4, C5, C6, C7, C12), MULTIPLE_OUTCOMES and WORKER_TASKS_GT_6; parts: M19b model-call measurement, thinking and caps (FR41, FR42); M19c passages (FR43); M19d breadth first, prefetch, partial notes (FR44); M19e server liveness (FR45 server half); M19f phone liveness (FR45 app half); M19g live Mac proof (AC32); M19h live phone proof (AC33). This part keeps one signal: CONCURRENCY_LIFECYCLE (cancelling a call at its cap or guard and re-issuing it; seam check: FR41's logging is the measurement the caps are judged by and the warm-up num_ctx is one request field, so splitting them off leaves halves too small to review alone) - not split further.
+
+Owns: FR41, FR42. Traces to: AC31 (log line per call, warm-up num_ctx, think value per step, num_predict only on thinking-off steps, thinking text detected, routine cap, plan/write guard re-issue).
+
+### Architecture
+
+C5, C6, C7
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M19b-AC1**: Server tests through POST /v1/chat with a scripted fake Ollama: every deep research model call writes exactly one structured log line with step name, the `think` value sent, attempt number, wall time, Ollama's `load_duration`, `prompt_eval_count`, `prompt_eval_duration`, `eval_count`, `eval_duration`, and the character count of `message.thinking`; when the server loads or warms the deep-research model it sends the same `num_ctx` the research calls use; no global Ollama context setting is changed and ordinary replies' Ollama requests are unchanged.
+- [ ] **M19b-AC2**: Server tests: brief, query proposal, page choice, note-taking and gap check are sent with top-level `think: false`, a `num_predict` output cap (server settings, defaults about 200 tokens and about 800 for notes) and non-thinking sampling (temperature 0.7, top_p 0.8, top_k 20 unless a schema step uses a lower temperature); plan and write are sent with thinking on, streamed, and never with `num_predict`; `format` and `num_ctx` are sent as before; a thinking-off step whose fake reply contains `message.thinking` text is detected and logged (not trusted from the setting) and used only if its content validates.
+- [ ] **M19b-AC3**: Server tests: a thinking-off model call that exceeds its hard wall-clock cap (server setting, default about 30 s) is cancelled and counts as a failed attempt under FR35's retry-then-skip rule, and the run carries on.
+- [ ] **M19b-AC4**: Server tests: a plan or write call whose thinking exceeds its guard (server settings, defaults about 30 s for plan and about 60 s for write, the write guard fitting inside the FR36 write reserve) is cancelled and re-issued once with `think: false`, never truncating an answer; if the re-issue also fails, FR35's skip and FR36's write-up rules apply and the run still ends `complete`, `partial` or `failed`.
+
+### Baseline
+
+### Evidence
+
+### Validation
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+
+## M19c — A note call gets the page's most relevant passages, and useless pages cost no model call
+
+Status: TODO
+
+### Outcome
+
+Through POST /v1/chat, a deep research note call receives the page title, its first paragraph and the keyword-ranked passages that best match the sub-question (about 2-3K tokens, page text first and task last, behind a byte-stable instruction prefix) instead of the whole page; quotes are still checked against the full stored page; a near-empty, bot-challenge or no-match page is skipped without a model call. Second part of the FR41-FR45 split (see M19b). Operational-complexity signals: none (one component, C6; passage splitting and ranking are in-process with no new model or service).
+
+Owns: FR43. Traces to: AC31 (note excerpt within the size cap, quote outside the excerpt still matches, empty/blocked/no-match pages make no note call).
+
+### Architecture
+
+C6
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M19c-AC1**: Server tests through POST /v1/chat with a scripted fake Ollama and fake page backend: the note request carries the page title, its first paragraph and the top passages (stored page text split on headings and paragraphs into passages of about 150-400 words, ranked in-process by BM25 or equivalent against the sub-question and the main question's terms) within the excerpt size cap (server setting, about 2-3K tokens), with page text first and the task last; its fixed instructions form a byte-stable prefix, with per-step task text at the end of the user message and not in the system message.
+- [ ] **M19c-AC2**: Server tests: a note quote taken from the full stored page text but outside the excerpt still passes the FR37 quote check, a quote matching neither is dropped, and raw page text is still discarded once noted (FR35).
+- [ ] **M19c-AC3**: Server tests: a page with no passage above the relevance threshold, with almost no extracted text, or showing bot-challenge markers makes no note call and is logged "empty" or "blocked"; FR37's numbering and Sources rules for pages read are unchanged by the skip.
+
+### Baseline
+
+### Evidence
+
+### Validation
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+
+## M19d — Research covers every sub-question first, reads chosen pages ahead, and keeps partial notes
+
+Status: TODO
+
+### Outcome
+
+Through POST /v1/chat, every sub-question gets its searches and its first page before any gets a second; chosen pages are fetched in parallel as soon as page choice returns while model calls stay one at a time; a sub-question ends early when a search round adds no new URLs; a deadline-cut note call keeps its complete notes, and a run that runs out of time with no notes says so honestly and stays `failed`. Third part of the FR41-FR45 split (see M19b). Operational-complexity signal: CONCURRENCY_LIFECYCLE (one signal; parallel prefetched reads under the run's one cancellation signal; seam check: breadth-first order and prefetch are the same scheduling change in the research loop) - not split further.
+
+Owns: FR44. Traces to: AC31 (breadth first, parallel reads with no overlapping model calls, deadline-cut note keeps complete notes, ran-out-of-time sentence).
+
+### Architecture
+
+C6, C12
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M19d-AC1**: Server tests through POST /v1/chat with a scripted fake Ollama and fake search/page backends: every sub-question gets its searches and its first page before any sub-question gets a second page, and a sub-question ends early when a search round adds no new URLs.
+- [ ] **M19d-AC2**: Server tests: chosen pages start fetching in parallel as soon as page choice returns, each keeping its FR24 time limit, while model calls never overlap; Stop or the deadline with several prefetched reads in flight cancels all of them through the run's one signal (FR36).
+- [ ] **M19d-AC3**: Server tests: when the deadline cuts a note call, every complete note already present in its partial output is kept and still quote-checked; a run that ends with no notes because research time ran out ends `failed` with the sentence "The research ran out of time before it could take notes." instead of blaming the pages.
+
+### Baseline
+
+### Evidence
+
+### Validation
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+
+## M19e — Reply streams show they are alive: started steps for deep research and keep-alives for every reply
+
+Status: TODO
+
+### Outcome
+
+Over GET /v1/generations/{id}/events, a deep research run emits a "started" step before awaiting every search, read and model call ("Choosing pages", "Taking notes: <domain>", "Checking for gaps"), and every open reply stream - deep research, ordinary web and switch off - carries an SSE comment keep-alive at least every 15 s without disturbing Last-Event-ID resume. Server half of FR45; the app half is M19f. Fourth part of the FR41-FR45 split (see M19b). Operational-complexity signal: CONCURRENCY_LIFECYCLE (one signal; a keep-alive timer owned by each open stream; seam check: the started steps and the keep-alive are the server's two liveness signals on the same stream, each a small change) - not split further.
+
+Owns: none owned. Traces to: AC31 (started steps precede each await; keep-alives every 15 s on deep, ordinary web and switch-off streams without disturbing resume), FR45 (server half; FR45 owned by M19f), FR40 (amended: keep-alive on ordinary and switch-off replies).
+
+### Architecture
+
+C4, C6
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M19e-AC1**: Server tests through POST /v1/chat and GET /v1/generations/{id}/events with a scripted fake Ollama and fake backends that hold each call open: a deep research run emits a "started" step, carrying `elapsed_ms`, before awaiting every search, read and model call (not only after it returns), with model-call steps such as "Choosing pages", "Taking notes: <domain>" and "Checking for gaps".
+- [ ] **M19e-AC2**: Server tests: while a reply stream is open the server sends an SSE comment keep-alive at least every 15 s on deep research, ordinary web and switch-off streams; the comments carry no event ID, and a Last-Event-ID resume still yields every event with no gaps or duplicates; all existing server tests pass.
+
+### Baseline
+
+### Evidence
+
+### Validation
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+
+## M19f — On the phone the clock ticks every second, each outage gets its own resume allowance, and a failed reply shows a plain line
+
+Status: TODO
+
+### Outcome
+
+In the app, a deep research reply's elapsed clock ticks every second locally from the last server `elapsed_ms` (capped at the budget, re-anchored on every event and after every resume); for every reply the 300 s resume allowance applies per outage and resets after each successful resume; and a reply saved with error status and no answer text shows a plain line such as "Lost connection to the Mac before the reply arrived" with its steps, never an empty bubble. App half of FR45 (server half in M19e). Fifth part of the FR41-FR45 split (see M19b). Operational-complexity signal: CONCURRENCY_LIFECYCLE (one signal; the resume allowance's timer ownership in the app client; seam check: the clock and error line are display changes over the same reply state) - not split further.
+
+Owns: FR45. Traces to: AC31 (resume allowance resets after a successful resume; an error reply with no text shows the error line with steps, on deep and ordinary replies), FR40 (amended: per-outage resume allowance and error line on ordinary and switch-off replies).
+
+### Architecture
+
+C1, C2, C3
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M19f-AC1**: App tests: a deep research reply's elapsed clock ticks every second locally from the last server `elapsed_ms`, is capped at the budget, and is re-anchored on every server event and after every resume.
+- [ ] **M19f-AC2**: App tests through the app server client with scripted dropping streams: the 300 s resume allowance applies per outage and resets after every successful resume, so several short outages in one reply all resume; a single outage longer than 300 s ends the reply on the phone with error status and its steps kept.
+- [ ] **M19f-AC3**: App tests: a reply with error status and no answer text - deep research, ordinary web or switch off - shows a plain line (e.g. "Lost connection to the Mac before the reply arrived") with its steps visible, never an empty bubble, both live and when reopened from storage.
+
+### Baseline
+
+### Evidence
+
+### Validation
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+
+## M19g — Faster deep research proven live on the Mac
+
+Status: TODO
+
+### Outcome
+
+With com.harness.server restarted on this code (standing human permission for FR41-FR45 work) and `qwen3.5:35b-a3b` resident, the FR35 `format` probe is re-run with thinking off and the AC29 question set (including the 2026-10-02 heat-pump question) is run with FR41 logging; each run passes on AC29's bar and its speed figures are recorded, not gated. Run before M20 to prove the riskiest integration (thinking off on the real model) early; M21 re-runs AC29 after M20 changes the search path. Sixth part of the FR41-FR45 split (see M19b). Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; proof only, no production change expected) - not split.
+
+Owns: none owned. Traces to: AC32, AC29 (pass bar).
+
+### Architecture
+
+C4, C6, C7, C11, C12, C13
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M19g-AC1**: Live on the Mac: the FR35 `format` probe is re-run with thinking off on the installed Ollama against `qwen3.5:35b-a3b`, and its validity rate is recorded in evidence under .harness/evidence/.
+- [ ] **M19g-AC2**: Live on the Mac with com.harness.server restarted on this code and `qwen3.5:35b-a3b` resident: the AC29 question set (3 real research-style questions plus the 2026-10-02 heat-pump question) is run through the server API with FR41 logging, and per run the total wall time, research-phase model calls, distinct pages read, notes kept, planning time and routine-call p50/p95 are recorded in evidence; each run ends within the budget plus a small margin with status `complete` or `partial`, a report citing at least 3 distinct read pages, and no citation number that fails to resolve to a saved source. Speed figures are recorded, not gated (reference targets: routine p50 < 10 s, planning < 40 s).
+
+### Baseline
+
+### Evidence
+
+### Validation
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+
+## M19h — On the phone, a deep research reply rides out airplane mode and its clock never stalls
+
+Status: TODO
+
+### Outcome
+
+The owner runs a deep research reply on the phone, turns airplane mode on for about 30 s twice, and the reply still ends showing its steps and either the report or a visible status line, with the elapsed clock advancing every second throughout. Owner-performed proof of FR45 on the real phone; needs M19e and M19f live (server restarted under the standing permission; app bundle served from the working tree). Seventh and last part of the FR41-FR45 split (see M19b). Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; proof only) - not split.
+
+Owns: none owned. Traces to: AC33.
+
+### Architecture
+
+C1, C2, C4, C6
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M19h-AC1**: On the owner's phone: during a deep research run, airplane mode is turned on for about 30 s twice; the reply still ends showing its steps and either the report or a visible status line (never an empty bubble), and the elapsed clock visibly advances every second throughout; the owner's report and a screenshot of the finished reply are saved under .harness/evidence/.
+
+### Baseline
+
+### Evidence
+
+### Validation
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+
 ## M20 — Search backends rest after being blocked, and repeated searches and page reads come from cache
 
 Status: TODO
@@ -514,16 +746,17 @@ Pending.
 
 ### Follow-ups
 
+- FR40 amended 2026-10-02: ordinary and switch-off replies also get FR45's stream keep-alive, per-outage resume allowance and error line; those are built and proven in M19e and M19f (AC31). M20-AC3's 'existing ordinary-web and switch-off tests pass unchanged' is judged against the suite as it stands after M19f. M20's criteria are otherwise unaffected.
 
-## M21 — Three real research questions answered on the Mac, and the owner's phone screenshot
+## M21 — Four real research questions answered on the Mac, and the owner's phone screenshot
 
 Status: TODO
 
 ### Outcome
 
-The finished feature proven live: three real research-style questions run on `qwen3.5:35b-a3b` each end within budget with a report citing at least three distinct read pages, and the owner photographs a finished deep research reply on the phone. Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; proof only) - not split.
+The finished feature proven live: three real research-style questions plus the 2026-10-02 heat-pump question run on `qwen3.5:35b-a3b` each end within budget with a report citing at least three distinct read pages, and the owner photographs a finished deep research reply on the phone. Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; proof only) - not split.
 
-Owns: none owned. Traces to: AC29, AC30.
+Owns: none owned. Traces to: AC29 (amended 2026-10-02: plus the heat-pump question), AC30.
 
 ### Architecture
 
@@ -535,7 +768,7 @@ Pending.
 
 ### Acceptance Criteria
 
-- [ ] **M21-AC1**: Live on the Mac with `qwen3.5:35b-a3b` resident: 3 real research-style questions each end within the budget plus a small margin with status `complete` or `partial`, a report citing at least 3 distinct read pages, and no citation number that fails to resolve to a saved source; the owner's opinion of report quality is recorded in the evidence (not a gate).
+- [ ] **M21-AC1**: Live on the Mac with `qwen3.5:35b-a3b` resident: 3 real research-style questions plus the 2026-10-02 heat-pump question each end within the budget plus a small margin with status `complete` or `partial`, a report citing at least 3 distinct read pages, and no citation number that fails to resolve to a saved source; the owner's opinion of report quality is recorded in the evidence (not a gate).
 - [ ] **M21-AC2**: The owner's phone screenshot of a finished deep research reply showing its steps, its status, logo citations and "Sources (n)" is saved under .harness/evidence/.
 
 ### Baseline
@@ -554,6 +787,7 @@ Pending.
 
 ### Follow-ups
 
+- AC29 amended 2026-10-02 to add the 2026-10-02 heat-pump question: M21-AC1, title and outcome updated at planning on 2026-10-02 to the four-question set. M19g runs the same set before M20 for AC32; M21 re-runs it after M20 because M20 changes the search path. M21-AC2 is unaffected.
 
 ## M5a — Always-on server and bundle host
 

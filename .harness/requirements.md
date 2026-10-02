@@ -50,6 +50,15 @@ local models under-search when left to decide (Qwen3-32B made fewer than 2 searc
 on BrowseComp-Plus) and that Ollama's native tool-calling path is unreliable for these models, so
 code owns the loop and the model makes only small schema-constrained decisions.
 
+**Fast deep research (FR41–FR45, added 2026-10-02):** the first live phone run after M19 (heat-pump
+question, server restarted on the m19 branch) ended with an empty bubble; a Mac rerun took 1:54 to
+plan and ran out of research time inside its first note call, ending `failed` with a sentence
+blaming the pages. `reports/Fast local deep research redesign.md` (notes under `research_notes/Fast
+local deep research redesign/`) traced it to `think: true` with no output cap on every step and to
+silent streams. The owner chose the report's ranks 0–6 (all within FR34–FR40's guarantees), with the
+phone liveness fixes applied to every reply, built before M20. LearningCircuit
+`local-deep-research` was considered as a replacement and not adopted (see Decisions).
+
 ## Functional Requirements
 
 - [FR1] **Model list.** The app lists every model installed in Ollama (`GET /api/tags`) by its
@@ -300,7 +309,56 @@ code owns the loop and the model makes only small schema-constrained decisions.
   FR20's region and no-account rules. If every backend is resting or failing, the search is
   "unavailable" as in FR20.
 - [FR40] **No change to ordinary replies.** Ordinary web replies (FR19, FR30, FR31, FR33) and
-  replies with the switch off behave as before, apart from FR39's resting and caching.
+  replies with the switch off behave as before, apart from FR39's resting and caching and FR45's
+  stream keep-alive, per-outage resume allowance and error line (amended 2026-10-02).
+- [FR41] **Every deep research model call is measured, and the model is not reloaded at the start.**
+  The server writes one structured log line per deep-research model call with: step name, the `think`
+  value sent, attempt number, wall time, and Ollama's `load_duration`, `prompt_eval_count`,
+  `prompt_eval_duration`, `eval_count`, `eval_duration`, plus the character count of
+  `message.thinking`. When the deep-research model is warmed/loaded by the server it is sent the same
+  `num_ctx` the research calls use, so the first research call does not rebuild the runner. No global
+  Ollama context setting (e.g. `OLLAMA_CONTEXT_LENGTH`) is changed; ordinary replies' context is
+  untouched.
+- [FR42] **Thinking only where it pays; every model call is time-capped.** Brief, query proposal,
+  page choice, note-taking and gap check are sent with top-level `think: false` on `/api/chat`, an
+  output cap (`num_predict`; default about 200 tokens, about 800 for notes — server settings) and
+  non-thinking sampling (model-card defaults: temperature 0.7, top_p 0.8, top_k 20; schema steps may
+  use a lower temperature if it validates better). Each such call has a hard wall-clock cap (default
+  about 30 s, server setting); a call that hits it is cancelled and counts as a failed attempt under
+  FR35's retry-then-skip rule. Plan and write keep thinking on, streamed, under a thinking time guard
+  (default about 30 s for plan, about 60 s for write — server settings, write's guard fitting inside
+  the FR36 write reserve); if thinking exceeds the guard the request is cancelled and re-issued once
+  with `think: false`, never truncating an answer. Output caps are never applied to a thinking-on
+  request. FR35's `format` and `num_ctx` rules are unchanged.
+- [FR43] **Note calls get passages, not pages.** The stored page text is split on headings and
+  paragraphs into passages (about 150–400 words) and ranked by keyword relevance (BM25 or
+  equivalent, in-process, no extra model) against the sub-question and the main question's terms.
+  The note call receives the page title, its first paragraph and the top passages, about 2–3K tokens
+  in all (server setting), with page text first and the task last. A page with no passage above the
+  relevance threshold, with almost no extracted text, or showing bot-challenge markers is skipped
+  without a model call and logged as "empty" or "blocked". Quotes are still checked against the full
+  stored page text (FR37) and raw text is still discarded once noted (FR35). Fixed instructions form
+  a byte-stable prompt prefix: per-step task text goes at the end of the user message, not in the
+  system message.
+- [FR44] **Breadth first, pages fetched ahead, partial notes kept.** Every sub-question gets its
+  searches and its first page before any sub-question gets a second page. Chosen pages are fetched in
+  parallel as soon as page choice returns (each keeping its FR24 limit and FR36 cancellation), while
+  model calls stay strictly one at a time. A sub-question ends early when a search round adds no new
+  URLs. When the deadline cuts a note call, every complete note already present in its partial output
+  is kept (still quote-checked). A run that ends with no notes because research time ran out says so
+  in its failure sentence ("The research ran out of time before it could take notes.") instead of
+  claiming the pages were unusable; its status stays `failed`.
+- [FR45] **The phone always shows that a reply is alive.** For deep research, the server emits a
+  "started" step before awaiting every search, read and model call (not only after it returns), with
+  model-call steps such as "Choosing pages", "Taking notes: <domain>" and "Checking for gaps"; the
+  app's elapsed clock ticks every second locally from the last server `elapsed_ms`, capped at the
+  budget, re-anchored on every event and after every resume. For **all replies** (deep research,
+  ordinary web, switch off): the server sends an SSE comment keep-alive at least every 15 s while a
+  stream is open (comments carry no event ID, so FR9/FR38 resume and no-gaps/no-duplicates are
+  unchanged); the app's 300 s resume allowance applies per outage (reset after every successful
+  resume) rather than to the whole reply; and a reply saved with error status and no answer text
+  shows a plain line (e.g. "Lost connection to the Mac before the reply arrived") with its steps
+  visible, never an empty bubble.
 
 ## Acceptance Criteria
 
@@ -420,12 +478,35 @@ All proven against the live Mac Studio and Ollama, not mocks.
     hour and one returning a CAPTCHA for 24 hours; a repeated query and page are served from cache;
     ordinary web replies' existing tests pass unchanged.
 29. **AC29** — Live on the Mac with `qwen3.5:35b-a3b` resident (downloaded for this work): 3 real
-    research-style questions each end within the budget plus a small margin with status `complete`
+    research-style questions, plus the 2026-10-02 heat-pump question (amended 2026-10-02), each end within the budget plus a small margin with status `complete`
     or `partial`, a report citing at least 3 distinct read pages, and no citation number that fails
     to resolve to a saved source. The owner's opinion of report quality is recorded in the evidence
     but is not a gate.
 30. **AC30** — The owner's phone screenshot of a finished deep research reply showing its steps, its
     status, logo citations and "Sources (n)".
+31. **AC31** — Automated tests with a scripted fake Ollama and fake search/page backends prove
+    FR41–FR45: one log line per model call with the FR41 fields; the warm-up sends the research
+    `num_ctx`; each step sends the specified `think` value, and `num_predict` only on thinking-off
+    steps; a thinking-off step whose fake reply contains thinking text is detected (not trusted from
+    the setting); a routine call exceeding its cap is cancelled and retried/skipped; a plan or write
+    whose thinking exceeds its guard is re-issued with `think: false`; the note request carries a
+    page excerpt within the size cap and a quote outside the excerpt but in the full page still
+    matches; empty, blocked and no-match pages make no note call; sub-questions are served breadth
+    first; reads start in parallel while model calls never overlap; a deadline-cut note call keeps
+    its complete notes; a time-out run with no notes uses the "ran out of time" sentence; "started"
+    steps precede each await; keep-alives arrive at least every 15 s on deep, ordinary web and
+    switch-off streams without disturbing resume; the resume allowance resets after a successful
+    resume; an error reply with no text shows the error line with steps, on deep and ordinary
+    replies. All existing tests pass.
+32. **AC32** — Live on the Mac: the FR35 `format` probe is re-run with thinking off on the installed
+    Ollama and its validity rate recorded; the AC29 question set is run with FR41 logging, and per
+    run the total wall time, research-phase model calls, distinct pages read, notes kept, planning
+    time and routine-call p50/p95 are recorded in evidence. Pass/fail is AC29's (time, status, ≥ 3
+    cited pages, resolvable citations); the speed figures are recorded, not gated (targets for
+    reference: routine p50 < 10 s, planning < 40 s).
+33. **AC33** — On the owner's phone: during a deep research run, airplane mode is turned on for about
+    30 s twice; the reply still ends showing its steps and either the report or a visible status line
+    (never an empty bubble), and the elapsed clock visibly advances every second throughout.
 
 ## Constraints
 
@@ -483,6 +564,12 @@ All proven against the live Mac Studio and Ollama, not mocks.
   thorough presets; a replayable 20-question evaluation set; a reranker or any second resident
   model; PDF reading; a per-sentence entailment check; a headless-browser re-fetch for
   JavaScript-rendered pages.
+- For fast deep research (FR41–FR45), deferred (each would need an amendment): search-snippet notes
+  when a page cannot be read; merging brief and plan into one call; choosing pages in code instead of
+  a model step; markdown-aware quote matching; fewer than two searches per sub-question; the Ollama
+  MLX model tag (`qwen3.5:35b-a3b-nvfp4`, `format` ignored on MLX in Ollama 0.32); a global
+  `OLLAMA_CONTEXT_LENGTH`; changing the page extractor; running models in parallel
+  (`OLLAMA_NUM_PARALLEL` > 1). Replacing the loop with LearningCircuit `local-deep-research`.
 
 ## Edge Cases
 
@@ -541,6 +628,18 @@ All proven against the live Mac Studio and Ollama, not mocks.
 - The phone is locked for the whole run: the run finishes on the Mac and the reply is there on return
   (FR38).
 - A deep research run is in progress and the owner sends a message: refused as a reply in progress.
+- A thinking-off step comes back with thinking text anyway (setting ignored): detected from
+  `message.thinking`, logged, and treated as that step's result only if its content validates (FR42).
+- A plan or write call thinks past its guard: cancelled and re-issued once with thinking off; if
+  that also fails, FR35/FR36 skip and write-up rules apply (FR42).
+- A page whose passages all score zero, a near-empty page, or a bot-challenge page: no note call,
+  logged as "empty"/"blocked"; FR37's numbering and Sources rules for pages read are unchanged by
+  the skip — the page simply yields no notes.
+- Stop or the deadline while several prefetched reads are in flight: all are cancelled by the one
+  signal (FR36, FR44).
+- The connection drops several times in one long reply: each outage gets its own 300 s allowance;
+  a single outage longer than that ends the reply on the phone with the error line and steps, while
+  the Mac keeps running it (FR38, FR45); reopening later shows the saved reply.
 
 ## Decisions / Clarifications
 
@@ -689,6 +788,29 @@ All proven against the live Mac Studio and Ollama, not mocks.
   saved; circuit breakers (1 h rate-limit, 24 h CAPTCHA) and 24 h caching in the search service,
   applying to ordinary web search too; reranker, PDFs, entailment check, JS-page re-fetch, presets,
   model-started runs and the 20-question set left out.
+- **Fast deep research: safe fixes only** (human, 2026-10-02): ranks 0–6 of `reports/Fast local deep
+  research redesign.md` become FR41–FR45. Chosen over also adding search-snippet notes and over also
+  moving to the MLX model tag; those and the other amendment-needing shortcuts are deferred.
+- **Phone liveness fixes for every reply** (human, 2026-10-02): keep-alive, per-outage resume
+  allowance and the error line apply to ordinary and switch-off replies too (FR40 amended). Chosen
+  over deep-research-only.
+- **Live pass bar is the outcome; speeds recorded, not gated** (human, 2026-10-02): AC29/AC32 gate on
+  finishing in time with ≥ 3 cited pages; per-call speed figures are evidence only. Chosen over
+  gating on routine p50 < 10 s and planning < 40 s.
+- **Standing permission to restart com.harness.server for FR41–FR45 work** (human, 2026-10-02):
+  the harness may restart the always-on Mac server whenever a live test of this work needs new code.
+  Limited to this work.
+- **Not replacing the loop with LearningCircuit `local-deep-research`** (human, 2026-10-02, "Okay
+  carry on"): it calls the same model through the same Ollama so would not fix the thinking cost; its
+  published local-model scores used Serper (a paid search API, against the no-payment constraint);
+  it is a separate Python app with its own login, database and SearXNG dependency; and it would
+  discard FR35–FR38's built guarantees. Its useful techniques (page excerpts, parallel fetch,
+  breadth-first coverage) are in FR43–FR44. A one-hour side-by-side trial was offered and declined.
+- Defaults chosen by Claude, shown to the owner (2026-10-02): FR41–FR45 are built before M20; plan
+  and write keep thinking under a time guard with a thinking-off fallback, all other steps think
+  off; output caps ~200/~800 tokens, routine call cap ~30 s, plan guard ~30 s, write guard ~60 s,
+  excerpt ~2–3K tokens, keep-alive every 15 s (all server settings); a time-out with no notes stays
+  `failed` with an honest sentence; the heat-pump question joins AC29's live set.
 
 ## Open Questions
 
