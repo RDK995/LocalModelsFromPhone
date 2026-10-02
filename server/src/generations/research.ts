@@ -92,6 +92,10 @@ export const NO_REPORT_NOTE =
 export const COULD_NOT_SEARCH_NOTE =
   "The research could not search the web — every search failed or was unavailable. Try again later.";
 
+/** FR36: the answer of a run whose searches returned results but no page gave usable material. */
+export const COULD_NOT_READ_NOTE =
+  "The research found search results but could not get anything usable from the pages — none could be read or none had relevant content. Try again later.";
+
 /** Thrown inside the run when the current phase's deadline has passed; never leaves the run. */
 class PhaseTimeUp extends Error {}
 
@@ -531,8 +535,8 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
     // 4. Write the report from the notes only.
     checkAbort();
     phase = "write";
-    // FR36 `failed`: searches were attempted, none returned anything and no page was read.
-    const failed = searchesRun > 0 && searchesWithResults === 0 && readNumbers.size === 0;
+    // FR36 `failed`: searches were attempted but no note survived (nothing usable to write from).
+    const failed = searchesRun > 0 && notes.length === 0;
     let written: string | null = null;
     let wroteNothing = false;
     if (!failed && phaseOver()) {
@@ -553,7 +557,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
       yield step({ step_id: "write", kind: "write", status: written ? "done" : "failed" });
     }
 
-    let report = failed ? COULD_NOT_SEARCH_NOTE : written ? cleanReport(written, readNumbers) : "";
+    let report = failed ? (searchesWithResults === 0 ? COULD_NOT_SEARCH_NOTE : COULD_NOT_READ_NOTE) : written ? cleanReport(written, readNumbers) : "";
     if (report === "") {
       wroteNothing = true;
       const gathered = notes.length

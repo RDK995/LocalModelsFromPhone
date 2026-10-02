@@ -228,10 +228,13 @@ describe("POST /v1/chat with deep_research (M15 FR35, FR37)", () => {
     });
 
     it("AC1: a slow step uses up research time, the run writes, ends partial, and every step carries elapsed/budget", async () => {
+      let searchCalls = 0;
       const s = setup({
         research: { budgetMs: BUDGET },
         search: async (query, signal, normal) => {
-          await sleep(350); // finite, ignores the signal
+          // The first sub-question runs at full speed so a note is gathered (FR36: no note = failed);
+          // later searches are slow (finite, ignore the signal) and use up the research time.
+          if (++searchCalls > 2) await sleep(350);
           return normal(query, signal);
         },
       });
@@ -292,9 +295,12 @@ describe("POST /v1/chat with deep_research (M15 FR35, FR37)", () => {
 
     it("AC3a: an in-flight read receives an aborted signal at the deadline and the stream ends in time", async () => {
       const seen: boolean[] = [];
+      let readCalls = 0;
       const s = setup({
         research: { budgetMs: BUDGET },
-        read: async (url, signal) => {
+        read: async (url, signal, normal, numberPage) => {
+          // The first read succeeds so a note is gathered (FR36: no note = failed); later reads hang.
+          if (++readCalls === 1) return normal(url, signal, numberPage);
           const result = await untilAborted(signal, {
             page: null,
             events: [{ type: "step", data: { step_id: "rx", kind: "read", status: "failed", url } }] as WebEvent[],

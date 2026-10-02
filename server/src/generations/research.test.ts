@@ -733,16 +733,19 @@ describe("runResearch time budget (FR36)", () => {
     const web = fakeWeb();
     const slowSearch: ResearchWebTools = {
       async search(query, signal) {
-        await sleep(700); // slow but non-hanging; ignores the signal
+        // The first sub-question runs at full speed so a note is gathered (FR36: no note = failed);
+        // the third search is slow but non-hanging, ignores the signal, and uses up the research time.
+        if (web.searches.length >= 2) await sleep(700);
         return web.tools.search(query, signal);
       },
       read: web.tools.read,
     };
     const { events, ms } = await timed(() => collect(fc.client, slowSearch, { ...BASE, budgetMs }));
     expect(ms).toBeLessThanOrEqual(budgetMs + MARGIN_MS);
-    expect(web.searches.length).toBe(1);
-    expect(web.reads.length).toBe(0);
-    const afterSearch = fc.signals.slice(fc.signals.findIndex((r) => r.step === "queries") + 1);
+    expect(web.searches.length).toBe(3);
+    expect(web.reads.length).toBe(2); // only the first sub-question's reads; none after the deadline
+    const lastQueries = fc.signals.map((r) => r.step).lastIndexOf("queries");
+    const afterSearch = fc.signals.slice(lastQueries + 1);
     expect(afterSearch.map((r) => r.step)).toEqual(["write"]);
     expect(fc.signals.find((r) => r.step === "write")!.abortedAtStart).toBe(false);
     expect(contentText(events).trim().length).toBeGreaterThan(0);
@@ -813,9 +816,11 @@ describe("runResearch time budget (FR36)", () => {
     const fc = hangingClient(null);
     const web = fakeWeb();
     const seen: boolean[] = [];
+    let readCalls = 0;
     const tools: ResearchWebTools = {
       search: web.tools.search,
-      read: (_u, signal) => untilAborted(signal, seen),
+      // The first read succeeds so a note is gathered (FR36: no note = failed); later reads hang.
+      read: (u, signal, numberPage) => (++readCalls === 1 ? web.tools.read(u, signal, numberPage) : untilAborted(signal, seen)),
     };
     const { events, ms } = await timed(() => collect(fc.client, tools, { ...BASE, budgetMs }));
     expect(ms).toBeLessThanOrEqual(budgetMs + MARGIN_MS);
@@ -856,15 +861,41 @@ describe("runResearch time budget (FR36)", () => {
     expect(done.research.status).toBe("partial");
   });
 
-  it("AC3: a write cut off by the deadline with nothing gathered ends partial with the no-report note", async () => {
-    const { NO_REPORT_NOTE } = await import("./research");
+  it("COULD_NOT_READ_NOTE has the exact text", async () => {
+    const { COULD_NOT_READ_NOTE } = await import("./research");
+    expect(COULD_NOT_READ_NOTE).toBe(
+      "The research found search results but could not get anything usable from the pages — none could be read or none had relevant content. Try again later.",
+    );
+  });
+
+  it("FR36: searches returned results but no page could be read: failed with the could-not-read sentence, no write call", async () => {
+    const { COULD_NOT_READ_NOTE } = await import("./research");
+    const fc = fakeClient({ write: () => JSON.stringify({ report: "Invented report about cats [1]." }) });
+    const web = fakeWeb();
+    const tools: ResearchWebTools = { search: web.tools.search, read: async () => ({ page: null, events: [] }) };
+    const events = await collect(fc.client, tools, { ...BASE, budgetMs: 4000 });
+    expect(web.searches.length).toBeGreaterThan(0);
+    expect(fc.of("write").length).toBe(0);
+    expect(stepData(events).some((s) => s.kind === "write")).toBe(false);
+    expect(contentText(events)).toBe(COULD_NOT_READ_NOTE);
+    expect(events.some((e) => e.type === "sources")).toBe(true);
+    const done = doneData(events);
+    expect(done.status).toBe("complete");
+    expect(done.research.status).toBe("failed");
+    expect(events.every((e) => !e.data.includes('"status":"complete"') || e.type === "done")).toBe(true);
+  });
+
+  it("FR36: pages read but note extraction yields no notes: failed with the could-not-read sentence, even if a write would hang", async () => {
+    const { COULD_NOT_READ_NOTE } = await import("./research");
     const budgetMs = 700;
     const fc = hangingClient("write", { note: () => JSON.stringify({ notes: [] }) });
-    const { events, ms } = await timed(() => collect(fc.client, fakeWeb().tools, { ...BASE, budgetMs }));
+    const web = fakeWeb();
+    const { events, ms } = await timed(() => collect(fc.client, web.tools, { ...BASE, budgetMs }));
     expect(ms).toBeLessThanOrEqual(budgetMs + MARGIN_MS);
-    expect(fc.seen).toEqual([true]);
-    expect(contentText(events)).toBe(NO_REPORT_NOTE);
-    expect(doneData(events).research.status).toBe("partial");
+    expect(web.reads.length).toBeGreaterThan(0);
+    expect(fc.of("write").length).toBe(0);
+    expect(contentText(events)).toBe(COULD_NOT_READ_NOTE);
+    expect(doneData(events).research.status).toBe("failed");
   });
 
   it("a user Stop while a search is in flight still ends cancelled, not partial", async () => {
