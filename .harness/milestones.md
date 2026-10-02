@@ -465,7 +465,7 @@ C4, C6
 
 ## M19f — On the phone the clock ticks every second, each outage gets its own resume allowance, and a failed reply shows a plain line
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -479,13 +479,13 @@ C1, C2, C3
 
 ### As-Built
 
-Pending.
+.harness/as-built/M19f.md - RECORDED - C1, C2, C3 observed, 4 edges, 16 of 16 files attributed, no claim mismatches
 
 ### Acceptance Criteria
 
-- [ ] **M19f-AC1**: App tests: a deep research reply's elapsed clock ticks every second locally from the last server `elapsed_ms`, is capped at the budget, and is re-anchored on every server event and after every resume.
-- [ ] **M19f-AC2**: App tests through the app server client with scripted dropping streams: the 300 s resume allowance applies per outage and resets after every successful resume, so several short outages in one reply all resume; a single outage longer than 300 s ends the reply on the phone with error status and its steps kept.
-- [ ] **M19f-AC3**: App tests: a reply with error status and no answer text - deep research, ordinary web or switch off - shows a plain line (e.g. "Lost connection to the Mac before the reply arrived") with its steps visible, never an empty bubble, both live and when reopened from storage.
+- [x] **M19f-AC1**: App tests: a deep research reply's elapsed clock ticks every second locally from the last server `elapsed_ms`, is capped at the budget, and is re-anchored on every server event and after every resume.
+- [x] **M19f-AC2**: App tests through the app server client with scripted dropping streams: the 300 s resume allowance applies per outage and resets after every successful resume, so several short outages in one reply all resume; a single outage longer than 300 s ends the reply on the phone with error status and its steps kept.
+- [x] **M19f-AC3**: App tests: a reply with error status and no answer text - deep research, ordinary web or switch off - shows a plain line (e.g. "Lost connection to the Mac before the reply arrived") with its steps visible, never an empty bubble, both live and when reopened from storage.
 
 ### Baseline
 
@@ -506,7 +506,7 @@ Pending.
 
 ### Review
 
-Pending.
+- Cycle 1: PASS (tier Mid, model sonnet, reason ORDINARY_IMPLEMENTATION; whole-milestone scope, diff 6897b7a..f9877f5). Per-criterion: M19f-AC1 PASS, M19f-AC2 PASS, M19f-AC3 PASS. Findings: 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL. Reviewer re-ran `cd mobile && bun test && bunx tsc --noEmit` (516 pass, 0 fail; tsc clean) - .harness/evidence/M19f-review.log.
 
 ### Review Cycles
 

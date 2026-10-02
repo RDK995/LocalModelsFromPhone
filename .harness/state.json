@@ -11950,19 +11950,19 @@
         "FR45"
       ],
       "traces": "AC31 (resume allowance resets after a successful resume; an error reply with no text shows the error line with steps, on deep and ordinary replies), FR40 (amended: per-outage resume allowance and error line on ordinary and switch-off replies)",
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 0,
       "review_override": null,
       "baseline": "6897b7a42cb49268affdce55f299ded341f09646 on m19f-phone-liveness",
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M19f.md",
+        "result": "RECORDED - C1, C2, C3 observed, 4 edges, 16 of 16 files attributed, no claim mismatches"
       },
       "criteria": [
         {
           "id": "M19f-AC1",
           "text": "App tests: a deep research reply's elapsed clock ticks every second locally from the last server `elapsed_ms`, is capped at the budget, and is re-anchored on every server event and after every resume.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "mobile/src/ui/researchClock.test.ts (ticks each second from last elapsed_ms, capped at budget, re-anchored on every event, re-anchors on the first event after a resume, ticker calls onTick every 1000 ms and stops, ordinary replies get no clock label); streamReducer/chatItems anchored_at - .harness/evidence/M19f-T2-verifier.log (src/ui 300 pass; full mobile suite 503 pass; tsc clean; eslint exit 0)"
           ]
@@ -11970,7 +11970,7 @@
         {
           "id": "M19f-AC2",
           "text": "App tests through the app server client with scripted dropping streams: the 300 s resume allowance applies per outage and resets after every successful resume, so several short outages in one reply all resume; a single outage longer than 300 s ends the reply on the phone with error status and its steps kept.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "mobile/src/api/client.test.ts 'APIClient per-outage resume allowance' (a) several short outages all resume, (b) a single outage over 300 s after an earlier short one ends the reply with error and no further requests, (c) allowance measured from the current outage start: 299 s retries, over 300 s does not; conversationSession.test.ts 'ends the reply with status error and keeps its steps when the connection never comes back within 300 s' - .harness/evidence/M19f-T1-verifier.log (97 pass focused; full mobile suite 497 pass; tsc clean)"
           ]
@@ -11978,7 +11978,7 @@
         {
           "id": "M19f-AC3",
           "text": "App tests: a reply with error status and no answer text - deep research, ordinary web or switch off - shows a plain line (e.g. \"Lost connection to the Mac before the reply arrived\") with its steps visible, never an empty bubble, both live and when reopened from storage.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "mobile/src/chat/errorReplySession.test.ts (deep research incl. model steps / ordinary web / switch off: plain line and steps, live and reopened through a fresh ConversationStore; model steps shown after reopening; a kind model step is kept on reload), mobile/src/ui/errorReply.test.ts (fallback to LOST_CONNECTION_LINE \"Lost connection to the Mac before the reply arrived\" without error_message; stored error_message used; no errorLine for an error reply with text or a complete reply; stepLabel model detail / (failed) / Thinking); chat.tsx renders errorLine in the bubble and lists steps uncollapsed - .harness/evidence/M19f-T3-verifier.log (focused 412 pass; full mobile suite 516 pass; tsc clean; eslint on changed files exit 0)"
           ]
@@ -12052,7 +12052,25 @@
           ]
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "PASS",
+          "scope": "SUBSTANTIVE",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "ORDINARY_IMPLEMENTATION",
+          "diff_range": "6897b7a42cb49268affdce55f299ded341f09646..f9877f5",
+          "artifact": null,
+          "findings": "0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL",
+          "per_criterion": {
+            "M19f-AC1": "PASS",
+            "M19f-AC2": "PASS",
+            "M19f-AC3": "PASS"
+          },
+          "note": "whole-milestone scope; reviewer re-ran cd mobile && bun test && bunx tsc --noEmit (516 pass, 0 fail; tsc clean) - .harness/evidence/M19f-review.log"
+        }
+      ],
       "findings": [],
       "validation": [
         "`cd mobile && bun test && bunx tsc --noEmit` - PASS (verifier after T1-T3: 516 pass, 0 fail; tsc clean) - .harness/evidence/M19f-T3-verifier.log. `bun run lint` fails only on 5 pre-existing quote errors in mobile/src/chat/webQuietSession.test.ts (present at baseline, untouched); eslint on every M19f-changed file exits 0."
