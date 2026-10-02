@@ -318,6 +318,15 @@ function normaliseWhitespace(s: string): string {
   return s.replace(/\s+/g, " ").trim();
 }
 
+/** FR45: a page's domain for its note step label - the hostname without a leading "www.". */
+function domainOf(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./i, "");
+  } catch {
+    return url;
+  }
+}
+
 /** Wrap untrusted web text as data; it cannot close its own marker. */
 function untrusted(label: string, body: string): string {
   const safe = body.replace(/<\/?untrusted_data[^>]*>/gi, "");
@@ -622,11 +631,19 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
     }
   }
 
-  function absorb(events: WebEvent[]): ResearchEvent[] {
+  /**
+   * Takes a web call's events into the run. `own` is the search/read step this run already announced
+   * as started before awaiting the call (FR45): the tool's own late started copy is dropped and its
+   * other steps carry the announced step_id, so every step_id has one started step.
+   */
+  function absorb(events: WebEvent[], own?: { kind: "search" | "read"; step_id: string }): ResearchEvent[] {
     const out: ResearchEvent[] = [];
     for (const e of events) {
-      if (e.type === "step") out.push(step(e.data));
-      else if (e.data.n !== undefined && !sources.some((x) => x.n === e.data.n)) {
+      if (e.type === "step") {
+        if (own && e.data.kind === own.kind) {
+          if (e.data.status !== "started") out.push(step({ ...e.data, step_id: own.step_id }));
+        } else out.push(step(e.data));
+      } else if (e.data.n !== undefined && !sources.some((x) => x.n === e.data.n)) {
         sources.push({ title: e.data.title, url: e.data.url, n: e.data.n });
       }
     }
@@ -659,6 +676,8 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
     | { ok: false; error: unknown };
   /** A read started ahead of its note step; `result` never rejects (no unhandled rejection). */
   interface Prefetch {
+    /** The read step announced as started when the read began (FR45). */
+    stepId: string;
     result: Promise<ReadOutcome>;
     outcome: ReadOutcome | null;
     /** Its events were taken into the run (consumed by a note step, or drained at the end). */
@@ -667,8 +686,33 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
   /** Every read started in the run, in start order. */
   const started: Prefetch[] = [];
 
+  /**
+   * FR45: one model step announced as a "model" step - started before the call is awaited, then done,
+   * or failed when the step was skipped (null) or cut off (the error is rethrown).
+   */
+  async function* modelCall<T>(
+    detail: string,
+    name: ModelStepName,
+    task: string,
+    userContent: string,
+    schema: Schema,
+    validate: (v: unknown) => T | null
+  ): AsyncGenerator<ResearchEvent, T | null> {
+    const step_id = crypto.randomUUID();
+    yield step({ step_id, kind: "model", status: "started", detail });
+    let value: T | null;
+    try {
+      value = await modelStep(name, task, userContent, schema, validate);
+    } catch (error) {
+      yield step({ step_id, kind: "model", status: "failed", detail });
+      throw error;
+    }
+    yield step({ step_id, kind: "model", status: value === null ? "failed" : "done", detail });
+    return value;
+  }
+
   /** Starts a read now under the phase signal (FR36) without waiting for it. */
-  function startRead(url: string): Prefetch {
+  function startRead(url: string, stepId: string): Prefetch {
     let pending: Promise<{ page: ReadPage | null; events: WebEvent[] }>;
     try {
       pending = webTools.read(url, phaseSignal(), numberPage);
@@ -677,6 +721,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
     }
     // Handling is attached now, so a read that is never awaited cannot reject unhandled.
     const entry: Prefetch = {
+      stepId,
       outcome: null,
       absorbed: false,
       result: pending.then(
@@ -713,13 +758,13 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
       if (entry.absorbed || !entry.outcome) continue;
       entry.absorbed = true;
       if (!entry.outcome.ok) continue;
-      yield* absorb(entry.outcome.events);
+      yield* absorb(entry.outcome.events, { kind: "read", step_id: entry.stepId });
       if (entry.outcome.page?.n !== undefined) readNumbers.add(entry.outcome.page.n);
     }
   }
 
   /** The next query not yet searched in this run, or null when none can be found. */
-  async function nextQuery(sq: SubState): Promise<string | null> {
+  async function* nextQuery(sq: SubState): AsyncGenerator<ResearchEvent, string | null> {
     for (;;) {
       const q = sq.queue.shift()?.trim();
       if (q !== undefined) {
@@ -730,7 +775,8 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
       if (sq.proposals < s.maxSearches) {
         sq.proposals++;
         const done = sq.runQueries.length ? `Searches already run: ${sq.runQueries.join(" | ")}` : "No searches run yet.";
-        const r = await modelStep(
+        const r = yield* modelCall(
+          "Choosing searches",
           "queries",
           "Propose web search queries (short, varied wording and angles) for the current sub-question.",
           context(`${sq.label}\n${done}`),
@@ -755,15 +801,17 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
    * with no query left.
    */
   async function* searchOnce(sq: SubState): AsyncGenerator<ResearchEvent, number | "failed" | null> {
-    const query = await nextQuery(sq);
+    const query = yield* nextQuery(sq);
     if (query === null) return null;
     checkDeadline();
     seenQueries.add(normaliseText(query));
     sq.runQueries.push(query);
     sq.searches++;
     searchesRun++;
+    const step_id = crypto.randomUUID();
+    yield step({ step_id, kind: "search", status: "started", query });
     const { results, events } = await webTools.search(query, phaseSignal());
-    yield* absorb(events);
+    yield* absorb(events, { kind: "search", step_id });
     const searchFailed = events.some(
       (e) => e.type === "step" && e.data.kind === "search" && (e.data.status === "failed" || e.data.status === "unavailable")
     );
@@ -782,12 +830,13 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
   }
 
   /** One page choice over the unread candidates; every chosen page starts reading at once (FR44). */
-  async function choosePages(sq: SubState): Promise<void> {
+  async function* choosePages(sq: SubState): AsyncGenerator<ResearchEvent, void> {
     const remaining = s.pagesPerSubQuestion - sq.reads;
     const unread = sq.candidates.filter((c) => !readKeys.has(pageUrlKey(c.url)));
     if (remaining <= 0 || unread.length === 0) return;
     const listing = unread.map((c, i) => `${i + 1}. ${c.title}\n   ${c.url}\n   ${c.snippet}`).join("\n");
-    const picked = await modelStep(
+    const picked = yield* modelCall(
+      "Choosing pages",
       "pages",
       `Choose up to ${remaining} search results worth reading for the current sub-question, by their number in the list.`,
       context(`${sq.label}\nSearch results:\n${untrusted("search results", listing)}`),
@@ -799,14 +848,27 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
       ? picked.filter((i): i is number => Number.isInteger(i) && (i as number) >= 1 && (i as number) <= unread.length)
       : unread.map((_, i) => i + 1);
     const chosen = [...new Set(indexes)].slice(0, remaining).map((i) => unread[i - 1]!);
+    // Every chosen read starts at once (parallel); then each is announced as started (FR45), before
+    // anything awaits it. A read that began before a deadline cut is still announced.
+    const begun: Array<{ url: string; step_id: string }> = [];
+    let cut: { error: unknown } | null = null;
     for (const candidate of chosen) {
-      checkDeadline(); // no read starts once the research phase is over
+      try {
+        checkDeadline(); // no read starts once the research phase is over
+      } catch (error) {
+        cut = { error };
+        break;
+      }
       const key = pageUrlKey(candidate.url);
       if (readKeys.has(key)) continue;
       readKeys.add(key); // reserved now, so no other sub-question chooses it
       sq.reads++;
-      sq.prefetched.push(startRead(candidate.url));
+      const step_id = crypto.randomUUID();
+      sq.prefetched.push(startRead(candidate.url, step_id));
+      begun.push({ url: candidate.url, step_id });
     }
+    for (const { url, step_id } of begun) yield step({ step_id, kind: "read", status: "started", url });
+    if (cut) throw cut.error;
   }
 
   /**
@@ -819,7 +881,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
       entry.absorbed = true;
       if (!outcome.ok) throw outcome.error;
       const { page, events } = outcome;
-      yield* absorb(events);
+      yield* absorb(events, { kind: "read", step_id: entry.stepId });
       if (!page || page.n === undefined || readNumbers.has(page.n)) continue;
       const n = page.n;
       readNumbers.add(n);
@@ -840,7 +902,8 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
       };
       let found: unknown[] | null;
       try {
-        found = await modelStep(
+        found = yield* modelCall(
+          `Taking notes: ${domainOf(page.url)}`,
           "notes",
           `Record short notes from page [${n}] that help answer the current sub-question. ` +
             "The excerpt above holds the page's title, first paragraph and most relevant passages. " +
@@ -918,7 +981,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
         }
         if (sq.searches >= s.maxSearches) sq.searchOver = true;
         // Also when it ran out of new queries before minSearches: still read what was collected.
-        if (sq.searches > 0) await choosePages(sq);
+        if (sq.searches > 0) yield* choosePages(sq);
         yield* noteNext(sq);
       }
 
@@ -937,7 +1000,8 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
             continue;
           }
           active = true;
-          const gap = await modelStep(
+          const gap = yield* modelCall(
+            "Checking for gaps",
             "gap",
             "Decide whether the notes are enough to answer the current sub-question. If not, give one new search query.",
             context(`${sq.label}\nSearches already run: ${sq.runQueries.join(" | ")}`),
@@ -963,7 +1027,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
             sq.searchOver = true;
             continue;
           }
-          await choosePages(sq);
+          yield* choosePages(sq);
           yield* noteNext(sq);
         }
       }

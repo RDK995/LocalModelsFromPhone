@@ -18,7 +18,7 @@ export type StepEvent = {
   type: "step";
   data: {
     step_id: string;
-    kind: "search" | "read" | "continue" | "answer_now" | "plan" | "write";
+    kind: "search" | "read" | "continue" | "answer_now" | "plan" | "write" | "model";
     status: "started" | "done" | "failed" | "unavailable";
     query?: string;
     url?: string;
