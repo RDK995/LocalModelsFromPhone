@@ -10821,8 +10821,40 @@
           ]
         }
       ],
-      "reviews": [],
-      "findings": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "CHANGES_REQUIRED",
+          "scope": "SUBSTANTIVE",
+          "tier": "Top",
+          "reason_code": "MILESTONE_REVIEW",
+          "diff_range": "003da19138951edcc615474a3d57c944a320e089..fa2ee80",
+          "artifact": ".harness/reviews/M17-cycle1.md",
+          "review_log": ".harness/evidence/M17-review.log",
+          "findings": "0 BLOCKER, 1 IMPORTANT, 1 OPTIONAL",
+          "per_criterion": {
+            "M17-AC1": "PASS",
+            "M17-AC2": "PASS",
+            "M17-AC3": "PASS"
+          },
+          "pre_correction": "fa2ee80999ad98a28d22f9f55f8b175479b765b9",
+          "note": "review tier recorded by the fix-cycle orchestrator as Top because the milestone diff contains a Top-routed task (M17-T1); the skill's dispatch record is authoritative if it differs"
+        }
+      ],
+      "findings": [
+        {
+          "id": "M17-R1-F1",
+          "severity": "IMPORTANT",
+          "summary": "results returned but no page read / no notes still writes an uncited report labelled complete (FR36)",
+          "status": "OPEN"
+        },
+        {
+          "id": "M17-R1-F2",
+          "severity": "OPTIONAL",
+          "summary": "parseResearchBudget has no unit test",
+          "status": "OPEN"
+        }
+      ],
       "validation": [
         {
           "command": "cd server && bun test && bun run typecheck",

@@ -449,7 +449,9 @@ Per criterion (status left PENDING for review):
 
 ### Review
 
-Pending.
+Cycle 1: CHANGES REQUIRED (SUBSTANTIVE) — .harness/reviews/M17-cycle1.md (Finding 1 IMPORTANT, Finding 2 OPTIONAL; M17-AC1/AC2/AC3 PASS); review log .harness/evidence/M17-review.log
+Pre-correction: fa2ee80999ad98a28d22f9f55f8b175479b765b9
+Corrections: in progress.
 
 ### Review Cycles
 
