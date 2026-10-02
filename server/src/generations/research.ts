@@ -23,7 +23,7 @@
 import type { OllamaChatRequest } from "../ollama/client";
 import type { ReadPage, SearchResult, StepEvent, WebEvent } from "../web/tools";
 import { createPageNumberer, pageUrlKey } from "../web/pageNumbers";
-import type { ContentEvent, DoneEvent, SourcesEvent } from "@shared/api";
+import type { ContentEvent, DoneEvent, SourcesEvent, StepEventData } from "@shared/api";
 import type { GenerationEvent, OllamaChatClient } from "./manager";
 
 /** The structured web tools (C12) the research loop uses; satisfied by createWebTools(). */
@@ -53,6 +53,10 @@ export interface ResearchSettings {
   retries: number;
   /** Ollama `think` value sent on every model step (the live probe decides the default). */
   think: boolean;
+  /** FR36: overall time budget of the run, in milliseconds. */
+  budgetMs: number;
+  /** FR36: share of the budget reserved for the write-up; research stops at budgetMs * (1 - this). */
+  writeReserveFraction: number;
 }
 
 export const DEFAULT_RESEARCH_SETTINGS: ResearchSettings = {
@@ -65,6 +69,8 @@ export const DEFAULT_RESEARCH_SETTINGS: ResearchSettings = {
   retries: 2,
   /** probe 2026-10-02: think-on 7/7 valid */
   think: true,
+  budgetMs: 480_000,
+  writeReserveFraction: 0.25,
 };
 
 /** One event in the generation event shape, without log seq/timestamp. */
@@ -81,6 +87,13 @@ export interface ResearchRunOptions {
 
 export const NO_REPORT_NOTE =
   "No report was produced — the research could not be written up. Try asking again.";
+
+/** FR36: the answer of a run that had no usable material because no search worked. */
+export const COULD_NOT_SEARCH_NOTE =
+  "The research could not search the web — every search failed or was unavailable. Try again later.";
+
+/** Thrown inside the run when the current phase's deadline has passed; never leaves the run. */
+class PhaseTimeUp extends Error {}
 
 type Note = { n: number; quote: string; claim: string };
 type Schema = Record<string, unknown>;
@@ -230,11 +243,39 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
   const seenQueries = new Set<string>();
   const notes: Note[] = [];
   let searchesRun = 0;
+  let searchesWithResults = 0;
+
+  // FR36: one budget; research stops at the research deadline, the write-up at the final one.
+  const budgetMs = s.budgetMs;
+  const researchMs = budgetMs * (1 - s.writeReserveFraction);
+  const researchDeadline = startTime + researchMs;
+  const finalDeadline = startTime + budgetMs;
+  const researchTimer = new AbortController();
+  const finalTimer = new AbortController();
+  const timers = [
+    setTimeout(() => researchTimer.abort(new DOMException("Research time is over", "TimeoutError")), researchMs),
+    setTimeout(() => finalTimer.abort(new DOMException("Research budget is spent", "TimeoutError")), budgetMs),
+  ];
+  // One signal per phase reaches every search, read and model request of that phase.
+  const researchSignal = AbortSignal.any([signal, researchTimer.signal]);
+  const writeSignal = AbortSignal.any([signal, finalTimer.signal]);
+  let phase: "research" | "write" = "research";
+  const phaseSignal = () => (phase === "research" ? researchSignal : writeSignal);
+  const phaseOver = () =>
+    phase === "research"
+      ? researchTimer.signal.aborted || Date.now() >= researchDeadline
+      : finalTimer.signal.aborted || Date.now() >= finalDeadline;
 
   const ev = (type: ResearchEvent["type"], data: unknown): ResearchEvent => ({ type, data: JSON.stringify(data) });
-  const step = (data: StepEvent["data"]) => ev("step", data);
+  const step = (data: StepEvent["data"]) =>
+    ev("step", { ...data, elapsed_ms: Date.now() - startTime, budget_ms: budgetMs } satisfies StepEventData);
   const checkAbort = () => {
     if (signal.aborted) throw new DOMException("Research cancelled", "AbortError");
+  };
+  /** Before every search, read and model call: a user Stop throws AbortError, a passed deadline PhaseTimeUp. */
+  const checkDeadline = () => {
+    checkAbort();
+    if (phaseOver()) throw new PhaseTimeUp();
   };
 
   /** Notes for a request: the latest notes whose rendered lines fit the cap. */
@@ -285,11 +326,11 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
       keep_alive: -1,
     };
     for (let attempt = 0; attempt <= s.retries; attempt++) {
-      checkAbort();
+      checkDeadline();
       let content = "";
       try {
-        for await (const chunk of client.chat(structuredClone(request), signal)) {
-          checkAbort();
+        for await (const chunk of client.chat(structuredClone(request), phaseSignal())) {
+          checkDeadline();
           if (chunk.message?.content) content += chunk.message.content;
           if (chunk.done) {
             if (typeof chunk.eval_count === "number") evalCount += chunk.eval_count;
@@ -299,6 +340,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
         }
       } catch (error) {
         if (signal.aborted) throw error;
+        if (error instanceof PhaseTimeUp || phaseOver()) throw new PhaseTimeUp(); // never retried
         continue; // counts as a failed attempt
       }
       let parsed: unknown;
@@ -324,168 +366,196 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
     return out;
   }
 
+  let researchCutShort = false;
+  let writeCutShort = false;
+  let planOpen = false;
   try {
-    // 1-2. Brief and plan (one "plan" phase).
-    yield step({ step_id: "plan", kind: "plan", status: "started" });
-    const b = await modelStep(
-      "Restate the user's question as a short research brief (one to three sentences).",
-      `Question:\n${question}`,
-      SCHEMAS.brief,
-      VALIDATORS.brief
-    );
-    if (b) brief = b;
-    const p = await modelStep(
-      `Split the brief into exactly ${s.subQuestionCount} distinct sub-questions to research on the web.`,
-      context(`Question:\n${question}`),
-      SCHEMAS.plan,
-      VALIDATORS.plan
-    );
-    plan = p ? p.slice(0, Math.max(1, s.subQuestionCount)) : [brief];
-    yield step({ step_id: "plan", kind: "plan", status: "done" });
+    try {
+      // 1-2. Brief and plan (one "plan" phase).
+      planOpen = true;
+      yield step({ step_id: "plan", kind: "plan", status: "started" });
+      const b = await modelStep(
+        "Restate the user's question as a short research brief (one to three sentences).",
+        `Question:\n${question}`,
+        SCHEMAS.brief,
+        VALIDATORS.brief
+      );
+      if (b) brief = b;
+      const p = await modelStep(
+        `Split the brief into exactly ${s.subQuestionCount} distinct sub-questions to research on the web.`,
+        context(`Question:\n${question}`),
+        SCHEMAS.plan,
+        VALIDATORS.plan
+      );
+      plan = p ? p.slice(0, Math.max(1, s.subQuestionCount)) : [brief];
+      planOpen = false;
+      yield step({ step_id: "plan", kind: "plan", status: "done" });
 
-    // 3. Each sub-question: searches, reads, notes, gap check.
-    for (const [index, subQuestion] of plan.entries()) {
-      const label = `Current sub-question (${index + 1} of ${plan.length}): ${subQuestion}`;
-      const queue: string[] = [];
-      const runQueries: string[] = [];
-      const candidates: SearchResult[] = [];
-      const candidateKeys = new Set<string>();
-      let searches = 0;
-      let reads = 0;
-      let proposals = 0;
-      let fallbackUsed = false;
+      // 3. Each sub-question: searches, reads, notes, gap check.
+      for (const [index, subQuestion] of plan.entries()) {
+        const label = `Current sub-question (${index + 1} of ${plan.length}): ${subQuestion}`;
+        const queue: string[] = [];
+        const runQueries: string[] = [];
+        const candidates: SearchResult[] = [];
+        const candidateKeys = new Set<string>();
+        let searches = 0;
+        let reads = 0;
+        let proposals = 0;
+        let fallbackUsed = false;
 
-      /** The next query not yet searched in this run, or null when none can be found. */
-      const nextQuery = async (): Promise<string | null> => {
-        for (;;) {
-          while (queue.length) {
-            const q = queue.shift()!.trim();
-            const key = normaliseText(q);
-            if (key !== "" && !seenQueries.has(key)) return q;
+        /** The next query not yet searched in this run, or null when none can be found. */
+        const nextQuery = async (): Promise<string | null> => {
+          for (;;) {
+            while (queue.length) {
+              const q = queue.shift()!.trim();
+              const key = normaliseText(q);
+              if (key !== "" && !seenQueries.has(key)) return q;
+            }
+            if (proposals < s.maxSearches) {
+              proposals++;
+              const done = runQueries.length ? `Searches already run: ${runQueries.join(" | ")}` : "No searches run yet.";
+              const r = await modelStep(
+                "Propose web search queries (short, varied wording and angles) for the current sub-question.",
+                context(`${label}\n${done}`),
+                SCHEMAS.queries,
+                VALIDATORS.queries
+              );
+              if (r) queue.push(...r);
+              continue;
+            }
+            if (!fallbackUsed) {
+              fallbackUsed = true;
+              queue.push(subQuestion);
+              continue;
+            }
+            return null;
           }
-          if (proposals < s.maxSearches) {
-            proposals++;
-            const done = runQueries.length ? `Searches already run: ${runQueries.join(" | ")}` : "No searches run yet.";
-            const r = await modelStep(
-              "Propose web search queries (short, varied wording and angles) for the current sub-question.",
-              context(`${label}\n${done}`),
-              SCHEMAS.queries,
-              VALIDATORS.queries
-            );
-            if (r) queue.push(...r);
-            continue;
-          }
-          if (!fallbackUsed) {
-            fallbackUsed = true;
-            queue.push(subQuestion);
-            continue;
-          }
-          return null;
-        }
-      };
+        };
 
-      const readChosen = async function* (): AsyncGenerator<ResearchEvent> {
-        const remaining = s.pagesPerSubQuestion - reads;
-        const unread = candidates.filter((c) => !readKeys.has(pageUrlKey(c.url)));
-        if (remaining <= 0 || unread.length === 0) return;
-        const listing = unread
-          .map((c, i) => `${i + 1}. ${c.title}\n   ${c.url}\n   ${c.snippet}`)
-          .join("\n");
-        const picked = await modelStep(
-          `Choose up to ${remaining} search results worth reading for the current sub-question, by their number in the list.`,
-          context(`${label}\nSearch results:\n${untrusted("search results", listing)}`),
-          SCHEMAS.select,
-          VALIDATORS.select
-        );
-        // Only indexes into the server-parsed list; a skipped step reads the top results.
-        const indexes = picked
-          ? picked.filter((i): i is number => Number.isInteger(i) && (i as number) >= 1 && (i as number) <= unread.length)
-          : unread.map((_, i) => i + 1);
-        const chosen = [...new Set(indexes)].slice(0, remaining).map((i) => unread[i - 1]!);
-
-        for (const candidate of chosen) {
-          checkAbort();
-          const key = pageUrlKey(candidate.url);
-          if (readKeys.has(key)) continue;
-          readKeys.add(key);
-          reads++;
-          const { page, events } = await webTools.read(candidate.url, signal, numberPage);
-          yield* absorb(events);
-          if (!page || page.n === undefined || readNumbers.has(page.n)) continue;
-          const n = page.n;
-          readNumbers.add(n);
-          readKeys.add(pageUrlKey(page.url));
-          const pageText = normaliseText(page.text);
-          const found = await modelStep(
-            `Record short notes from page [${n}] that help answer the current sub-question. ` +
-              "Each note has a quote copied exactly from the page text and a short claim it supports.",
-            context(`${label}\nPage [${n}] (${page.title}):\n${untrusted(`page ${n}`, page.text)}`),
-            SCHEMAS.note,
-            VALIDATORS.note
+        const readChosen = async function* (): AsyncGenerator<ResearchEvent> {
+          const remaining = s.pagesPerSubQuestion - reads;
+          const unread = candidates.filter((c) => !readKeys.has(pageUrlKey(c.url)));
+          if (remaining <= 0 || unread.length === 0) return;
+          const listing = unread
+            .map((c, i) => `${i + 1}. ${c.title}\n   ${c.url}\n   ${c.snippet}`)
+            .join("\n");
+          const picked = await modelStep(
+            `Choose up to ${remaining} search results worth reading for the current sub-question, by their number in the list.`,
+            context(`${label}\nSearch results:\n${untrusted("search results", listing)}`),
+            SCHEMAS.select,
+            VALIDATORS.select
           );
-          for (const item of found ?? []) {
-            if (!isObj(item) || !nonEmpty(item.quote) || !nonEmpty(item.claim)) continue;
-            const pageTextNorm = normaliseWhitespace(page.text);
-            const quote = normaliseWhitespace(item.quote);
-            if (!pageTextNorm.includes(quote)) continue; // FR37: unverifiable quote dropped
-            notes.push({ n, quote: item.quote.replace(/\s+/g, " ").trim(), claim: item.claim.trim() });
+          // Only indexes into the server-parsed list; a skipped step reads the top results.
+          const indexes = picked
+            ? picked.filter((i): i is number => Number.isInteger(i) && (i as number) >= 1 && (i as number) <= unread.length)
+            : unread.map((_, i) => i + 1);
+          const chosen = [...new Set(indexes)].slice(0, remaining).map((i) => unread[i - 1]!);
+
+          for (const candidate of chosen) {
+            checkDeadline();
+            const key = pageUrlKey(candidate.url);
+            if (readKeys.has(key)) continue;
+            readKeys.add(key);
+            reads++;
+            const { page, events } = await webTools.read(candidate.url, phaseSignal(), numberPage);
+            yield* absorb(events);
+            if (!page || page.n === undefined || readNumbers.has(page.n)) continue;
+            const n = page.n;
+            readNumbers.add(n);
+            readKeys.add(pageUrlKey(page.url));
+            const pageText = normaliseText(page.text);
+            const found = await modelStep(
+              `Record short notes from page [${n}] that help answer the current sub-question. ` +
+                "Each note has a quote copied exactly from the page text and a short claim it supports.",
+              context(`${label}\nPage [${n}] (${page.title}):\n${untrusted(`page ${n}`, page.text)}`),
+              SCHEMAS.note,
+              VALIDATORS.note
+            );
+            for (const item of found ?? []) {
+              if (!isObj(item) || !nonEmpty(item.quote) || !nonEmpty(item.claim)) continue;
+              const pageTextNorm = normaliseWhitespace(page.text);
+              const quote = normaliseWhitespace(item.quote);
+              if (!pageTextNorm.includes(quote)) continue; // FR37: unverifiable quote dropped
+              notes.push({ n, quote: item.quote.replace(/\s+/g, " ").trim(), claim: item.claim.trim() });
+            }
           }
+        };
+
+        let readPassRan = false;
+        while (searches < s.maxSearches) {
+          const query = await nextQuery();
+          if (query === null) break;
+          checkDeadline();
+          seenQueries.add(normaliseText(query));
+          runQueries.push(query);
+          searches++;
+          searchesRun++;
+          const { results, events } = await webTools.search(query, phaseSignal());
+          yield* absorb(events);
+          if (results.length) searchesWithResults++;
+          for (const r of results) {
+            if (!/^https?:\/\//i.test(r.url)) continue;
+            const key = pageUrlKey(r.url);
+            if (candidateKeys.has(key)) continue;
+            candidateKeys.add(key);
+            candidates.push(r);
+          }
+          if (searches < s.minSearches) continue;
+
+          readPassRan = true;
+          yield* readChosen();
+          if (searches >= s.maxSearches) break;
+
+          const gap = await modelStep(
+            "Decide whether the notes are enough to answer the current sub-question. If not, give one new search query.",
+            context(`${label}\nSearches already run: ${runQueries.join(" | ")}`),
+            SCHEMAS.gap,
+            VALIDATORS.gap
+          );
+          if (!gap || gap.enough) break;
+          if (nonEmpty(gap.next_query)) queue.unshift(gap.next_query);
         }
-      };
-
-      let readPassRan = false;
-      while (searches < s.maxSearches) {
-        const query = await nextQuery();
-        if (query === null) break;
-        checkAbort();
-        seenQueries.add(normaliseText(query));
-        runQueries.push(query);
-        searches++;
-        searchesRun++;
-        const { results, events } = await webTools.search(query, signal);
-        yield* absorb(events);
-        for (const r of results) {
-          if (!/^https?:\/\//i.test(r.url)) continue;
-          const key = pageUrlKey(r.url);
-          if (candidateKeys.has(key)) continue;
-          candidateKeys.add(key);
-          candidates.push(r);
+        // Ran out of new queries before minSearches: still read what was collected.
+        if (searches > 0 && !readPassRan) {
+          checkDeadline();
+          yield* readChosen();
         }
-        if (searches < s.minSearches) continue;
-
-        readPassRan = true;
-        yield* readChosen();
-        if (searches >= s.maxSearches) break;
-
-        const gap = await modelStep(
-          "Decide whether the notes are enough to answer the current sub-question. If not, give one new search query.",
-          context(`${label}\nSearches already run: ${runQueries.join(" | ")}`),
-          SCHEMAS.gap,
-          VALIDATORS.gap
-        );
-        if (!gap || gap.enough) break;
-        if (nonEmpty(gap.next_query)) queue.unshift(gap.next_query);
       }
-      // Ran out of new queries before minSearches: still read what was collected.
-      if (searches > 0 && !readPassRan) {
-        checkAbort();
-        yield* readChosen();
-      }
+    } catch (error) {
+      // A deadline abort (thrown by the check or by an in-flight call) moves the run to writing.
+      if (signal.aborted || !(error instanceof PhaseTimeUp || phaseOver())) throw error;
+      researchCutShort = true;
+      if (planOpen) yield step({ step_id: "plan", kind: "plan", status: "failed" });
     }
 
     // 4. Write the report from the notes only.
     checkAbort();
-    yield step({ step_id: "write", kind: "write", status: "started" });
-    const written = await modelStep(
-      "Write the final report answering the brief, using only the notes. Cite pages only as [n] using the note numbers. Do not include URLs.",
-      context("Write the report now."),
-      SCHEMAS.write,
-      VALIDATORS.write
-    );
-    yield step({ step_id: "write", kind: "write", status: written ? "done" : "failed" });
+    phase = "write";
+    // FR36 `failed`: searches were attempted, none returned anything and no page was read.
+    const failed = searchesRun > 0 && searchesWithResults === 0 && readNumbers.size === 0;
+    let written: string | null = null;
+    let wroteNothing = false;
+    if (!failed && phaseOver()) {
+      writeCutShort = true; // final deadline passed before the write call: skip it
+    } else if (!failed) {
+      yield step({ step_id: "write", kind: "write", status: "started" });
+      try {
+        written = await modelStep(
+          "Write the final report answering the brief, using only the notes. Cite pages only as [n] using the note numbers. Do not include URLs.",
+          context("Write the report now."),
+          SCHEMAS.write,
+          VALIDATORS.write
+        );
+      } catch (error) {
+        if (signal.aborted || !(error instanceof PhaseTimeUp || phaseOver())) throw error;
+        writeCutShort = true;
+      }
+      yield step({ step_id: "write", kind: "write", status: written ? "done" : "failed" });
+    }
 
-    let report = written ? cleanReport(written, readNumbers) : "";
+    let report = failed ? COULD_NOT_SEARCH_NOTE : written ? cleanReport(written, readNumbers) : "";
     if (report === "") {
+      wroteNothing = true;
       const gathered = notes.length
         ? cleanReport(
             `The report could not be written. Notes gathered:\n${notes.map((note) => `- ${note.claim} [${note.n}]`).join("\n")}`,
@@ -503,11 +573,18 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
       model,
       eval_count: evalCount,
       tokens_per_second: seconds > 0 ? evalCount / seconds : 0,
+      research: {
+        status: failed ? "failed" : researchCutShort || writeCutShort || wroteNothing ? "partial" : "complete",
+        elapsed_ms: Date.now() - startTime,
+        budget_ms: budgetMs,
+      },
     };
     yield ev("done", done);
   } catch (error) {
     if (!signal.aborted) throw error;
     const cancelled: DoneEvent = { status: "cancelled", model, eval_count: evalCount, tokens_per_second: 0 };
     yield ev("done", cancelled);
+  } finally {
+    for (const t of timers) clearTimeout(t);
   }
 }

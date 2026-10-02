@@ -627,3 +627,262 @@ describe("runResearch", () => {
     expect(writeReq).toContain("whitespace claim");
   });
 });
+
+// ---------------------------------------------------------------------------
+// FR36: overall time budget, deadline checks, one cancellation signal, run status.
+// ---------------------------------------------------------------------------
+
+const MARGIN_MS = 500;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Never resolves on its own: records whether the signal was aborted when it fired, then rejects. */
+function untilAborted(signal: AbortSignal, seen: boolean[]): Promise<never> {
+  return new Promise((_, reject) => {
+    const fail = () => {
+      seen.push(signal.aborted);
+      reject(signal.reason ?? new DOMException("aborted", "AbortError"));
+    };
+    if (signal.aborted) fail();
+    else signal.addEventListener("abort", fail, { once: true });
+  });
+}
+
+/** fakeClient whose `hang` step only ends when its signal aborts; records each request's signal. */
+function hangingClient(hang: Step | null, script: Script = {}) {
+  const base = fakeClient(script);
+  const seen: boolean[] = [];
+  const signals: Array<{ step: Step; signal: AbortSignal; abortedAtStart: boolean }> = [];
+  const client: OllamaChatClient = {
+    async *chat(req, maybeSignal, tools) {
+      const step = stepOf(req);
+      if (!maybeSignal) throw new Error("research model requests must carry a signal");
+      const signal = maybeSignal;
+      signals.push({ step, signal, abortedAtStart: signal.aborted });
+      if (step === hang) {
+        base.requests.push({ req: structuredClone(req), tools, step });
+        await untilAborted(signal, seen);
+      }
+      yield* base.client.chat(req, signal, tools);
+    },
+  };
+  return { ...base, client, seen, signals };
+}
+
+function emptyWeb(status: "failed" | "unavailable") {
+  const searches: string[] = [];
+  const reads: string[] = [];
+  let id = 0;
+  const tools: ResearchWebTools = {
+    async search(query) {
+      searches.push(query);
+      const step_id = `s${++id}`;
+      return {
+        results: [],
+        events: [
+          { type: "step", data: { step_id, kind: "search", status: "started", query } },
+          { type: "step", data: { step_id, kind: "search", status, query, detail: "backend down" } },
+        ],
+      };
+    },
+    async read(url) {
+      reads.push(url);
+      return { page: null, events: [] };
+    },
+  };
+  return { tools, searches, reads };
+}
+
+async function timed(fn: () => Promise<ResearchEvent[]>): Promise<{ events: ResearchEvent[]; ms: number }> {
+  const t0 = Date.now();
+  const events = await fn();
+  return { events, ms: Date.now() - t0 };
+}
+
+const doneData = (events: ResearchEvent[]) => JSON.parse(last(events).data);
+
+describe("runResearch time budget (FR36)", () => {
+  it("defaults: an 8 minute budget with a quarter reserved for writing", async () => {
+    const { DEFAULT_RESEARCH_SETTINGS } = await import("./research");
+    expect(DEFAULT_RESEARCH_SETTINGS.budgetMs).toBe(480_000);
+    expect(DEFAULT_RESEARCH_SETTINGS.writeReserveFraction).toBe(0.25);
+  });
+
+  it("a run inside its budget ends complete; every step and the done event carry elapsed time against the budget", async () => {
+    const fc = fakeClient();
+    const events = await collect(fc.client, fakeWeb().tools, { ...BASE, budgetMs: 4000 });
+    const steps = stepData(events);
+    expect(steps.length).toBeGreaterThan(0);
+    for (const s of steps) {
+      expect(typeof s.elapsed_ms).toBe("number");
+      expect(s.elapsed_ms).toBeGreaterThanOrEqual(0);
+      expect(s.budget_ms).toBe(4000);
+    }
+    // web-tool steps (absorbed) carry them too
+    expect(steps.some((s) => s.kind === "search" && typeof s.elapsed_ms === "number")).toBe(true);
+    const done = doneData(events);
+    expect(done.status).toBe("complete");
+    expect(done.research.status).toBe("complete");
+    expect(done.research.budget_ms).toBe(4000);
+    expect(typeof done.research.elapsed_ms).toBe("number");
+    expect(done.research.elapsed_ms).toBeLessThanOrEqual(4000);
+  });
+
+  it("AC1: once research time has passed, no further search, read or research model request starts; the write request does; the run ends partial", async () => {
+    const budgetMs = 800; // research time 600 ms
+    const fc = hangingClient(null);
+    const web = fakeWeb();
+    const slowSearch: ResearchWebTools = {
+      async search(query, signal) {
+        await sleep(700); // slow but non-hanging; ignores the signal
+        return web.tools.search(query, signal);
+      },
+      read: web.tools.read,
+    };
+    const { events, ms } = await timed(() => collect(fc.client, slowSearch, { ...BASE, budgetMs }));
+    expect(ms).toBeLessThanOrEqual(budgetMs + MARGIN_MS);
+    expect(web.searches.length).toBe(1);
+    expect(web.reads.length).toBe(0);
+    const afterSearch = fc.signals.slice(fc.signals.findIndex((r) => r.step === "queries") + 1);
+    expect(afterSearch.map((r) => r.step)).toEqual(["write"]);
+    expect(fc.signals.find((r) => r.step === "write")!.abortedAtStart).toBe(false);
+    expect(contentText(events).trim().length).toBeGreaterThan(0);
+    const done = doneData(events);
+    expect(done.status).toBe("complete");
+    expect(done.research.status).toBe("partial");
+    expect(done.research.budget_ms).toBe(budgetMs);
+  });
+
+  it("AC2: with every search failed or unavailable the run ends failed with a plain could-not-search sentence and its steps", async () => {
+    const { COULD_NOT_SEARCH_NOTE } = await import("./research");
+    expect(COULD_NOT_SEARCH_NOTE).toBe(
+      "The research could not search the web — every search failed or was unavailable. Try again later.",
+    );
+    for (const status of ["failed", "unavailable"] as const) {
+      const budgetMs = 1000;
+      const fc = fakeClient();
+      const web = emptyWeb(status);
+      const { events, ms } = await timed(() => collect(fc.client, web.tools, { ...BASE, budgetMs }));
+      expect(ms).toBeLessThanOrEqual(budgetMs + MARGIN_MS);
+      expect(web.searches.length).toBeGreaterThan(0);
+      expect(fc.of("write").length).toBe(0);
+      expect(contentText(events)).toBe(COULD_NOT_SEARCH_NOTE);
+      expect(stepData(events).filter((s) => s.kind === "search").some((s) => s.status === status)).toBe(true);
+      const done = doneData(events);
+      expect(done.status).toBe("complete");
+      expect(done.research.status).toBe("failed");
+    }
+  });
+
+  it("AC3: a search that only ends when aborted receives an aborted signal at the deadline; the run ends within budget", async () => {
+    const budgetMs = 600;
+    const fc = fakeClient();
+    const seen: boolean[] = [];
+    const tools: ResearchWebTools = {
+      search: (_q, signal) => untilAborted(signal, seen),
+      read: async () => ({ page: null, events: [] }),
+    };
+    const { events, ms } = await timed(() => collect(fc.client, tools, { ...BASE, budgetMs }));
+    expect(ms).toBeLessThanOrEqual(budgetMs + MARGIN_MS);
+    expect(seen).toEqual([true]);
+    expect(contentText(events).trim().length).toBeGreaterThan(0);
+    expect(last(events).type).toBe("done");
+    expect(doneData(events).status).toBe("complete");
+    expect(doneData(events).research.status).toBe("failed");
+  });
+
+  it("AC3: a long-delayed search ending after the budget still lets the run end within budget", async () => {
+    const budgetMs = 600;
+    const fc = fakeClient();
+    const web = fakeWeb();
+    const tools: ResearchWebTools = {
+      search: (q, signal) =>
+        new Promise((resolve, reject) => {
+          const t = setTimeout(() => resolve(web.tools.search(q, signal)), 3000);
+          signal.addEventListener("abort", () => { clearTimeout(t); reject(signal.reason); }, { once: true });
+        }),
+      read: web.tools.read,
+    };
+    const { events, ms } = await timed(() => collect(fc.client, tools, { ...BASE, budgetMs }));
+    expect(ms).toBeLessThanOrEqual(budgetMs + MARGIN_MS);
+    expect(last(events).type).toBe("done");
+    expect(contentText(events).trim().length).toBeGreaterThan(0);
+  });
+
+  it("AC3: a read that only ends when aborted receives an aborted signal at the deadline; the run writes and ends partial", async () => {
+    const budgetMs = 800;
+    const fc = hangingClient(null);
+    const web = fakeWeb();
+    const seen: boolean[] = [];
+    const tools: ResearchWebTools = {
+      search: web.tools.search,
+      read: (_u, signal) => untilAborted(signal, seen),
+    };
+    const { events, ms } = await timed(() => collect(fc.client, tools, { ...BASE, budgetMs }));
+    expect(ms).toBeLessThanOrEqual(budgetMs + MARGIN_MS);
+    expect(seen).toEqual([true]);
+    expect(fc.of("write").length).toBe(1);
+    expect(contentText(events).trim().length).toBeGreaterThan(0);
+    expect(doneData(events).research.status).toBe("partial");
+  });
+
+  it("AC3: a research model request that only ends when aborted receives an aborted signal and is not retried; the run writes and ends partial", async () => {
+    const budgetMs = 800;
+    const fc = hangingClient("queries");
+    const web = fakeWeb();
+    const { events, ms } = await timed(() => collect(fc.client, web.tools, { ...BASE, budgetMs, retries: 2 }));
+    expect(ms).toBeLessThanOrEqual(budgetMs + MARGIN_MS);
+    expect(fc.seen).toEqual([true]);
+    expect(fc.of("queries").length).toBe(1);
+    expect(web.searches.length).toBe(0);
+    expect(fc.of("write").length).toBe(1);
+    expect(fc.signals.find((r) => r.step === "write")!.abortedAtStart).toBe(false);
+    expect(contentText(events).trim().length).toBeGreaterThan(0);
+    expect(doneData(events).research.status).toBe("partial");
+  });
+
+  it("AC3: a write that only ends when aborted is aborted at the final deadline; the run ends partial with the gathered notes", async () => {
+    const budgetMs = 700;
+    const fc = hangingClient("write");
+    const web = fakeWeb();
+    const { events, ms } = await timed(() => collect(fc.client, web.tools, { ...BASE, budgetMs, retries: 2 }));
+    expect(ms).toBeLessThanOrEqual(budgetMs + MARGIN_MS);
+    expect(ms).toBeGreaterThanOrEqual(budgetMs - 50);
+    expect(fc.seen).toEqual([true]);
+    expect(fc.of("write").length).toBe(1);
+    expect(contentText(events)).toContain("Notes gathered");
+    expect(stepData(events).filter((s) => s.kind === "write").map((s) => s.status)).toEqual(["started", "failed"]);
+    const done = doneData(events);
+    expect(done.status).toBe("complete");
+    expect(done.research.status).toBe("partial");
+  });
+
+  it("AC3: a write cut off by the deadline with nothing gathered ends partial with the no-report note", async () => {
+    const { NO_REPORT_NOTE } = await import("./research");
+    const budgetMs = 700;
+    const fc = hangingClient("write", { note: () => JSON.stringify({ notes: [] }) });
+    const { events, ms } = await timed(() => collect(fc.client, fakeWeb().tools, { ...BASE, budgetMs }));
+    expect(ms).toBeLessThanOrEqual(budgetMs + MARGIN_MS);
+    expect(fc.seen).toEqual([true]);
+    expect(contentText(events)).toBe(NO_REPORT_NOTE);
+    expect(doneData(events).research.status).toBe("partial");
+  });
+
+  it("a user Stop while a search is in flight still ends cancelled, not partial", async () => {
+    const ac = new AbortController();
+    const fc = fakeClient();
+    const seen: boolean[] = [];
+    const tools: ResearchWebTools = {
+      search: (_q, signal) => {
+        setTimeout(() => ac.abort(), 50);
+        return untilAborted(signal, seen);
+      },
+      read: async () => ({ page: null, events: [] }),
+    };
+    const { events, ms } = await timed(() => collect(fc.client, tools, { ...BASE, budgetMs: 4000 }, ac.signal));
+    expect(ms).toBeLessThan(1000);
+    expect(seen).toEqual([true]);
+    expect(doneData(events).status).toBe("cancelled");
+    expect(events.some((e) => e.type === "content")).toBe(false);
+    expect(fc.of("write").length).toBe(0);
+  });
+});

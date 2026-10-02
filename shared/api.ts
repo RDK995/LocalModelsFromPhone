@@ -84,6 +84,12 @@ export interface DoneEvent {
   model: string;
   eval_count: number;
   tokens_per_second: number;
+  /** FR36: present on a deep research run's done event (status of the research, elapsed vs budget). */
+  research?: {
+    status: "complete" | "partial" | "failed";
+    elapsed_ms: number;
+    budget_ms: number;
+  };
 }
 
 export interface StepEventData {
@@ -93,6 +99,9 @@ export interface StepEventData {
   query?: string;
   url?: string;
   detail?: string;
+  /** FR36: on deep research steps, time since the run started and the run's budget. */
+  elapsed_ms?: number;
+  budget_ms?: number;
 }
 
 export interface SourcesEvent {

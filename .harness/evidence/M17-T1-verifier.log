@@ -1,0 +1,107 @@
+VERIFICATION LOG FOR M17-T1
+
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/generations/research.test.ts && bun test && bun run typecheck
+
+Current commit: HEAD bad5a7f (M17: baseline 003da19 on m17-research-time-budget)
+
+Exit Status: 0
+
+Test Run 1 - research.test.ts:
+Output: 32 pass, 0 fail, 410 expect() calls. Ran 32 tests across 1 file. [4.31s]
+
+Test Run 2 - Full test suite:
+Output: 232 pass, 0 fail, 1410 expect() calls. Ran 232 tests across 12 files. [7.83s]
+
+Test Run 3 - Typecheck:
+Output: (no errors)
+
+Files Changed:
+- server/src/generations/research.ts (allowed)
+- server/src/generations/research.test.ts (allowed)
+- shared/api.ts (allowed)
+
+No files outside the allowed list were changed (excluding .harness/).
+
+Tests Weakened: NO
+- All existing tests in the original describe block (lines 147-629) remain unchanged.
+- New tests are in a separate describe block starting at line 703.
+- No assertions were deleted, renamed, or loosened in existing tests.
+
+Criteria Exercised:
+
+AC1: "the deadline is checked before every search, read and model call; when research time (budget minus the writing reserve) runs out the run moves to writing with what it has and ends `partial`; the run's events carry its status and elapsed time against the budget."
+
+Evidence:
+- Test at line 710: Verifies every step event carries elapsed_ms and budget_ms
+  * "a run inside its budget ends complete; every step and the done event carry elapsed time against the budget"
+  * Lines 714-728: Asserts steps carry elapsed_ms, budget_ms; done event carries research.elapsed_ms, research.budget_ms, research.status
+
+- Test at line 730: Tests the deadline check and partial status
+  * "AC1: once research time has passed, no further search, read or research model request starts; the write request does; the run ends partial"
+  * Lines 745-746: Asserts no further search/read/model steps after research time
+  * Line 751: Asserts research.status === "partial"
+  * Lines 742: Asserts run within budget + margin
+  * Line 748: Asserts write step was called (moved to writing)
+
+AC2: "with every search failing (webTools.search returns no results / failed or unavailable steps) the run ends within budget + small margin as `failed`, with a plain sentence saying the research could not search as its content, plus its steps."
+
+Evidence:
+- Test at line 755: Tests all-searches-failed scenario
+  * "AC2: with every search failed or unavailable the run ends failed with a plain could-not-search sentence and its steps"
+  * Lines 756-759: Imports and verifies COULD_NOT_SEARCH_NOTE matches expected string
+  * Line 768: Asserts contentText(events) === COULD_NOT_SEARCH_NOTE
+  * Line 767: Asserts fc.of("write").length === 0 (write not called)
+  * Line 772: Asserts research.status === "failed"
+  * Line 769: Asserts step data contains search step with failed/unavailable status
+  * Line 765: Asserts run within budget + margin
+
+AC3: "with a slow search backend (search that only resolves when its signal aborts, or after a long delay) the run ends within budget + small margin; the in-flight search, read and model request each receive an aborted signal at the deadline; with the deadline hitting during the write-up the run ends within budget + small margin as `partial` with a non-empty answer (the existing gathered-notes text or NO_REPORT_NOTE if nothing)."
+
+Evidence:
+- Test at line 776: Search receives aborted signal at deadline
+  * "AC3: a search that only ends when aborted receives an aborted signal at the deadline; the run ends within budget"
+  * Line 786: Asserts seen === [true] (signal.aborted was true when signal fired)
+  * Line 785: Asserts run within budget + margin
+  * Line 790: Asserts research.status === "failed"
+
+- Test at line 793: Long-delayed search is aborted within budget
+  * "AC3: a long-delayed search ending after the budget still lets the run end within budget"
+  * Line 806: Asserts run within budget + margin
+  * Line 801: Search setup shows timeout 3000ms with abort listener, demonstrating signal observance
+
+- Test at line 811: Read receives aborted signal at deadline
+  * "AC3: a read that only ends when aborted receives an aborted signal at the deadline; the run writes and ends partial"
+  * Line 822: Asserts seen === [true] (signal.aborted was true)
+  * Line 821: Asserts run within budget + margin
+  * Line 823: Asserts fc.of("write").length === 1 (write was called)
+  * Line 825: Asserts research.status === "partial"
+
+- Test at line 828: Research model request receives aborted signal, not retried
+  * "AC3: a research model request that only ends when aborted receives an aborted signal and is not retried; the run writes and ends partial"
+  * Line 834: Asserts fc.seen === [true] (signal.aborted was true)
+  * Line 835: Asserts fc.of("queries").length === 1 (only one attempt, not retried)
+  * Line 832: Asserts run within budget + margin
+  * Line 837: Asserts fc.of("write").length === 1 (write was called)
+  * Line 840: Asserts research.status === "partial"
+
+- Test at line 843: Write aborted at final deadline, ends partial with gathered notes
+  * "AC3: a write that only ends when aborted is aborted at the final deadline; the run ends partial with the gathered notes"
+  * Line 850: Asserts fc.seen === [true] (signal.aborted was true)
+  * Line 848: Asserts ms >= budgetMs - 50 (aborted very close to deadline)
+  * Line 852: Asserts contentText(events) contains "Notes gathered"
+  * Line 853: Asserts write step shows "started" then "failed"
+  * Line 856: Asserts research.status === "partial"
+
+- Test at line 859: Write cut off, nothing gathered, ends partial with NO_REPORT_NOTE
+  * "AC3: a write cut off by the deadline with nothing gathered ends partial with the no-report note"
+  * Line 860: Imports NO_REPORT_NOTE
+  * Line 866: Asserts contentText(events) === NO_REPORT_NOTE
+  * Line 865: Asserts run within budget + margin
+  * Line 867: Asserts research.status === "partial"
+
+Additional: User Stop handling (line 870)
+- Test "a user Stop while a search is in flight still ends cancelled, not partial"
+- Verifies that user signal abort preserves "cancelled" status (not converted to "partial")
+- Line 884: Asserts done.status === "cancelled"
+
+Result: ALL TESTS PASS
