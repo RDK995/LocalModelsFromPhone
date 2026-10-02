@@ -607,3 +607,10 @@ thinking guard with a one-time `think:false` re-issue live in C6's research loop
 Why: C5 already owns loading and C6 already owns the research loop's requests (D-M15-1); passing
 one request field through the existing load path changes no component boundary, technology or
 responsibility ownership.
+
+### D-M19e-1 — Step kind `model` for deep research model-call steps
+
+Milestone: M19e
+Material: no
+Change: `StepEventData.kind` (shared/api.ts, I-stream step events) gains `"model"`; a deep research model-call step is `{step_id, kind: "model", status, detail: <label>}` with labels "Choosing searches", "Choosing pages", "Taking notes: <domain>", "Checking for gaps". Search and read steps in deep research carry the run's own step_id so the pre-await started step and the later outcome share one id.
+Why: FR45 needs a started step before every model call, and the existing kinds name only search, read, plan and write. Additive wire value inside C6's existing step events; no component boundary, technology or ownership change. C2 rendering of it is M19f.
