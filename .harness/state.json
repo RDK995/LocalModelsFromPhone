@@ -10503,7 +10503,7 @@
       "architecture": "C6, C7, C11, C12, C13",
       "requirements": [],
       "traces": "AC29 (first live question), Constraints (format with thinking unverified)",
-      "status": "BLOCKED",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
       "baseline": "d4037fb0e9652dc2113bf33816bf63205c893d03 on m16-real-model-live-proof",
@@ -10681,7 +10681,8 @@
           "M16-T5 Mid attempt 3 checked the server start time (2026-10-01 09:56) against the newest commits (T2-T4, 2026-10-01 23:57 to 2026-10-02 00:32) and found it stale; the server is managed by LaunchAgent com.harness.server, which the packet reserves for a human to restart."
         ],
         "remaining": "Restart the server so it runs the current branch, then re-dispatch M16-T5 unchanged.",
-        "recommended": "Run: launchctl kickstart -k gui/$(id -u)/com.harness.server ; then confirm qwen3.5:35b-a3b is still resident (re-load it from the phone or POST /v1/models/load if not) and resume M16."
+        "recommended": "Run: launchctl kickstart -k gui/$(id -u)/com.harness.server ; then confirm qwen3.5:35b-a3b is still resident (re-load it from the phone or POST /v1/models/load if not) and resume M16.",
+        "resolution": "Human decision 2026-10-02: authorised the harness to restart LaunchAgent com.harness.server itself (launchctl kickstart -k gui/$(id -u)/com.harness.server), confirm qwen3.5:35b-a3b is resident (POST /v1/models/load if not), then re-dispatch M16-T5 with its packet unchanged."
       }
     },
     "M17": {

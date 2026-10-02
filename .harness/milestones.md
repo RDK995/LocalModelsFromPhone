@@ -377,7 +377,7 @@ b48673499df9aa0d846bad7bbefe1548d57cb272 on m15-deep-research-skeleton
 
 ## M16 — The deep research run works on the real qwen3.5:35b-a3b on the Mac
 
-Status: BLOCKED
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -430,6 +430,8 @@ The server must be restarted onto the current branch before M16-T5 can run.
 
 Recommended decision:
 Run `launchctl kickstart -k gui/$(id -u)/com.harness.server`, confirm `qwen3.5:35b-a3b` is still resident (reload it from the phone or via POST /v1/models/load if not), then resume M16 (re-dispatch M16-T5 with its packet unchanged). Alternatively, authorise the harness to perform that restart itself.
+
+Human decision (2026-10-02): the harness is authorised to restart LaunchAgent `com.harness.server` itself (`launchctl kickstart -k gui/$(id -u)/com.harness.server`), confirm `qwen3.5:35b-a3b` is resident (POST /v1/models/load if not), then re-dispatch M16-T5 with its packet unchanged. Status returned to IN_PROGRESS.
 
 ### Validation
 
