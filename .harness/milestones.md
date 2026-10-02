@@ -368,59 +368,7 @@ FR9, FR11 and FR23 apply to a run: it survives a dropped connection or backgroun
 
 Owns: FR38. Traces to: AC28 (first and second Stop, dropped-connection resume).
 
-### Architecture
-
-C1, C2, C3, C5, C6
-
-### As-Built
-
-`.harness/as-built/M19.md` — RECORDED: 9/9 files attributed; components C1, C2, C3, C4, C6; 6 edges; 1 claim mismatch (claimed C5 Model manager, but no server/src/models/ files changed).
-
-### Acceptance Criteria
-
-- [x] **M19-AC1**: Server tests: a first Stop during searching or reading cancels in-flight searches and reads at once and the run writes a short report from the notes so far under its own short time limit (about a minute), ending `partial`; a second Stop during that write-up cancels it and the reply ends stopped with its steps and sources but no report.
-- [x] **M19-AC2**: Server tests: a dropped connection does not stop the run and resuming from the last seen event yields steps, clock and text with no gaps or duplicates; while a run is in progress a new message is refused as a reply in progress, and unloading the model mid-run needs the FR6 confirmation and, if confirmed, ends the run `partial` or stopped without hanging.
-- [x] **M19-AC3**: App tests: a deep research reply is saved with its report as the answer plus steps, sources and status; page text and notes are not persisted; the next prompt carries the report like any prior answer; a second-Stop reply reopens with its steps and sources and no report; backgrounding and returning resumes without gaps or duplicates.
-
-### Baseline
-
-63d14e44a3ca8cb00411d0592d64b1804faf22e7 on m19-deep-research-stop-resume
-
-### Evidence
-
-Size check: 3 criteria; real entry points POST /v1/chat, POST /v1/generations/{id}/cancel and GET /v1/generations/{id}/events (M19-AC1/AC2); one signal CONCURRENCY_LIFECYCLE already seam-checked at planning - run unsplit. State file archived M17 (670 -> 606 lines).
-
-Tasks (tier routing; attempt numbers per the ladder):
-- M19-T1 — two-stage Stop (research `stopSignal`, `stopWriteMs` default 60000, manager wrap-up controller, `cancelActive` hard, sources on a cancelled run). Mid (sonnet), ORDINARY_IMPLEMENTATION, attempt 3, PASS (worker wrote implementation before tests; verifier confirmed the new tests cannot pass against baseline); verifier PASS (`.harness/evidence/M19-T1-verifier.log`); commit e1cc64c.
-- M19-T2 — server resume / reply-in-progress / unload-mid-run tests. Cheap (haiku), BOUNDED_LOW_RISK: attempt 1 INTERRUPTED (turn limit, unload test failing "socket connection was closed"); continuation (handoff `.harness/tasks/M19-T2-handoff-1.md`) INTERRUPTED, same failure → Escalated Mid (sonnet) attempt 3 PASS (test bug: the fake hold double-counted calls and the fake Ollama had no unload state; no production change); verifier PASS, 3/3 repeat runs (`.harness/evidence/M19-T2-verifier.log`); commit c832050.
-- M19-T3 — app saving / second-Stop reopen / resume tests. Cheap (haiku), BOUNDED_LOW_RISK, attempt 1 INTERRUPTED (turn limit), continuation 1 (handoff `.harness/tasks/M19-T3-handoff-1.md`) PASS, tests only; verifier PASS (`.harness/evidence/M19-T3-verifier.log`); commit 2578e53.
-
-Per criterion (status left PENDING for review):
-- M19-AC1: server/src/http/deepResearchStop.test.ts (one Stop → write step, one report, done `complete` + research `partial`; two Stops → done `cancelled`, steps and `sources`, no report content); research.test.ts FR38 cases (a)-(e) incl. in-flight search/read signals aborted at the Stop, write-up bounded by `stopWriteMs`, hard abort during write-up; manager.test.ts two-stage `cancelGeneration`, `cancelActive` hard (T1 log).
-- M19-AC2: server/src/http/deepResearchResume.test.ts (drop leaves the run active; Last-Event-ID resume equals the full log, contiguous ids, no duplicates, clock on every step, one report; 409 `generation_in_flight`; unload unconfirmed 409 `confirmation_required` with `reply_in_progress`, confirmed 202 → run ends `cancelled`/`partial` within 2 s, unloaded, slot freed) (T2 log).
-- M19-AC3: conversationSession.test.ts AC3.1-AC3.3, chatItems.test.ts AC3.3, client.test.ts (m) AC3.4 (T3 log).
-
-### Validation
-
-- `cd server && bun test && bun run typecheck` — PASS per verifier after T2 (273 pass, 0 fail; tsc clean). `.harness/evidence/M19-T2-verifier.log`
-- `cd mobile && bun test && bun run typecheck && npx eslint --max-warnings 0 src/api/client.test.ts src/chat/conversationSession.test.ts src/ui/chatItems.test.ts` — PASS per verifier after T3 (493 pass, 0 fail; tsc and eslint clean). `.harness/evidence/M19-T3-verifier.log`
-- `cd mobile && bun run lint` — still FAIL, pre-existing (webQuietSession.test.ts quotes errors, untouched by M19).
-- Architecture deviation recorded: D-M19-1 (Material: no).
-
-### Review
-
-Cycle 1: PASS — tier Mid (sonnet; highest substantive task tier Mid: T1 Mid, T2 escalated Cheap→Mid, T3 Cheap), whole milestone 63d14e4..f6e69ad; per-criterion M19-AC1/AC2/AC3 PASS; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL; reviewer re-ran server bun test (273 pass, 0 fail) + typecheck, mobile bun test (493 pass, 0 fail) + typecheck + eslint on changed files (clean); repo-wide mobile lint failure pre-existing (webQuietSession.test.ts). Review log `.harness/evidence/M19-review.log`. No report file (PASS).
-
-### Review Cycles
-
-0
-
-### Follow-ups
-
-- Human step (owner only): restart com.harness.server so the two-stage Stop is live, then on the phone check a first Stop gives a short `partial` report and a second Stop ends with steps and sources only. Not performed by the harness.
-- The phone shows no "Stopping..." cue between the first and second Stop; the Stop button simply stays available (not required by FR38).
-- Repo-wide mobile lint still red from the pre-existing `quotes` errors in mobile/src/chat/webQuietSession.test.ts.
-
+Detail: `.harness/archive/M19.md`
 
 ## M19b — Every deep research model call is logged, thinks only at plan and write, and is time-capped
 
@@ -516,6 +464,8 @@ Pending.
 - [ ] **M19c-AC3**: Server tests: a page with no passage above the relevance threshold, with almost no extracted text, or showing bot-challenge markers makes no note call and is logged "empty" or "blocked"; FR37's numbering and Sources rules for pages read are unchanged by the skip.
 
 ### Baseline
+
+5abbe7a93651ca550d160438d2e6a9291af71797 on m19c-note-passages (branched from m19b-model-call-logging-thinking-caps; tree clean apart from the human's untracked reports/ and research_notes/, left untouched). Baseline validation: `cd server && bun test` exit 0, 290 pass, 0 fail.
 
 ### Evidence
 

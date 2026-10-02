@@ -1,0 +1,29 @@
+VERIFICATION RUN FOR M19c-T1
+
+Command executed:
+  cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/generations/passages.test.ts
+
+Output:
+bun test v1.4.0 (1381054db)
+
+ 25 pass
+ 0 fail
+ 62 expect() calls
+Ran 25 tests across 1 file. [7.00ms]
+
+Exit Status: 0
+
+---
+
+Command executed:
+  cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bunx tsc --noEmit
+
+Output (summary):
+ 315 pass
+ 0 fail
+ 2109 expect() calls
+Ran 315 tests across 18 files. [12.80s]
+
+Exit Status: 0
+
+(Full test output saved to .claude/projects/.../bkqr79qg2.txt due to size)
