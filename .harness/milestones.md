@@ -451,11 +451,18 @@ Per criterion (status left PENDING for review):
 
 Cycle 1: CHANGES REQUIRED (SUBSTANTIVE) — .harness/reviews/M17-cycle1.md (Finding 1 IMPORTANT, Finding 2 OPTIONAL; M17-AC1/AC2/AC3 PASS); review log .harness/evidence/M17-review.log
 Pre-correction: fa2ee80999ad98a28d22f9f55f8b175479b765b9
-Corrections: in progress.
+Corrections (each verifier-confirmed, committed):
+- M17-C1 finding 1 (IMPORTANT) — Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3 PASS; verifier PASS (focused 43 pass, full server suite 250 pass 0 fail, tsc clean) `.harness/evidence/M17-C1-verifier.log`; 7ad4019. Rule now `failed = searchesRun > 0 && notes.length === 0`; answer COULD_NOT_SEARCH_NOTE when no search returned results, else new COULD_NOT_READ_NOTE; write call skipped. Existing fixtures adjusted (not assertions) so they still gather a note: research.test.ts AC1 deadline test and AC3 read-abort test; deepResearch.test.ts AC1 and AC3a. Deleted research.test.ts "AC3: a write cut off by the deadline with nothing gathered ends partial with the no-report note" (scenario no longer reachable: no notes now skips the write); replaced by "FR36: pages read but note extraction yields no notes" and a COULD_NOT_READ_NOTE exact-text test. Write-cut-by-final-deadline with notes still proven (research.test.ts:848, deepResearch.test.ts AC3b).
+- M17-C2 finding 2 (OPTIONAL) — Cheap (haiku, BOUNDED_LOW_RISK), attempt 1 PASS; verifier PASS (9 pass, tsc clean) `.harness/evidence/M17-C2-verifier.log`; d677901.
+Cycle-1 validation: `cd server && bun test && bun run typecheck` 250 pass 0 fail, tsc clean, on the tree holding both corrections (`.harness/evidence/M17-C1-verifier.log`). shared/api.ts unchanged by corrections, so mobile typecheck unaffected.
+Correction diff: git diff fa2ee80999ad98a28d22f9f55f8b175479b765b9 HEAD
+Files changed by corrections (code): server/src/generations/research.ts; server/src/generations/research.test.ts; server/src/http/deepResearch.test.ts; server/src/index.test.ts (new). Plus .harness records.
+Outside the findings' named files: server/src/http/deepResearch.test.ts — not named by either finding; changed only in fixtures (AC1, AC3a) because the finding-1 status rule would otherwise turn those no-note runs `failed`. This widens the cycle-2 review beyond the findings.
+Correction tiers: Mid (C1), Cheap (C2); no Top.
 
 ### Review Cycles
 
-0
+1
 
 ### Follow-ups
 
@@ -463,6 +470,8 @@ Corrections: in progress.
 - When the write call is skipped (final deadline already passed, or `failed`), no `write` step is emitted; M18 display may want one.
 - Any error thrown in the research phase after the research deadline is treated as running out of time; an unrelated post-deadline bug would be masked.
 - No live check that a real qwen3.5:35b-a3b run now ends within ~8 min (the M16 run took ~24 min); it needs a restart of com.harness.server, which is not authorised beyond M16. Candidate for M21.
+- Cycle-1 correction makes a run cut by the research deadline before any note exists `failed` (no usable material) rather than `partial` (stopped early by the deadline); FR36 can be read either way. Product reading to confirm, together with the slow-search follow-up above.
+- NO_REPORT_NOTE is now reachable only when notes exist but cleaning the gathered-notes text yields nothing; consider whether it is still needed.
 - milestones.md is ~690 lines after archiving M15; nothing else archivable yet.
 
 
