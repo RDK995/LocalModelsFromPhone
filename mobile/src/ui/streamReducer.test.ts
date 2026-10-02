@@ -101,7 +101,7 @@ describe("applyStreamEvent deep research clock and result", () => {
       applyStreamEvent,
       initialStreamAccumulator
     );
-    expect(acc.clock).toEqual({ elapsed_ms: 5000, budget_ms: 480000 });
+    expect(acc.clock).toEqual({ elapsed_ms: 5000, budget_ms: 480000, anchored_at: expect.any(Number) });
   });
 
   it("records the research result from done", () => {

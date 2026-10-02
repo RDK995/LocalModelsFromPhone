@@ -1,0 +1,136 @@
+Task: M19f-T2 — A deep research reply's elapsed clock ticks every second locally
+Verifier: Claude Haiku 4.5
+Date: 2026-10-02
+
+COMMAND 1: bun test src/ui
+================================================================================
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun test src/ui
+
+Exit Status: 0
+
+Output:
+bun test v1.4.0 (1381054db)
+
+ 300 pass
+ 0 fail
+ 11717 expect() calls
+Ran 300 tests across 18 files. [143.00ms]
+
+COMMAND 2: bun test && bunx tsc --noEmit
+================================================================================
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun test && bunx tsc --noEmit
+
+Exit Status: 0
+
+Output:
+bun test v1.4.0 (1381054db)
+
+ 503 pass
+ 0 fail
+ 12262 expect() calls
+Ran 503 tests across 33 files. [263.00ms]
+
+COMMAND 3: eslint on changed files
+================================================================================
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bunx eslint src/app/chat.tsx src/ui/chatItems.test.ts src/ui/chatItems.ts src/ui/deepResearch.ts src/ui/streamReducer.test.ts src/ui/streamReducer.ts src/ui/researchClock.test.ts --max-warnings 0
+
+Exit Status: 0
+
+Output: (no output)
+
+FILES CHANGED (from git diff HEAD and git status --porcelain)
+================================================================================
+M mobile/src/app/chat.tsx (allowed)
+M mobile/src/ui/chatItems.test.ts (allowed)
+M mobile/src/ui/chatItems.ts (allowed)
+M mobile/src/ui/deepResearch.ts (allowed)
+M mobile/src/ui/streamReducer.test.ts (allowed)
+M mobile/src/ui/streamReducer.ts (allowed)
+? mobile/src/ui/researchClock.test.ts (allowed - new test file)
+
+No changes to: mobile/src/chat/conversationSession.ts, .harness/, server/, shared/, src/api/
+
+TESTS WEAKENED CHECK
+================================================================================
+Inspected git diffs of test files:
+
+1. mobile/src/ui/streamReducer.test.ts:
+   Line 104: expect(acc.clock).toEqual({ elapsed_ms: 5000, budget_ms: 480000, anchored_at: expect.any(Number) });
+   EXTENDED (not weakened) - added anchored_at assertion instead of loosening
+
+2. mobile/src/ui/chatItems.test.ts:
+   Lines 573, 576, 589: Added anchored_at values to clock objects and passed now parameter to buildChatItems
+   EXTENDED (not weakened) - strengthened assertions by including anchored_at
+
+3. mobile/src/ui/deepResearch.test.ts:
+   No changes - checked via git diff
+
+No test weakening detected.
+
+MARKDOWNTEXT.TEST.TS LITERAL ASSERTION
+================================================================================
+File: mobile/src/ui/markdownText.test.ts:104
+Assertion found: expect(chat).toContain("buildChatItems(messages, pending)");
+✓ Verified: chat.tsx line 323 calls buildChatItems(messages, pending) without the now parameter
+This is correct per task requirement: buildChatItems(persisted, pending, now?: number) with default Date.now()
+
+CHAT.TSX TICKER IMPLEMENTATION
+================================================================================
+Verified in git diff and source:
+
+1. Import: startSecondTicker imported from @/ui/deepResearch ✓
+2. State: const [, setClockTick] = useState(0); ✓
+3. Clock running condition: lines 119-123 check if pending && !blocked && !!clock && !research ✓
+4. useEffect: lines 124-127 run startSecondTicker when clockRunning is true ✓
+5. Cleanup: returned function from startSecondTicker stops on unmount or condition change ✓
+6. Date.now() in onEvent: line 259 passes Date.now() to applyStreamEvent ✓
+
+NEW FUNCTIONS EXPORTED
+================================================================================
+File: mobile/src/ui/deepResearch.ts
+
+1. interface ResearchClockAnchor { elapsed_ms, budget_ms, anchored_at }
+2. liveResearchElapsedMs(clock: ResearchClockAnchor, now: number): number
+   = Math.min(clock.budget_ms, clock.elapsed_ms + Math.max(0, now - clock.anchored_at))
+3. interface IntervalTimers { setInterval, clearInterval }
+4. startSecondTicker(onTick: () => void, timers?: IntervalTimers): () => void
+
+CRITERIA (a)-(f) COVERAGE
+================================================================================
+File: mobile/src/ui/researchClock.test.ts (lines shown)
+
+(a) Clock ticks every second from server elapsed_ms
+    Test: "ticks every second from the last server elapsed_ms" (lines 30-36)
+    Assertion: labels at t0+1000, t0+2000, t0+3000 read 0:11, 0:12, 0:13 ✓
+
+(b) Projection never exceeds budget_ms
+    Test: "never exceeds the budget" (lines 38-42)
+    Assertion: at t0+5000 shows 8:00 of 8:00 when anchored at 479000; liveResearchElapsedMs caps at 480000 ✓
+
+(c) Re-anchor on every new server event
+    Test: "re-anchors on every new server event" (lines 44-50)
+    Assertion: after event with 10000ms at t0, label at t0+4000 is 0:14; new event with 12000ms at t0+4000
+    makes label 0:12 at t0+4000 and 0:14 at t0+6000 ✓
+
+(d) Re-anchor after resume
+    Test: "re-anchors on the first event after a resume" (lines 52-61)
+    Assertion: 60s gap with no events (label ticks to 1:30), then event at t0+70000 with 75000ms
+    makes label show 1:15 at t0+70000 and 1:17 at t0+72000 ✓
+
+(e) Ticker calls onTick every 1000ms and stops
+    Test: "calls onTick every 1000 ms and stops after the stop function" (lines 69-95)
+    Assertion: with fake timers, onTick called twice, ms=1000, clearInterval called with handle ✓
+
+(f) Ordinary replies get no clock label
+    Test: "ordinary replies get no clock label" (lines 63-66)
+    Assertion: step event without elapsed_ms produces undefined clockLabel ✓
+
+SUMMARY
+================================================================================
+Command 1 (bun test src/ui): PASS - 300 pass, 0 fail
+Command 2 (bun test && tsc): PASS - 503 pass, 0 fail
+Command 3 (eslint): PASS - exit 0
+Files Changed: All 7 files within allowed list, all required files present
+Tests Weakened: NO - existing assertions extended to include anchored_at, no assertions weakened
+Criteria (a)-(f): ALL COVERED with explicit test cases
+

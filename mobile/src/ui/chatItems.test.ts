@@ -570,10 +570,10 @@ describe("deep research items", () => {
       accumulator: {
         ...initialStreamAccumulator,
         steps: researchSteps.slice(0, 2),
-        clock: { elapsed_ms: 192000, budget_ms: 480000 },
+        clock: { elapsed_ms: 192000, budget_ms: 480000, anchored_at: 5000 },
       },
     };
-    const item = buildChatItems([], pending)[1];
+    const item = buildChatItems([], pending, 5000)[1];
     expect(item?.clockLabel).toBe("3:12 of 8:00");
     expect(item && "research" in item).toBe(false);
   });
@@ -586,7 +586,7 @@ describe("deep research items", () => {
       blocked: false,
       accumulator: {
         ...initialStreamAccumulator,
-        clock: { elapsed_ms: 1000, budget_ms: 480000 },
+        clock: { elapsed_ms: 1000, budget_ms: 480000, anchored_at: 0 },
         research,
       },
     };

@@ -20,7 +20,7 @@
 import type { Message } from "@/store/conversationStore";
 import type { StreamAccumulator } from "@/ui/streamReducer";
 import type { StepEventData } from "@shared/api";
-import { researchClockLabel } from "@/ui/deepResearch";
+import { liveResearchElapsedMs, researchClockLabel } from "@/ui/deepResearch";
 
 export interface PendingTurn {
   userMessageId: string;
@@ -55,7 +55,8 @@ export interface ChatItem {
  */
 export function buildChatItems(
   persisted: Message[],
-  pending: PendingTurn | null
+  pending: PendingTurn | null,
+  now: number = Date.now()
 ): ChatItem[] {
   const items: ChatItem[] = persisted.map((m) => ({
     key: m.id,
@@ -94,7 +95,7 @@ export function buildChatItems(
           ? { sources: pending.accumulator.sources }
           : {}),
         ...(pending.accumulator.research ? { research: pending.accumulator.research } : {}),
-        ...streamingClock(pending.accumulator),
+        ...streamingClock(pending.accumulator, now),
         streaming: true,
       });
     }
@@ -103,9 +104,13 @@ export function buildChatItems(
   return items;
 }
 
-function streamingClock(acc: StreamAccumulator): { clockLabel?: string } {
-  const clock = acc.research ?? acc.clock;
-  return clock ? { clockLabel: researchClockLabel(clock.elapsed_ms, clock.budget_ms) } : {};
+function streamingClock(acc: StreamAccumulator, now: number): { clockLabel?: string } {
+  if (acc.research) {
+    return { clockLabel: researchClockLabel(acc.research.elapsed_ms, acc.research.budget_ms) };
+  }
+  return acc.clock
+    ? { clockLabel: researchClockLabel(liveResearchElapsedMs(acc.clock, now), acc.clock.budget_ms) }
+    : {};
 }
 
 /** Label for the thinking-section toggle button, by its current state. */

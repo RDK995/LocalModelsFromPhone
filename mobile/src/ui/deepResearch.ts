@@ -73,3 +73,29 @@ export function researchStatusLabel(
 ): string {
   return `Deep research: ${status}`;
 }
+
+export interface ResearchClockAnchor {
+  elapsed_ms: number;
+  budget_ms: number;
+  /** Local time (ms) at which the server's elapsed_ms was received. */
+  anchored_at: number;
+}
+
+/** Elapsed time projected locally from the last server value, capped at the budget. */
+export function liveResearchElapsedMs(clock: ResearchClockAnchor, now: number): number {
+  return Math.min(clock.budget_ms, clock.elapsed_ms + Math.max(0, now - clock.anchored_at));
+}
+
+export interface IntervalTimers {
+  setInterval(fn: () => void, ms: number): unknown;
+  clearInterval(handle: unknown): void;
+}
+
+/** Calls `onTick` every 1000 ms; returns a function that stops the ticker. */
+export function startSecondTicker(
+  onTick: () => void,
+  timers: IntervalTimers = { setInterval, clearInterval }
+): () => void {
+  const handle = timers.setInterval(onTick, 1000);
+  return () => timers.clearInterval(handle);
+}

@@ -62,7 +62,7 @@ import {
   stepsToggleLabel,
 } from "@/ui/chatItems";
 import type { PendingTurn } from "@/ui/chatItems";
-import { researchStatusLabel } from "@/ui/deepResearch";
+import { researchStatusLabel, startSecondTicker } from "@/ui/deepResearch";
 import { webSwitchDisplayValue, webSwitchState } from "@/ui/webSwitch";
 import type { WebSwitchState } from "@/ui/webSwitch";
 import { deepResearchAction } from "@/ui/deepResearch";
@@ -82,6 +82,9 @@ export default function ChatScreen() {
   const [expandedKeys, setExpandedKeys] = useState<ReadonlySet<string>>(
     new Set()
   );
+  // Bumped once a second while a research clock runs, to re-render so
+  // buildChatItems re-projects the label from the current time.
+  const [, setClockTick] = useState(0);
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [blockedMessage, setBlockedMessage] = useState<string | null>(null);
   // null until the first capability check settles (switch disabled, no text).
@@ -112,6 +115,16 @@ export default function ChatScreen() {
     setConversation(found);
     setIsLoadingConversation(false);
   }, [id]);
+
+  const clockRunning =
+    !!pending &&
+    !pending.blocked &&
+    !!pending.accumulator.clock &&
+    !pending.accumulator.research;
+  useEffect(() => {
+    if (!clockRunning) return;
+    return startSecondTicker(() => setClockTick((n) => n + 1));
+  }, [clockRunning]);
 
   // Initialize client with token on mount
   useEffect(() => {
@@ -243,7 +256,7 @@ export default function ChatScreen() {
           onEvent: (event) => {
             setPending((prev) =>
               prev
-                ? { ...prev, accumulator: applyStreamEvent(prev.accumulator, event) }
+                ? { ...prev, accumulator: applyStreamEvent(prev.accumulator, event, Date.now()) }
                 : prev
             );
             if (event.type === "content") {

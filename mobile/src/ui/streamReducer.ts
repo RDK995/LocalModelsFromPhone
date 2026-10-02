@@ -14,7 +14,7 @@ export interface StreamAccumulator {
   steps: StepEventData[];
   sources: SourcesEvent["items"];
   /** Latest deep research clock from a step event; absent for ordinary replies. */
-  clock?: { elapsed_ms: number; budget_ms: number };
+  clock?: { elapsed_ms: number; budget_ms: number; anchored_at: number };
   /** Deep research result from the done event; absent for ordinary replies. */
   research?: NonNullable<DoneEvent["research"]>;
 }
@@ -35,7 +35,8 @@ export const initialStreamAccumulator: StreamAccumulator = {
  */
 export function applyStreamEvent(
   acc: StreamAccumulator,
-  event: StreamEvent
+  event: StreamEvent,
+  now: number = Date.now()
 ): StreamAccumulator {
   switch (event.type) {
     case "thinking":
@@ -53,7 +54,7 @@ export function applyStreamEvent(
         ...acc,
         steps,
         ...(elapsed_ms !== undefined && budget_ms !== undefined
-          ? { clock: { elapsed_ms, budget_ms } }
+          ? { clock: { elapsed_ms, budget_ms, anchored_at: now } }
           : {}),
       };
     }
