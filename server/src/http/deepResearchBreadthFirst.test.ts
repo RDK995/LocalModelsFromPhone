@@ -79,6 +79,8 @@ interface SetupOptions {
   pages?: number[];
   /** Search results' URLs for a query (default three fresh URLs per query). */
   searchUrls?: (query: string) => string[];
+  /** A query whose search fails: its step ends failed or unavailable and it returns no results. */
+  searchFails?: (query: string) => "failed" | "unavailable" | undefined;
   /** Delay before each model reply, ms. */
   chatDelayMs?: number;
   /**
@@ -158,11 +160,12 @@ function setup(opts: SetupOptions = {}) {
       for (const u of urls) if (!urlSub.has(u)) urlSub.set(u, sub);
       const results = urls.map((url, i) => ({ title: `T ${query} ${i}`, url, snippet: "s" }));
       const step_id = `s${++id}`;
+      const failure = opts.searchFails?.(query);
       const events: WebEvent[] = [
         { type: "step", data: { step_id, kind: "search", status: "started", query } },
-        { type: "step", data: { step_id, kind: "search", status: "done", query } },
+        { type: "step", data: { step_id, kind: "search", status: failure ?? "done", query } },
       ];
-      return { results, events };
+      return { results: failure ? [] : results, events };
     },
     async read(url, signal, numberPage) {
       const sub = urlSub.get(url) ?? 0;
@@ -348,6 +351,42 @@ describe("deep research breadth first and prefetch (M19d FR44)", () => {
       expect(searches(1)).toEqual(["q1a", "q1gap1"]);
       expect(gapsFor(1)).toBe(1);
       expect(searches(2)).toEqual(["q2a", "q2gap1", "q2gap2"]);
+    } finally {
+      s.server.stop(true);
+    }
+  });
+
+  for (const status of ["failed", "unavailable"] as const) {
+    it(`F1: a sub-question whose first search ${status} searches again and still gets its first page`, async () => {
+      const s = setup({
+        research: { pagesPerSubQuestion: 2, subQuestionCount: 3, minSearches: 2, maxSearches: 3 },
+        searchFails: (query) => (query === "q2a" ? status : undefined),
+      });
+      try {
+        const events = await s.run();
+        const searches = (sub: number) => s.timeline.filter((t) => t.kind === "search" && t.sub === sub).map((t: any) => t.query);
+        expect(searches(2).slice(0, 2)).toEqual(["q2a", "q2b"]);
+        const noteSubs = (s.timeline.filter((t) => t.kind === "chat" && t.step === "notes") as Array<{ sub: number }>).map((c) => c.sub);
+        expect(noteSubs.slice(0, 3)).toEqual([1, 2, 3]);
+        expect(noteSubs.filter((k) => k === 2).length).toBeGreaterThan(0);
+        expect(doneOf(events).research.status).toBe("complete");
+      } finally {
+        s.server.stop(true);
+      }
+    });
+  }
+
+  it("F1: a later-round failed search does not end that sub-question's searching", async () => {
+    const s = setup({
+      research: { pagesPerSubQuestion: 4, subQuestionCount: 2, minSearches: 1, maxSearches: 3 },
+      pages: [1],
+      searchFails: (query) => (query === "q1gap1" ? "failed" : undefined),
+      gap: (sub, n) => ({ enough: false, next_query: `q${sub}gap${n}` }),
+    });
+    try {
+      await s.run();
+      const searches = (sub: number) => s.timeline.filter((t) => t.kind === "search" && t.sub === sub).map((t: any) => t.query);
+      expect(searches(1)).toEqual(["q1a", "q1gap1", "q1gap2"]);
     } finally {
       s.server.stop(true);
     }

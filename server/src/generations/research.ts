@@ -749,8 +749,12 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
     }
   }
 
-  /** One search for a sub-question: the number of new candidate URLs it added, or null with no query left. */
-  async function* searchOnce(sq: SubState): AsyncGenerator<ResearchEvent, number | null> {
+  /**
+   * One search for a sub-question: the number of new candidate URLs it added, "failed" when the search
+   * itself failed or was unavailable (it counts as a search but says nothing about new URLs), or null
+   * with no query left.
+   */
+  async function* searchOnce(sq: SubState): AsyncGenerator<ResearchEvent, number | "failed" | null> {
     const query = await nextQuery(sq);
     if (query === null) return null;
     checkDeadline();
@@ -760,6 +764,10 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
     searchesRun++;
     const { results, events } = await webTools.search(query, phaseSignal());
     yield* absorb(events);
+    const searchFailed = events.some(
+      (e) => e.type === "step" && e.data.kind === "search" && (e.data.status === "failed" || e.data.status === "unavailable")
+    );
+    if (searchFailed) return "failed";
     if (results.length) searchesWithResults++;
     let added = 0;
     for (const r of results) {
@@ -901,7 +909,8 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
       for (const sq of subs) {
         for (let i = 0; i < firstRoundSearches; i++) {
           const added = yield* searchOnce(sq);
-          // No new query, or FR44: a search that adds no new URLs ends this sub-question's searching.
+          // No new query, or FR44: a successful search that adds no new URLs ends this sub-question's
+          // searching. A failed search does not; the next query is tried (FR35 floor).
           if (added === null || added === 0) {
             sq.searchOver = true;
             break;
@@ -946,7 +955,10 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
             continue;
           }
           if (sq.searches >= s.maxSearches) sq.searchOver = true;
-          // FR44 early end. Candidates it already has were offered to an earlier page choice; no new one.
+          // A failed search is not an early end; the sub-question may search again next round.
+          if (added === "failed") continue;
+          // FR44 early end: a successful search that adds no new URLs. Candidates it already has were
+          // offered to an earlier page choice; no new one.
           if (added === 0) {
             sq.searchOver = true;
             continue;
