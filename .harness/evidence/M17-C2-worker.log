@@ -1,0 +1,37 @@
+Test Execution: M17-C2 — Unit test for parseResearchBudget
+Date: 2026-10-02
+Working Directory: /Users/ryankenny/Projects/CodingHarnessv2/server
+
+Command 1: bun test src/index.test.ts
+==========================================
+bun test v1.4.0 (1381054db)
+
+ 9 pass
+ 0 fail
+ 9 expect() calls
+Ran 9 tests across 1 file. [11.00ms]
+
+Exit Status: 0
+
+Command 2: bun run typecheck
+==============================
+$ tsc --noEmit
+
+Exit Status: 0
+
+Summary
+=======
+All 9 test assertions passed successfully:
+- parseResearchBudget("600000") === 600000 ✓
+- parseResearchBudget(" 1000 ") === 1000 ✓
+- parseResearchBudget(undefined) === undefined ✓
+- parseResearchBudget("") === undefined ✓
+- parseResearchBudget("0") === undefined ✓
+- parseResearchBudget("-5") === undefined ✓
+- parseResearchBudget("abc") === undefined ✓
+- parseResearchBudget("1e3") === undefined ✓
+- parseResearchBudget("99999999999999999999") === undefined ✓
+
+TypeScript typechecking passed with no errors.
+
+Importing server/src/index.ts in tests does not start the server (guarded by import.meta.main).

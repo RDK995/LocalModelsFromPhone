@@ -1,0 +1,40 @@
+Verification of Task: M17-C2 - Unit test for parseResearchBudget
+=================================================================
+
+Date: 2026-10-02
+Commit at start: 795d52f M17: review cycle 1 CHANGES REQUIRED recorded; pre-correction fa2ee80
+Branch: m17-research-time-budget
+
+Command Run:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/index.test.ts && bun run typecheck
+
+Exit Status: 0
+
+Output:
+bun test v1.4.0 (1381054db)
+
+ 9 pass
+ 0 fail
+ 9 expect() calls
+Ran 9 tests across 1 file. [11.00ms]
+$ tsc --noEmit
+
+Test Results Summary:
+- All 9 tests passed
+- Typecheck passed with no errors
+
+Test Assertions Verified:
+1. parseResearchBudget("600000") === 600000 ✓
+2. parseResearchBudget(" 1000 ") === 1000 ✓
+3. parseResearchBudget(undefined) === undefined ✓
+4. parseResearchBudget("") === undefined ✓
+5. parseResearchBudget("0") === undefined ✓
+6. parseResearchBudget("-5") === undefined ✓
+7. parseResearchBudget("abc") === undefined ✓
+8. parseResearchBudget("1e3") === undefined ✓
+9. parseResearchBudget("99999999999999999999") === undefined ✓
+
+Files Changed (this task only, excluding .harness/ and M17-C1 changes):
+- server/src/index.test.ts (new)
+
+All assertions match packet requirements exactly.
