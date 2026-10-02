@@ -179,7 +179,9 @@ describe("runResearch", () => {
     // Step kinds in order (consecutive repeats collapsed).
     const kinds = stepData(events).map((s) => s.kind);
     const collapsed = kinds.filter((k, i) => i === 0 || kinds[i - 1] !== k);
-    expect(collapsed).toEqual(["plan", "search", "read", "search", "read", "write"]);
+    expect(collapsed).toEqual(["plan", "model", "search", "model", "read", "model", "search", "model", "read", "model", "read", "model", "read", "model", "write"]);
+    const modelDetails = stepData(events).filter((s) => s.kind === "model" && s.status === "started").map((s) => s.detail);
+    expect(modelDetails).toEqual(["Choosing searches", "Choosing pages", "Taking notes: alpha.example", "Choosing searches", "Choosing pages", "Taking notes: gamma.example", "Taking notes: alpha.example", "Taking notes: gamma.example", "Checking for gaps", "Checking for gaps"]);
     const plan = stepData(events).filter((s) => s.kind === "plan").map((s) => s.status);
     expect(plan).toEqual(["started", "done"]);
     const write = stepData(events).filter((s) => s.kind === "write").map((s) => s.status);
