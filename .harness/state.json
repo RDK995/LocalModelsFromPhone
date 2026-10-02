@@ -12383,7 +12383,7 @@
       "architecture": "C1, C2, C4, C6",
       "requirements": [],
       "traces": "AC33",
-      "status": "BLOCKED",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": "3294301e2631ab7796ee0cc131ecb225022dc96f on m19h-phone-airplane-proof",
@@ -12396,7 +12396,10 @@
           "id": "M19h-AC1",
           "text": "On the owner's phone: during a deep research run, airplane mode is turned on for about 30 s twice; the reply still ends showing its steps and either the report or a visible status line (never an empty bubble), and the elapsed clock visibly advances every second throughout; the owner's report and a screenshot of the finished reply are saved under .harness/evidence/.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            ".harness/evidence/M19h-AC1-owner-report.md",
+            ".harness/evidence/M19h-AC1-screenshot.png"
+          ]
         }
       ],
       "tasks": [
@@ -12433,7 +12436,7 @@
             ".harness/evidence/M19h-T1-readiness.log",
             ".harness/evidence/M19h-T1-verifier.log"
           ],
-          "status": "PENDING_OWNER_RUN"
+          "status": "OWNER_RUN_RECORDED"
         }
       ],
       "follow_ups": [
@@ -12445,16 +12448,7 @@
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
       ],
       "ordering_decision": "Human decision 2026-10-02: build fast deep research (FR41-FR45) before M20; M20 and M21 stay TODO after M19b-M19h; M5a stays BLOCKED and parked, its record unchanged.",
-      "blocked": {
-        "problem": "M19h-AC1 (AC33) is a live proof only the owner can perform: airplane mode on and off on the real iPhone during a deep research reply, watching the screen. Agents have no access to the phone; the observation and screenshot cannot be produced or inferred. The Mac side is ready (T1).",
-        "affected": "M19h / M19h-AC1 (AC33; proof of FR45 from M19e and M19f)",
-        "attempts": [
-          "M19h-T1: read-only readiness check, PASS - server pid 4781 started after the last server/ commit, bundle host serving the clean working tree, qwen3.5:35b-a3b resident, boot-readiness-check.sh PASS (.harness/evidence/M19h-T1-readiness.log, M19h-T1-verifier.log).",
-          "Nothing else is agent-performable: no production change is in scope, and the phone run must not be simulated."
-        ],
-        "remaining": "The owner's phone run, written report and screenshot of the finished reply.",
-        "recommended": "Owner follows the steps in milestones.md M19h 'Recommended decision', then saves .harness/evidence/M19h-AC1-screenshot.png and .harness/evidence/M19h-AC1-owner-report.md and sets M19h to REVIEW."
-      }
+      "blocked": null
     },
     "M20": {
       "id": "M20",

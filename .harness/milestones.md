@@ -505,7 +505,7 @@ C4, C6, C7, C11, C12, C13
 
 ## M19h — On the phone, a deep research reply rides out airplane mode and its clock never stalls
 
-Status: BLOCKED
+Status: REVIEW
 
 ### Outcome
 
@@ -532,7 +532,7 @@ Pending.
 ### Evidence
 
 - T1 — Mac-side readiness (read-only)   Cheap (haiku), attempt 1, PASS; verifier PASS (re-ran `bash ops/scripts/boot-readiness-check.sh` exit 0 "PASS: ALL CHECKS PASSED"). com.harness.server pid 4781 started 2026-10-02 21:56:12 +01:00, after the last server/ commit 22c9a00 (21:53:11 +01:00); bundle host 8081 listener pid 64430 started 2026-10-02 15:28:23 (Metro serves the working tree live; `git status --porcelain -- server mobile` empty, so it serves HEAD's app code incl. M19f 01ac82e); health 401; qwen3.5:35b-a3b in `ollama ps`; no ac29-live-run in flight. No restart was needed. Commit 92fa7c4. .harness/evidence/M19h-T1-readiness.log, .harness/evidence/M19h-T1-verifier.log.
-- M19h-AC1: NOT YET PROVEN. Needs the owner's phone run below; agents cannot toggle airplane mode on the phone or observe its screen.
+- M19h-AC1: owner's phone run recorded 2026-10-02 - .harness/evidence/M19h-AC1-owner-report.md (owner: "Clock kept ticking with airplane mode"; follow-up answer "Twice, ~30s, all fine") and .harness/evidence/M19h-AC1-screenshot.png (finished reply, 22:47). Unblocked by the human; set to REVIEW.
 
 ### Validation
 
