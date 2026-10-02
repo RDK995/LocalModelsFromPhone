@@ -1,0 +1,187 @@
+=== M19f-T3 VERIFICATION LOG ===
+Date: 2026-10-02
+Verifier: Claude Haiku 4.5
+
+TASK: M19f-T3 — Error replies with no answer text show a plain line with steps, live and when reopened from storage
+
+=== COMMAND 1: Focused test suite (ui, chat, store directories) ===
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun test src/ui src/chat src/store
+Exit Status: 0
+Output:
+bun test v1.4.0 (1381054db)
+ 412 pass
+ 0 fail
+ 12021 expect() calls
+Ran 412 tests across 26 files. [160.00ms]
+
+=== COMMAND 2: Full test suite and type check ===
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun test && bunx tsc --noEmit
+Exit Status: 0
+Output:
+bun test v1.4.0 (1381054db)
+ 516 pass
+ 0 fail
+ 12300 expect() calls
+Ran 516 tests across 35 files. [268.00ms]
+
+(TypeScript check passed with no output)
+
+=== COMMAND 3: ESLint on all changed/added files ===
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bunx eslint src/app/chat.tsx src/chat/conversationSession.ts src/store/conversationStore.ts src/ui/chatItems.ts src/chat/errorReplySession.test.ts src/ui/errorReply.test.ts src/ui/errorReply.ts --max-warnings 0
+Exit Status: 0
+Output: (no output = clean)
+
+=== FILES CHANGED ===
+Modified (committed):
+  - mobile/src/app/chat.tsx
+  - mobile/src/chat/conversationSession.ts
+  - mobile/src/store/conversationStore.ts
+  - mobile/src/ui/chatItems.ts
+
+New (untracked):
+  - mobile/src/chat/errorReplySession.test.ts
+  - mobile/src/ui/errorReply.test.ts
+  - mobile/src/ui/errorReply.ts
+
+All files within "Files Allowed To Change" per packet.
+
+=== DEFINITION OF DONE VERIFICATION ===
+
+(1) All commands exit 0: ✓ VERIFIED
+    - bun test (ui/chat/store): exit 0 (412 pass)
+    - bun test && tsc: exit 0 (516 pass)
+    - eslint: exit 0 (clean)
+
+(2) Each new test named:
+    NEW TESTS IN mobile/src/ui/errorReply.test.ts:
+      ✓ LOST_CONNECTION_LINE and errorLineFor
+        - has the exact wording
+        - maps lost-connection errors to the line
+        - describes other errors
+      ✓ buildChatItems: errorLine
+        - falls back to the lost-connection line for an error reply stored without error_message
+        - uses the stored error_message, also for whitespace-only content
+        - gives no errorLine to an error reply with text, or a complete reply
+      ✓ stepLabel: model steps
+        - shows the detail, with (failed) when failed, and falls back to Thinking
+
+    NEW TESTS IN mobile/src/chat/errorReplySession.test.ts:
+      ✓ error reply with no answer text (M19f-AC3)
+        - deep research: plain line and steps incl. model steps, live and reopened
+        - deep research: model steps stored on an error reply are shown after reopening
+        - ordinary web: plain line and steps, live and reopened
+        - switch off: plain line with no steps, live and reopened
+      ✓ store: model steps and error_message survive reload
+        - keeps a message with a kind model step (dropped before STEP_KINDS accepted it)
+        - drops a conversation whose error_message is not a string
+
+(3) Exact LOST_CONNECTION_LINE text:
+    ✓ FOUND in mobile/src/ui/errorReply.ts line 9:
+      export const LOST_CONNECTION_LINE = "Lost connection to the Mac before the reply arrived";
+    ✓ VERIFIED in test mobile/src/ui/errorReply.test.ts line 13:
+      expect(LOST_CONNECTION_LINE).toBe("Lost connection to the Mac before the reply arrived");
+
+(4) What happened on reload to "model" step before the fix:
+    Before: STEP_KINDS in conversationStore.ts was ["search", "read", "continue", "answer_now", "plan", "write"]
+    Impact: When isValidStep() checked `!STEP_KINDS.includes(v.kind as string)` for a "model" kind step,
+            it returned false, causing isValidMessage() to return false, causing the entire message to be
+            rejected and dropped during storage reload, making the conversation fail to load.
+    After: STEP_KINDS (line 110 of conversationStore.ts) now includes "model":
+           const STEP_KINDS = ["search", "read", "continue", "answer_now", "plan", "write", "model"];
+    ✓ VERIFIED in test mobile/src/chat/errorReplySession.test.ts lines 186-202:
+      "keeps a message with a kind model step (dropped before STEP_KINDS accepted it)" test passes
+
+(5) Error types mapping to LOST_CONNECTION_LINE:
+    From mobile/src/ui/errorReply.ts isLostConnectionError function (lines 16-20):
+      ✓ UnreachableError
+      ✓ TypeError (fetch network failure)
+      ✓ Error with message === RESUME_EXHAUSTED_MESSAGE ("The connection to the Mac was lost and could not be restored.")
+    ✓ VERIFIED in test mobile/src/ui/errorReply.test.ts lines 15-19:
+      expect(errorLineFor(new Error(RESUME_EXHAUSTED_MESSAGE))).toBe(LOST_CONNECTION_LINE);
+      expect(errorLineFor(new UnreachableError())).toBe(LOST_CONNECTION_LINE);
+      expect(errorLineFor(new TypeError("Network request failed"))).toBe(LOST_CONNECTION_LINE);
+
+=== ACCEPTANCE CRITERIA M19f-AC3 VERIFICATION ===
+
+AC3 parts (verbatim packet): "App tests: a reply with error status and no answer text - deep research, 
+ordinary web or switch off - shows a plain line (e.g. "Lost connection to the Mac before the reply arrived") 
+with its steps visible, never an empty bubble, both live and when reopened from storage."
+
+(a) Live (show errorLine while sending is in progress):
+    ✓ runDroppedReply() helper in errorReplySession.test.ts (lines 42-112):
+      - Creates a conversation with web search on/off
+      - Triggers sendInConversation with a scripted client that drops connection
+      - Builds pending ChatItem from persisted + pending
+      - Verifies item.errorLine === LOST_CONNECTION_LINE
+    ✓ Tests exercising (a):
+      - "deep research: plain line and steps incl. model steps, live and reopened" (lines 122-142)
+      - "ordinary web: plain line and steps, live and reopened" (lines 164-174)
+      - "switch off: plain line with no steps, live and reopened" (lines 176-182)
+
+(b) Reopened from storage (conversation reloaded through fresh ConversationStore):
+    ✓ In each runDroppedReply test (line 109-110):
+      - Fresh store created over same storage: createConversationStore(storage)
+      - Conversation re-read and verified to have same errorLine/steps
+    ✓ Tests exercising (b):
+      - All three runDroppedReply tests verify "reopened" item has same errorLine/steps as "live"
+      - "keeps a message with a kind model step (dropped before STEP_KINDS accepted it)" (lines 186-202)
+        directly stores a message with "model" step and verifies reload succeeds
+
+(c) Fallback/no errorLine cases:
+    ✓ buildChatItems logic (chatItems.ts lines 73-75):
+      - errorLine set only when: role === "assistant" && status === "error" && content.trim() === ""
+      - Uses: m.error_message ?? LOST_CONNECTION_LINE (fallback when no error_message)
+    ✓ Test "falls back to the lost-connection line for an error reply stored without error_message"
+      (errorReply.test.ts lines 27-30): Message with empty content, no error_message → uses fallback
+    ✓ Test "uses the stored error_message, also for whitespace-only content"
+      (errorReply.test.ts lines 31-34): Message with "  \n" content, error_message set → uses stored
+    ✓ Test "gives no errorLine to an error reply with text, or a complete reply"
+      (errorReply.test.ts lines 35-41): Non-empty error reply and complete reply → no errorLine
+
+(d) Model step kept on reload:
+    ✓ STEP_KINDS now includes "model" (conversationStore.ts line 110)
+    ✓ isValidStep function accepts "model" kind (line 117 checks STEP_KINDS.includes)
+    ✓ Test "keeps a message with a kind model step (dropped before STEP_KINDS accepted it)"
+      (errorReplySession.test.ts lines 186-202): Appends message with "model" step, reopens via
+      fresh store, verifies message is kept intact with step data preserved
+
+(e) stepLabel for kind "model":
+    ✓ stepLabel implementation (chatItems.ts lines 157-160):
+      - Shows step.detail when present (e.g., "Choosing pages", "Taking notes: example.com")
+      - Shows " (failed)" suffix when status === "failed"
+      - Falls back to "Thinking" when detail is missing
+    ✓ Test "shows the detail, with (failed) when failed, and falls back to Thinking"
+      (errorReply.test.ts lines 51-56):
+      - "Choosing pages" (started, detail present)
+      - "Taking notes: example.com" (done, detail present)
+      - "Checking for gaps (failed)" (failed, detail present)
+      - "Thinking" (started, no detail)
+    ✓ Test "deep research: model steps stored on an error reply are shown after reopening"
+      (errorReplySession.test.ts lines 144-162): Appends message with two "model" steps with detail,
+      reopens, verifies stepLabel output matches expected labels
+
+=== ADDITIONAL IMPLEMENTATION VERIFICATION ===
+
+chat.tsx errorLine rendering (line 465-467):
+  {item.errorLine && (
+    <Text style={styles.messageText}>{item.errorLine}</Text>
+  )}
+  ✓ errorLine rendered as plain text inside the message bubble
+
+chat.tsx steps visibility for errorLine (lines 410-444):
+  Line 412: {item.streaming || item.errorLine ? (
+  ✓ When errorLine is set, steps are shown directly (not collapsed)
+  ✓ Steps appear as direct list (lines 413-417), not behind toggle
+
+conversationSession.ts error handling (line 203):
+  persistReply("error", errorLineFor(error));
+  ✓ Uses errorLineFor function to map error to plain line
+  ✓ Persists error_message when error is lost-connection type
+
+=== SUMMARY ===
+All packet Tests commands: EXIT 0 ✓
+Files changed vs allowed: ALL WITHIN ALLOWED LIST ✓
+Existing tests weakened: NO (no modifications to committed test files) ✓
+Acceptance criteria exercised: ALL 5 PARTS WITH TESTS ✓
+Definition of Done: ALL ITEMS VERIFIED ✓
+

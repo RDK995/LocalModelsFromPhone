@@ -409,7 +409,7 @@ export default function ChatScreen() {
                   )}
                   {item.steps && (
                     <View style={styles.stepsContainer}>
-                      {item.streaming ? (
+                      {item.streaming || item.errorLine ? (
                         item.steps.map((step, index) => (
                           <Text key={index} style={styles.stepText}>
                             {stepLabel(step)}
@@ -462,6 +462,9 @@ export default function ChatScreen() {
                       ) : (
                         <Text style={styles.messageText}>{item.content}</Text>
                       ))}
+                    {item.errorLine && (
+                      <Text style={styles.messageText}>{item.errorLine}</Text>
+                    )}
                     {item.streaming && (
                       <ActivityIndicator style={styles.loadingDots} />
                     )}

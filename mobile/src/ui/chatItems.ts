@@ -20,6 +20,7 @@
 import type { Message } from "@/store/conversationStore";
 import type { StreamAccumulator } from "@/ui/streamReducer";
 import type { StepEventData } from "@shared/api";
+import { LOST_CONNECTION_LINE } from "@/ui/errorReply";
 import { liveResearchElapsedMs, researchClockLabel } from "@/ui/deepResearch";
 
 export interface PendingTurn {
@@ -43,6 +44,8 @@ export interface ChatItem {
   research?: Message["research"];
   /** Live "m:ss of m:ss" clock for a streaming deep research reply. */
   clockLabel?: string;
+  /** Plain line for an error reply with no answer text (FR45); never an empty bubble. */
+  errorLine?: string;
   streaming: boolean;
 }
 
@@ -67,6 +70,9 @@ export function buildChatItems(
     ...(m.steps && m.steps.length > 0 ? { steps: m.steps } : {}),
     ...(m.sources && m.sources.length > 0 ? { sources: m.sources } : {}),
     ...(m.research ? { research: m.research } : {}),
+    ...(m.role === "assistant" && m.status === "error" && m.content.trim() === ""
+      ? { errorLine: m.error_message ?? LOST_CONNECTION_LINE }
+      : {}),
     streaming: false,
   }));
 
@@ -148,6 +154,10 @@ export function stepLabel(step: StepEventData): string {
     return "Asked the model to answer now";
   }
 
+  if (kind === "model") {
+    const base = step.detail?.trim() ? step.detail : "Thinking";
+    return status === "failed" ? `${base} (failed)` : base;
+  }
   if (kind === "plan") {
     return status === "failed" ? "Planning (failed)" : "Planning";
   }

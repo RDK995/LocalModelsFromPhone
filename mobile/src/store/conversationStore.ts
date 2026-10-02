@@ -50,6 +50,8 @@ export interface Message {
   sources?: SourcesEvent["items"];
   /** Deep research result (FR36); absent for ordinary replies. */
   research?: { status: "complete" | "partial" | "failed"; elapsed_ms: number; budget_ms: number };
+  /** Plain line saying why a reply ended in error (FR45); absent otherwise. */
+  error_message?: string;
 }
 
 export interface Conversation {
@@ -105,7 +107,7 @@ function defaultNewId(): string {
 
 const MESSAGE_STATUSES: MessageStatus[] = ["complete", "stopped", "error", "streaming"];
 
-const STEP_KINDS = ["search", "read", "continue", "answer_now", "plan", "write"];
+const STEP_KINDS = ["search", "read", "continue", "answer_now", "plan", "write", "model"];
 const STEP_STATUSES = ["started", "done", "failed", "unavailable"];
 
 function isValidStep(value: unknown): boolean {
@@ -154,6 +156,7 @@ function isValidMessage(value: unknown): value is Message {
     return false;
   }
   if (v.research !== undefined && !isValidResearch(v.research)) return false;
+  if (v.error_message !== undefined && typeof v.error_message !== "string") return false;
   return true;
 }
 

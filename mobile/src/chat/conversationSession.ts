@@ -37,6 +37,7 @@ import type { SendMessageCallbacks } from "./chatController";
 import type { APIClient, StreamEvent } from "@/api/client";
 import type { ChatRequest } from "@shared/api";
 import type { ConversationStore, Message, MessageStatus } from "@/store/conversationStore";
+import { errorLineFor } from "@/ui/errorReply";
 import { applyStreamEvent, initialStreamAccumulator } from "@/ui/streamReducer";
 
 export const BLOCKED_MESSAGE =
@@ -153,7 +154,7 @@ export async function sendInConversation(
   let sentModel: string | null = null;
   let pendingPersist: Promise<void> = Promise.resolve();
 
-  function persistReply(status: MessageStatus): void {
+  function persistReply(status: MessageStatus, errorMessage?: string): void {
     const message: Message = {
       id: options?.assistantMessageId ?? newMessageId(),
       role: "assistant",
@@ -163,6 +164,7 @@ export async function sendInConversation(
       ...(accumulator.steps.length > 0 ? { steps: accumulator.steps } : {}),
       ...(accumulator.sources.length > 0 ? { sources: accumulator.sources } : {}),
       ...(accumulator.research ? { research: accumulator.research } : {}),
+      ...(errorMessage ? { error_message: errorMessage } : {}),
       ...(doneModel || sentModel ? { model: doneModel ?? sentModel ?? undefined } : {}),
     };
     pendingPersist = store.appendMessage(conversationId, message).then(() => undefined);
@@ -198,7 +200,7 @@ export async function sendInConversation(
         message === NO_MODEL_LOADED_MESSAGE ? BLOCKED_MESSAGE : message
       ),
     onError: (error) => {
-      persistReply("error");
+      persistReply("error", errorLineFor(error));
       pendingPersist = pendingPersist.then(() => callbacks.onError(error));
     },
     onUnauthorized: () => callbacks.onUnauthorized(),
