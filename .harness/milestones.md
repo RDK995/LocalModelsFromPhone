@@ -465,7 +465,7 @@ C4, C6
 
 ## M19f — On the phone the clock ticks every second, each outage gets its own resume allowance, and a failed reply shows a plain line
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -493,7 +493,16 @@ Pending.
 
 ### Evidence
 
+- T1 (Mid, sonnet, attempt 3, PASS; ORDINARY_IMPLEMENTATION; commit fcb0f87): the client's 300 s resume allowance is measured per outage and resets after every successful resume. Packet .harness/tasks/M19f-T1.md; verifier .harness/evidence/M19f-T1-verifier.log.
+- T2 (Mid, sonnet, attempt 3, PASS; ORDINARY_IMPLEMENTATION; commit c281ce0): local 1 s clock projection from the last elapsed_ms, capped at the budget, re-anchored on every event and after resume. Packet .harness/tasks/M19f-T2.md; verifier .harness/evidence/M19f-T2-verifier.log.
+- T3 (Mid, sonnet, attempt 3, PASS; ORDINARY_IMPLEMENTATION; commit 01ac82e): error reply with no text shows "Lost connection to the Mac before the reply arrived" (or the stored error_message) with steps listed, live and reopened; "model" added to stored step kinds; stepLabel renders model steps by detail. Worker's structured return lost when the previous orchestrator hit its turn cap; verified independently. Packet .harness/tasks/M19f-T3.md; verifier .harness/evidence/M19f-T3-verifier.log.
+- M19f-AC1: mobile/src/ui/researchClock.test.ts (ticks each second from last elapsed_ms, capped at budget, re-anchored on every event and on the first event after a resume, 1000 ms ticker stops, no clock for ordinary replies) - .harness/evidence/M19f-T2-verifier.log (src/ui 300 pass; full suite 503 pass; tsc clean; eslint exit 0)
+- M19f-AC2: mobile/src/api/client.test.ts "APIClient per-outage resume allowance" (a) several short outages all resume, (b) one outage over 300 s after a short one ends with error and no further requests, (c) 299 s retries, over 300 s does not; conversationSession.test.ts "ends the reply with status error and keeps its steps when the connection never comes back within 300 s" - .harness/evidence/M19f-T1-verifier.log (97 pass focused; full suite 497 pass; tsc clean)
+- M19f-AC3: mobile/src/chat/errorReplySession.test.ts (deep research incl. model steps / ordinary web / switch off: plain line and steps, live and reopened through a fresh ConversationStore; a kind "model" step kept on reload) and mobile/src/ui/errorReply.test.ts (fallback line without error_message; no errorLine for an error reply with text or a complete reply; stepLabel model) - .harness/evidence/M19f-T3-verifier.log (focused 412 pass; full suite 516 pass; tsc clean; eslint on changed files exit 0)
+
 ### Validation
+
+- `cd mobile && bun test && bunx tsc --noEmit` - PASS (verifier after T1-T3: 516 pass, 0 fail; tsc clean) - .harness/evidence/M19f-T3-verifier.log. `bun run lint` fails only on 5 pre-existing quote errors in mobile/src/chat/webQuietSession.test.ts (present at baseline, untouched). The reviewer re-runs this.
 
 ### Review
 
@@ -504,6 +513,11 @@ Pending.
 0
 
 ### Follow-ups
+
+- Pre-existing: `cd mobile && bun run lint` fails on 5 quote errors in src/chat/webQuietSession.test.ts, present at baseline 6897b7a; not M19f scope.
+- M19e follow-up still open: a read or search cut off by the deadline/Stop/cancel keeps a 'started' step with no done/failed step, so the app may show it as still running; M19f did not change this.
+- T1-T3 records reconstructed from packets, commits and verifier logs after the previous orchestrator hit its turn cap.
+- milestones.md is over 400 lines but nothing is archivable (remaining full entries are active, most recently settled, TODO or BLOCKED).
 
 
 ## M19g — Faster deep research proven live on the Mac

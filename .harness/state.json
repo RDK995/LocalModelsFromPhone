@@ -11950,7 +11950,7 @@
         "FR45"
       ],
       "traces": "AC31 (resume allowance resets after a successful resume; an error reply with no text shows the error line with steps, on deep and ordinary replies), FR40 (amended: per-outage resume allowance and error line on ordinary and switch-off replies)",
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": "6897b7a42cb49268affdce55f299ded341f09646 on m19f-phone-liveness",
@@ -11963,26 +11963,106 @@
           "id": "M19f-AC1",
           "text": "App tests: a deep research reply's elapsed clock ticks every second locally from the last server `elapsed_ms`, is capped at the budget, and is re-anchored on every server event and after every resume.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "mobile/src/ui/researchClock.test.ts (ticks each second from last elapsed_ms, capped at budget, re-anchored on every event, re-anchors on the first event after a resume, ticker calls onTick every 1000 ms and stops, ordinary replies get no clock label); streamReducer/chatItems anchored_at - .harness/evidence/M19f-T2-verifier.log (src/ui 300 pass; full mobile suite 503 pass; tsc clean; eslint exit 0)"
+          ]
         },
         {
           "id": "M19f-AC2",
           "text": "App tests through the app server client with scripted dropping streams: the 300 s resume allowance applies per outage and resets after every successful resume, so several short outages in one reply all resume; a single outage longer than 300 s ends the reply on the phone with error status and its steps kept.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "mobile/src/api/client.test.ts 'APIClient per-outage resume allowance' (a) several short outages all resume, (b) a single outage over 300 s after an earlier short one ends the reply with error and no further requests, (c) allowance measured from the current outage start: 299 s retries, over 300 s does not; conversationSession.test.ts 'ends the reply with status error and keeps its steps when the connection never comes back within 300 s' - .harness/evidence/M19f-T1-verifier.log (97 pass focused; full mobile suite 497 pass; tsc clean)"
+          ]
         },
         {
           "id": "M19f-AC3",
           "text": "App tests: a reply with error status and no answer text - deep research, ordinary web or switch off - shows a plain line (e.g. \"Lost connection to the Mac before the reply arrived\") with its steps visible, never an empty bubble, both live and when reopened from storage.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "mobile/src/chat/errorReplySession.test.ts (deep research incl. model steps / ordinary web / switch off: plain line and steps, live and reopened through a fresh ConversationStore; model steps shown after reopening; a kind model step is kept on reload), mobile/src/ui/errorReply.test.ts (fallback to LOST_CONNECTION_LINE \"Lost connection to the Mac before the reply arrived\" without error_message; stored error_message used; no errorLine for an error reply with text or a complete reply; stepLabel model detail / (failed) / Thinking); chat.tsx renders errorLine in the bubble and lists steps uncollapsed - .harness/evidence/M19f-T3-verifier.log (focused 412 pass; full mobile suite 516 pass; tsc clean; eslint on changed files exit 0)"
+          ]
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M19f-T1",
+          "title": "per-outage 300 s resume allowance in the app server client",
+          "packet": ".harness/tasks/M19f-T1.md",
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "who owns the resume budget clock in the client's drop/resume loop; injectable fake clock/sleep oracle"
+          },
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M19f-T1-verifier.log",
+              "commit": "fcb0f87"
+            }
+          ]
+        },
+        {
+          "id": "M19f-T2",
+          "title": "deep research clock ticks every second locally, capped and re-anchored",
+          "packet": ".harness/tasks/M19f-T2.md",
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "pure clock projection plus a 1 s ticker owned by the chat screen; injected time and fake timers"
+          },
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M19f-T2-verifier.log",
+              "commit": "c281ce0"
+            }
+          ]
+        },
+        {
+          "id": "M19f-T3",
+          "title": "error reply with no text shows a plain line with its steps, live and reopened; model steps survive reload",
+          "packet": ".harness/tasks/M19f-T3.md",
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "view-model + one persisted optional field + storage validation fix across store, session and chat view-model; bun test oracle"
+          },
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS (worker structured return lost when the previous orchestrator hit its turn cap; worker log 516 pass exit 0; verified independently)",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M19f-T3-verifier.log",
+              "commit": "01ac82e"
+            }
+          ]
+        }
+      ],
       "reviews": [],
       "findings": [],
-      "validation": [],
-      "follow_ups": [],
+      "validation": [
+        "`cd mobile && bun test && bunx tsc --noEmit` - PASS (verifier after T1-T3: 516 pass, 0 fail; tsc clean) - .harness/evidence/M19f-T3-verifier.log. `bun run lint` fails only on 5 pre-existing quote errors in mobile/src/chat/webQuietSession.test.ts (present at baseline, untouched); eslint on every M19f-changed file exits 0."
+      ],
+      "follow_ups": [
+        "Pre-existing: `cd mobile && bun run lint` fails on 5 quote errors in src/chat/webQuietSession.test.ts (lines 255-333), present at baseline 6897b7a; not M19f scope.",
+        "M19e follow-up still open: a prefetched read or search cut off by the deadline/Stop/cancel has a 'started' step with no done/failed step, so the app may show it as still running; M19f did not change this (server-side fix in drainReads, or an app-side rule for a finished reply).",
+        "T1-T3 attempt records were reconstructed from packets, commits and verifier logs after the previous orchestrator hit its turn cap; the T3 worker's structured return was lost (verifier evidence stands).",
+        "milestones.md is over 400 lines (about 740) but nothing is archivable: remaining full entries are active, most recently settled (M19e), TODO or BLOCKED."
+      ],
       "complexity_signals": [
         "CONCURRENCY_LIFECYCLE"
       ],
