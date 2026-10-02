@@ -10975,7 +10975,7 @@
         "FR34"
       ],
       "traces": "AC28 (action hidden/disabled/enabled, model name from server, steps live and saved)",
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -10983,34 +10983,133 @@
         "branch": "m18-deep-research-phone"
       },
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M18.md",
+        "result": "RECORDED - 26/26 files attributed; components C1,C2,C3,C4,C5; 8 edges; no claim mismatches"
       },
       "criteria": [
         {
           "id": "M18-AC1",
           "text": "Server tests: the server's state reports the configured deep-research model name (Mac-side setting, default `qwen3.5:35b-a3b`); a deep research request with web off, or when the resident model is not the configured one, is refused with a plain error and no run; the chat model is never offered a `deep_research` tool.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "server/src/http/deepResearchGate.test.ts (POST /v1/chat and GET /v1/state via createServer): state reports deep_research_model (configured and default); deep_research with web off -> 400 deep_research_needs_web, no generation, no Ollama chat; other model -> 409 deep_research_model_not_loaded \"Load <model> to use deep research\", no generation; web tools and the fake Ollama request carry no deep_research tool; server/src/index.test.ts parseResearchModel (PHONE_MODELS_RESEARCH_MODEL, default qwen3.5:35b-a3b) - .harness/evidence/M18-T1-verifier.log (server 258 pass, 0 fail)"
+          ]
         },
         {
           "id": "M18-AC2",
           "text": "App tests: the \"Deep research\" action beside Send is hidden with the web switch off, shown disabled with \"Load <model name> to use deep research\" when another model is resident, and enabled when the configured model (name from the server, none hardcoded) is resident; using it sends that one message as a run and the next message is an ordinary reply.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "mobile/src/ui/deepResearch.test.ts (hidden with web off; disabled with \"Load <model> to use deep research\" incl. non-default name; enabled when resident equals server-reported model); chatController.test.ts exact body {model, messages, web:true, deep_research:true} and blocked cases; conversationSession.test.ts next send carries no deep_research key and the flag is not persisted; errorMessages.test.ts refusal codes - .harness/evidence/M18-T2-verifier.log (466 pass, 0 fail); chat.tsx button wiring is not unit-testable (on-device check listed as a human step)"
+          ]
         },
         {
           "id": "M18-AC3",
           "text": "App tests: a run's phase steps and elapsed clock (\"m:ss of 8:00\") show live; the finished reply shows its status (`complete`/`partial`/`failed`), its `[n]` marks as logos (FR31) and \"Sources (n)\" of the pages read, and reopens the same from storage.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "chatItems.test.ts stepLabel Planning/Writing report, live clockLabel, persisted research, logos via parseInline/presentCitation and \"Sources (2)\"; deepResearch.test.ts researchClockLabel \"3:12 of 8:00\" and researchStatusLabel; streamReducer.test.ts clock and research; client.test.ts parses plan/write, elapsed/budget, done.research; conversationSession.test.ts scripted run persists content, steps, sources with n and research status and a fresh store returns the same; conversationStore.test.ts research round-trip and validation - .harness/evidence/M18-T3-verifier.log (488 pass, 0 fail)"
+          ]
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M18-T1",
+          "packet": ".harness/tasks/M18-T1.md",
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "one server setting threaded to GET /v1/state and two POST /v1/chat refusals with HTTP tests"
+          },
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M18-T1-verifier.log",
+              "commit": "bf90904"
+            }
+          ]
+        },
+        {
+          "id": "M18-T2",
+          "packet": ".harness/tasks/M18-T2.md",
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "pure view-model, per-send flag through the send path, composer wiring"
+          },
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "FAIL (lint only)",
+              "verifier": "FAIL (exit 1, lint only)",
+              "evidence": ".harness/evidence/M18-T2-verifier.log",
+              "commit": "709b16a",
+              "judgement": "Accepted by orchestrator: bun test 466/0 and typecheck pass; the only failure is 5 pre-existing eslint quotes errors in mobile/src/chat/webQuietSession.test.ts, unchanged since baseline 983623f; eslint on all nine changed files exits 0 (verifier). The packet Tests command was miscalibrated (repo-wide lint already red at baseline)."
+            }
+          ]
+        },
+        {
+          "id": "M18-T3",
+          "packet": ".harness/tasks/M18-T3.md",
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "extends stream reducer, step labels, persisted message shape and rendering for fields the server already emits"
+          },
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "BLOCKED (packet scope)",
+              "detail": "mobile/src/api/client.ts parseSSEEvent dropped plan/write steps, elapsed_ms/budget_ms and done.research; file not in packet scope. Orchestrator confirmed (client.ts:45) and amended the packet to allow client.ts/client.test.ts; continued without spending a rung (handoff .harness/tasks/M18-T3-handoff-1.md)."
+            },
+            {
+              "attempt": 3,
+              "continuation": 1,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M18-T3-verifier.log",
+              "commit": "88372e1"
+            }
+          ]
+        }
+      ],
       "reviews": [],
       "findings": [],
-      "validation": [],
-      "follow_ups": [],
+      "validation": [
+        {
+          "command": "cd server && bun test && bun run typecheck",
+          "result": "PASS (verifier after T1: 258 pass, 0 fail; tsc clean)",
+          "artifact": ".harness/evidence/M18-T1-verifier.log"
+        },
+        {
+          "command": "cd mobile && bun test && bun run typecheck && npx eslint --max-warnings 0 <M18-changed mobile/src files>",
+          "result": "PASS (verifier after T3: 488 pass, 0 fail; tsc clean; eslint clean on changed files)",
+          "artifact": ".harness/evidence/M18-T3-verifier.log"
+        },
+        {
+          "command": "cd mobile && bun run lint",
+          "result": "FAIL pre-existing at baseline: 5 quotes errors in mobile/src/chat/webQuietSession.test.ts (unchanged by M18); see follow-ups",
+          "artifact": ".harness/evidence/M18-T2-verifier.log"
+        }
+      ],
+      "follow_ups": [
+        "Repo-wide mobile lint (bun run lint) is red at baseline: 5 eslint quotes errors in mobile/src/chat/webQuietSession.test.ts lines 255, 258, 261, 264, 333 (not M18 work).",
+        "When a deep research send is blocked on the phone, chat.tsx still shows the generic \"Load a model\" button under the deep-research explanation; it routes to Models and works, but the label is generic.",
+        "Human step (needs the owner): restart com.harness.server so PHONE_MODELS_RESEARCH_MODEL/deep_research_model are live, then on the phone check the Deep research button is hidden/disabled/enabled and a run shows phases, clock, status, logos and Sources live and on reopen (screenshot). Not performed by the harness."
+      ],
       "complexity_signals": [
         "SUBSYSTEMS_GT_3"
       ],

@@ -558,3 +558,19 @@ Why: FR36 needs the run's status and elapsed time visible to the phone (M18) wit
 type or a change to `done.status` values that ordinary replies and the phone already parse.
 Additive optional fields; no component boundary, technology or responsibility changes. C13 is not
 changed by M17.
+
+### D-M18-1 — Deep-research model setting reported on `GET /v1/state` by the HTTP layer
+
+Milestone: M18 (implementation 2026-10-02)
+Material: no
+Change: I5's state response gains `deep_research_model` (FR34), the value of the Mac-side server
+setting `PHONE_MODELS_RESEARCH_MODEL` (default `qwen3.5:35b-a3b`, the one hardcoded copy, in
+`server/src/http/server.ts`), read by the server entry point and passed to `createServer`. C4's
+`GET /v1/state` handler adds it to C5's `state()` result rather than C5 reporting it, and C4's
+`POST /v1/chat` validation refuses `deep_research` with web off (400 `deep_research_needs_web`) or a
+model other than the configured one (409 `deep_research_model_not_loaded`). C2 gained parsing of
+the existing deep-research event fields (plan/write steps, `elapsed_ms`/`budget_ms`,
+`done.research`) and C3's stored message gained an optional `research` field.
+Why: the setting is server configuration, not model state, and C5's `state()` keeps its existing
+contract and tests; the refusals are request validation, which is C4's responsibility. Additive
+fields only; no component boundary, technology or responsibility ownership changes.

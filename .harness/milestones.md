@@ -412,7 +412,7 @@ Cycle 2: PASS — tier Mid (sonnet; correction tasks C1 Mid, C2 Cheap); scope wi
 
 ## M18 — The phone offers Deep research only when the configured model is loaded, and shows the run live
 
-Status: TODO
+Status: REVIEW
 
 ### Outcome
 
@@ -426,7 +426,7 @@ C1, C2, C3, C4, C5
 
 ### As-Built
 
-Pending.
+`.harness/as-built/M18.md` — RECORDED: 26/26 files attributed; components C1, C2, C3, C4, C5; 8 edges; no claim mismatches.
 
 ### Acceptance Criteria
 
@@ -436,9 +436,28 @@ Pending.
 
 ### Baseline
 
+983623f4619963eb458f13b2fba99b3775bfd00a on m18-deep-research-phone
+
 ### Evidence
 
+Size check: 3 criteria; real entry point POST /v1/chat and GET /v1/state (M18-AC1); one signal SUBSYSTEMS_GT_3 already seam-checked at planning - run unsplit.
+
+Tasks (tier routing; attempt numbers per the ladder):
+- M18-T1 — server setting `PHONE_MODELS_RESEARCH_MODEL` (default `qwen3.5:35b-a3b`), `deep_research_model` on GET /v1/state, two POST /v1/chat refusals, no `deep_research` tool. Mid (sonnet), ORDINARY_IMPLEMENTATION, attempt 3, PASS; verifier PASS (`.harness/evidence/M18-T1-verifier.log`); commit bf90904.
+- M18-T2 — "Deep research" action beside Send (view-model, per-send flag, composer). Mid (sonnet), ORDINARY_IMPLEMENTATION, attempt 3: tests 466/0 and typecheck pass; packet command exit 1 only from 5 pre-existing eslint `quotes` errors in mobile/src/chat/webQuietSession.test.ts (unchanged since baseline), eslint clean on all changed files per verifier (`.harness/evidence/M18-T2-verifier.log`). Accepted by orchestrator judgement; commit 709b16a.
+- M18-T3 — live phases and clock, finished status, logos, Sources (n), reopen from storage. Mid (sonnet), ORDINARY_IMPLEMENTATION, attempt 3 BLOCKED on packet scope (mobile/src/api/client.ts dropped plan/write steps, elapsed/budget and done.research); packet amended, continuation 1 at the same tier PASS; verifier PASS (`.harness/evidence/M18-T3-verifier.log`); commit 88372e1.
+
+Per criterion (status left PENDING for review):
+- M18-AC1: server/src/http/deepResearchGate.test.ts (state reports the configured and default name; web-off refusal 400 `deep_research_needs_web`; other-model refusal 409 `deep_research_model_not_loaded`; neither starts a run nor calls Ollama chat; no `deep_research` tool in the web tools or the fake Ollama request); server/src/index.test.ts `parseResearchModel` (T1 log).
+- M18-AC2: mobile/src/ui/deepResearch.test.ts (hidden/disabled/enabled, non-default model name); chatController.test.ts exact request bodies and blocked cases; conversationSession.test.ts next send ordinary, flag not persisted; errorMessages.test.ts refusal codes (T2 log). chat.tsx wiring is display only (human on-device check under Follow-ups).
+- M18-AC3: chatItems.test.ts (Planning / Writing report labels, live clock label, persisted research, logos via parseInline/presentCitation, "Sources (2)"); deepResearch.test.ts ("3:12 of 8:00", status label); streamReducer.test.ts; client.test.ts (plan/write, elapsed/budget, done.research); conversationSession.test.ts scripted run persisted and reopened from a fresh store; conversationStore.test.ts research round-trip (T3 log).
+
 ### Validation
+
+- `cd server && bun test && bun run typecheck` — PASS per verifier after T1 (258 pass, 0 fail; tsc clean). `.harness/evidence/M18-T1-verifier.log`
+- `cd mobile && bun test && bun run typecheck && npx eslint --max-warnings 0 <M18-changed mobile/src files>` — PASS per verifier after T3 (488 pass, 0 fail; tsc clean; eslint clean). `.harness/evidence/M18-T3-verifier.log`
+- `cd mobile && bun run lint` — FAIL, pre-existing at baseline (5 `quotes` errors in mobile/src/chat/webQuietSession.test.ts, untouched by M18); see Follow-ups.
+- Architecture deviation recorded: D-M18-1 (Material: no).
 
 ### Review
 
@@ -449,6 +468,10 @@ Pending.
 0
 
 ### Follow-ups
+
+- Repo-wide mobile lint is red at baseline: 5 eslint `quotes` errors in mobile/src/chat/webQuietSession.test.ts lines 255, 258, 261, 264, 333 (not M18 work).
+- A blocked deep research send still shows the generic "Load a model" button under the deep-research explanation (it routes to Models and works; label is generic).
+- Human step (owner only): restart com.harness.server so the new setting and refusals are live, then on the phone check the Deep research button is hidden / disabled with "Load qwen3.5:35b-a3b to use deep research" / enabled, and that a run shows phases, clock, status, logos and Sources live and on reopen (screenshot). Not performed by the harness.
 
 
 ## M19 — Stop, resume and saving work for a deep research run
