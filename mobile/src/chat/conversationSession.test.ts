@@ -25,10 +25,12 @@ const BASE_URL = "https://ryans-mac-studio.tailc3648a.ts.net:8443";
 
 function stateResponse(
   resident: { name: string } | null,
-  models: Array<{ name: string; size_bytes: number; tools: boolean }> = []
+  models: Array<{ name: string; size_bytes: number; tools: boolean }> = [],
+  deepResearchModel?: string
 ): Response {
   return new Response(
     JSON.stringify({
+      ...(deepResearchModel === undefined ? {} : { deep_research_model: deepResearchModel }),
       models,
       resident: resident ? { name: resident.name, loaded_by_server: true } : null,
       operation: { kind: "idle" },
@@ -822,5 +824,51 @@ describe("sendInConversation: web history and persistence (M11)", () => {
       "generation_id", "last_seq", "steps", "sources",
     ]);
     for (const key of Object.keys(reply)) expect(allowed.has(key)).toBe(true);
+  });
+});
+
+describe("sendInConversation: deep research (M18)", () => {
+  function drClient(resident: string, bodies: Array<Record<string, unknown>>): APIClient {
+    const fetchMock = mock(async (url: string, init?: RequestInit) => {
+      if (url.endsWith("/v1/state")) {
+        return stateResponse({ name: resident }, [{ name: resident, size_bytes: 1, tools: true }], "dr:7b");
+      }
+      bodies.push(JSON.parse(init!.body as string));
+      return completedChatResponse("ok", resident);
+    });
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+    return client;
+  }
+
+  it("sends deep_research:true for that send only; the next plain send is an ordinary reply", async () => {
+    const store = createConversationStore(createMemoryStorage());
+    const c = await store.create();
+    await store.setWebSearch(c.id, true);
+    const bodies: Array<Record<string, unknown>> = [];
+    const client = drClient("dr:7b", bodies);
+    await sendInConversation(client, store, c.id, "research", newCallbacks().callbacks, {
+      deepResearch: true,
+    });
+    await sendInConversation(client, store, c.id, "follow up", newCallbacks().callbacks);
+    expect(bodies[0].deep_research).toBe(true);
+    expect(bodies[0].web).toBe(true);
+    expect("deep_research" in bodies[1]).toBe(false);
+    expect(bodies[1].web).toBe(true);
+    expect("deep_research" in ((await store.get(c.id)) as object)).toBe(false);
+  });
+
+  it("passes the deep research explanation, not the no-model text, when the model does not match", async () => {
+    const store = createConversationStore(createMemoryStorage());
+    const c = await store.create();
+    await store.setWebSearch(c.id, true);
+    const bodies: Array<Record<string, unknown>> = [];
+    const client = drClient("llama3", bodies);
+    const result = newCallbacks();
+    await sendInConversation(client, store, c.id, "research", result.callbacks, {
+      deepResearch: true,
+    });
+    expect(bodies).toHaveLength(0);
+    expect(result.blocked).toBe("Load dr:7b to use deep research");
   });
 });

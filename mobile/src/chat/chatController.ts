@@ -23,6 +23,11 @@ import { ModelNotResidentError, UnauthorizedError } from "@/api/client";
 import type { APIClient, StreamEvent } from "@/api/client";
 import type { ChatRequest } from "@shared/api";
 import { UNAUTHORIZED_MESSAGE } from "@/api/errorMessages";
+import {
+  DEEP_RESEARCH_NEEDS_WEB_MESSAGE,
+  DEEP_RESEARCH_UNKNOWN_MODEL_MESSAGE,
+  loadDeepResearchModelMessage,
+} from "@/ui/deepResearch";
 
 export const NO_MODEL_LOADED_MESSAGE = "No model loaded";
 /** Re-exported from errorMessages.ts (the single source of its text, M5b) so
@@ -53,6 +58,13 @@ export interface SendMessageCallbacks {
    * at send time; otherwise the body carries no `web` key.
    */
   web?: boolean;
+  /**
+   * Send this one message as a deep research run (M18, FR34). Honoured only
+   * when `web` is true, the resident model has tools and is the
+   * `deep_research_model` reported by `GET /v1/state`; otherwise sending is
+   * blocked (`onBlocked` with the reason) and no request is made.
+   */
+  deepResearch?: boolean;
   signal?: AbortSignal;
 }
 
@@ -71,8 +83,10 @@ export async function sendMessage(
 ): Promise<void> {
   let resident: ChatRequest["model"] | null;
   let residentHasTools = false;
+  let deepResearchModel: string | undefined;
   try {
     const state = await client.getState();
+    deepResearchModel = state.deep_research_model || undefined;
     resident = state.resident ? state.resident.name : null;
     residentHasTools =
       resident !== null &&
@@ -88,6 +102,21 @@ export async function sendMessage(
     return;
   }
 
+  if (callbacks.deepResearch === true) {
+    if (callbacks.web !== true) {
+      callbacks.onBlocked(DEEP_RESEARCH_NEEDS_WEB_MESSAGE);
+      return;
+    }
+    if (!deepResearchModel) {
+      callbacks.onBlocked(DEEP_RESEARCH_UNKNOWN_MODEL_MESSAGE);
+      return;
+    }
+    if (resident !== deepResearchModel || !residentHasTools) {
+      callbacks.onBlocked(loadDeepResearchModelMessage(deepResearchModel));
+      return;
+    }
+  }
+
   if (!resident) {
     callbacks.onBlocked(NO_MODEL_LOADED_MESSAGE);
     return;
@@ -97,9 +126,11 @@ export async function sendMessage(
 
   try {
     await client.chat(
-      callbacks.web === true && residentHasTools
-        ? { model: resident, messages, web: true }
-        : { model: resident, messages },
+      callbacks.deepResearch === true
+        ? { model: resident, messages, web: true, deep_research: true }
+        : callbacks.web === true && residentHasTools
+          ? { model: resident, messages, web: true }
+          : { model: resident, messages },
       {
         onStart: callbacks.onStart,
         onEvent: callbacks.onEvent,

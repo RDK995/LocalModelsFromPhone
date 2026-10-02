@@ -1,0 +1,141 @@
+VERIFICATION LOG: M18-T2
+========================
+
+Current commit: bf90904 (M18 T1: server reports the configured deep-research model)
+Verifier: Claude Haiku 4.5
+Date: 2026-10-02
+
+COMMAND 1: Full test suite with linting
+=====================================
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun test && bun run typecheck && bun run lint
+Exit Status: 1
+Output excerpt:
+  bun test v1.4.0 (1381054db)
+   466 pass
+   0 fail
+   12142 expect() calls
+  Ran 466 tests across 32 files. [226.00ms]
+  $ tsc --noEmit
+  $ eslint src --max-warnings 0
+  
+  /Users/ryankenny/Projects/CodingHarnessv2/mobile/src/chat/webQuietSession.test.ts
+    255:9   error  Strings must use doublequote  quotes
+    258:9   error  Strings must use doublequote  quotes
+    261:9   error  Strings must use doublequote  quotes
+    264:9   error  Strings must use doublequote  quotes
+    333:15  error  Strings must use doublequote  quotes
+
+  ✖ 5 problems (5 errors, 0 warnings)
+  5 errors and 0 warnings potentially fixable with the `--fix` option.
+
+  error: script "lint" exited with code 1
+
+COMMAND 2: Verify webQuietSession.test.ts is unchanged
+======================================================
+Command: git diff HEAD mobile/src/chat/webQuietSession.test.ts
+Exit Status: 0
+Output: (no output - file unchanged against HEAD)
+
+Command: git diff 983623f HEAD mobile/src/chat/webQuietSession.test.ts
+Exit Status: 0
+Output: (no output - file unchanged against baseline)
+
+Conclusion: webQuietSession.test.ts lint errors are pre-existing.
+
+COMMAND 3: Lint only the files this task changed
+================================================
+Command: npx eslint --max-warnings 0 src/api/errorMessages.test.ts src/api/errorMessages.ts src/app/chat.tsx src/chat/chatController.test.ts src/chat/chatController.ts src/chat/conversationSession.test.ts src/chat/conversationSession.ts src/ui/deepResearch.test.ts src/ui/deepResearch.ts
+Exit Status: 0
+Output: (no output - lint passed)
+
+COMMAND 4: Check for hardcoded model names in mobile/src
+========================================================
+Command: grep -r "qwen" src --exclude-dir=node_modules
+Output:
+  - References found only in test files (modelActions.test.ts, deepResearch.test.ts, errorMessages.test.ts, modelList.test.ts)
+  - No hardcoded "qwen" references in production code files
+
+COMMAND 5: Files changed verification
+=====================================
+Modified files:
+  - mobile/src/api/errorMessages.test.ts (allowed: YES)
+  - mobile/src/api/errorMessages.ts (allowed: YES)
+  - mobile/src/app/chat.tsx (allowed: YES)
+  - mobile/src/chat/chatController.test.ts (allowed: YES)
+  - mobile/src/chat/chatController.ts (allowed: YES)
+  - mobile/src/chat/conversationSession.test.ts (allowed: YES)
+  - mobile/src/chat/conversationSession.ts (allowed: YES)
+
+New files:
+  - mobile/src/ui/deepResearch.test.ts (allowed: YES)
+  - mobile/src/ui/deepResearch.ts (allowed: YES)
+
+All changes are within the allowed file list.
+
+ACCEPTANCE CRITERIA VERIFICATION
+=================================
+
+AC1: New pure module mobile/src/ui/deepResearch.ts
+  - Module exists at the correct path ✓
+  - Exports deepResearchAction function ✓
+  - Function signature matches spec (webOn: boolean, state: object | null) ✓
+  - webOn false → visible false (tested in deepResearch.test.ts line 7-15) ✓
+  - webOn true, resident === deep_research_model → visible, enabled, null explanation (line 17-24) ✓
+  - webOn true, other/no model → visible, disabled, "Load <model>" (line 26-47) ✓
+  - webOn true, no state → visible, disabled, plain explanation (line 62-70) ✓
+  - No hardcoded model names (verified by grep) ✓
+  - Tests cover all branches including non-default model name "some-other:7b" (line 49-60) ✓
+
+AC2: mobile/src/chat/chatController.ts deep research
+  - SendMessageCallbacks gains deepResearch?: boolean (chatController.ts line 67) ✓
+  - sendMessage sends { model, messages, web: true, deep_research: true } when conditions met (line 129-130) ✓
+  - Condition: callbacks.deepResearch === true (line 105) ✓
+  - Condition: callbacks.web === true (line 106) ✓
+  - Condition: resident model has tools (line 114) ✓
+  - Condition: resident === state.deep_research_model (line 114) ✓
+  - Blocks with explanation when conditions not met (line 107-117) ✓
+  - Tests verify exact request body (chatController.test.ts lines 415-492) ✓
+
+AC3: mobile/src/chat/conversationSession.ts
+  - sendInConversation accepts deepResearch through options (line 121) ✓
+  - Passes deepResearch to sendMessage (line 208) ✓
+  - Does NOT persist deepResearch on conversation (conversationSession.test.ts line 858) ✓
+  - Tests verify deep_research:true only in that send (line 854) ✓
+  - Next send is ordinary (no deep_research key, line 856) ✓
+
+AC4: Blocked path handling
+  - onBlocked message handling: converts NO_MODEL_LOADED_MESSAGE to BLOCKED_MESSAGE (line 196)
+  - But passes through deep research explanations unchanged (line 194-197) ✓
+  - Tests verify explanation passed correctly (conversationSession.test.ts line 872) ✓
+  - Existing tests still pass (466 tests) ✓
+
+AC5: Server refusal error codes mapped
+  - deep_research_needs_web mapped in errorMessages.ts (line 67-68) ✓
+  - deep_research_model_not_loaded mapped (line 69-73) ✓
+  - Uses server's message if provided (line 71-72) ✓
+  - Fallback message: "Load the deep research model to use deep research" (line 73) ✓
+  - Tests verify both code mappings (errorMessages.test.ts lines 142-162) ✓
+
+AC6: mobile/src/app/chat.tsx UI
+  - Imports deepResearchAction (line 67) ✓
+  - Keeps deep_research_model from state (line 88-90) ✓
+  - Calls deepResearchAction with webOn and state (line 192-195) ✓
+  - Renders "Deep research" button beside Send (line 492-503) ✓
+  - Button visibility/enabled controlled by deepResearch action (line 492, 497, 501) ✓
+  - handleSendMessage refactored to accept options parameter (line 197) ✓
+  - Passes deepResearch flag through (line 276) ✓
+  - Explanation shown as text line (line 519-521) ✓
+  - No logic duplicated (pure modules kept separate) ✓
+
+TEST SUMMARY
+============
+- bun test: 466 pass, 0 fail ✓
+- bun run typecheck: clean ✓
+- bun run lint: passed on files changed by task ✓
+- Existing tests not weakened (only additions to test suites) ✓
+- Deep research tests cover all conditions ✓
+
+CONCLUSION
+==========
+All acceptance criteria verified. No hardcoded model names. No tests weakened.
+The pre-existing lint errors in webQuietSession.test.ts are not this task's responsibility.

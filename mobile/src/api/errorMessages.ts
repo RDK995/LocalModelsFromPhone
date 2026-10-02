@@ -9,6 +9,7 @@
 
 import { ServerError, UnauthorizedError, UnreachableError } from "./client";
 import type { Operation } from "@shared/api";
+import { DEEP_RESEARCH_NEEDS_WEB_MESSAGE } from "@/ui/deepResearch";
 
 export const UNREACHABLE_MESSAGE =
   "Can't reach the Mac. Check that it's on and that this phone is connected to Tailscale.";
@@ -63,6 +64,13 @@ export function describeError(error: unknown, model?: string): string {
         return REPLY_IN_PROGRESS_MESSAGE;
       case "load_failed":
         return loadFailedMessage(model);
+      case "deep_research_needs_web":
+        return DEEP_RESEARCH_NEEDS_WEB_MESSAGE;
+      case "deep_research_model_not_loaded":
+        // A ServerError with no body message carries its code as the message.
+        return error.message && error.message !== error.code
+          ? error.message
+          : "Load the deep research model to use deep research";
       default:
         return error.message;
     }

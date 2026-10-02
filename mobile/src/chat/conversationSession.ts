@@ -32,7 +32,7 @@
  *   resolves.
  */
 
-import { sendMessage } from "./chatController";
+import { NO_MODEL_LOADED_MESSAGE, sendMessage } from "./chatController";
 import type { SendMessageCallbacks } from "./chatController";
 import type { APIClient, StreamEvent } from "@/api/client";
 import type { ChatRequest } from "@shared/api";
@@ -114,7 +114,12 @@ export async function sendInConversation(
   conversationId: string,
   prompt: string,
   callbacks: SendInConversationCallbacks,
-  options?: { userMessageId?: string; assistantMessageId?: string }
+  options?: {
+    userMessageId?: string;
+    assistantMessageId?: string;
+    /** Send this one message as a deep research run (M18); never stored on the conversation. */
+    deepResearch?: boolean;
+  }
 ): Promise<void> {
   const conversation = await store.get(conversationId);
   if (!conversation) {
@@ -184,7 +189,12 @@ export async function sendInConversation(
       accumulator = applyStreamEvent(accumulator, event);
       callbacks.onEvent(event);
     },
-    onBlocked: () => callbacks.onBlocked(BLOCKED_MESSAGE),
+    // A deep research block carries its own explanation; the plain no-model
+    // block keeps the Models-screen wording.
+    onBlocked: (message) =>
+      callbacks.onBlocked(
+        message === NO_MODEL_LOADED_MESSAGE ? BLOCKED_MESSAGE : message
+      ),
     onError: (error) => {
       persistReply("error");
       pendingPersist = pendingPersist.then(() => callbacks.onError(error));
@@ -195,6 +205,7 @@ export async function sendInConversation(
       pendingPersist = pendingPersist.then(() => callbacks.onComplete());
     },
     web: webSearch,
+    ...(options?.deepResearch === true ? { deepResearch: true } : {}),
     signal: callbacks.signal,
   };
 

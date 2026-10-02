@@ -64,6 +64,8 @@ import {
 import type { PendingTurn } from "@/ui/chatItems";
 import { webSwitchDisplayValue, webSwitchState } from "@/ui/webSwitch";
 import type { WebSwitchState } from "@/ui/webSwitch";
+import { deepResearchAction } from "@/ui/deepResearch";
+import type { DeepResearchStateInput } from "@/ui/deepResearch";
 import { createConversationStore } from "@/store/conversationStore";
 import type { Conversation } from "@/store/conversationStore";
 import { asyncStoragePort } from "@/store/asyncStorage";
@@ -83,6 +85,9 @@ export default function ChatScreen() {
   const [blockedMessage, setBlockedMessage] = useState<string | null>(null);
   // null until the first capability check settles (switch disabled, no text).
   const [webState, setWebState] = useState<WebSwitchState | null>(null);
+  // Latest GET /v1/state facts the "Deep research" action is gated on (M18).
+  const [deepResearchState, setDeepResearchState] =
+    useState<DeepResearchStateInput | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const router = useRouter();
   const clientRef = useRef(createAPIClient());
@@ -143,10 +148,15 @@ export default function ChatScreen() {
           const state = await clientRef.current.getState();
           if (!cancelled) {
             setWebState(webSwitchState(state.models, state.resident));
+            setDeepResearchState({
+              resident: state.resident,
+              deep_research_model: state.deep_research_model,
+            });
           }
         } catch {
           if (!cancelled) {
             setWebState(webSwitchState(null, null));
+            setDeepResearchState(null);
           }
         }
       };
@@ -179,7 +189,12 @@ export default function ChatScreen() {
     loadConversation();
   }, [loadConversation]);
 
-  const handleSendMessage = async () => {
+  const deepResearch = deepResearchAction(
+    webSwitchDisplayValue(conversation?.web_search, webState),
+    deepResearchState
+  );
+
+  const handleSendMessage = async (options?: { deepResearch: boolean }) => {
     if (!inputText.trim() || isLoading || !id) {
       return;
     }
@@ -255,7 +270,11 @@ export default function ChatScreen() {
             void startedGenerationId;
           },
         },
-        { userMessageId, assistantMessageId }
+        {
+          userMessageId,
+          assistantMessageId,
+          ...(options?.deepResearch ? { deepResearch: true } : {}),
+        }
       );
     } finally {
       // The store is the single source of truth for persisted messages:
@@ -469,18 +488,39 @@ export default function ChatScreen() {
                   <Text style={styles.buttonText}>Stop</Text>
                 </TouchableOpacity>
               ) : (
-                <TouchableOpacity
-                  style={[
-                    styles.button,
-                    !inputText.trim() && styles.buttonDisabled,
-                  ]}
-                  onPress={handleSendMessage}
-                  disabled={!inputText.trim()}
-                >
-                  <Text style={styles.buttonText}>Send</Text>
-                </TouchableOpacity>
+                <>
+                  {deepResearch.visible && (
+                    <TouchableOpacity
+                      style={[
+                        styles.button,
+                        styles.deepResearchButton,
+                        (!deepResearch.enabled || !inputText.trim()) &&
+                          styles.buttonDisabled,
+                      ]}
+                      onPress={() => handleSendMessage({ deepResearch: true })}
+                      disabled={!deepResearch.enabled || !inputText.trim()}
+                    >
+                      <Text style={styles.buttonText}>Deep research</Text>
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity
+                    style={[
+                      styles.button,
+                      !inputText.trim() && styles.buttonDisabled,
+                    ]}
+                    onPress={() => handleSendMessage()}
+                    disabled={!inputText.trim()}
+                  >
+                    <Text style={styles.buttonText}>Send</Text>
+                  </TouchableOpacity>
+                </>
               )}
             </View>
+            {!isLoading && deepResearch.visible && deepResearch.explanation && (
+              <Text style={styles.deepResearchExplanation}>
+                {deepResearch.explanation}
+              </Text>
+            )}
           </>
         )}
       </KeyboardAvoidingView>
@@ -675,6 +715,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     justifyContent: "center",
     alignItems: "center",
+  },
+  deepResearchButton: {
+    backgroundColor: "#5856D6",
+  },
+  deepResearchExplanation: {
+    fontSize: 12,
+    color: "#999",
+    paddingHorizontal: 20,
+    paddingBottom: 8,
   },
   stopButton: {
     backgroundColor: "#ff3b30",

@@ -24,10 +24,12 @@ const BASE_URL = "https://ryans-mac-studio.tailc3648a.ts.net:8443";
 
 function stateResponse(
   resident: { name: string } | null,
-  models: Array<{ name: string; size_bytes: number; tools: boolean }> = []
+  models: Array<{ name: string; size_bytes: number; tools: boolean }> = [],
+  deepResearchModel?: string
 ): Response {
   return new Response(
     JSON.stringify({
+      ...(deepResearchModel === undefined ? {} : { deep_research_model: deepResearchModel }),
       models,
       resident: resident ? { name: resident.name, loaded_by_server: true } : null,
       operation: { kind: "idle" },
@@ -407,5 +409,84 @@ describe("stopGeneration (F3: Stop cancels without aborting the fetch)", () => {
       type: "done",
       data: { status: "cancelled" },
     });
+  });
+});
+
+describe("sendMessage: deep research (M18)", () => {
+  const DR = "some-other:7b";
+
+  async function run(opts: {
+    deepResearch?: boolean;
+    web?: boolean;
+    resident?: string | null;
+    tools?: boolean;
+    deepModel?: string;
+  }) {
+    const chatBodies: Array<Record<string, unknown>> = [];
+    const resident = opts.resident === undefined ? DR : opts.resident;
+    const fetchMock = mock(async (url: string, init?: RequestInit) => {
+      if (url.endsWith("/v1/state")) {
+        return stateResponse(
+          resident ? { name: resident } : null,
+          resident ? [{ name: resident, size_bytes: 1, tools: opts.tools ?? true }] : [],
+          opts.deepModel ?? DR
+        );
+      }
+      chatBodies.push(JSON.parse(init?.body as string));
+      const stream = controlledSseResponse("gen-1");
+      stream.push(
+        "event: done\ndata: {\"status\":\"complete\",\"model\":\"x\",\"eval_count\":1,\"tokens_per_second\":1}\n\n"
+      );
+      stream.close();
+      return stream.response;
+    });
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+    const result = newCallbacks();
+    await sendMessage(client, [{ role: "user", content: "hi" }], {
+      ...result.callbacks,
+      ...(opts.web === undefined ? {} : { web: opts.web }),
+      ...(opts.deepResearch === undefined ? {} : { deepResearch: opts.deepResearch }),
+    });
+    return { chatBodies, result };
+  }
+
+  it("sends web:true and deep_research:true when the resident is the deep research model", async () => {
+    const { chatBodies, result } = await run({ deepResearch: true, web: true });
+    expect(chatBodies).toEqual([
+      { model: DR, messages: [{ role: "user", content: "hi" }], web: true, deep_research: true },
+    ]);
+    expect(result.blocked).toBeNull();
+  });
+
+  it("blocks with the load explanation, and makes no chat request, for another model", async () => {
+    const { chatBodies, result } = await run({ deepResearch: true, web: true, resident: "llama3" });
+    expect(chatBodies).toHaveLength(0);
+    expect(result.blocked).toBe(`Load ${DR} to use deep research`);
+  });
+
+  it("blocks with the load explanation when no model is resident", async () => {
+    const { chatBodies, result } = await run({ deepResearch: true, web: true, resident: null });
+    expect(chatBodies).toHaveLength(0);
+    expect(result.blocked).toBe(`Load ${DR} to use deep research`);
+  });
+
+  it("blocks when web is not on, or the resident has no tools", async () => {
+    const noWeb = await run({ deepResearch: true, web: false });
+    expect(noWeb.chatBodies).toHaveLength(0);
+    expect(noWeb.result.blocked).toBe("Deep research needs web search to be on.");
+    const noWebKey = await run({ deepResearch: true });
+    expect(noWebKey.chatBodies).toHaveLength(0);
+    const noTools = await run({ deepResearch: true, web: true, tools: false });
+    expect(noTools.chatBodies).toHaveLength(0);
+    expect(noTools.result.blocked).toBe(`Load ${DR} to use deep research`);
+  });
+
+  it("is unchanged when deepResearch is false or absent", async () => {
+    expect((await run({ web: true })).chatBodies).toEqual([
+      { model: DR, messages: [{ role: "user", content: "hi" }], web: true },
+    ]);
+    const off = await run({ deepResearch: false, web: true });
+    expect("deep_research" in off.chatBodies[0]).toBe(false);
   });
 });

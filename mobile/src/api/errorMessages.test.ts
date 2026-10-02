@@ -138,3 +138,25 @@ describe("describeOperationFailure", () => {
     );
   });
 });
+
+describe("describeError: deep research refusals (M18)", () => {
+  it("uses the server's own message for deep_research_model_not_loaded", () => {
+    expect(
+      describeError(
+        new ServerError("deep_research_model_not_loaded", "Load qwen3.5:35b-a3b to use deep research")
+      )
+    ).toBe("Load qwen3.5:35b-a3b to use deep research");
+  });
+
+  it("falls back to a plain sentence when the model refusal carries no message", () => {
+    expect(describeError(new ServerError("deep_research_model_not_loaded"))).toBe(
+      "Load the deep research model to use deep research"
+    );
+  });
+
+  it("maps deep_research_needs_web to a plain sentence", () => {
+    expect(describeError(new ServerError("deep_research_needs_web", "whatever"))).toBe(
+      "Deep research needs web search to be on."
+    );
+  });
+});
