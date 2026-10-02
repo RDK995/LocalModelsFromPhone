@@ -5,6 +5,9 @@ import { GenerationManager, type GenerationWebTools } from "../generations/manag
 import { COULD_NOT_SEARCH_NOTE, NO_REPORT_NOTE, type ResearchSettings, type ResearchWebTools } from "../generations/research";
 import type { WebEvent } from "../web/tools";
 
+/** FR43 skip rules off: tiny fixture pages; these tests are not about passage selection. */
+const NO_SKIP = { noteMinWords: 0, noteMinRelevance: -1 };
+
 const TOKEN = "test-token";
 const headers = () => ({ "Content-Type": "application/json", Authorization: `Bearer ${TOKEN}` });
 
@@ -127,7 +130,7 @@ function setup(opts: SetupOptions = {}) {
     ...research,
   };
   setValidToken(TOKEN);
-  const server = createServer({ ollama: client, manager: new GenerationManager(client, web, opts.research), port: 0, researchModel: "fake-model" });
+  const server = createServer({ ollama: client, manager: new GenerationManager(client, web, { ...NO_SKIP, ...opts.research }), port: 0, researchModel: "fake-model" });
   const base = `http://127.0.0.1:${server.port}`;
   const post = (body: unknown) => fetch(`${base}/v1/chat`, { method: "POST", headers: headers(), body: JSON.stringify(body) });
   return { requests, reads, server, base, post };

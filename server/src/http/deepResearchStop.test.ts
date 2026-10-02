@@ -7,6 +7,9 @@ import type { WebEvent } from "../web/tools";
 
 // FR38: the two-stage Stop of a deep research run, over HTTP.
 
+/** FR43 skip rules off: tiny fixture pages; these tests are not about passage selection. */
+const NO_SKIP = { noteMinWords: 0, noteMinRelevance: -1 };
+
 const TOKEN = "test-token";
 const headers = () => ({ "Content-Type": "application/json", Authorization: `Bearer ${TOKEN}` });
 
@@ -130,7 +133,7 @@ function setup(opts: { hangWrite?: boolean; stopWriteMs?: number } = {}) {
     ...research,
   };
   setValidToken(TOKEN);
-  const manager = new GenerationManager(client, web, { stopWriteMs: opts.stopWriteMs ?? 5000 });
+  const manager = new GenerationManager(client, web, { ...NO_SKIP, stopWriteMs: opts.stopWriteMs ?? 5000 });
   const server = createServer({ ollama: client, manager, port: 0, researchModel: "fake-model" });
   const base = `http://127.0.0.1:${server.port}`;
   const start = async () => {

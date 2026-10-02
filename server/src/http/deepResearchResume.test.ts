@@ -8,6 +8,9 @@ import type { WebEvent } from "../web/tools";
 // M19-AC2: a deep research run survives a dropped connection, refuses a new
 // message, and a confirmed unload ends it without hanging.
 
+/** FR43 skip rules off: tiny fixture pages; these tests are not about passage selection. */
+const NO_SKIP = { noteMinWords: 0, noteMinRelevance: -1 };
+
 const TOKEN = "test-token";
 const headers = () => ({ "Content-Type": "application/json", Authorization: `Bearer ${TOKEN}` });
 
@@ -131,7 +134,7 @@ function setup() {
     ...research,
   };
   setValidToken(TOKEN);
-  const manager = new GenerationManager(client, web, { stopWriteMs: 5000 });
+  const manager = new GenerationManager(client, web, { ...NO_SKIP, stopWriteMs: 5000 });
   const server = createServer({ ollama: client, manager, port: 0, researchModel: "fake-model" });
   const base = `http://127.0.0.1:${server.port}`;
   const post = (path: string, body?: unknown) =>

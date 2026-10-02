@@ -123,11 +123,14 @@ async function collect(
   signal: AbortSignal = new AbortController().signal,
 ): Promise<ResearchEvent[]> {
   const events: ResearchEvent[] = [];
-  for await (const e of runResearch({ model: "test", question: "Tell me about cats", client, webTools, signal, settings })) {
+  for await (const e of runResearch({ model: "test", question: "Tell me about cats", client, webTools, signal, settings: { ...NO_SKIP, ...settings } })) {
     events.push(e);
   }
   return events;
 }
+
+/** FR43 skip rules off: these tests use tiny fixture pages and are not about passage selection. */
+const NO_SKIP = { noteMinWords: 0, noteMinRelevance: -1 } satisfies Partial<ResearchSettings>;
 
 const last = (events: ResearchEvent[]) => events[events.length - 1]!;
 const stepData = (events: ResearchEvent[]) =>
@@ -962,7 +965,7 @@ describe("runResearch two-stage Stop (FR38)", () => {
       webTools,
       signal: hard.signal,
       stopSignal: stop.signal,
-      settings,
+      settings: { ...NO_SKIP, ...settings },
     })) {
       events.push(e);
     }
@@ -1062,7 +1065,7 @@ describe("runResearch two-stage Stop (FR38)", () => {
       webTools: fakeWeb().tools,
       signal: hard.signal,
       stopSignal: stop.signal,
-      settings: { ...STOP_BASE, stopWriteMs: 200 },
+      settings: { ...NO_SKIP, ...STOP_BASE, stopWriteMs: 200 },
     });
     const events: ResearchEvent[] = [];
     let stopAt = 0;
@@ -1090,7 +1093,7 @@ describe("runResearch two-stage Stop (FR38)", () => {
       webTools: w.tools,
       signal: hard.signal,
       stopSignal: stop.signal,
-      settings: STOP_BASE,
+      settings: { ...NO_SKIP, ...STOP_BASE },
     })) {
       events.push(e);
       if (e.type === "step" && JSON.parse(e.data).kind === "write") setTimeout(() => hard.abort(), 20);

@@ -367,12 +367,12 @@ export function buildNoteExcerpt(
 
   // 4. Build excerpt
   // Get first paragraph (first block that's not a heading)
-  const normalized = page.text.replace(/\s+/g, " ").trim();
-  const paragraphs = normalized.split(/\n+/);
+  // Split before collapsing whitespace: collapsing first would make the whole page one paragraph.
+  const paragraphs = page.text.split(/\n\s*\n|\n(?=#{1,6} )/);
   let firstParagraph = "";
 
   for (const para of paragraphs) {
-    const trimmed = para.trim();
+    const trimmed = para.replace(/\s+/g, " ").trim();
     if (trimmed && !trimmed.startsWith("#")) {
       firstParagraph = trimmed;
       break;
