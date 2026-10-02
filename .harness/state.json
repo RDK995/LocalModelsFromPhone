@@ -11358,7 +11358,50 @@
           "evidence": []
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M19b-T1",
+          "packet": ".harness/tasks/M19b-T1.md",
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "logger and num_ctx threaded through Ollama client, model manager, server wiring and research loop with HTTP tests"
+          },
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M19b-T1-verifier.log",
+              "commit": "5c77841"
+            }
+          ]
+        },
+        {
+          "id": "M19b-T2",
+          "packet": ".harness/tasks/M19b-T2.md",
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "per-step think/num_predict/sampling request fields and thinking detection in the research module with HTTP tests"
+          },
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M19b-T2-verifier.log",
+              "commit": "PENDING"
+            }
+          ]
+        }
+      ],
       "reviews": [],
       "findings": [],
       "validation": [],

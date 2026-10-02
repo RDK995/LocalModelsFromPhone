@@ -51,8 +51,12 @@ export interface ResearchSettings {
   numCtx: number;
   /** Retries of a model step whose reply is malformed, empty or invalid. */
   retries: number;
-  /** Ollama `think` value sent on every model step (the live probe decides the default). */
-  think: boolean;
+  /** FR42: `num_predict` cap on thinking-off steps (brief, queries, pages, gap). */
+  routineNumPredict: number;
+  /** FR42: `num_predict` cap on the note-taking step. */
+  notesNumPredict: number;
+  /** FR42: non-thinking sampling sent on thinking-off steps. */
+  routineSampling: { temperature: number; top_p: number; top_k: number };
   /** FR36: overall time budget of the run, in milliseconds. */
   budgetMs: number;
   /** FR36: share of the budget reserved for the write-up; research stops at budgetMs * (1 - this). */
@@ -69,8 +73,9 @@ export const DEFAULT_RESEARCH_SETTINGS: ResearchSettings = {
   notesCapChars: 8000,
   numCtx: 32768,
   retries: 2,
-  /** probe 2026-10-02: think-on 7/7 valid */
-  think: true,
+  routineNumPredict: 200,
+  notesNumPredict: 800,
+  routineSampling: { temperature: 0.7, top_p: 0.8, top_k: 20 },
   budgetMs: 480_000,
   writeReserveFraction: 0.25,
   stopWriteMs: 60_000,
@@ -107,6 +112,8 @@ export interface ModelCallLog {
   eval_count: number | null;
   eval_duration: number | null;
   thinking_chars: number;
+  /** True when a `think: false` request still got `message.thinking` text back. */
+  thinking_detected: boolean;
   outcome: "ok" | "invalid" | "error" | "aborted";
 }
 
@@ -365,6 +372,8 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
     schema: Schema,
     validate: (v: unknown) => T | null
   ): Promise<T | null> {
+    // FR42: plan and write think; every other step is thinking-off, capped and non-thinking-sampled.
+    const thinks = name === "plan" || name === "write";
     const request: OllamaChatRequest = {
       model,
       messages: [
@@ -372,8 +381,14 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
         { role: "user", content: userContent },
       ],
       format: schema,
-      options: { num_ctx: s.numCtx },
-      think: s.think,
+      options: thinks
+        ? { num_ctx: s.numCtx }
+        : {
+            num_ctx: s.numCtx,
+            num_predict: name === "notes" ? s.notesNumPredict : s.routineNumPredict,
+            ...s.routineSampling,
+          },
+      think: thinks,
       keep_alive: -1,
     };
     for (let attempt = 0; attempt <= s.retries; attempt++) {
@@ -432,6 +447,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
           eval_count: last?.eval_count ?? null,
           eval_duration: last?.eval_duration ?? null,
           thinking_chars: thinkingChars,
+          thinking_detected: request.think === false && thinkingChars > 0,
           outcome,
         });
       }

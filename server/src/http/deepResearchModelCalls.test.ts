@@ -236,6 +236,94 @@ describe("deep research model-call logging and load num_ctx (M19b FR41)", () => 
     }
   });
 
+  it("thinking-off steps send think:false, the num_predict cap and non-thinking sampling; plan and write think with only num_ctx", async () => {
+    const s = setup({ research: { numCtx: 7777 } });
+    try {
+      await (await s.post(deepBody)).text();
+      const seen = new Set<string>();
+      for (const r of s.requests) {
+        const step = stepOf(r);
+        seen.add(step);
+        expect(typeof r.format).toBe("object");
+        expect(r.options.num_ctx).toBe(7777);
+        expect(r.keep_alive).toBe(-1);
+        if (step === "plan" || step === "write") {
+          expect(r.think).toBe(true);
+          expect("num_predict" in r.options).toBe(false);
+          expect(Object.keys(r.options)).toEqual(["num_ctx"]);
+        } else {
+          expect(r.think).toBe(false);
+          expect(r.options.num_predict).toBe(step === "notes" ? 800 : 200);
+          expect(r.options.temperature).toBe(0.7);
+          expect(r.options.top_p).toBe(0.8);
+          expect(r.options.top_k).toBe(20);
+        }
+      }
+      expect([...seen].sort()).toEqual(["brief", "gap", "notes", "pages", "plan", "queries", "write"]);
+    } finally {
+      s.server.stop(true);
+    }
+  });
+
+  it("routineNumPredict and notesNumPredict are settings", async () => {
+    const s = setup({ research: { routineNumPredict: 123, notesNumPredict: 456 } });
+    try {
+      await (await s.post(deepBody)).text();
+      for (const r of s.requests) {
+        const step = stepOf(r);
+        if (step === "plan" || step === "write") expect("num_predict" in r.options).toBe(false);
+        else expect(r.options.num_predict).toBe(step === "notes" ? 456 : 123);
+      }
+    } finally {
+      s.server.stop(true);
+    }
+  });
+
+  it("a thinking-off reply that also carries thinking text is detected, logged and still used when its content is valid", async () => {
+    const s = setup({
+      chat: (request) => {
+        if (s.requests.length !== 1) return undefined;
+        const content = JSON.stringify(replyFor(request.format, ""));
+        return (async function* () {
+          yield chunk("", false, "let me think");
+          yield chunk(content, false);
+          yield chunk("", true);
+        })();
+      },
+    });
+    try {
+      await (await s.post(deepBody)).text();
+      expect(s.logs.length).toBe(s.requests.length);
+      expect(s.logs[0]).toMatchObject({ step: "brief", think: false, attempt: 1, outcome: "ok", thinking_detected: true });
+      expect(s.logs[0]!.thinking_chars).toBeGreaterThan(0);
+      expect(s.logs[1]!.step).toBe("plan");
+      for (const l of s.logs.slice(1)) expect(l.thinking_detected).toBe(false);
+    } finally {
+      s.server.stop(true);
+    }
+  });
+
+  it("a thinking-off reply with the JSON only in thinking is not used: invalid, thinking detected, step retried", async () => {
+    const s = setup({
+      chat: (request) => {
+        if (s.requests.length !== 1) return undefined;
+        const json = JSON.stringify(replyFor(request.format, ""));
+        return (async function* () {
+          yield chunk("", false, json);
+          yield chunk("", true);
+        })();
+      },
+    });
+    try {
+      await (await s.post(deepBody)).text();
+      expect(s.logs[0]).toMatchObject({ step: "brief", attempt: 1, outcome: "invalid", thinking_detected: true });
+      expect(s.logs[0]!.thinking_chars).toBeGreaterThan(0);
+      expect(s.logs[1]).toMatchObject({ step: "brief", attempt: 2, outcome: "ok", thinking_detected: false });
+    } finally {
+      s.server.stop(true);
+    }
+  });
+
   async function loadModel(s: ReturnType<typeof setup>, name: string) {
     const res = await fetch(`${s.base}/v1/models/load`, { method: "POST", headers: headers(), body: JSON.stringify({ name, confirm: true }) });
     expect(res.status).toBeLessThan(300);
