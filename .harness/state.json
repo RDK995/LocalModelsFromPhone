@@ -11324,7 +11324,7 @@
         "FR42"
       ],
       "traces": "AC31 (log line per call, warm-up num_ctx, think value per step, num_predict only on thinking-off steps, thinking text detected, routine cap, plan/write guard re-issue)",
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": "ba44206ef3b643d83f13119555c295b8baa6ed3a on m19b-model-call-logging-thinking-caps",
@@ -11337,25 +11337,33 @@
           "id": "M19b-AC1",
           "text": "Server tests through POST /v1/chat with a scripted fake Ollama: every deep research model call writes exactly one structured log line with step name, the `think` value sent, attempt number, wall time, Ollama's `load_duration`, `prompt_eval_count`, `prompt_eval_duration`, `eval_count`, `eval_duration`, and the character count of `message.thinking`; when the server loads or warms the deep-research model it sends the same `num_ctx` the research calls use; no global Ollama context setting is changed and ordinary replies' Ollama requests are unchanged.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "server/src/http/deepResearchModelCalls.test.ts (POST /v1/chat deep_research): one deep_research_model_call line per request (logs.length == requests.length) with step, think, attempt, wall_ms, load_duration, prompt_eval_count, prompt_eval_duration, eval_count, eval_duration, thinking_chars, outcome; invalid->retry logs attempt 1 'invalid', 2 'ok'; stream error logs 'error' with null stats; POST /v1/models/load of the research model sends {num_ctx: 12345} (non-default numCtx), another model sends no options; ordinary web and switch-off replies send no new request fields and write no research log line; client.test.ts load(name,{num_ctx}) vs load(name); models/manager.test.ts num_ctx only for research model - .harness/evidence/M19b-T1-verifier.log (280 pass)"
+          ]
         },
         {
           "id": "M19b-AC2",
           "text": "Server tests: brief, query proposal, page choice, note-taking and gap check are sent with top-level `think: false`, a `num_predict` output cap (server settings, defaults about 200 tokens and about 800 for notes) and non-thinking sampling (temperature 0.7, top_p 0.8, top_k 20 unless a schema step uses a lower temperature); plan and write are sent with thinking on, streamed, and never with `num_predict`; `format` and `num_ctx` are sent as before; a thinking-off step whose fake reply contains `message.thinking` text is detected and logged (not trusted from the setting) and used only if its content validates.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "server/src/http/deepResearchModelCalls.test.ts: brief/queries/pages/notes/gap requests think:false, num_predict 200 (800 notes), temperature 0.7, top_p 0.8, top_k 20, format and num_ctx; plan/write think:true, options {num_ctx} only (no num_predict); non-default routineNumPredict/notesNumPredict sent; thinking-off reply with thinking text + valid content used, thinking_detected true, thinking_chars>0; JSON only in thinking -> 'invalid', thinking_detected, retried; research.test.ts per-step think assertion replaces the removed global-think tests (requirement change, verifier: not weakened) - .harness/evidence/M19b-T2-verifier.log (283 pass)"
+          ]
         },
         {
           "id": "M19b-AC3",
           "text": "Server tests: a thinking-off model call that exceeds its hard wall-clock cap (server setting, default about 30 s) is cancelled and counts as a failed attempt under FR35's retry-then-skip rule, and the run carries on.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "server/src/http/deepResearchModelCalls.test.ts 'deep research call time limits': queries hangs once -> fake signal aborted at ~routineCapMs, attempt 1 'timeout', attempt 2 'ok', run complete with report; gap hangs every attempt -> retries+1 'timeout' attempts per sub-question, step skipped, run reaches done - .harness/evidence/M19b-T3-verifier.log (290 pass; new file 16 pass x3)"
+          ]
         },
         {
           "id": "M19b-AC4",
           "text": "Server tests: a plan or write call whose thinking exceeds its guard (server settings, defaults about 30 s for plan and about 60 s for write, the write guard fitting inside the FR36 write reserve) is cancelled and re-issued once with `think: false`, never truncating an answer; if the re-issue also fails, FR35's skip and FR36's write-up rules apply and the run still ends `complete`, `partial` or `failed`.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "server/src/http/deepResearchModelCalls.test.ts: defaults planGuardMs 30000, writeGuardMs 60000 < budgetMs*writeReserveFraction (120000); plan thinking past guard aborted, re-issued think:false without num_predict, log 'guard' then 'ok', its sub-questions researched; write guard -> think:false re-issue's report is the answer, complete; write guard + invalid re-issue -> exactly 2 write requests, run partial with gathered-notes text; answer content starting before the guard and ending after is never aborted (1 request, full report) - .harness/evidence/M19b-T3-verifier.log"
+          ]
         }
       ],
       "tasks": [
@@ -11397,15 +11405,47 @@
               "result": "PASS",
               "verifier": "PASS",
               "evidence": ".harness/evidence/M19b-T2-verifier.log",
-              "commit": "PENDING"
+              "commit": "580a93a"
+            }
+          ]
+        },
+        {
+          "id": "M19b-T3",
+          "packet": ".harness/tasks/M19b-T3.md",
+          "routing": {
+            "tier": "Top",
+            "model": "opus",
+            "reason_code": "DIFFICULT_CONCURRENCY",
+            "detail": "per-attempt cancellation timer composed with hard Stop, FR38 first-Stop and FR36 phase-deadline aborts without misclassifying one as another"
+          },
+          "attempts": [
+            {
+              "attempt": 4,
+              "tier": "Top",
+              "model": "opus",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M19b-T3-verifier.log",
+              "commit": "f98b017"
             }
           ]
         }
       ],
       "reviews": [],
       "findings": [],
-      "validation": [],
-      "follow_ups": [],
+      "validation": [
+        {
+          "command": "cd server && bun test && bun run typecheck",
+          "result": "PASS (verifier after T3: 290 pass, 0 fail; tsc clean; deepResearchModelCalls.test.ts 16 pass on 3 runs)",
+          "artifact": ".harness/evidence/M19b-T3-verifier.log"
+        }
+      ],
+      "follow_ups": [
+        "The plan/write think:false re-issue sends options {num_ctx} only (model default sampling, not the routine 0.7/0.8/20); FR42 does not specify its sampling. Revisit in M19g if live validity is poor.",
+        "Deep research tests now print deep_research_model_call JSON lines to stdout (default logger is console.log); harmless noise.",
+        "The new FR42 settings (routineNumPredict, notesNumPredict, routineSampling, routineCapMs, planGuardMs, writeGuardMs) are ResearchSettings fields with no environment variable override, like the other research settings except the budget.",
+        "Not live until com.harness.server is restarted (owner has given a standing OK for FR41-FR45); the live proof is M19g."
+      ],
       "complexity_signals": [
         "CONCURRENCY_LIFECYCLE"
       ],
