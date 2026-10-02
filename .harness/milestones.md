@@ -412,7 +412,7 @@ Cycle 2: PASS — tier Mid (sonnet; correction tasks C1 Mid, C2 Cheap); scope wi
 
 ## M18 — The phone offers Deep research only when the configured model is loaded, and shows the run live
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -430,9 +430,9 @@ C1, C2, C3, C4, C5
 
 ### Acceptance Criteria
 
-- [ ] **M18-AC1**: Server tests: the server's state reports the configured deep-research model name (Mac-side setting, default `qwen3.5:35b-a3b`); a deep research request with web off, or when the resident model is not the configured one, is refused with a plain error and no run; the chat model is never offered a `deep_research` tool.
-- [ ] **M18-AC2**: App tests: the "Deep research" action beside Send is hidden with the web switch off, shown disabled with "Load <model name> to use deep research" when another model is resident, and enabled when the configured model (name from the server, none hardcoded) is resident; using it sends that one message as a run and the next message is an ordinary reply.
-- [ ] **M18-AC3**: App tests: a run's phase steps and elapsed clock ("m:ss of 8:00") show live; the finished reply shows its status (`complete`/`partial`/`failed`), its `[n]` marks as logos (FR31) and "Sources (n)" of the pages read, and reopens the same from storage.
+- [x] **M18-AC1**: Server tests: the server's state reports the configured deep-research model name (Mac-side setting, default `qwen3.5:35b-a3b`); a deep research request with web off, or when the resident model is not the configured one, is refused with a plain error and no run; the chat model is never offered a `deep_research` tool.
+- [x] **M18-AC2**: App tests: the "Deep research" action beside Send is hidden with the web switch off, shown disabled with "Load <model name> to use deep research" when another model is resident, and enabled when the configured model (name from the server, none hardcoded) is resident; using it sends that one message as a run and the next message is an ordinary reply.
+- [x] **M18-AC3**: App tests: a run's phase steps and elapsed clock ("m:ss of 8:00") show live; the finished reply shows its status (`complete`/`partial`/`failed`), its `[n]` marks as logos (FR31) and "Sources (n)" of the pages read, and reopens the same from storage.
 
 ### Baseline
 
@@ -461,7 +461,7 @@ Per criterion (status left PENDING for review):
 
 ### Review
 
-Pending.
+Cycle 1: PASS — tier Mid (sonnet; tasks T1–T3 all Mid), whole milestone 983623f..2bb57e9; per-criterion M18-AC1/AC2/AC3 PASS; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL; reviewer re-ran server bun test (258 pass, 0 fail) + typecheck, mobile bun test (488 pass, 0 fail) + typecheck + eslint on changed files (clean); confirmed repo-wide mobile lint failure is pre-existing (webQuietSession.test.ts, from M14 dbc4e53). Review log `.harness/evidence/M18-review.log`. No report file (PASS).
 
 ### Review Cycles
 
