@@ -453,6 +453,7 @@ Pending.
 
 - `bun run typecheck` in server/ covers only `src/**`; `server/scripts/` (incl. the new probe) is not typechecked by the project command.
 - `check-state.py` reports pre-existing missing artifacts: `.harness/evidence/M13-T4-verifier.log`, `.harness/as-built/M13.md`, `M14.md`, `M15.md`, `.harness/reviews/M15-cycle1.md` (not caused by M16).
+- Architecture body does not describe deep research: D-M15-1 (under ## Deviations) states 'Requirement Coverage additions FR34 -> C1..C5; FR35-FR38 -> C6; FR39 -> C13, C14; FR40 -> C6, C12, C13', but the Requirement Coverage table lists no FR34-FR40, the ## Diagram does not show the research loop, and the C6/C7/C13 component descriptions do not mention deep research, format/think/num_ctx, circuit breakers or the 24 h cache. Fold D-M15-1 into ## Diagram, ## Components and ## Requirement Coverage via the architect skill (human request 2026-10-02).
 
 ## M17 — A deep research run always ends within about 8 minutes with its status shown
 

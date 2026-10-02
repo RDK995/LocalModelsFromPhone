@@ -10695,7 +10695,8 @@
         "server typecheck excludes server/scripts/",
         "pre-existing missing artifacts reported by check-state (M13/M14/M15 as-built, M15 cycle1 review, M13-T4 verifier log)",
         "Live deep research run took ~1433 s (~24 min), with ~14 min of stream silence between step seq 19 and the final events; far beyond the ~8 minute bound M17 introduces. Not diagnosed here; relevant to M17.",
-        "M16-T5 packet's 900 s client timeout was too short; the run was completed by re-attaching to the generation's event stream."
+        "M16-T5 packet's 900 s client timeout was too short; the run was completed by re-attaching to the generation's event stream.",
+        "Architecture body does not describe deep research: D-M15-1 (under ## Deviations) states 'Requirement Coverage additions FR34 -> C1..C5; FR35-FR38 -> C6; FR39 -> C13, C14; FR40 -> C6, C12, C13', but the Requirement Coverage table lists no FR34-FR40, the ## Diagram does not show the research loop, and the C6/C7/C13 component descriptions do not mention deep research, format/think/num_ctx, circuit breakers or the 24 h cache. Fold D-M15-1 into ## Diagram, ## Components and ## Requirement Coverage via the architect skill (human request 2026-10-02)."
       ],
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
