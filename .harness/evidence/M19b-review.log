@@ -1,0 +1,25 @@
+{"event":"deep_research_model_call","step":"queries","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":true,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"pages","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":true,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":true,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":true,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"gap","think":false,"attempt":1,"wall_ms":1,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":true,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"queries","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":true,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"write","think":true,"attempt":1,"wall_ms":22,"load_duration":null,"prompt_eval_count":null,"prompt_eval_duration":null,"eval_count":null,"eval_duration":null,"thinking_chars":0,"thinking_detected":false,"outcome":"aborted"}
+{"event":"deep_research_model_call","step":"brief","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":true,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"plan","think":true,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"queries","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":true,"outcome":"ok"}
+
+ 290 pass
+ 0 fail
+ 2048 expect() calls
+Ran 290 tests across 17 files. [12.73s]
+$ tsc --noEmit
+ 0 fail
+ 402 expect() calls
+Ran 16 tests across 1 file. [1031.00ms]
+ 0 fail
+ 402 expect() calls
+Ran 16 tests across 1 file. [1060.00ms]
+ 0 fail
+ 402 expect() calls
+Ran 16 tests across 1 file. [1046.00ms]

@@ -591,3 +591,19 @@ controllers so an unload never waits for a write-up. Ordinary and web replies ke
 Why: C6 already owns a reply's cancellation and the run-owned signals (D-M17-1); the cancel route
 and SSE events already carry everything the phone needs, so no component boundary, technology or
 responsibility ownership changes.
+
+### D-M19b-1 — Research model loaded at the research `num_ctx`; FR41/FR42 realised across C5, C6 and C7
+
+Milestone: M19b (implementation 2026-10-02; recorded at review cycle 1, finding M19b-R1-F1)
+Material: no
+Change: I9/I10's `load(name)` = `POST /api/generate {model, keep_alive:-1}` gains an optional
+`options: {num_ctx}`. C7's `load(name, options?)` forwards it; C5 (`ModelManager`) is constructed
+with the deep-research model name and C6's `researchNumCtx()`, and sends `{num_ctx}` only when
+loading that model, so the first research call does not rebuild the runner (FR41). Loading any
+other model sends no options, and no global Ollama context setting changes. FR41's per-call log
+line and FR42's per-step `think`, `num_predict`, sampling, routine wall-clock cap and plan/write
+thinking guard with a one-time `think:false` re-issue live in C6's research loop
+(`runResearch`), on top of C7's existing `chat` request.
+Why: C5 already owns loading and C6 already owns the research loop's requests (D-M15-1); passing
+one request field through the existing load path changes no component boundary, technology or
+responsibility ownership.
