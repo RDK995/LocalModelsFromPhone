@@ -173,8 +173,65 @@ export const COULD_NOT_SEARCH_NOTE =
 export const COULD_NOT_READ_NOTE =
   "The research found search results but could not get anything usable from the pages — none could be read or none had relevant content. Try again later.";
 
-/** Thrown inside the run when the current phase's deadline has passed; never leaves the run. */
-class PhaseTimeUp extends Error {}
+/**
+ * FR44/FR36: the answer of a run whose research time ran out before any note was kept
+ * (searches did return results, and the run was not stopped by the user).
+ */
+export const RAN_OUT_OF_TIME_NOTE = "The research ran out of time before it could take notes.";
+
+/**
+ * Thrown inside the run when the current phase's deadline has passed; never leaves the run.
+ * `partial` is the reply streamed so far by a "notes" call that the phase end cut off.
+ */
+class PhaseTimeUp extends Error {
+  constructor(readonly partial?: string) {
+    super();
+  }
+}
+
+/**
+ * Every complete object element of the top-level "notes" array in a possibly truncated JSON reply,
+ * in order; a trailing incomplete element is ignored, as is any element without a non-empty string
+ * quote and claim. Invalid or empty input gives [].
+ */
+export function completeNotesFromPartial(partial: string): Array<{ quote: string; claim: string }> {
+  const out: Array<{ quote: string; claim: string }> = [];
+  const keyAt = partial.search(/"notes"\s*:\s*\[/);
+  if (keyAt < 0) return out;
+  let i = partial.indexOf("[", keyAt);
+  i++;
+  let depth = 0; // object/array nesting inside the notes array
+  let inString = false;
+  let escaped = false;
+  let start = -1;
+  for (; i < partial.length; i++) {
+    const ch = partial[i]!;
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (ch === "\\") escaped = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') inString = true;
+    else if (ch === "{" || ch === "[") {
+      if (depth === 0 && ch === "{") start = i;
+      depth++;
+    } else if (ch === "}" || ch === "]") {
+      if (depth === 0) break; // the notes array itself closed
+      depth--;
+      if (depth === 0 && ch === "}" && start >= 0) {
+        try {
+          const item: unknown = JSON.parse(partial.slice(start, i + 1));
+          if (isObj(item) && nonEmpty(item.quote) && nonEmpty(item.claim)) out.push({ quote: item.quote, claim: item.claim });
+        } catch {
+          // an unparsable element is ignored
+        }
+        start = -1;
+      }
+    }
+  }
+  return out;
+}
 
 type Note = { n: number; quote: string; claim: string };
 type Schema = Record<string, unknown>;
@@ -510,7 +567,9 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
         }
         if (error instanceof PhaseTimeUp || phaseOver()) {
           outcome = "aborted";
-          throw new PhaseTimeUp(); // never retried
+          // Never retried. A cut-off notes call hands its streamed reply on so complete notes survive
+          // (also on a first Stop: FR38 writes from the notes so far; a hard cancel never gets here).
+          throw new PhaseTimeUp(name === "notes" ? content : undefined);
         }
         if (fired && limit) {
           outcome = limit.kind;
@@ -669,22 +728,32 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
               logPage({ n, url: page.url, reason: built.skip, detail: built.reason });
               continue;
             }
-            const found = await modelStep(
-              "notes",
-              `Record short notes from page [${n}] that help answer the current sub-question. ` +
-                "The excerpt above holds the page's title, first paragraph and most relevant passages. " +
-                "Each note has a quote copied exactly from the page text and a short claim it supports.",
-              `${untrusted(`page ${n}`, built.excerpt)}\n\n${context(label)}`,
-              SCHEMAS.note,
-              VALIDATORS.note
-            );
-            for (const item of found ?? []) {
-              if (!isObj(item) || !nonEmpty(item.quote) || !nonEmpty(item.claim)) continue;
+            // One path for a whole reply and for the complete notes of a cut-off one (FR37 quote check).
+            const keepNotes = (items: unknown[]) => {
               const pageTextNorm = normaliseWhitespace(page.text);
-              const quote = normaliseWhitespace(item.quote);
-              if (!pageTextNorm.includes(quote)) continue; // FR37: unverifiable quote dropped
-              notes.push({ n, quote: item.quote.replace(/\s+/g, " ").trim(), claim: item.claim.trim() });
+              for (const item of items) {
+                if (!isObj(item) || !nonEmpty(item.quote) || !nonEmpty(item.claim)) continue;
+                if (!pageTextNorm.includes(normaliseWhitespace(item.quote))) continue; // FR37: unverifiable quote dropped
+                notes.push({ n, quote: item.quote.replace(/\s+/g, " ").trim(), claim: item.claim.trim() });
+              }
+            };
+            let found: unknown[] | null;
+            try {
+              found = await modelStep(
+                "notes",
+                `Record short notes from page [${n}] that help answer the current sub-question. ` +
+                  "The excerpt above holds the page's title, first paragraph and most relevant passages. " +
+                  "Each note has a quote copied exactly from the page text and a short claim it supports.",
+                `${untrusted(`page ${n}`, built.excerpt)}\n\n${context(label)}`,
+                SCHEMAS.note,
+                VALIDATORS.note
+              );
+            } catch (error) {
+              // FR44: a deadline-cut note call keeps its complete notes, then the run moves on to writing.
+              if (error instanceof PhaseTimeUp && error.partial) keepNotes(completeNotesFromPartial(error.partial));
+              throw error;
             }
+            keepNotes(found ?? []);
           }
         };
 
@@ -766,7 +835,8 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
       yield step({ step_id: "write", kind: "write", status: written ? "done" : "failed" });
     }
 
-    let report = failed ? (searchesWithResults === 0 ? COULD_NOT_SEARCH_NOTE : COULD_NOT_READ_NOTE) : written ? cleanReport(written, readNumbers) : "";
+    const failureNote = searchesWithResults === 0 ? COULD_NOT_SEARCH_NOTE : researchCutShort ? RAN_OUT_OF_TIME_NOTE : COULD_NOT_READ_NOTE;
+    let report = failed ? failureNote : written ? cleanReport(written, readNumbers) : "";
     if (report === "") {
       wroteNothing = true;
       const gathered = notes.length

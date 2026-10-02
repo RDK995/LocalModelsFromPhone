@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { runResearch, type ResearchEvent, type ResearchSettings, type ResearchWebTools } from "./research";
+import { runResearch, completeNotesFromPartial, type ResearchEvent, type ResearchSettings, type ResearchWebTools } from "./research";
 import type { OllamaChatClient } from "./manager";
 import type { OllamaChatRequest, OllamaChatResponse, OllamaTool } from "../ollama/client";
 import type { WebEvent } from "../web/tools";
@@ -1118,5 +1118,43 @@ describe("runResearch two-stage Stop (FR38)", () => {
     expect(done.status).toBe("complete");
     expect(done.research.status).toBe("partial");
     expect(contentText(events).trim().length).toBeGreaterThan(0);
+  });
+});
+
+describe("completeNotesFromPartial (M19d FR44)", () => {
+  it("returns [] for empty, whitespace and non-JSON input", () => {
+    expect(completeNotesFromPartial("")).toEqual([]);
+    expect(completeNotesFromPartial("   ")).toEqual([]);
+    expect(completeNotesFromPartial("not json at all")).toEqual([]);
+  });
+
+  it("returns [] when the notes array has just opened", () => {
+    expect(completeNotesFromPartial('{"notes":[')).toEqual([]);
+  });
+
+  it("keeps a complete element and ignores a truncated one", () => {
+    const partial = '{"notes":[{"quote":"q1","claim":"c1"},{"quote":"q2","cla';
+    expect(completeNotesFromPartial(partial)).toEqual([{ quote: "q1", claim: "c1" }]);
+  });
+
+  it("handles an escaped quote and braces/brackets inside strings", () => {
+    const partial = '{"notes":[{"quote":"he said \\"hi\\" } ] {","claim":"c [x] }"},{"quote":"q2","claim":"c2"},{"quo';
+    expect(completeNotesFromPartial(partial)).toEqual([
+      { quote: 'he said "hi" } ] {', claim: "c [x] }" },
+      { quote: "q2", claim: "c2" },
+    ]);
+  });
+
+  it("returns every note of a complete reply in order", () => {
+    const full = JSON.stringify({ notes: [{ quote: "a", claim: "1" }, { quote: "b", claim: "2" }] });
+    expect(completeNotesFromPartial(full)).toEqual([
+      { quote: "a", claim: "1" },
+      { quote: "b", claim: "2" },
+    ]);
+  });
+
+  it("ignores an element missing its claim or quote", () => {
+    const partial = '{"notes":[{"quote":"only quote"},{"claim":"only claim"},{"quote":"q","claim":"c"},{"quote":"x"';
+    expect(completeNotesFromPartial(partial)).toEqual([{ quote: "q", claim: "c" }]);
   });
 });
