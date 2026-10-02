@@ -380,64 +380,7 @@ Through POST /v1/chat, every deep research model call writes one structured log 
 
 Owns: FR41, FR42. Traces to: AC31 (log line per call, warm-up num_ctx, think value per step, num_predict only on thinking-off steps, thinking text detected, routine cap, plan/write guard re-issue).
 
-### Architecture
-
-C5, C6, C7
-
-### As-Built
-
-.harness/as-built/M19b.md - RECORDED: components C4, C5, C6, C7, 4 edges, claim mismatches NONE
-
-### Acceptance Criteria
-
-- [x] **M19b-AC1**: Server tests through POST /v1/chat with a scripted fake Ollama: every deep research model call writes exactly one structured log line with step name, the `think` value sent, attempt number, wall time, Ollama's `load_duration`, `prompt_eval_count`, `prompt_eval_duration`, `eval_count`, `eval_duration`, and the character count of `message.thinking`; when the server loads or warms the deep-research model it sends the same `num_ctx` the research calls use; no global Ollama context setting is changed and ordinary replies' Ollama requests are unchanged.
-- [x] **M19b-AC2**: Server tests: brief, query proposal, page choice, note-taking and gap check are sent with top-level `think: false`, a `num_predict` output cap (server settings, defaults about 200 tokens and about 800 for notes) and non-thinking sampling (temperature 0.7, top_p 0.8, top_k 20 unless a schema step uses a lower temperature); plan and write are sent with thinking on, streamed, and never with `num_predict`; `format` and `num_ctx` are sent as before; a thinking-off step whose fake reply contains `message.thinking` text is detected and logged (not trusted from the setting) and used only if its content validates.
-- [x] **M19b-AC3**: Server tests: a thinking-off model call that exceeds its hard wall-clock cap (server setting, default about 30 s) is cancelled and counts as a failed attempt under FR35's retry-then-skip rule, and the run carries on.
-- [x] **M19b-AC4**: Server tests: a plan or write call whose thinking exceeds its guard (server settings, defaults about 30 s for plan and about 60 s for write, the write guard fitting inside the FR36 write reserve) is cancelled and re-issued once with `think: false`, never truncating an answer; if the re-issue also fails, FR35's skip and FR36's write-up rules apply and the run still ends `complete`, `partial` or `failed`.
-
-### Baseline
-
-ba44206ef3b643d83f13119555c295b8baa6ed3a on m19b-model-call-logging-thinking-caps (tree clean apart from the owner's untracked research report files, left untracked; server baseline `bun test` 273 pass, typecheck clean)
-
-### Evidence
-
-Tasks (branch m19b-model-call-logging-thinking-caps, from ba44206):
-- M19b-T1 — FR41 log line per model-call attempt + research num_ctx on load of the deep-research model. Mid (sonnet), ORDINARY_IMPLEMENTATION, attempt 3 PASS; verifier PASS (`.harness/evidence/M19b-T1-verifier.log`, 280 pass); commit 5c77841.
-- M19b-T2 — FR42 request shape per step (think:false + num_predict 200/800 + sampling 0.7/0.8/20 on routine steps; think:true, num_ctx only on plan/write; thinking text detected). Mid (sonnet), ORDINARY_IMPLEMENTATION, attempt 3 PASS; verifier PASS, research.test.ts global-think tests replaced by a per-step assertion as the packet authorised (not weakened) (`.harness/evidence/M19b-T2-verifier.log`, 283 pass); commit 580a93a.
-- M19b-T3 — FR42 time limits (routine cap 30 s -> timeout counts as failed attempt; plan/write thinking guard 30 s / 60 s -> one think:false re-issue, never truncating). Top (opus), DIFFICULT_CONCURRENCY, attempt 4 PASS; verifier PASS, no existing test edited (`.harness/evidence/M19b-T3-verifier.log`, 290 pass; new file 16 pass x3); commit f98b017.
-
-Per criterion (status left PENDING for review):
-- M19b-AC1: server/src/http/deepResearchModelCalls.test.ts (POST /v1/chat deep_research): one deep_research_model_call line per request (logs.length == requests.length) with step, think, attempt, wall_ms, load_duration, prompt_eval_count, prompt_eval_duration, eval_count, eval_duration, thinking_chars, outcome; invalid->retry logs attempt 1 'invalid', 2 'ok'; stream error logs 'error' with null stats; POST /v1/models/load of the research model sends {num_ctx: 12345} (non-default numCtx), another model sends no options; ordinary web and switch-off replies send no new request fields and write no research log line; client.test.ts load(name,{num_ctx}) vs load(name); models/manager.test.ts num_ctx only for research model - .harness/evidence/M19b-T1-verifier.log (280 pass)
-- M19b-AC2: server/src/http/deepResearchModelCalls.test.ts: brief/queries/pages/notes/gap requests think:false, num_predict 200 (800 notes), temperature 0.7, top_p 0.8, top_k 20, format and num_ctx; plan/write think:true, options {num_ctx} only (no num_predict); non-default routineNumPredict/notesNumPredict sent; thinking-off reply with thinking text + valid content used, thinking_detected true, thinking_chars>0; JSON only in thinking -> 'invalid', thinking_detected, retried; research.test.ts per-step think assertion replaces the removed global-think tests (requirement change, verifier: not weakened) - .harness/evidence/M19b-T2-verifier.log (283 pass)
-- M19b-AC3: server/src/http/deepResearchModelCalls.test.ts 'deep research call time limits': queries hangs once -> fake signal aborted at ~routineCapMs, attempt 1 'timeout', attempt 2 'ok', run complete with report; gap hangs every attempt -> retries+1 'timeout' attempts per sub-question, step skipped, run reaches done - .harness/evidence/M19b-T3-verifier.log (290 pass; new file 16 pass x3)
-- M19b-AC4: server/src/http/deepResearchModelCalls.test.ts: defaults planGuardMs 30000, writeGuardMs 60000 < budgetMs*writeReserveFraction (120000); plan thinking past guard aborted, re-issued think:false without num_predict, log 'guard' then 'ok', its sub-questions researched; write guard -> think:false re-issue's report is the answer, complete; write guard + invalid re-issue -> exactly 2 write requests, run partial with gathered-notes text; answer content starting before the guard and ending after is never aborted (1 request, full report) - .harness/evidence/M19b-T3-verifier.log
-
-### Validation
-
-- `cd server && bun test && bun run typecheck` — PASS per verifier after T3 (290 pass, 0 fail; tsc clean; `bun test src/http/deepResearchModelCalls.test.ts` 16 pass on 3 runs). `.harness/evidence/M19b-T3-verifier.log`
-- Server-only milestone: no mobile file changed.
-
-### Review
-
-Cycle 1 (2026-10-02): CHANGES REQUIRED, scope RECORD_ONLY - tier Top (opus), reason DIFFICULT_CONCURRENCY, diff ba44206..85836a9; report .harness/reviews/M19b-cycle1.md, log .harness/evidence/M19b-review.log; findings 0 BLOCKER, 1 IMPORTANT, 3 OPTIONAL; per-criterion M19b-AC1..AC4 all PASS.
-Pre-correction: 85836a909001abe439719b07cc70f8f2be594cbb
-Record-only correction: e9c49a9 adds D-M19b-1 to .harness/architecture.md (resolves M19b-R1-F1); `check-state.py --record-only 85836a9 HEAD` OK. Optional findings F2-F4 left open (see Follow-ups).
-Verdict: PASS (completion gate: every criterion PASS, no BLOCKER/IMPORTANT open), review tier Top (opus).
-
-### Review Cycles
-
-0
-
-### Follow-ups
-
-- Review cycle 1 OPTIONAL F2: with a budget set via environment below 240 s, the 60 s write guard no longer fits inside the write reserve, so the think:false re-issue never happens in that case.
-- Review cycle 1 OPTIONAL F3: no test covers the plan guard firing and the plan re-issue then failing.
-- Review cycle 1 OPTIONAL F4: tests without a log function print deep_research_model_call lines to stdout (same as the logger follow-up below).
-- The plan/write think:false re-issue sends options {num_ctx} only (model default sampling, not the routine 0.7/0.8/20); FR42 does not specify its sampling. Revisit in M19g if live validity is poor.
-- Deep research tests now print deep_research_model_call JSON lines to stdout (default logger is console.log); harmless noise.
-- The new FR42 settings (routineNumPredict, notesNumPredict, routineSampling, routineCapMs, planGuardMs, writeGuardMs) are ResearchSettings fields with no environment variable override, like the other research settings except the budget.
-- Not live until com.harness.server is restarted (owner has given a standing OK for FR41-FR45); the live proof is M19g.
-
+Detail: `.harness/archive/M19b.md`
 
 ## M19c — A note call gets the page's most relevant passages, and useless pages cost no model call
 
@@ -509,7 +452,7 @@ Cycle 1: PASS — tier Mid, model sonnet (reason ORDINARY_IMPLEMENTATION; T1 Che
 
 ## M19d — Research covers every sub-question first, reads chosen pages ahead, and keeps partial notes
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -532,6 +475,8 @@ Pending.
 - [ ] **M19d-AC3**: Server tests: when the deadline cuts a note call, every complete note already present in its partial output is kept and still quote-checked; a run that ends with no notes because research time ran out ends `failed` with the sentence "The research ran out of time before it could take notes." instead of blaming the pages.
 
 ### Baseline
+
+4f0953ed372dad6716122c5f9491353006a57039 on m19d-breadth-first-prefetch
 
 ### Evidence
 

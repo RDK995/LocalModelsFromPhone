@@ -11630,10 +11630,10 @@
         "FR44"
       ],
       "traces": "AC31 (breadth first, parallel reads with no overlapping model calls, deadline-cut note keeps complete notes, ran-out-of-time sentence)",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
-      "baseline": null,
+      "baseline": "4f0953ed372dad6716122c5f9491353006a57039 on m19d-breadth-first-prefetch",
       "as_built": {
         "artifact": null,
         "result": "PENDING"
@@ -11658,7 +11658,30 @@
           "evidence": []
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M19d-T1",
+          "packet": ".harness/tasks/M19d-T1.md",
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "deadline-path salvage of complete notes from a cut note call and the ran-out-of-time failure sentence; HTTP oracle; no new concurrency"
+          },
+          "attempts": []
+        },
+        {
+          "id": "M19d-T2",
+          "packet": ".harness/tasks/M19d-T2.md",
+          "routing": {
+            "tier": "Top",
+            "model": "opus",
+            "reason_code": "DIFFICULT_CONCURRENCY",
+            "detail": "restructure the research loop into breadth-first rounds with parallel prefetched page reads under the run's one cancellation signal while model calls stay serial; lifecycle of orphaned in-flight reads, numbering and sources"
+          },
+          "attempts": []
+        }
+      ],
       "reviews": [],
       "findings": [],
       "validation": [],
