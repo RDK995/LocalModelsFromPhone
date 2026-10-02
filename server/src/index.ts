@@ -6,6 +6,10 @@
  * missing, empty, not a regular file, or group/world-readable, then starts the
  * HTTP server on 127.0.0.1:7789 in front of Ollama at 127.0.0.1:11434.
  *
+ * Server setting:
+ *   PHONE_MODELS_RESEARCH_BUDGET_MS - deep research time budget in milliseconds
+ *                            (positive integer; absent or invalid -> the 480000 default)
+ *
  * Test-only overrides (never set these in the LaunchAgent):
  *   PHONE_MODELS_PORT        - listen port (loopback host is not overridable)
  *   PHONE_MODELS_TOKEN_FILE  - token file path
@@ -65,6 +69,12 @@ function parsePortOverride(value: string | undefined): number | undefined {
   return port;
 }
 
+export function parseResearchBudget(value: string | undefined): number | undefined {
+  if (value === undefined || !/^[1-9]\d*$/.test(value.trim())) return undefined;
+  const ms = Number(value.trim());
+  return Number.isSafeInteger(ms) ? ms : undefined;
+}
+
 export function main(env: Record<string, string | undefined> = process.env): void {
   const tokenFile = env.PHONE_MODELS_TOKEN_FILE || DEFAULT_TOKEN_FILE;
   const port = parsePortOverride(env.PHONE_MODELS_PORT) ?? DEFAULT_PORT;
@@ -73,7 +83,8 @@ export function main(env: Record<string, string | undefined> = process.env): voi
 
   const ollama = new OllamaClient(env.PHONE_MODELS_OLLAMA_URL || OLLAMA_URL);
   const webTools = createWebTools({ baseUrl: env.PHONE_MODELS_SEARCH_URL || SEARCH_URL });
-  const manager = new GenerationManager(ollama, webTools);
+  const budgetMs = parseResearchBudget(env.PHONE_MODELS_RESEARCH_BUDGET_MS);
+  const manager = new GenerationManager(ollama, webTools, budgetMs === undefined ? {} : { budgetMs });
   const server = createServer({ ollama, manager, port, icon: webTools.icon });
 
   if (server.hostname !== LISTEN_HOST) {

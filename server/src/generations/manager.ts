@@ -17,7 +17,7 @@ import type {
 } from "../ollama/client";
 import { createWebTools, type WebEvent, type WebToolCall } from "../web/tools";
 import { createPageNumberer } from "../web/pageNumbers";
-import { runResearch, type ResearchWebTools } from "./research";
+import { DEFAULT_RESEARCH_SETTINGS, runResearch, type ResearchSettings, type ResearchWebTools } from "./research";
 import type {
   ChatRequest,
   ContentEvent,
@@ -95,12 +95,16 @@ export class GenerationManager {
 
   private webTools: GenerationWebTools & Partial<ResearchWebTools>;
 
+  private researchSettings: Partial<ResearchSettings>;
+
   constructor(
     ollamaClient: OllamaChatClient,
-    webTools: GenerationWebTools & Partial<ResearchWebTools> = createWebTools()
+    webTools: GenerationWebTools & Partial<ResearchWebTools> = createWebTools(),
+    researchSettings: Partial<ResearchSettings> = {}
   ) {
     this.ollamaClient = ollamaClient;
     this.webTools = webTools;
+    this.researchSettings = researchSettings;
   }
 
   /**
@@ -148,6 +152,7 @@ export class GenerationManager {
   private async runDeepResearch(genId: string, record: GenerationRecord, request: ChatRequest): Promise<void> {
     const signal = record.abortController.signal;
     const question = [...request.messages].reverse().find((m) => m.role === "user")?.content ?? "";
+    const startTime = Date.now();
     let terminal: { type: "done" | "error"; data: string } | undefined;
     try {
       const { search, read } = this.webTools;
@@ -158,6 +163,7 @@ export class GenerationManager {
         client: this.ollamaClient,
         webTools: { search: search.bind(this.webTools), read: read.bind(this.webTools) },
         signal,
+        settings: this.researchSettings,
       });
       for await (const event of events) {
         if (event.type === "done" || event.type === "error") {
@@ -172,11 +178,21 @@ export class GenerationManager {
         const cancelled: DoneEvent = { status: "cancelled", model: request.model, eval_count: 0, tokens_per_second: 0 };
         terminal = { type: "done", data: JSON.stringify(cancelled) };
       } else {
-        const failure: ErrorEvent = {
-          code: "generation_error",
-          message: error instanceof Error ? error.message : String(error),
+        // FR36: a deep research reply never ends in an error with no reply.
+        const text: ContentEvent = { text: "The research failed before it could produce a report. Try asking again." };
+        this.append(record, "content", JSON.stringify(text));
+        const failed: DoneEvent = {
+          status: "complete",
+          model: request.model,
+          eval_count: 0,
+          tokens_per_second: 0,
+          research: {
+            status: "failed",
+            elapsed_ms: Date.now() - startTime,
+            budget_ms: this.researchSettings.budgetMs ?? DEFAULT_RESEARCH_SETTINGS.budgetMs,
+          },
         };
-        terminal = { type: "error", data: JSON.stringify(failure) };
+        terminal = { type: "done", data: JSON.stringify(failed) };
       }
     }
 
