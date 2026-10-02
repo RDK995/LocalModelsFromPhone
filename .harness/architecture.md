@@ -574,3 +574,20 @@ the existing deep-research event fields (plan/write steps, `elapsed_ms`/`budget_
 Why: the setting is server configuration, not model state, and C5's `state()` keeps its existing
 contract and tests; the refusals are request validation, which is C4's responsibility. Additive
 fields only; no component boundary, technology or responsibility ownership changes.
+
+### D-M19-1 — Two-stage Stop for a deep research run inside C6
+
+Milestone: M19 (implementation 2026-10-02)
+Material: no
+Change: FR38's two-stage Stop is realised in C6 with no new route or event. A deep research
+generation record carries a second "wrap up" controller; `POST /v1/generations/{id}/cancel`
+(response shape unchanged) aborts it on the first call and the hard controller on a later call.
+`runResearch` gains an optional `stopSignal` and the setting `stopWriteMs` (default 60000): the
+first Stop aborts the research-phase signal (every in-flight search, read and model request) and
+gives the write-up at most `stopWriteMs` (never past the final budget), ending `research.status:
+"partial"`; a hard abort ends `done {status:"cancelled"}` with no report and now emits the pages-read
+`sources` event before it. `cancelActive()` (a confirmed FR6 load/unload, C5) aborts both
+controllers so an unload never waits for a write-up. Ordinary and web replies keep one-stage Stop.
+Why: C6 already owns a reply's cancellation and the run-owned signals (D-M17-1); the cancel route
+and SSE events already carry everything the phone needs, so no component boundary, technology or
+responsibility ownership changes.

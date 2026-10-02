@@ -11141,7 +11141,7 @@
         "FR38"
       ],
       "traces": "AC28 (first and second Stop, dropped-connection resume)",
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": "63d14e44a3ca8cb00411d0592d64b1804faf22e7 on m19-deep-research-stop-resume",
@@ -11154,26 +11154,139 @@
           "id": "M19-AC1",
           "text": "Server tests: a first Stop during searching or reading cancels in-flight searches and reads at once and the run writes a short report from the notes so far under its own short time limit (about a minute), ending `partial`; a second Stop during that write-up cancels it and the reply ends stopped with its steps and sources but no report.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "server/src/http/deepResearchStop.test.ts (POST /v1/chat, POST /v1/generations/{id}/cancel, GET events): one Stop -> write step, one report content, done complete + research partial; two Stops (second during write-up) -> done cancelled, search/read/write steps and sources, no content; server/src/generations/research.test.ts FR38 cases (a) Stop during search aborts the hung search's signal, (b) during read, (c) write-up limited by stopWriteMs, (c2) Stop during normal write-up, (d) hard abort during short write-up: cancelled, no content, sources before done, (e) no notes: no write call, partial; default stopWriteMs 60000; manager.test.ts two-stage cancelGeneration and cancelActive hard stop - .harness/evidence/M19-T1-verifier.log (server 270 pass, 0 fail)"
+          ]
         },
         {
           "id": "M19-AC2",
           "text": "Server tests: a dropped connection does not stop the run and resuming from the last seen event yields steps, clock and text with no gaps or duplicates; while a run is in progress a new message is refused as a reply in progress, and unloading the model mid-run needs the FR6 confirmation and, if confirmed, ends the run `partial` or stopped without hanging.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "server/src/http/deepResearchResume.test.ts: dropped connection (reader cancelled after >=3 steps) leaves the run active; Last-Event-ID reconnect: first+resumed deep-equals full log, ids contiguous, no duplicates, elapsed_ms/budget_ms on every step, exactly one report content, done research.status; new POST /v1/chat during run -> 409 generation_in_flight, no second generation; unload without confirm -> 409 confirmation_required reasons incl. reply_in_progress, run continues; confirmed -> 202, stream ends cancelled/partial within 2 s, fake Ollama unloaded, slot freed - .harness/evidence/M19-T2-verifier.log (server 273 pass, 0 fail; file 3/3 runs green)"
+          ]
         },
         {
           "id": "M19-AC3",
           "text": "App tests: a deep research reply is saved with its report as the answer plus steps, sources and status; page text and notes are not persisted; the next prompt carries the report like any prior answer; a second-Stop reply reopens with its steps and sources and no report; backgrounding and returning resumes without gaps or duplicates.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "mobile/src/chat/conversationSession.test.ts AC3.1 (report saved as content with steps, sources, research partial; only Message keys, reopened from fresh store), AC3.2 (next send's exact messages body carries the report per FR23 history rule), AC3.3 (second-Stop stream saved stopped, empty content, steps and sources, reopens from fresh store); mobile/src/ui/chatItems.test.ts AC3.3 (reopened stopped message builds steps and 'Sources (2)'); mobile/src/api/client.test.ts (m) AC3.4 (drop mid run, Last-Event-ID resume: every step with elapsed_ms and the report exactly once, in order, done research partial) - .harness/evidence/M19-T3-verifier.log (mobile 493 pass, 0 fail; tsc and eslint clean)"
+          ]
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M19-T1",
+          "packet": ".harness/tasks/M19-T1.md",
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "two-stage cancellation signal composition in the research module and generation manager with HTTP tests"
+          },
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M19-T1-verifier.log",
+              "commit": "e1cc64c"
+            }
+          ]
+        },
+        {
+          "id": "M19-T2",
+          "packet": ".harness/tasks/M19-T2.md",
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "HTTP tests from stated assertions over existing resume, in-progress refusal and FR6 unload behaviour"
+          },
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "INTERRUPTED",
+              "verifier": null,
+              "evidence": "turn limit, no report; unload test failing (socket closed)",
+              "commit": null
+            },
+            {
+              "attempt": 2,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "INTERRUPTED",
+              "verifier": null,
+              "evidence": "continuation with .harness/tasks/M19-T2-handoff-1.md; turn limit, no report; same failure",
+              "commit": null
+            },
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M19-T2-verifier.log",
+              "commit": "c832050"
+            }
+          ]
+        },
+        {
+          "id": "M19-T3",
+          "packet": ".harness/tasks/M19-T3.md",
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "app tests from stated assertions over existing session, store, history and resume code"
+          },
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "INTERRUPTED",
+              "verifier": null,
+              "evidence": "turn limit, no report; partial conversationSession.test.ts on disk",
+              "commit": null
+            },
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M19-T3-verifier.log",
+              "commit": "2578e53",
+              "note": "continuation 1 with .harness/tasks/M19-T3-handoff-1.md"
+            }
+          ]
+        }
+      ],
       "reviews": [],
       "findings": [],
-      "validation": [],
-      "follow_ups": [],
+      "validation": [
+        {
+          "command": "cd server && bun test && bun run typecheck",
+          "result": "PASS (verifier after T2: 273 pass, 0 fail; tsc clean)",
+          "artifact": ".harness/evidence/M19-T2-verifier.log"
+        },
+        {
+          "command": "cd mobile && bun test && bun run typecheck && npx eslint --max-warnings 0 src/api/client.test.ts src/chat/conversationSession.test.ts src/ui/chatItems.test.ts",
+          "result": "PASS (verifier after T3: 493 pass, 0 fail; tsc and eslint clean)",
+          "artifact": ".harness/evidence/M19-T3-verifier.log"
+        }
+      ],
+      "follow_ups": [
+        "Human step (owner only): restart com.harness.server so the two-stage Stop is live, then on the phone check first Stop gives a short partial report and a second Stop ends with steps and sources only. Not performed by the harness.",
+        "The phone shows no 'Stopping...' cue between the first and second Stop; the Stop button simply stays available (not required by FR38).",
+        "Repo-wide mobile lint still red from pre-existing quotes errors in mobile/src/chat/webQuietSession.test.ts (unchanged)."
+      ],
       "complexity_signals": [
         "CONCURRENCY_LIFECYCLE"
       ],
