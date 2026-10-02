@@ -153,7 +153,9 @@ describe("runResearch", () => {
         JSON.stringify({ queries: n === 0 ? ["alpha", "  ALPHA  ", "beta"] : ["gamma", "Alpha", "delta"] }),
     });
     const web = fakeWeb();
-    const events = await collect(fc.client, web.tools, BASE);
+    // M19d FR44: a sub-question whose page quota is used is done without a gap check; a quota of 3
+    // (two pages chosen) keeps the gap step in this end-to-end sequence.
+    const events = await collect(fc.client, web.tools, { ...BASE, pagesPerSubQuestion: 3 });
 
     // Server-set count: the third sub-question is dropped.
     expect(fc.of("queries").length).toBe(2);
@@ -252,6 +254,9 @@ describe("runResearch", () => {
     const fc = fakeClient({
       queries: (_r, n) => JSON.stringify({ queries: [`one${n}`] }),
       gap: (_r, n) => JSON.stringify({ enough: false, next_query: `more ${n}` }),
+      // M19d FR44: a used page quota ends a sub-question, so one page is chosen first and none later,
+      // leaving the search cap as what stops it.
+      select: (_r, n) => JSON.stringify({ pages: n === 0 ? [1] : [] }),
     });
     const web = fakeWeb();
     const events = await collect(fc.client, web.tools, { subQuestionCount: 1, minSearches: 2, maxSearches: 4, pagesPerSubQuestion: 2 });
@@ -821,7 +826,8 @@ describe("runResearch time budget (FR36)", () => {
     };
     const { events, ms } = await timed(() => collect(fc.client, tools, { ...BASE, budgetMs }));
     expect(ms).toBeLessThanOrEqual(budgetMs + MARGIN_MS);
-    expect(seen).toEqual([true]);
+    // M19d FR44 prefetch: sub-question 1's second read and both of sub-question 2's are in flight together.
+    expect(seen).toEqual([true, true, true]);
     expect(fc.of("write").length).toBe(1);
     expect(contentText(events).trim().length).toBeGreaterThan(0);
     expect(doneData(events).research.status).toBe("partial");

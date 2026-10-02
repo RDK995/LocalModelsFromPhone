@@ -240,7 +240,8 @@ describe("deep research model-call logging and load num_ctx (M19b FR41)", () => 
   });
 
   it("thinking-off steps send think:false, the num_predict cap and non-thinking sampling; plan and write think with only num_ctx", async () => {
-    const s = setup({ research: { numCtx: 7777 } });
+    // M19d FR44: a used page quota ends a sub-question without a gap check; quota 3 keeps every step in the run.
+    const s = setup({ research: { numCtx: 7777, pagesPerSubQuestion: 3 } });
     try {
       await (await s.post(deepBody)).text();
       const seen = new Set<string>();
@@ -447,7 +448,8 @@ describe("deep research call time limits (M19b FR42)", () => {
   it("AC3: a thinking-off step that hits its cap on every attempt is skipped after retries + 1 and the run carries on", async () => {
     let abortedCount = 0;
     const s = setup({
-      research: { routineCapMs: 60 },
+      // M19d FR44: quota 3 (two pages chosen) so each sub-question still reaches its gap step.
+      research: { routineCapMs: 60, pagesPerSubQuestion: 3 },
       chat: (request, signal) =>
         stepOf(request) === "gap" ? hangUntilAbort(signal, false, () => abortedCount++) : undefined,
     });

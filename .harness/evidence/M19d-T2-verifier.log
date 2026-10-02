@@ -1,0 +1,213 @@
+bun test v1.4.0 (1381054db)
+
+src/http/deepResearchBreadthFirst.test.ts:
+{"event":"deep_research_model_call","step":"brief","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"plan","think":true,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"queries","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"pages","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":1,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"queries","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"pages","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"queries","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"pages","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"write","think":true,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"brief","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"plan","think":true,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"queries","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"pages","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"queries","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"pages","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"queries","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"pages","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":1,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"write","think":true,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"brief","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"plan","think":true,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"queries","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"pages","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"queries","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"pages","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"queries","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"pages","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"gap","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"pages","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"gap","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"pages","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"write","think":true,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"brief","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"plan","think":true,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"queries","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"pages","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"queries","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"pages","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"gap","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"gap","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"pages","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"gap","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"pages","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"write","think":true,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"brief","think":false,"attempt":1,"wall_ms":3,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"plan","think":true,"attempt":1,"wall_ms":4,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"queries","think":false,"attempt":1,"wall_ms":3,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"pages","think":false,"attempt":1,"wall_ms":4,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":4,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"queries","think":false,"attempt":1,"wall_ms":3,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"pages","think":false,"attempt":1,"wall_ms":3,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":4,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"queries","think":false,"attempt":1,"wall_ms":3,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"pages","think":false,"attempt":1,"wall_ms":4,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":4,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":3,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":4,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":3,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"write","think":true,"attempt":1,"wall_ms":4,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"brief","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"plan","think":true,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"queries","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"pages","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"queries","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"pages","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"write","think":true,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"brief","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"plan","think":true,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"queries","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"pages","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"queries","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"pages","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"write","think":true,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":3,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+
+ 7 pass
+ 0 fail
+ 76 expect() calls
+Ran 7 tests across 1 file. [1057.00ms]
+{"event":"deep_research_model_call","step":"pages","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":true,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":true,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":true,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":17,"thinking_detected":true,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"write","think":true,"attempt":1,"wall_ms":200,"load_duration":null,"prompt_eval_count":null,"prompt_eval_duration":null,"eval_count":null,"eval_duration":null,"thinking_chars":0,"thinking_detected":false,"outcome":"aborted"}
+{"event":"deep_research_model_call","step":"brief","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":true,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"plan","think":true,"attempt":1,"wall_ms":1,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"queries","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":true,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"pages","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":true,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":true,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"queries","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":true,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"write","think":true,"attempt":1,"wall_ms":22,"load_duration":null,"prompt_eval_count":null,"prompt_eval_duration":null,"eval_count":null,"eval_duration":null,"thinking_chars":0,"thinking_detected":false,"outcome":"aborted"}
+{"event":"deep_research_model_call","step":"brief","think":false,"attempt":1,"wall_ms":1,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":true,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"plan","think":true,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"queries","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":true,"outcome":"ok"}
+
+ 336 pass
+ 0 fail
+ 2212 expect() calls
+Ran 336 tests across 21 files. [14.91s]
+
+===== VERIFICATION SUMMARY =====
+
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/http/deepResearchBreadthFirst.test.ts
+Exit Status: 0
+Output: 7 pass 0 fail 76 expect() calls
+
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test
+Exit Status: 0
+Output (run 1): 336 pass 0 fail 2212 expect() calls
+Output (run 2): 336 pass 0 fail 2211 expect() calls
+
+Command: bunx tsc --noEmit
+Exit Status: 0
+Output: (clean)
+
+===== FILES CHANGED =====
+- server/src/generations/research.ts (allowed)
+- server/src/http/deepResearchBreadthFirst.test.ts (new, allowed)
+- server/src/generations/research.test.ts (allowed, order-driven updates)
+- server/src/http/deepResearchModelCalls.test.ts (allowed, order-driven updates)
+
+===== EXISTING TEST MODIFICATIONS =====
+1. research.test.ts line 158: Added pagesPerSubQuestion: 3 to settings
+   - All assertions remain: queries count, reads, note/gap counts, step sequence, sources
+   - Justified: "a used page quota ends a sub-question without a gap check; quota 3 keeps gap in sequence"
+
+2. research.test.ts line 259: Added select script { pages: n === 0 ? [1] : [] }
+   - Assertions unchanged: search cap (4), read cap (<=2), report check, status check
+   - Justified: "a used page quota ends a sub-question"
+
+3. research.test.ts line 830: Changed expect(seen).toEqual([true]) to expect(seen).toEqual([true, true, true])
+   - Justified by comment: "M19d FR44 prefetch: sub-question 1's second read and both of sub-question 2's are in flight together"
+   - This expects 3 hanging reads instead of 1, confirming parallel prefetch
+
+4. deepResearchModelCalls.test.ts line 244: Added pagesPerSubQuestion: 3
+   - All assertions remain unchanged
+   - Justified: "quota 3 keeps every step in the run"
+
+5. deepResearchModelCalls.test.ts line 452: Added pagesPerSubQuestion: 3
+   - All assertions remain unchanged
+   - Justified: "quota 3 (two pages chosen) so each sub-question still reaches its gap step"
+
+===== ACCEPTANCE CRITERIA TESTS =====
+AC1a (first three note decisions are sub-questions 1, 2, 3 in plan order):
+  - Test 1 line 252: Checks noteSubs.slice(0, 3) === [1, 2, 3], searches before 4th note
+  - Test 2 line 282: Same with first read failing (breadth-first still holds)
+
+AC1b (a sub-question whose second search adds no new URLs runs no further searches and no gap check):
+  - Test 1 line 305: searchesFor(2) === 2, gapsFor(2) === 0; others reach maxSearches
+  - Test 2 line 336: search returning nothing ends searching; gapsFor(1) === 1 (one gap before the empty search)
+
+AC2a (chosen pages read in parallel before note call, max concurrent model calls === 1):
+  - Line 356: maxChatInFlight === 1, maxReadsInFlight >= 2, second read starts before first note
+
+AC2b (at deadline, every hanging read's signal is aborted, sources contains every completed read):
+  - Line 390: Hanging reads' signals aborted, sources contains completedUrls, wall clock within budget+margin
+
+AC2c (first Stop aborts every in-flight read, gives short write-up):
+  - Line 427: Hanging reads' signals aborted after Stop, only page 1 cited (page 2 not read before Stop)
+
+===== CODE REVIEW: REJECTION HANDLING =====
+Lines 671-689 in research.ts - startRead() function:
+  - Rejection handling attached at lines 682-685: result: pending.then(..., (error) => {...})
+  - No unhandled rejection possible from prefetched reads
+  - Confirmed: every prefetched read has rejection handling at creation time
+
+===== CODE REVIEW: NO READS AFTER RESEARCH PHASE =====
+Line 795 in research.ts - choosePages() function:
+  - checkDeadline() called inside the loop that starts reads
+  - Comment: "no read starts once the research phase is over"
+  - Confirmed: throws PhaseTimeUp if phase is over
+
+===== MODULE DOC COMMENT =====
+Lines 1-35 in research.ts:
+  - Updated to describe breadth-first rounds and prefetch
+  - Lines 7-21 describe the exact behavior: "every sub-question gets its searches and FIRST page before any gets SECOND page"
+  - Confirmed: documentation matches implementation
+
+===== DECISION ON LEFTOVER CANDIDATES =====
+From AC1b test line 305-334:
+  - Sub-question ends searching when search adds no new URLs
+  - NO further page choice for leftover candidates is offered
+  - The sub-question stays in the round loop and can still note its prefetched pages (lines 326-328)
+  - But no new searches or page choices for it (searchOver flag set at line 906 in research.ts)
+

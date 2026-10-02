@@ -4,13 +4,24 @@
  * A fixed, server-owned sequence - not a model tool loop:
  *   1. brief      - restate the question as a short research brief
  *   2. plan       - split it into sub-questions (count set by the server)
- *   3. per sub-question: propose queries, run >= minSearches distinct searches
- *      (<= maxSearches), choose pages BY INDEX among server-parsed result URLs,
- *      read them via C12, one note step per page (FR43: the note call gets only
- *      an excerpt - title, first paragraph, top BM25 passages - and empty or
- *      bot-challenge pages are skipped without a call; quotes are still checked
- *      against the full page text), then a gap check that may end the
- *      sub-question early
+ *   3. research, breadth first over the sub-questions (FR44):
+ *      - round 1, in plan order: each sub-question proposes queries and runs up
+ *        to minSearches distinct searches, makes one page choice BY INDEX among
+ *        server-parsed result URLs, and gets its first page's note step before
+ *        the next sub-question starts;
+ *      - later rounds, in plan order, at most one note step per sub-question per
+ *        round: its next prefetched page if it has one, otherwise a gap check
+ *        (may end it), one more search (<= maxSearches) and a page choice for its
+ *        remaining page quota;
+ *      - prefetch: every page a page choice picks starts reading (C12) at once,
+ *        in parallel, under the phase's one signal; the loop does not wait for
+ *        those reads and only awaits the one whose note step comes next. Model
+ *        calls stay strictly one at a time. Reads that completed but were never
+ *        noted still reach Sources; pages are numbered as their reads complete;
+ *      - a sub-question stops searching when a search adds no new URLs;
+ *      - note step (FR43): the note call gets only an excerpt - title, first
+ *        paragraph, top BM25 passages - and empty or bot-challenge pages are
+ *        skipped without a call; quotes are still checked against the full page
  *   4. write      - one report from the notes only, citing pages as [n]
  *
  * Every model step is a narrow chat request with a JSON schema `format`, the
@@ -621,6 +632,225 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
     }
     return out;
   }
+  /** FR37: prefetched pages may be numbered out of absorb order; Sources lists them by number. */
+  const sortedSources = () => [...sources].sort((a, b) => (a.n ?? 0) - (b.n ?? 0));
+
+  /** One sub-question's research state across the breadth-first rounds (FR44). */
+  interface SubState {
+    subQuestion: string;
+    label: string;
+    queue: string[];
+    runQueries: string[];
+    candidates: SearchResult[];
+    candidateKeys: Set<string>;
+    searches: number;
+    /** Pages chosen for reading (the page quota counts them at choice time). */
+    reads: number;
+    proposals: number;
+    fallbackUsed: boolean;
+    /** Chosen pages being read ahead, noted first in, first out. */
+    prefetched: Prefetch[];
+    /** No further searches or gap checks (ended early, out of queries, or maxSearches reached). */
+    searchOver: boolean;
+    done: boolean;
+  }
+  type ReadOutcome =
+    | { ok: true; page: ReadPage | null; events: WebEvent[] }
+    | { ok: false; error: unknown };
+  /** A read started ahead of its note step; `result` never rejects (no unhandled rejection). */
+  interface Prefetch {
+    result: Promise<ReadOutcome>;
+    outcome: ReadOutcome | null;
+    /** Its events were taken into the run (consumed by a note step, or drained at the end). */
+    absorbed: boolean;
+  }
+  /** Every read started in the run, in start order. */
+  const started: Prefetch[] = [];
+
+  /** Starts a read now under the phase signal (FR36) without waiting for it. */
+  function startRead(url: string): Prefetch {
+    let pending: Promise<{ page: ReadPage | null; events: WebEvent[] }>;
+    try {
+      pending = webTools.read(url, phaseSignal(), numberPage);
+    } catch (error) {
+      pending = Promise.reject(error);
+    }
+    // Handling is attached now, so a read that is never awaited cannot reject unhandled.
+    const entry: Prefetch = {
+      outcome: null,
+      absorbed: false,
+      result: pending.then(
+        ({ page, events }) => (entry.outcome = { ok: true, page, events }),
+        (error: unknown) => (entry.outcome = { ok: false, error })
+      ),
+    };
+    started.push(entry);
+    return entry;
+  }
+
+  /** Waits for a prefetched read, but gives up as soon as the research phase ends (deadline, Stop, cancel). */
+  function untilPhaseEnd<T>(pending: Promise<T>): Promise<T> {
+    const phaseEnded = () => (signal.aborted ? new DOMException("Research cancelled", "AbortError") : new PhaseTimeUp());
+    if (researchSignal.aborted) return Promise.reject(phaseEnded());
+    return new Promise<T>((resolve, reject) => {
+      const onAbort = () => reject(phaseEnded());
+      researchSignal.addEventListener("abort", onAbort, { once: true });
+      void pending.then((value) => {
+        researchSignal.removeEventListener("abort", onAbort);
+        resolve(value);
+      });
+    });
+  }
+
+  /**
+   * FR37: reads that completed but were never noted (the deadline or a Stop came first) still
+   * numbered a page, so their events reach Sources. Reads still in flight have an aborted signal.
+   */
+  async function* drainReads(): AsyncGenerator<ResearchEvent> {
+    if (started.every((entry) => entry.absorbed)) return;
+    await new Promise((resolve) => setTimeout(resolve, 0)); // let reads that just finished settle
+    for (const entry of started) {
+      if (entry.absorbed || !entry.outcome) continue;
+      entry.absorbed = true;
+      if (!entry.outcome.ok) continue;
+      yield* absorb(entry.outcome.events);
+      if (entry.outcome.page?.n !== undefined) readNumbers.add(entry.outcome.page.n);
+    }
+  }
+
+  /** The next query not yet searched in this run, or null when none can be found. */
+  async function nextQuery(sq: SubState): Promise<string | null> {
+    for (;;) {
+      const q = sq.queue.shift()?.trim();
+      if (q !== undefined) {
+        const key = normaliseText(q);
+        if (key !== "" && !seenQueries.has(key)) return q;
+        continue;
+      }
+      if (sq.proposals < s.maxSearches) {
+        sq.proposals++;
+        const done = sq.runQueries.length ? `Searches already run: ${sq.runQueries.join(" | ")}` : "No searches run yet.";
+        const r = await modelStep(
+          "queries",
+          "Propose web search queries (short, varied wording and angles) for the current sub-question.",
+          context(`${sq.label}\n${done}`),
+          SCHEMAS.queries,
+          VALIDATORS.queries
+        );
+        if (r) sq.queue.push(...r);
+        continue;
+      }
+      if (!sq.fallbackUsed) {
+        sq.fallbackUsed = true;
+        sq.queue.push(sq.subQuestion);
+        continue;
+      }
+      return null;
+    }
+  }
+
+  /** One search for a sub-question: the number of new candidate URLs it added, or null with no query left. */
+  async function* searchOnce(sq: SubState): AsyncGenerator<ResearchEvent, number | null> {
+    const query = await nextQuery(sq);
+    if (query === null) return null;
+    checkDeadline();
+    seenQueries.add(normaliseText(query));
+    sq.runQueries.push(query);
+    sq.searches++;
+    searchesRun++;
+    const { results, events } = await webTools.search(query, phaseSignal());
+    yield* absorb(events);
+    if (results.length) searchesWithResults++;
+    let added = 0;
+    for (const r of results) {
+      if (!/^https?:\/\//i.test(r.url)) continue;
+      const key = pageUrlKey(r.url);
+      if (sq.candidateKeys.has(key) || readKeys.has(key)) continue;
+      sq.candidateKeys.add(key);
+      sq.candidates.push(r);
+      added++;
+    }
+    return added;
+  }
+
+  /** One page choice over the unread candidates; every chosen page starts reading at once (FR44). */
+  async function choosePages(sq: SubState): Promise<void> {
+    const remaining = s.pagesPerSubQuestion - sq.reads;
+    const unread = sq.candidates.filter((c) => !readKeys.has(pageUrlKey(c.url)));
+    if (remaining <= 0 || unread.length === 0) return;
+    const listing = unread.map((c, i) => `${i + 1}. ${c.title}\n   ${c.url}\n   ${c.snippet}`).join("\n");
+    const picked = await modelStep(
+      "pages",
+      `Choose up to ${remaining} search results worth reading for the current sub-question, by their number in the list.`,
+      context(`${sq.label}\nSearch results:\n${untrusted("search results", listing)}`),
+      SCHEMAS.select,
+      VALIDATORS.select
+    );
+    // Only indexes into the server-parsed list; a skipped step reads the top results.
+    const indexes = picked
+      ? picked.filter((i): i is number => Number.isInteger(i) && (i as number) >= 1 && (i as number) <= unread.length)
+      : unread.map((_, i) => i + 1);
+    const chosen = [...new Set(indexes)].slice(0, remaining).map((i) => unread[i - 1]!);
+    for (const candidate of chosen) {
+      checkDeadline(); // no read starts once the research phase is over
+      const key = pageUrlKey(candidate.url);
+      if (readKeys.has(key)) continue;
+      readKeys.add(key); // reserved now, so no other sub-question chooses it
+      sq.reads++;
+      sq.prefetched.push(startRead(candidate.url));
+    }
+  }
+
+  /**
+   * The sub-question's next note decision: the first prefetched read that gives a page not already
+   * read in this run gets its note step (a notes call, or the FR43 skip). False when none is left.
+   */
+  async function* noteNext(sq: SubState): AsyncGenerator<ResearchEvent, boolean> {
+    for (let entry = sq.prefetched.shift(); entry; entry = sq.prefetched.shift()) {
+      const outcome = await untilPhaseEnd(entry.result);
+      entry.absorbed = true;
+      if (!outcome.ok) throw outcome.error;
+      const { page, events } = outcome;
+      yield* absorb(events);
+      if (!page || page.n === undefined || readNumbers.has(page.n)) continue;
+      const n = page.n;
+      readNumbers.add(n);
+      readKeys.add(pageUrlKey(page.url));
+      const built = buildNoteExcerpt({ title: page.title, text: page.text }, `${sq.subQuestion} ${question}`, s);
+      if (built.skip !== null) {
+        logPage({ n, url: page.url, reason: built.skip, detail: built.reason });
+        return true;
+      }
+      // One path for a whole reply and for the complete notes of a cut-off one (FR37 quote check).
+      const keepNotes = (items: unknown[]) => {
+        const pageTextNorm = normaliseWhitespace(page.text);
+        for (const item of items) {
+          if (!isObj(item) || !nonEmpty(item.quote) || !nonEmpty(item.claim)) continue;
+          if (!pageTextNorm.includes(normaliseWhitespace(item.quote))) continue; // FR37: unverifiable quote dropped
+          notes.push({ n, quote: item.quote.replace(/\s+/g, " ").trim(), claim: item.claim.trim() });
+        }
+      };
+      let found: unknown[] | null;
+      try {
+        found = await modelStep(
+          "notes",
+          `Record short notes from page [${n}] that help answer the current sub-question. ` +
+            "The excerpt above holds the page's title, first paragraph and most relevant passages. " +
+            "Each note has a quote copied exactly from the page text and a short claim it supports.",
+          `${untrusted(`page ${n}`, built.excerpt)}\n\n${context(sq.label)}`,
+          SCHEMAS.note,
+          VALIDATORS.note
+        );
+      } catch (error) {
+        // FR44: a deadline-cut note call keeps its complete notes, then the run moves on to writing.
+        if (error instanceof PhaseTimeUp && error.partial) keepNotes(completeNotesFromPartial(error.partial));
+        throw error;
+      }
+      keepNotes(found ?? []);
+      return true;
+    }
+    return false;
+  }
 
   let researchCutShort = false;
   let writeCutShort = false;
@@ -649,153 +879,80 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
       planOpen = false;
       yield step({ step_id: "plan", kind: "plan", status: "done" });
 
-      // 3. Each sub-question: searches, reads, notes, gap check.
-      for (const [index, subQuestion] of plan.entries()) {
-        const label = `Current sub-question (${index + 1} of ${plan.length}): ${subQuestion}`;
-        const queue: string[] = [];
-        const runQueries: string[] = [];
-        const candidates: SearchResult[] = [];
-        const candidateKeys = new Set<string>();
-        let searches = 0;
-        let reads = 0;
-        let proposals = 0;
-        let fallbackUsed = false;
+      // 3. Breadth-first rounds over the sub-questions (FR44).
+      const subs: SubState[] = plan.map((subQuestion, index) => ({
+        subQuestion,
+        label: `Current sub-question (${index + 1} of ${plan.length}): ${subQuestion}`,
+        queue: [],
+        runQueries: [],
+        candidates: [],
+        candidateKeys: new Set<string>(),
+        searches: 0,
+        reads: 0,
+        proposals: 0,
+        fallbackUsed: false,
+        prefetched: [],
+        searchOver: false,
+        done: false,
+      }));
 
-        /** The next query not yet searched in this run, or null when none can be found. */
-        const nextQuery = async (): Promise<string | null> => {
-          for (;;) {
-            while (queue.length) {
-              const q = queue.shift()!.trim();
-              const key = normaliseText(q);
-              if (key !== "" && !seenQueries.has(key)) return q;
-            }
-            if (proposals < s.maxSearches) {
-              proposals++;
-              const done = runQueries.length ? `Searches already run: ${runQueries.join(" | ")}` : "No searches run yet.";
-              const r = await modelStep(
-                "queries",
-                "Propose web search queries (short, varied wording and angles) for the current sub-question.",
-                context(`${label}\n${done}`),
-                SCHEMAS.queries,
-                VALIDATORS.queries
-              );
-              if (r) queue.push(...r);
-              continue;
-            }
-            if (!fallbackUsed) {
-              fallbackUsed = true;
-              queue.push(subQuestion);
-              continue;
-            }
-            return null;
+      // Round 1: every sub-question gets its first searches, one page choice and its first page.
+      const firstRoundSearches = Math.min(Math.max(1, s.minSearches), s.maxSearches);
+      for (const sq of subs) {
+        for (let i = 0; i < firstRoundSearches; i++) {
+          const added = yield* searchOnce(sq);
+          // No new query, or FR44: a search that adds no new URLs ends this sub-question's searching.
+          if (added === null || added === 0) {
+            sq.searchOver = true;
+            break;
           }
-        };
+        }
+        if (sq.searches >= s.maxSearches) sq.searchOver = true;
+        // Also when it ran out of new queries before minSearches: still read what was collected.
+        if (sq.searches > 0) await choosePages(sq);
+        yield* noteNext(sq);
+      }
 
-        const readChosen = async function* (): AsyncGenerator<ResearchEvent> {
-          const remaining = s.pagesPerSubQuestion - reads;
-          const unread = candidates.filter((c) => !readKeys.has(pageUrlKey(c.url)));
-          if (remaining <= 0 || unread.length === 0) return;
-          const listing = unread
-            .map((c, i) => `${i + 1}. ${c.title}\n   ${c.url}\n   ${c.snippet}`)
-            .join("\n");
-          const picked = await modelStep(
-            "pages",
-            `Choose up to ${remaining} search results worth reading for the current sub-question, by their number in the list.`,
-            context(`${label}\nSearch results:\n${untrusted("search results", listing)}`),
-            SCHEMAS.select,
-            VALIDATORS.select
-          );
-          // Only indexes into the server-parsed list; a skipped step reads the top results.
-          const indexes = picked
-            ? picked.filter((i): i is number => Number.isInteger(i) && (i as number) >= 1 && (i as number) <= unread.length)
-            : unread.map((_, i) => i + 1);
-          const chosen = [...new Set(indexes)].slice(0, remaining).map((i) => unread[i - 1]!);
-
-          for (const candidate of chosen) {
-            checkDeadline();
-            const key = pageUrlKey(candidate.url);
-            if (readKeys.has(key)) continue;
-            readKeys.add(key);
-            reads++;
-            const { page, events } = await webTools.read(candidate.url, phaseSignal(), numberPage);
-            yield* absorb(events);
-            if (!page || page.n === undefined || readNumbers.has(page.n)) continue;
-            const n = page.n;
-            readNumbers.add(n);
-            readKeys.add(pageUrlKey(page.url));
-            const built = buildNoteExcerpt({ title: page.title, text: page.text }, `${subQuestion} ${question}`, s);
-            if (built.skip !== null) {
-              logPage({ n, url: page.url, reason: built.skip, detail: built.reason });
-              continue;
-            }
-            // One path for a whole reply and for the complete notes of a cut-off one (FR37 quote check).
-            const keepNotes = (items: unknown[]) => {
-              const pageTextNorm = normaliseWhitespace(page.text);
-              for (const item of items) {
-                if (!isObj(item) || !nonEmpty(item.quote) || !nonEmpty(item.claim)) continue;
-                if (!pageTextNorm.includes(normaliseWhitespace(item.quote))) continue; // FR37: unverifiable quote dropped
-                notes.push({ n, quote: item.quote.replace(/\s+/g, " ").trim(), claim: item.claim.trim() });
-              }
-            };
-            let found: unknown[] | null;
-            try {
-              found = await modelStep(
-                "notes",
-                `Record short notes from page [${n}] that help answer the current sub-question. ` +
-                  "The excerpt above holds the page's title, first paragraph and most relevant passages. " +
-                  "Each note has a quote copied exactly from the page text and a short claim it supports.",
-                `${untrusted(`page ${n}`, built.excerpt)}\n\n${context(label)}`,
-                SCHEMAS.note,
-                VALIDATORS.note
-              );
-            } catch (error) {
-              // FR44: a deadline-cut note call keeps its complete notes, then the run moves on to writing.
-              if (error instanceof PhaseTimeUp && error.partial) keepNotes(completeNotesFromPartial(error.partial));
-              throw error;
-            }
-            keepNotes(found ?? []);
+      // Later rounds: at most one note decision per sub-question per round, in plan order.
+      for (let active = true; active; ) {
+        active = false;
+        for (const sq of subs) {
+          if (sq.done) continue;
+          if (yield* noteNext(sq)) {
+            active = true;
+            continue;
           }
-        };
-
-        let readPassRan = false;
-        while (searches < s.maxSearches) {
-          const query = await nextQuery();
-          if (query === null) break;
-          checkDeadline();
-          seenQueries.add(normaliseText(query));
-          runQueries.push(query);
-          searches++;
-          searchesRun++;
-          const { results, events } = await webTools.search(query, phaseSignal());
-          yield* absorb(events);
-          if (results.length) searchesWithResults++;
-          for (const r of results) {
-            if (!/^https?:\/\//i.test(r.url)) continue;
-            const key = pageUrlKey(r.url);
-            if (candidateKeys.has(key)) continue;
-            candidateKeys.add(key);
-            candidates.push(r);
+          // Nothing prefetched is left: search further only while searches and page quota remain.
+          if (sq.searchOver || sq.reads >= s.pagesPerSubQuestion) {
+            sq.done = true;
+            continue;
           }
-          if (searches < s.minSearches) continue;
-
-          readPassRan = true;
-          yield* readChosen();
-          if (searches >= s.maxSearches) break;
-
+          active = true;
           const gap = await modelStep(
             "gap",
             "Decide whether the notes are enough to answer the current sub-question. If not, give one new search query.",
-            context(`${label}\nSearches already run: ${runQueries.join(" | ")}`),
+            context(`${sq.label}\nSearches already run: ${sq.runQueries.join(" | ")}`),
             SCHEMAS.gap,
             VALIDATORS.gap
           );
-          if (!gap || gap.enough) break;
-          if (nonEmpty(gap.next_query)) queue.unshift(gap.next_query);
-        }
-        // Ran out of new queries before minSearches: still read what was collected.
-        if (searches > 0 && !readPassRan) {
-          checkDeadline();
-          yield* readChosen();
+          if (!gap || gap.enough) {
+            sq.done = true;
+            continue;
+          }
+          if (nonEmpty(gap.next_query)) sq.queue.unshift(gap.next_query);
+          const added = yield* searchOnce(sq);
+          if (added === null) {
+            sq.done = true;
+            continue;
+          }
+          if (sq.searches >= s.maxSearches) sq.searchOver = true;
+          // FR44 early end. Candidates it already has were offered to an earlier page choice; no new one.
+          if (added === 0) {
+            sq.searchOver = true;
+            continue;
+          }
+          await choosePages(sq);
+          yield* noteNext(sq);
         }
       }
     } catch (error) {
@@ -804,6 +961,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
       researchCutShort = true;
       if (planOpen) yield step({ step_id: "plan", kind: "plan", status: "failed" });
     }
+    yield* drainReads();
 
     // 4. Write the report from the notes only.
     checkAbort();
@@ -848,7 +1006,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
       report = gathered || NO_REPORT_NOTE;
     }
     yield ev("content", { text: report } satisfies ContentEvent);
-    if (searchesRun > 0) yield ev("sources", { items: sources } satisfies SourcesEvent);
+    if (searchesRun > 0) yield ev("sources", { items: sortedSources() } satisfies SourcesEvent);
 
     const seconds = evalDurationNs > 0 ? evalDurationNs / 1e9 : (Date.now() - startTime) / 1000;
     const done: DoneEvent = {
@@ -866,7 +1024,8 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
   } catch (error) {
     if (!signal.aborted) throw error;
     // A stopped run keeps the sources of the pages it read.
-    if (searchesRun > 0) yield ev("sources", { items: sources } satisfies SourcesEvent);
+    yield* drainReads();
+    if (searchesRun > 0) yield ev("sources", { items: sortedSources() } satisfies SourcesEvent);
     const cancelled: DoneEvent = { status: "cancelled", model, eval_count: evalCount, tokens_per_second: 0 };
     yield ev("done", cancelled);
   } finally {
