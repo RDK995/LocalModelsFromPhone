@@ -480,7 +480,7 @@ C1, C2, C3
 
 ## M19g — Faster deep research proven live on the Mac
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -494,12 +494,12 @@ C4, C6, C7, C11, C12, C13
 
 ### As-Built
 
-Pending.
+.harness/as-built/M19g.md - RECORDED: C4, C6, C7, C11, C12 observed, 5 edges, 5 of 5 files attributed; 1 claim mismatch: C13 claimed but not observed in changeset (external, not touched).
 
 ### Acceptance Criteria
 
-- [ ] **M19g-AC1**: Live on the Mac: the FR35 `format` probe is re-run with thinking off on the installed Ollama against `qwen3.5:35b-a3b`, and its validity rate is recorded in evidence under .harness/evidence/.
-- [ ] **M19g-AC2**: Live on the Mac with com.harness.server restarted on this code and `qwen3.5:35b-a3b` resident: the AC29 question set (3 real research-style questions plus the 2026-10-02 heat-pump question) is run through the server API with FR41 logging, and per run the total wall time, research-phase model calls, distinct pages read, notes kept, planning time and routine-call p50/p95 are recorded in evidence; each run ends within the budget plus a small margin with status `complete` or `partial`, a report citing at least 3 distinct read pages, and no citation number that fails to resolve to a saved source. Speed figures are recorded, not gated (reference targets: routine p50 < 10 s, planning < 40 s).
+- [x] **M19g-AC1**: Live on the Mac: the FR35 `format` probe is re-run with thinking off on the installed Ollama against `qwen3.5:35b-a3b`, and its validity rate is recorded in evidence under .harness/evidence/.
+- [x] **M19g-AC2**: Live on the Mac with com.harness.server restarted on this code and `qwen3.5:35b-a3b` resident: the AC29 question set (3 real research-style questions plus the 2026-10-02 heat-pump question) is run through the server API with FR41 logging, and per run the total wall time, research-phase model calls, distinct pages read, notes kept, planning time and routine-call p50/p95 are recorded in evidence; each run ends within the budget plus a small margin with status `complete` or `partial`, a report citing at least 3 distinct read pages, and no citation number that fails to resolve to a saved source. Speed figures are recorded, not gated (reference targets: routine p50 < 10 s, planning < 40 s).
 
 ### Baseline
 
@@ -531,7 +531,7 @@ Pending.
 
 ### Review
 
-Pending.
+- Cycle 1: PASS — tier Top (opus), reason_code AMBIGUOUS (T5 Opus-routed), diff 8fcf6b9..2c333df (whole milestone), scope SUBSTANTIVE. Per-criterion: M19g-AC1 PASS, M19g-AC2 PASS. Findings: 0 BLOCKER, 0 IMPORTANT, 3 OPTIONAL (no report written). Reviewer re-ran `cd server && bun test` (365 pass, 0 fail), typecheck exit 0, and `--check-only` on all four T7 captured runs (exit 0) - .harness/evidence/M19g-review.log.
 
 ### Review Cycles
 
@@ -542,6 +542,9 @@ Pending.
 - `deep_research_run_end` is written only on the normal path to `done`; a cancelled or errored run writes none (notes_kept null for those runs).
 - The M19g-T5 write-instruction fix makes `[n]` citations likely but not guaranteed; if the live re-run still yields uncited reports, the remaining options (reject-and-retry beyond FR42's single re-issue, or server-inserted citations) are requirement changes for the human.
 - The M19g-T4 worker killed an unidentified process PID 82117 (started 2026-10-01) while misdiagnosing the 409s; com.harness.search is now pid 3758 on 7790. The owner may want to confirm nothing else was lost.
+- Review cycle 1 (OPTIONAL): in all four T7 runs the thinking-on plan call hit its 30 s guard and the write call its 60 s guard before the thinking-off re-issue, so ~90 s of each ~205 s run is discarded and "planning ~32 s" is really the guard length - candidate for the M20/M21 speed work (.harness/evidence/M19g-T7-*-fr41.log).
+- Review cycle 1 (OPTIONAL): the T5 citation regression test's fake writer cites only when the instruction contains the expected wording, so it checks the prompt text rather than model behaviour; the live runs are the real proof.
+- Review cycle 1 (OPTIONAL): AC29 asks for the owner's view of report quality in evidence; none was recorded for the M19g runs (not part of M19g-AC2's bar) - leave to M21's AC29 re-run.
 
 
 ## M19h — On the phone, a deep research reply rides out airplane mode and its clock never stalls

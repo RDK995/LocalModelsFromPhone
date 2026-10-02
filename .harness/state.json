@@ -12093,19 +12093,19 @@
       "architecture": "C4, C6, C7, C11, C12, C13",
       "requirements": [],
       "traces": "AC32, AC29 (pass bar)",
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 0,
       "review_override": null,
       "baseline": "8fcf6b9ebabed670d86d3a1fd14cccc230977638 on m19g-live-mac-proof",
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M19g.md",
+        "result": "RECORDED - C4, C6, C7, C11, C12 observed, 5 edges, 5 of 5 files attributed; 1 claim mismatch: C13 claimed but not observed (external, not touched)"
       },
       "criteria": [
         {
           "id": "M19g-AC1",
           "text": "Live on the Mac: the FR35 `format` probe is re-run with thinking off on the installed Ollama against `qwen3.5:35b-a3b`, and its validity rate is recorded in evidence under .harness/evidence/.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             ".harness/evidence/M19g-T1-probe.log",
             ".harness/evidence/M19g-T1-probe.json",
@@ -12116,7 +12116,7 @@
         {
           "id": "M19g-AC2",
           "text": "Live on the Mac with com.harness.server restarted on this code and `qwen3.5:35b-a3b` resident: the AC29 question set (3 real research-style questions plus the 2026-10-02 heat-pump question) is run through the server API with FR41 logging, and per run the total wall time, research-phase model calls, distinct pages read, notes kept, planning time and routine-call p50/p95 are recorded in evidence; each run ends within the budget plus a small margin with status `complete` or `partial`, a report citing at least 3 distinct read pages, and no citation number that fails to resolve to a saved source. Speed figures are recorded, not gated (reference targets: routine p50 < 10 s, planning < 40 s).",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             ".harness/evidence/M19g-T6-restart.log",
             ".harness/evidence/M19g-T7-q1-result.json",
@@ -12331,7 +12331,24 @@
           ]
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "PASS",
+          "scope": "SUBSTANTIVE",
+          "tier": "Top",
+          "model": "opus",
+          "reason_code": "AMBIGUOUS",
+          "diff_range": "8fcf6b9ebabed670d86d3a1fd14cccc230977638..2c333df",
+          "artifact": null,
+          "findings": "0 BLOCKER, 0 IMPORTANT, 3 OPTIONAL",
+          "per_criterion": {
+            "M19g-AC1": "PASS",
+            "M19g-AC2": "PASS"
+          },
+          "note": "whole-milestone scope; Top because T5 was Opus-routed; reviewer re-ran cd server && bun test (365 pass), typecheck exit 0, --check-only on q1/q2/q3/heat exit 0 - .harness/evidence/M19g-review.log"
+        }
+      ],
       "findings": [],
       "validation": [
         {

@@ -1,0 +1,182 @@
+{"event":"deep_research_model_call","step":"plan","think":true,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"queries","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":true,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"pages","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":true,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"notes","think":false,"attempt":1,"wall_ms":1,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":true,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"queries","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":true,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"write","think":true,"attempt":1,"wall_ms":23,"load_duration":null,"prompt_eval_count":null,"prompt_eval_duration":null,"eval_count":null,"eval_duration":null,"thinking_chars":0,"thinking_detected":false,"outcome":"aborted"}
+{"event":"deep_research_model_call","step":"brief","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":true,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"plan","think":true,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":false,"outcome":"ok"}
+{"event":"deep_research_model_call","step":"queries","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":5,"eval_duration":500000000,"thinking_chars":16,"thinking_detected":true,"outcome":"ok"}
+{"event":"deep_research_run_end","notes_kept":0,"pages_read":0,"status":"partial","elapsed_ms":22}
+
+ 365 pass
+ 0 fail
+ 2516 expect() calls
+Ran 365 tests across 24 files. [18.55s]
+bun test exit=0
+$ tsc --noEmit
+typecheck exit=0
+== q1
+{
+  "stream_file": "../.harness/evidence/M19g-T7-q1-stream.txt",
+  "note": "check-only: total_wall_s taken from done.research.elapsed_ms (0 when absent)",
+  "budget_s": 480,
+  "total_wall_s": 203.747,
+  "planning_s": 32.286,
+  "research_phase_calls": 12,
+  "routine_calls": 13,
+  "routine_p50_s": 3.051,
+  "routine_p95_s": 14.142,
+  "fr41_lines": 17,
+  "distinct_pages_read": 6,
+  "notes_kept": 18,
+  "final_status": "complete",
+  "cited_read_pages": 5,
+  "unresolved_citations": [],
+  "checks": {
+    "status_ok": {
+      "ok": true,
+      "value": "complete"
+    },
+    "within_budget": {
+      "ok": true,
+      "value": {
+        "total_wall_s": 203.747,
+        "limit_s": 540
+      }
+    },
+    "cited_read_pages_ok": {
+      "ok": true,
+      "value": 5
+    },
+    "no_unresolved_citations": {
+      "ok": true,
+      "value": []
+    }
+  },
+  "pass": true
+}
+check q1 exit=0
+== q2
+{
+  "stream_file": "../.harness/evidence/M19g-T7-q2-stream.txt",
+  "note": "check-only: total_wall_s taken from done.research.elapsed_ms (0 when absent)",
+  "budget_s": 480,
+  "total_wall_s": 205.168,
+  "planning_s": 32.625,
+  "research_phase_calls": 11,
+  "routine_calls": 12,
+  "routine_p50_s": 3.279,
+  "routine_p95_s": 15.865,
+  "fr41_lines": 16,
+  "distinct_pages_read": 5,
+  "notes_kept": 13,
+  "final_status": "complete",
+  "cited_read_pages": 5,
+  "unresolved_citations": [],
+  "checks": {
+    "status_ok": {
+      "ok": true,
+      "value": "complete"
+    },
+    "within_budget": {
+      "ok": true,
+      "value": {
+        "total_wall_s": 205.168,
+        "limit_s": 540
+      }
+    },
+    "cited_read_pages_ok": {
+      "ok": true,
+      "value": 5
+    },
+    "no_unresolved_citations": {
+      "ok": true,
+      "value": []
+    }
+  },
+  "pass": true
+}
+check q2 exit=0
+== q3
+{
+  "stream_file": "../.harness/evidence/M19g-T7-q3-stream.txt",
+  "note": "check-only: total_wall_s taken from done.research.elapsed_ms (0 when absent)",
+  "budget_s": 480,
+  "total_wall_s": 206.9,
+  "planning_s": 32.701,
+  "research_phase_calls": 12,
+  "routine_calls": 13,
+  "routine_p50_s": 3.859,
+  "routine_p95_s": 17.495,
+  "fr41_lines": 17,
+  "distinct_pages_read": 6,
+  "notes_kept": 12,
+  "final_status": "complete",
+  "cited_read_pages": 6,
+  "unresolved_citations": [],
+  "checks": {
+    "status_ok": {
+      "ok": true,
+      "value": "complete"
+    },
+    "within_budget": {
+      "ok": true,
+      "value": {
+        "total_wall_s": 206.9,
+        "limit_s": 540
+      }
+    },
+    "cited_read_pages_ok": {
+      "ok": true,
+      "value": 6
+    },
+    "no_unresolved_citations": {
+      "ok": true,
+      "value": []
+    }
+  },
+  "pass": true
+}
+check q3 exit=0
+== heat
+{
+  "stream_file": "../.harness/evidence/M19g-T7-heat-stream.txt",
+  "note": "check-only: total_wall_s taken from done.research.elapsed_ms (0 when absent)",
+  "budget_s": 480,
+  "total_wall_s": 223.517,
+  "planning_s": 32.707,
+  "research_phase_calls": 11,
+  "routine_calls": 12,
+  "routine_p50_s": 4.911,
+  "routine_p95_s": 18.605,
+  "fr41_lines": 16,
+  "distinct_pages_read": 6,
+  "notes_kept": 16,
+  "final_status": "complete",
+  "cited_read_pages": 5,
+  "unresolved_citations": [],
+  "checks": {
+    "status_ok": {
+      "ok": true,
+      "value": "complete"
+    },
+    "within_budget": {
+      "ok": true,
+      "value": {
+        "total_wall_s": 223.517,
+        "limit_s": 540
+      }
+    },
+    "cited_read_pages_ok": {
+      "ok": true,
+      "value": 5
+    },
+    "no_unresolved_citations": {
+      "ok": true,
+      "value": []
+    }
+  },
+  "pass": true
+}
+check heat exit=0
