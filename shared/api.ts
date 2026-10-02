@@ -38,6 +38,8 @@ export interface StateResponse {
   resident: ResidentModel | null;
   operation: Operation;
   generation: Generation | null;
+  /** FR34: the configured deep-research model name reported by the server. */
+  deep_research_model: string;
 }
 
 export interface LoadRequest {

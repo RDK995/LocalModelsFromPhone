@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { parseResearchBudget } from "./index";
+import { DEFAULT_RESEARCH_MODEL, parseResearchBudget, parseResearchModel } from "./index";
 
 describe("parseResearchBudget", () => {
   it("parses valid positive integers", () => {
@@ -36,5 +36,21 @@ describe("parseResearchBudget", () => {
 
   it("returns undefined for values beyond safe integers", () => {
     expect(parseResearchBudget("99999999999999999999")).toBe(undefined);
+  });
+});
+
+describe("parseResearchModel", () => {
+  it("defaults to qwen3.5:35b-a3b", () => {
+    expect(DEFAULT_RESEARCH_MODEL).toBe("qwen3.5:35b-a3b");
+  });
+
+  it("returns the default for absent or blank input", () => {
+    expect(parseResearchModel(undefined)).toBe(DEFAULT_RESEARCH_MODEL);
+    expect(parseResearchModel("")).toBe(DEFAULT_RESEARCH_MODEL);
+    expect(parseResearchModel("   ")).toBe(DEFAULT_RESEARCH_MODEL);
+  });
+
+  it("returns the trimmed configured name", () => {
+    expect(parseResearchModel(" llama3:8b ")).toBe("llama3:8b");
   });
 });

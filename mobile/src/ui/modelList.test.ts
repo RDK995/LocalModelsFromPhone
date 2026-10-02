@@ -29,6 +29,7 @@ describe("toModelListView", () => {
     resident: null,
     operation: { kind: "idle" },
     generation: null,
+    deep_research_model: "qwen3.5:35b-a3b",
   };
 
   it("mirrors an arbitrary models list verbatim, in order, with size labels", () => {

@@ -9,6 +9,9 @@
  * Server setting:
  *   PHONE_MODELS_RESEARCH_BUDGET_MS - deep research time budget in milliseconds
  *                            (positive integer; absent or invalid -> the 480000 default)
+ *   PHONE_MODELS_RESEARCH_MODEL - the one model deep research runs on (FR34); GET /v1/state
+ *                            reports it and deep research is refused unless it is loaded
+ *                            (trimmed; absent or blank -> qwen3.5:35b-a3b)
  *
  * Test-only overrides (never set these in the LaunchAgent):
  *   PHONE_MODELS_PORT        - listen port (loopback host is not overridable)
@@ -21,7 +24,7 @@ import { readFileSync, statSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
 import { GenerationManager } from "./generations/manager";
-import { createServer, setValidToken } from "./http/server";
+import { createServer, DEFAULT_RESEARCH_MODEL, setValidToken } from "./http/server";
 import { OllamaClient } from "./ollama/client";
 import { createWebTools } from "./web/tools";
 
@@ -69,6 +72,13 @@ function parsePortOverride(value: string | undefined): number | undefined {
   return port;
 }
 
+export { DEFAULT_RESEARCH_MODEL };
+
+export function parseResearchModel(value: string | undefined): string {
+  const name = value?.trim();
+  return name ? name : DEFAULT_RESEARCH_MODEL;
+}
+
 export function parseResearchBudget(value: string | undefined): number | undefined {
   if (value === undefined || !/^[1-9]\d*$/.test(value.trim())) return undefined;
   const ms = Number(value.trim());
@@ -85,7 +95,13 @@ export function main(env: Record<string, string | undefined> = process.env): voi
   const webTools = createWebTools({ baseUrl: env.PHONE_MODELS_SEARCH_URL || SEARCH_URL });
   const budgetMs = parseResearchBudget(env.PHONE_MODELS_RESEARCH_BUDGET_MS);
   const manager = new GenerationManager(ollama, webTools, budgetMs === undefined ? {} : { budgetMs });
-  const server = createServer({ ollama, manager, port, icon: webTools.icon });
+  const server = createServer({
+    ollama,
+    manager,
+    port,
+    icon: webTools.icon,
+    researchModel: parseResearchModel(env.PHONE_MODELS_RESEARCH_MODEL),
+  });
 
   if (server.hostname !== LISTEN_HOST) {
     server.stop(true);

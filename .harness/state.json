@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M17",
+  "current_milestone": "M18",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -10975,10 +10975,13 @@
         "FR34"
       ],
       "traces": "AC28 (action hidden/disabled/enabled, model name from server, steps live and saved)",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
-      "baseline": null,
+      "baseline": {
+        "commit": "983623f4619963eb458f13b2fba99b3775bfd00a",
+        "branch": "m18-deep-research-phone"
+      },
       "as_built": {
         "artifact": null,
         "result": "PENDING"

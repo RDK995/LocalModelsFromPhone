@@ -201,7 +201,7 @@ export class ModelManager {
    * `resident.loaded_by_server` is true exactly when the resident name
    * equals the model this manager itself last loaded.
    */
-  async state(): Promise<StateResponse> {
+  async state(): Promise<Omit<StateResponse, "deep_research_model">> {
     let tags: OllamaTagsResponse;
     let ps: OllamaPsResponse;
     try {

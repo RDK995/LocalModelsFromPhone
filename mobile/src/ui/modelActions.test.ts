@@ -16,6 +16,7 @@ function stateWith(operation: StateResponse["operation"]): StateResponse {
     resident: null,
     operation,
     generation: null,
+    deep_research_model: "qwen3.5:35b-a3b",
   };
 }
 

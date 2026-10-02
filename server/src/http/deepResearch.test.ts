@@ -127,7 +127,7 @@ function setup(opts: SetupOptions = {}) {
     ...research,
   };
   setValidToken(TOKEN);
-  const server = createServer({ ollama: client, manager: new GenerationManager(client, web, opts.research), port: 0 });
+  const server = createServer({ ollama: client, manager: new GenerationManager(client, web, opts.research), port: 0, researchModel: "fake-model" });
   const base = `http://127.0.0.1:${server.port}`;
   const post = (body: unknown) => fetch(`${base}/v1/chat`, { method: "POST", headers: headers(), body: JSON.stringify(body) });
   return { requests, reads, server, base, post };

@@ -42,11 +42,16 @@ export interface OllamaStateClient extends OllamaChatClient {
   show(name: string): Promise<{ capabilities?: string[] }>;
 }
 
+/** FR34: the one model deep research runs on unless the server setting overrides it. */
+export const DEFAULT_RESEARCH_MODEL = "qwen3.5:35b-a3b";
+
 export interface CreateServerOptions {
   ollama: OllamaStateClient;
   manager?: GenerationManager;
   models?: ModelManager;
   port?: number;
+  /** FR34 deep-research model name; defaults to DEFAULT_RESEARCH_MODEL. */
+  researchModel?: string;
   /** C12 icon lookup; when absent, /v1/icon answers 502 icon_unavailable. */
   icon?: (host: string, signal: AbortSignal) => Promise<IconResult>;
 }
@@ -409,6 +414,7 @@ export function createServer({
   models,
   port = DEFAULT_PORT,
   icon,
+  researchModel = DEFAULT_RESEARCH_MODEL,
 }: CreateServerOptions): ReturnType<typeof Bun.serve> {
   const genManager = manager ?? new GenerationManager(ollama);
   const modelManager = models ?? new ModelManager(ollama, genManager);
@@ -453,7 +459,7 @@ export function createServer({
       handler: async () => {
         try {
           const state = await modelManager.state();
-          return jsonResponse(state);
+          return jsonResponse({ ...state, deep_research_model: researchModel });
         } catch (error) {
           if (error instanceof OllamaDownError) {
             return errorResponse("ollama_down", error.message, 503);
@@ -540,6 +546,13 @@ export function createServer({
           return errorResponse("bad_request", body, 400);
         }
 
+        if (body.deep_research === true && body.web !== true) {
+          return errorResponse(
+            "deep_research_needs_web",
+            "Deep research needs web search to be on",
+            400
+          );
+        }
         if (modelManager.isBusy()) {
           return errorResponse(
             "operation_in_progress",
@@ -568,6 +581,14 @@ export function createServer({
           return errorResponse(
             "model_not_resident",
             `Model "${body.model}" is not loaded; load it first`,
+            409
+          );
+        }
+
+        if (body.deep_research === true && body.model !== researchModel) {
+          return errorResponse(
+            "deep_research_model_not_loaded",
+            `Load ${researchModel} to use deep research`,
             409
           );
         }
