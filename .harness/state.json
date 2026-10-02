@@ -11631,7 +11631,7 @@
       ],
       "traces": "AC31 (breadth first, parallel reads with no overlapping model calls, deadline-cut note keeps complete notes, ran-out-of-time sentence)",
       "status": "REVIEW",
-      "review_cycles": 0,
+      "review_cycles": 1,
       "review_override": null,
       "baseline": "4f0953ed372dad6716122c5f9491353006a57039 on m19d-breadth-first-prefetch",
       "as_built": {
@@ -11706,15 +11706,75 @@
               "commit": "b9e3db7"
             }
           ]
+        },
+        {
+          "id": "M19d-F1",
+          "packet": ".harness/tasks/M19d-F1.md",
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "review cycle 1 correction: a failed/unavailable search must not trigger the FR44 early end; two loop conditions plus HTTP tests"
+          },
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M19d-F1-verifier.log",
+              "commit": "2ffaa0f"
+            }
+          ]
         }
       ],
-      "reviews": [],
-      "findings": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "CHANGES_REQUIRED",
+          "scope": "SUBSTANTIVE",
+          "diff_range": "4f0953ed372dad6716122c5f9491353006a57039..d615923",
+          "artifact": ".harness/reviews/M19d-cycle1.md",
+          "findings": "0 BLOCKER, 1 IMPORTANT, 0 OPTIONAL",
+          "per_criterion": {
+            "M19d-AC1": "PASS",
+            "M19d-AC2": "PASS",
+            "M19d-AC3": "PASS"
+          },
+          "note": "reviewer re-ran cd server && bun test (336 pass, 0 fail) and bunx tsc --noEmit (clean) - .harness/evidence/M19d-review.log; reviewer tier not stated in the report, recorded as Top/opus from the T2 DIFFICULT_CONCURRENCY routing of the diff (inferred by the fix-cycle orchestrator)",
+          "pre_correction": "d615923f4d6d1da393f5f27eeb06c82ea1401c7b",
+          "correction_diff": "d615923f4d6d1da393f5f27eeb06c82ea1401c7b..HEAD",
+          "correction_files": [
+            "server/src/generations/research.ts",
+            "server/src/http/deepResearchBreadthFirst.test.ts"
+          ],
+          "files_outside_findings": "none; both files are named by the finding",
+          "tier": "Top",
+          "model": "opus",
+          "reason_code": "DIFFICULT_CONCURRENCY"
+        }
+      ],
+      "findings": [
+        {
+          "id": "M19d-cycle1-F1",
+          "severity": "IMPORTANT",
+          "status": "CORRECTED",
+          "correction_task": "M19d-F1",
+          "report": ".harness/reviews/M19d-cycle1.md",
+          "resolved_by": "pending review cycle 2"
+        }
+      ],
       "validation": [
         {
           "command": "cd server && bun test && bunx tsc --noEmit",
           "result": "PASS (verifier after T2: 336 pass, 0 fail, run twice; tsc clean)",
           "artifact": ".harness/evidence/M19d-T2-verifier.log"
+        },
+        {
+          "command": "cd server && bun test && bunx tsc --noEmit",
+          "result": "PASS (verifier after cycle-1 correction F1: 339 pass, 0 fail, run twice; tsc clean)",
+          "artifact": ".harness/evidence/M19d-F1-verifier.log"
         }
       ],
       "follow_ups": [

@@ -489,14 +489,15 @@ Pending.
 ### Validation
 
 - `cd server && bun test && bunx tsc --noEmit` - PASS (verifier after T2: 336 pass, 0 fail, run twice; tsc clean) - .harness/evidence/M19d-T2-verifier.log
+- `cd server && bun test && bunx tsc --noEmit` - PASS (verifier after cycle-1 correction F1: 339 pass, 0 fail, run twice; tsc clean) - .harness/evidence/M19d-F1-verifier.log
 
 ### Review
 
-- Cycle 1: CHANGES REQUIRED (Scope: SUBSTANTIVE), 1 IMPORTANT finding (a failed search ends a sub-question's searching as if it added no new URLs) - .harness/reviews/M19d-cycle1.md; reviewer validation .harness/evidence/M19d-review.log (336 pass, tsc clean). Pre-correction ref: d615923f4d6d1da393f5f27eeb06c82ea1401c7b. Correction task M19d-F1 (.harness/tasks/M19d-F1.md) in progress.
+- Cycle 1: CHANGES REQUIRED (Scope: SUBSTANTIVE), 1 IMPORTANT finding (a failed search ends a sub-question's searching as if it added no new URLs) - .harness/reviews/M19d-cycle1.md; reviewer validation .harness/evidence/M19d-review.log (336 pass, tsc clean). Pre-correction ref: d615923f4d6d1da393f5f27eeb06c82ea1401c7b. Correction: M19d-F1 (Mid, sonnet, attempt 3, PASS; routed Mid: ORDINARY_IMPLEMENTATION; commit 2ffaa0f) - searchOnce returns "failed" when its search step is failed/unavailable; neither loop sets searchOver on it; three new HTTP tests in deepResearchBreadthFirst.test.ts (first search failed, first search unavailable, later-round failed search) fail on the pre-correction code (3 fail) and pass after; full suite 339 pass twice, tsc clean - .harness/evidence/M19d-F1-verifier.log. Files changed by corrections: server/src/generations/research.ts, server/src/http/deepResearchBreadthFirst.test.ts - both named by the finding; no file outside the findings was touched.
 
 ### Review Cycles
 
-0
+1
 
 ### Follow-ups
 
