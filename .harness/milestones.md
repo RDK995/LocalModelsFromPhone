@@ -404,7 +404,7 @@ Human decision (2026-10-02): the harness is authorised to restart LaunchAgent `c
 
 ## M17 — A deep research run always ends within about 8 minutes with its status shown
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -432,7 +432,20 @@ Pending.
 
 ### Evidence
 
+Tasks (tier routing; attempt numbers per the ladder):
+- M17-T1 — research deadline, one signal per phase, complete/partial/failed, elapsed on events. Top (opus), DIFFICULT_CONCURRENCY, attempt 4, PASS; verifier PASS (`.harness/evidence/M17-T1-verifier.log`); commit 0ccd1ab.
+- M17-T2 — budget server setting `PHONE_MODELS_RESEARCH_BUDGET_MS`, manager never ends with error-only, POST /v1/chat tests. Mid (sonnet), ORDINARY_IMPLEMENTATION, attempt 3, PASS; verifier PASS (`.harness/evidence/M17-T2-verifier.log`); commit 5a0a284.
+
+Per criterion (status left PENDING for review):
+- M17-AC1: research.test.ts deadline/elapsed tests (T1 log); deepResearch.test.ts "AC1: a slow step uses up research time..." via POST /v1/chat (T2 log).
+- M17-AC2: research.test.ts all-searches-fail test (T1 log); deepResearch.test.ts "AC2: every search failing..." (T2 log).
+- M17-AC3: research.test.ts in-flight search/read/model abort and write-deadline tests (T1 log); deepResearch.test.ts AC3a (search, read, model) and AC3b (hanging write) (T2 log).
+
 ### Validation
+
+- `cd server && bun test && bun run typecheck` — PASS per verifier after T2 (239 pass, 0 fail; tsc clean). `.harness/evidence/M17-T2-verifier.log`
+- `cd mobile && bun run typecheck` — not run in implementation; `shared/api.ts` gained optional fields only. For the reviewer.
+- Architecture deviation recorded: D-M17-1 (Material: no).
 
 ### Review
 
@@ -443,6 +456,12 @@ Pending.
 0
 
 ### Follow-ups
+
+- Status when only slow (not unavailable) searches ran and the deadline cut them all: current rule reports `failed` with the could-not-search sentence; FR36 could also be read as `partial` (stopped early by the deadline). Product reading to confirm.
+- When the write call is skipped (final deadline already passed, or `failed`), no `write` step is emitted; M18 display may want one.
+- Any error thrown in the research phase after the research deadline is treated as running out of time; an unrelated post-deadline bug would be masked.
+- No live check that a real qwen3.5:35b-a3b run now ends within ~8 min (the M16 run took ~24 min); it needs a restart of com.harness.server, which is not authorised beyond M16. Candidate for M21.
+- milestones.md is ~690 lines after archiving M15; nothing else archivable yet.
 
 
 ## M18 — The phone offers Deep research only when the configured model is loaded, and shows the run live

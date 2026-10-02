@@ -10740,7 +10740,7 @@
         "FR36"
       ],
       "traces": "AC28 (all backends failing, slow backend, deadline during write-up)",
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": "003da19138951edcc615474a3d57c944a320e089 on m17-research-time-budget",
@@ -10753,26 +10753,95 @@
           "id": "M17-AC1",
           "text": "Server tests (fake Ollama and backends, shortened budget setting): the deadline is checked before every search, read and model call; when research time (budget minus the writing reserve of about a quarter) runs out the run moves to writing with what it has and ends `partial`; the run's events carry its status and elapsed time against the budget.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            ".harness/evidence/M17-T1-verifier.log (research.test.ts: elapsed/budget on events; research deadline -> no further search/read/model, write runs, partial)",
+            ".harness/evidence/M17-T2-verifier.log (deepResearch.test.ts AC1 via POST /v1/chat)"
+          ]
         },
         {
           "id": "M17-AC2",
           "text": "Server tests: with every search backend failing the run ends within the budget plus a small margin as `failed`, with a plain sentence saying the research could not search as its answer, plus its steps.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            ".harness/evidence/M17-T1-verifier.log (all searches failed/unavailable -> failed, COULD_NOT_SEARCH_NOTE, no write)",
+            ".harness/evidence/M17-T2-verifier.log (deepResearch.test.ts AC2 via POST /v1/chat, within budget+500ms)"
+          ]
         },
         {
           "id": "M17-AC3",
           "text": "Server tests: with a slow search backend the run ends within the budget plus a small margin (each search and read keeps its FR24 time limit and one cancellation signal reaches every in-flight search, read and model request); with the deadline hitting during the write-up it ends within the budget plus a small margin as `partial` with a non-empty answer (the FR33-style note if the write-up produced nothing).",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            ".harness/evidence/M17-T1-verifier.log (in-flight search/read/model each see aborted signal; deadline during write -> partial with notes or NO_REPORT_NOTE)",
+            ".harness/evidence/M17-T2-verifier.log (deepResearch.test.ts AC3a x3 and AC3b via POST /v1/chat, within budget+500ms)"
+          ]
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M17-T1",
+          "packet": ".harness/tasks/M17-T1.md",
+          "routing": {
+            "tier": "Top",
+            "model": "opus",
+            "reason_code": "DIFFICULT_CONCURRENCY",
+            "detail": "phase deadline timers and one cancellation signal reaching every in-flight search/read/model request, distinguished from user Stop"
+          },
+          "attempts": [
+            {
+              "attempt": 4,
+              "tier": "Top",
+              "model": "opus",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M17-T1-verifier.log",
+              "commit": "0ccd1ab"
+            }
+          ]
+        },
+        {
+          "id": "M17-T2",
+          "packet": ".harness/tasks/M17-T2.md",
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "settings plumbing through manager and index, manager failure path, HTTP tests with timing bounds; concurrency design fixed by T1"
+          },
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M17-T2-verifier.log",
+              "commit": "5a0a284"
+            }
+          ]
+        }
+      ],
       "reviews": [],
       "findings": [],
-      "validation": [],
-      "follow_ups": [],
+      "validation": [
+        {
+          "command": "cd server && bun test && bun run typecheck",
+          "result": "PASS (verifier, after T2: 239 pass, 0 fail; tsc clean)",
+          "artifact": ".harness/evidence/M17-T2-verifier.log"
+        },
+        {
+          "command": "cd mobile && bun run typecheck",
+          "result": "NOT RUN by implementation (shared/api.ts gained optional fields only); for the reviewer",
+          "artifact": null
+        }
+      ],
+      "follow_ups": [
+        "Status when only slow (not unavailable) searches ran and the deadline cut them all: current rule reports `failed` with COULD_NOT_SEARCH_NOTE; FR36 could also be read as `partial` (stopped early by the deadline). Product reading to confirm.",
+        "When the write call is skipped (final deadline already passed, or `failed`), no `write` step is emitted; M18 display may want one.",
+        "In the research phase any error thrown after the research deadline is treated as running out of time (moves to writing); an unrelated post-deadline bug would be masked.",
+        "Live check on qwen3.5:35b-a3b that a real run now ends within ~8 min was not part of M17's criteria (M16 run took ~24 min); needs a server restart, which is not authorised beyond M16. Candidate for M21.",
+        "milestones.md is still ~690 lines after archiving M15; nothing else is archivable yet (M16 most recently settled, M5a BLOCKED)."
+      ],
       "complexity_signals": [
         "CONCURRENCY_LIFECYCLE"
       ],
