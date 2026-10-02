@@ -457,7 +457,7 @@ C6, C12
 
 ## M19e — Reply streams show they are alive: started steps for deep research and keep-alives for every reply
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -471,7 +471,7 @@ C4, C6
 
 ### As-Built
 
-Pending.
+.harness/as-built/M19e.md - RECORDED: C4, C6 observed, 3 edges, 7 of 7 files attributed, no claim mismatches.
 
 ### Acceptance Criteria
 
@@ -496,7 +496,7 @@ Pending.
 
 ### Review
 
-Pending.
+- Cycle 1: PASS — tier Top (opus), reason_code DIFFICULT_CONCURRENCY, diff 755fbc5..3a4e4bf (whole milestone), scope SUBSTANTIVE. Per-criterion: M19e-AC1 PASS, M19e-AC2 PASS. Findings: 0 BLOCKER, 0 IMPORTANT, 2 OPTIONAL (no report written). Reviewer re-ran `cd server && bun test` (349 pass, 0 fail), server and mobile tsc clean - .harness/evidence/M19e-review.log.
 
 ### Review Cycles
 
@@ -504,7 +504,7 @@ Pending.
 
 ### Follow-ups
 
-- A prefetched read still in flight when the deadline, a Stop or a cancel hits now has a 'started' step with no matching done/failed step (drainReads skips unfinished reads); before M19e such reads were never announced. The app may show them as still running - consider a 'failed' read step in drainReads, or handle in M19f.
+- A prefetched read still in flight when the deadline, a Stop or a cancel hits now has a 'started' step with no matching done/failed step (drainReads skips unfinished reads); before M19e such reads were never announced. The app may show them as still running - consider a 'failed' read step in drainReads, or handle in M19f. Review cycle 1 (OPTIONAL): the same gap also covers a search cut off by the deadline/Stop/cancel and a read that ended in an error after its started step (research.ts ~760, ~812-813, ~882); model calls already close with 'failed'.
 - New wire value StepEventData.kind 'model' (detail = label); the app's stepLabel (mobile/src/ui/chatItems.ts) does not know it yet and would fall through to the read branch - M19f (app half of FR45) must render kind 'model' by its detail.
 - search/read steps now carry the run's own step_id (the web tool's random id is replaced) so the pre-await started step and the tool's later done/failed/unavailable step share one id.
 - milestones.md is still over 400 lines after archiving M19c (remaining entries are active, most recently settled, TODO or BLOCKED).
