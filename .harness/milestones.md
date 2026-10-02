@@ -441,7 +441,7 @@ Verdict: PASS (completion gate: every criterion PASS, no BLOCKER/IMPORTANT open)
 
 ## M19c — A note call gets the page's most relevant passages, and useless pages cost no model call
 
-Status: TODO
+Status: REVIEW
 
 ### Outcome
 
@@ -469,7 +469,27 @@ Pending.
 
 ### Evidence
 
+Tasks:
+
+```
+M19c-T1 — pure passage module (split, BM25 rank, capped excerpt, skip decision)
+          Cheap (haiku, BOUNDED_LOW_RISK), attempt 1, PASS; verifier PASS
+          (.harness/evidence/M19c-T1-verifier.log: passages.test.ts 25 pass; full suite 315 pass; tsc clean) — commit 8330fb5
+M19c-T2 — wire excerpt and skip into the note step, task text to the end of the user message, HTTP tests
+          Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3, PASS; verifier PASS
+          (.harness/evidence/M19c-T2-verifier.log: deepResearchPassages.test.ts 4 pass; full suite 319 pass; tsc clean) — commit 3e07eaf
+          Changed files all inside the packet's Files Allowed To Change; edits to pre-existing deep research tests add NO_SKIP settings only, no assertion removed.
+```
+
+Per criterion (claimed by implementation; the reviewer's table decides):
+
+- M19c-AC1: server/src/http/deepResearchPassages.test.ts lines 163-195 (POST /v1/chat deep_research, ~6000-word page: note request carries title, first paragraph and the relevant middle section, not the end sentence; `<untrusted_data>` page block first, estimateTokens <= noteExcerptTokens 2500; user message ends with the task; every request's system message === SYSTEM_INSTRUCTIONS, none contains 'Task:') and lines 197-210 (cap 600 honoured); passages.ts splitPassages/rankPassages (BM25 k1 1.2, b 0.75) unit tests in server/src/generations/passages.test.ts — .harness/evidence/M19c-T2-verifier.log
+- M19c-AC2: deepResearchPassages.test.ts lines 212-244: a quote absent from the note request but in the full stored page survives to the write request and the report keeps [1]; an invented quote is dropped; unquoted raw page sentences appear in no later request; research.ts quote check still against normaliseWhitespace(page.text) — .harness/evidence/M19c-T2-verifier.log
+- M19c-AC3: deepResearchPassages.test.ts lines 246-290: ~10-word page -> 'empty', Cloudflare bot page -> 'blocked', no-term-match page -> 'empty'; no notes request for any of them, one deep_research_page_skipped log line each with its n; all four pages in sources with sequential first-read numbers — .harness/evidence/M19c-T2-verifier.log
+
 ### Validation
+
+`cd server && bun test && bunx tsc --noEmit` — PASS after T2 (verifier): 319 pass, 0 fail across 19 files; tsc clean; artifact .harness/evidence/M19c-T2-verifier.log. The reviewer re-runs this.
 
 ### Review
 
@@ -480,6 +500,11 @@ Pending.
 0
 
 ### Follow-ups
+
+- T2 fixed a T1 bug in passages.ts (first paragraph computed after collapsing all whitespace, so it was the whole page) that T1's own unit tests did not catch; passages.test.ts has no test pinning first-paragraph extraction on a multi-paragraph page.
+- Pre-existing deep research tests (research.test.ts, deepResearch*.test.ts) run with NO_SKIP settings (noteMinWords 0, noteMinRelevance -1) because their fixture pages are a few words long; skip rules are covered only by deepResearchPassages.test.ts and passages.test.ts.
+- Every deep research step (not only notes) now sends SYSTEM_INSTRUCTIONS alone as the system message with the task at the end of the user message (FR43 byte-stable prefix).
+- Thresholds (noteMinWords 40, noteMinRelevance 0, bot markers under 400 words, noteExcerptTokens 2500 estimated as chars/4) are unproven against real pages; M19g's live run is where they meet real pages.
 
 
 ## M19d — Research covers every sub-question first, reads chosen pages ahead, and keeps partial notes
