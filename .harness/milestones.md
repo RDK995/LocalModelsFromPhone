@@ -452,7 +452,7 @@ Cycle 1: PASS — tier Mid, model sonnet (reason ORDINARY_IMPLEMENTATION; T1 Che
 
 ## M19d — Research covers every sub-question first, reads chosen pages ahead, and keeps partial notes
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -466,13 +466,13 @@ C6, C12
 
 ### As-Built
 
-Pending.
+.harness/as-built/M19d.md - RECORDED - components C6, C7, C12; 2 claim mismatches (C12 claimed but crossed not modified; C7 observed but not claimed)
 
 ### Acceptance Criteria
 
-- [ ] **M19d-AC1**: Server tests through POST /v1/chat with a scripted fake Ollama and fake search/page backends: every sub-question gets its searches and its first page before any sub-question gets a second page, and a sub-question ends early when a search round adds no new URLs.
-- [ ] **M19d-AC2**: Server tests: chosen pages start fetching in parallel as soon as page choice returns, each keeping its FR24 time limit, while model calls never overlap; Stop or the deadline with several prefetched reads in flight cancels all of them through the run's one signal (FR36).
-- [ ] **M19d-AC3**: Server tests: when the deadline cuts a note call, every complete note already present in its partial output is kept and still quote-checked; a run that ends with no notes because research time ran out ends `failed` with the sentence "The research ran out of time before it could take notes." instead of blaming the pages.
+- [x] **M19d-AC1**: Server tests through POST /v1/chat with a scripted fake Ollama and fake search/page backends: every sub-question gets its searches and its first page before any sub-question gets a second page, and a sub-question ends early when a search round adds no new URLs.
+- [x] **M19d-AC2**: Server tests: chosen pages start fetching in parallel as soon as page choice returns, each keeping its FR24 time limit, while model calls never overlap; Stop or the deadline with several prefetched reads in flight cancels all of them through the run's one signal (FR36).
+- [x] **M19d-AC3**: Server tests: when the deadline cuts a note call, every complete note already present in its partial output is kept and still quote-checked; a run that ends with no notes because research time ran out ends `failed` with the sentence "The research ran out of time before it could take notes." instead of blaming the pages.
 
 ### Baseline
 
@@ -494,6 +494,7 @@ Pending.
 ### Review
 
 - Cycle 1: CHANGES REQUIRED (Scope: SUBSTANTIVE), 1 IMPORTANT finding (a failed search ends a sub-question's searching as if it added no new URLs) - .harness/reviews/M19d-cycle1.md; reviewer validation .harness/evidence/M19d-review.log (336 pass, tsc clean). Pre-correction ref: d615923f4d6d1da393f5f27eeb06c82ea1401c7b. Correction: M19d-F1 (Mid, sonnet, attempt 3, PASS; routed Mid: ORDINARY_IMPLEMENTATION; commit 2ffaa0f) - searchOnce returns "failed" when its search step is failed/unavailable; neither loop sets searchOver on it; three new HTTP tests in deepResearchBreadthFirst.test.ts (first search failed, first search unavailable, later-round failed search) fail on the pre-correction code (3 fail) and pass after; full suite 339 pass twice, tsc clean - .harness/evidence/M19d-F1-verifier.log. Files changed by corrections: server/src/generations/research.ts, server/src/http/deepResearchBreadthFirst.test.ts - both named by the finding; no file outside the findings was touched.
+- Cycle 2: PASS (tier Mid, sonnet, reason ORDINARY_IMPLEMENTATION; correction diff d615923..e86ff8b), all criteria PASS, 0 findings; finding M19d-cycle1-F1 resolved; reviewer re-ran validation (339 pass, tsc clean) - .harness/evidence/M19d-review.log
 
 ### Review Cycles
 

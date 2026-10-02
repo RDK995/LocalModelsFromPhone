@@ -11630,19 +11630,19 @@
         "FR44"
       ],
       "traces": "AC31 (breadth first, parallel reads with no overlapping model calls, deadline-cut note keeps complete notes, ran-out-of-time sentence)",
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 1,
       "review_override": null,
       "baseline": "4f0953ed372dad6716122c5f9491353006a57039 on m19d-breadth-first-prefetch",
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M19d.md",
+        "result": "RECORDED - components C6, C7, C12; 2 claim mismatches (C12 claimed but crossed not modified; C7 observed but not claimed)"
       },
       "criteria": [
         {
           "id": "M19d-AC1",
           "text": "Server tests through POST /v1/chat with a scripted fake Ollama and fake search/page backends: every sub-question gets its searches and its first page before any sub-question gets a second page, and a sub-question ends early when a search round adds no new URLs.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "server/src/http/deepResearchBreadthFirst.test.ts AC1a (first three note decisions are sub-questions 1,2,3 in plan order; all searches before the 4th note; also when a first chosen read fails) and AC1b (second search adding no new URLs -> no further search and no gap check for that sub-question; a later empty search ends searching) - .harness/evidence/M19d-T2-verifier.log (7 pass; full suite 336 pass twice; tsc clean)"
           ]
@@ -11650,7 +11650,7 @@
         {
           "id": "M19d-AC2",
           "text": "Server tests: chosen pages start fetching in parallel as soon as page choice returns, each keeping its FR24 time limit, while model calls never overlap; Stop or the deadline with several prefetched reads in flight cancels all of them through the run's one signal (FR36).",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "server/src/http/deepResearchBreadthFirst.test.ts AC2a (max concurrent fake Ollama requests === 1; >=2 reads in flight; second chosen read starts before the first note request), AC2b (research deadline: every hanging prefetched read's signal aborted, run ends partial in time, Sources == completed reads), AC2c (first Stop aborts every in-flight prefetched read, short write-up); FR24 per-read limits unchanged in webTools.read - .harness/evidence/M19d-T2-verifier.log"
           ]
@@ -11658,7 +11658,7 @@
         {
           "id": "M19d-AC3",
           "text": "Server tests: when the deadline cuts a note call, every complete note already present in its partial output is kept and still quote-checked; a run that ends with no notes because research time ran out ends `failed` with the sentence \"The research ran out of time before it could take notes.\" instead of blaming the pages.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "server/src/http/deepResearchPartialNotes.test.ts AC3a (deadline-cut note call: complete note with a page quote reaches the write request, invalid-quote and incomplete notes dropped, status partial), AC3b (deadline with no notes: status failed, report exactly 'The research ran out of time before it could take notes.'), AC3c regressions (could-not-read, could-not-search); completeNotesFromPartial unit tests in research.test.ts - .harness/evidence/M19d-T1-verifier.log (51 pass; full suite 329 pass)"
           ]
@@ -11753,16 +11753,33 @@
           "tier": "Top",
           "model": "opus",
           "reason_code": "DIFFICULT_CONCURRENCY"
+        },
+        {
+          "cycle": 2,
+          "verdict": "PASS",
+          "scope": "SUBSTANTIVE",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "ORDINARY_IMPLEMENTATION",
+          "diff_range": "d615923f4d6d1da393f5f27eeb06c82ea1401c7b..e86ff8b",
+          "artifact": null,
+          "findings": "0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL",
+          "per_criterion": {
+            "M19d-AC1": "PASS",
+            "M19d-AC2": "PASS",
+            "M19d-AC3": "PASS"
+          },
+          "note": "correction-diff scope; reviewer re-ran cd server && bun test (339 pass, 0 fail) and bunx tsc --noEmit (clean) - .harness/evidence/M19d-review.log"
         }
       ],
       "findings": [
         {
           "id": "M19d-cycle1-F1",
           "severity": "IMPORTANT",
-          "status": "CORRECTED",
+          "status": "RESOLVED",
           "correction_task": "M19d-F1",
           "report": ".harness/reviews/M19d-cycle1.md",
-          "resolved_by": "pending review cycle 2"
+          "resolved_by": "review cycle 2 PASS"
         }
       ],
       "validation": [
