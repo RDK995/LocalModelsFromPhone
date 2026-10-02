@@ -161,7 +161,7 @@ type StreamOutcome = "terminal" | "aborted" | "drop";
 
 /** Result of driving the resume retry loop after a drop. */
 type ResumeOutcome =
-  | { outcome: "response"; response: Response; firstDropAt: number }
+  | { outcome: "response"; response: Response }
   | { outcome: "aborted" }
   | { outcome: "error"; error: Error };
 
@@ -591,7 +591,9 @@ export class APIClient {
         }
 
         currentResponse = resumed.response;
-        firstDropAt = resumed.firstDropAt;
+        // The outage is over: the 300 s allowance applies per outage, so the
+        // next drop starts a fresh allowance measured from that drop.
+        firstDropAt = null;
       }
     } catch (error) {
       // Not a transport drop: most likely the caller's own onEvent threw
@@ -783,7 +785,7 @@ export class APIClient {
    * terminal error. Stops early, without a further request, if
    * `options.signal` aborts (during the wait or the fetch).
    *
-   * If the resume budget since `firstDropAt` is exhausted while the app is
+   * If the resume budget since `firstDropAt` (the start of the current outage; a successful resume ends the outage and the next drop starts a fresh allowance) is exhausted while the app is
    * backgrounded (`lifecycle.isForeground()` is false), the loop does not
    * error out; instead it waits, without making any request, for the next
    * foreground event (AC4), then resumes immediately as though that event
@@ -884,7 +886,7 @@ export class APIClient {
       handle.fetchInFlight = false;
 
       if (response.status === 200) {
-        return { outcome: "response", response, firstDropAt };
+        return { outcome: "response", response };
       }
 
       if (response.status === 401) {

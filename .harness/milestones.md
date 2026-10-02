@@ -465,7 +465,7 @@ C4, C6
 
 ## M19f — On the phone the clock ticks every second, each outage gets its own resume allowance, and a failed reply shows a plain line
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -488,6 +488,8 @@ Pending.
 - [ ] **M19f-AC3**: App tests: a reply with error status and no answer text - deep research, ordinary web or switch off - shows a plain line (e.g. "Lost connection to the Mac before the reply arrived") with its steps visible, never an empty bubble, both live and when reopened from storage.
 
 ### Baseline
+
+6897b7a42cb49268affdce55f299ded341f09646 on m19f-phone-liveness
 
 ### Evidence
 

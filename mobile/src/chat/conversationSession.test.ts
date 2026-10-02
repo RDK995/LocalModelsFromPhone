@@ -1111,3 +1111,46 @@ describe("sendInConversation: deep research saving and stop (M19)", () => {
     expect(reopened).toEqual(reply);
   });
 });
+
+describe("sendInConversation: outage longer than the resume allowance (M19f-AC2)", () => {
+  it("ends the reply with status error and keeps its steps when the connection never comes back within 300 s", async () => {
+    const store = createConversationStore(createMemoryStorage());
+    const c = await store.create();
+
+    let virtualNow = 0;
+    const fetchMock = mock(async (url: string) => {
+      if (url.endsWith("/v1/state")) {
+        return stateResponse({ name: "llama3" }, [{ name: "llama3", size_bytes: 1, tools: true }]);
+      }
+      if (url.endsWith("/v1/chat")) {
+        const s = controlledSseResponse("gen-drop");
+        s.push("id: gen-drop-1\nevent: step\ndata: {\"step_id\":\"s1\",\"kind\":\"search\",\"status\":\"done\",\"query\":\"q\"}\n\n");
+        s.push("id: gen-drop-2\nevent: step\ndata: {\"step_id\":\"s2\",\"kind\":\"read\",\"status\":\"done\",\"url\":\"https://t.test\"}\n\n");
+        // The body ends without a terminal event: a transport drop.
+        s.close();
+        return s.response;
+      }
+      // Every resume attempt fails: the Mac stays unreachable.
+      throw new Error("network error");
+    });
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch, {
+      now: () => virtualNow,
+      sleep: async (ms: number) => {
+        // Each backoff wait plus a slow failing attempt: 200 s of fake time.
+        virtualNow += 200_000 + ms;
+      },
+    });
+    client.setToken("t");
+
+    const result = newCallbacks();
+    await sendInConversation(client, store, c.id, "hi", result.callbacks);
+
+    expect(result.errored).not.toBeNull();
+    const reply = (await store.get(c.id))!.messages[1];
+    expect(reply.status).toBe("error");
+    expect(reply.steps).toEqual([
+      { step_id: "s1", kind: "search", status: "done", query: "q" },
+      { step_id: "s2", kind: "read", status: "done", url: "https://t.test" },
+    ]);
+  });
+});

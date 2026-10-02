@@ -1837,6 +1837,164 @@ describe("APIClient dropped-connection resume (FR11)", () => {
   });
 });
 
+describe("APIClient per-outage resume allowance (M19f-AC2, FR45)", () => {
+  /** Starts a chat over a scripted sequence of responses; returns handles. */
+  function startChat(responses: Array<() => Response | Promise<Response>>) {
+    const clock = fakeClock();
+    const fetchMock = sequentialFetch(responses);
+    const client = new APIClient(BASE_URL, fetchMock as unknown as FetchImpl, {
+      sleep: clock.sleep,
+      now: clock.now,
+    });
+    client.setToken("t");
+    const events: StreamEvent[] = [];
+    const state = {
+      completed: false,
+      errored: null as Error | null,
+    };
+    const chatPromise = client.chat(
+      { model: "m", messages: [{ role: "user", content: "hi" }] },
+      {
+        onEvent: (event) => events.push(event),
+        onError: (error) => {
+          state.errored = error;
+        },
+        onComplete: () => {
+          state.completed = true;
+        },
+      }
+    );
+    return { clock, fetchMock, events, state, chatPromise };
+  }
+
+  it("(a) several 200 s outages in one reply all resume, even though the total outage time exceeds 300 s", async () => {
+    const streams = [0, 1, 2, 3, 4].map(() =>
+      resumableSseResponse({ generationId: "gen-pa" })
+    );
+    const { clock, fetchMock, events, state, chatPromise } = startChat(
+      streams.map((s) => () => s.response)
+    );
+
+    await waitFor(() => fetchMock.calls.length >= 1, "initial request");
+    streams[0]!.push(sseEvent("pa-1", "content", { text: "0" }));
+    await waitFor(() => events.length === 1, "first event");
+
+    for (let outage = 1; outage <= 4; outage++) {
+      streams[outage - 1]!.fail();
+      await waitFor(
+        () => clock.sleeps.length === outage,
+        `backoff wait for outage ${outage}`
+      );
+      clock.advance(200_000);
+      clock.release();
+      await waitFor(
+        () => fetchMock.calls.length === outage + 1,
+        `resume request for outage ${outage}`
+      );
+      streams[outage]!.push(
+        sseEvent(`pa-${outage + 1}`, "content", { text: String(outage) })
+      );
+      await waitFor(() => events.length === outage + 1, `event ${outage + 1}`);
+    }
+    streams[4]!.push(
+      sseEvent("pa-6", "done", {
+        status: "complete",
+        model: "m",
+        eval_count: 1,
+        tokens_per_second: 1,
+      })
+    );
+    await chatPromise;
+
+    expect(state.errored).toBeNull();
+    expect(state.completed).toBe(true);
+    expect(events.map((e) => e.type)).toEqual([
+      "content",
+      "content",
+      "content",
+      "content",
+      "content",
+      "done",
+    ]);
+    expect(fetchMock.calls.length).toBe(5);
+  });
+
+  it("(b) a single outage longer than 300 s after an earlier short outage ends the reply with an error and no further requests", async () => {
+    const s0 = resumableSseResponse({ generationId: "gen-pb" });
+    const s1 = resumableSseResponse({ generationId: "gen-pb" });
+    const { clock, fetchMock, state, chatPromise } = startChat([
+      () => s0.response,
+      () => s1.response,
+      () => {
+        throw new Error("network error");
+      },
+    ]);
+
+    await waitFor(() => fetchMock.calls.length >= 1, "initial request");
+    s0.fail();
+    await waitFor(() => clock.sleeps.length === 1, "outage 1 wait");
+    clock.advance(100_000);
+    clock.release();
+    await waitFor(() => fetchMock.calls.length === 2, "outage 1 resume");
+
+    s1.fail();
+    await waitFor(() => clock.sleeps.length === 2, "outage 2 wait");
+    clock.advance(300_001);
+    clock.release();
+    await waitFor(() => fetchMock.calls.length === 3, "outage 2 attempt");
+
+    await chatPromise;
+
+    expect(state.completed).toBe(false);
+    expect(state.errored).not.toBeNull();
+    expect(state.errored!.message).toContain("connection to the Mac was lost");
+    expect(clock.sleeps.length).toBe(2);
+    expect(fetchMock.calls.length).toBe(3);
+  });
+
+  it("(c) the allowance is measured from the start of the current outage: 299 s still retries, over 300 s does not", async () => {
+    const s0 = resumableSseResponse({ generationId: "gen-pc" });
+    const s1 = resumableSseResponse({ generationId: "gen-pc" });
+    const { clock, fetchMock, state, chatPromise } = startChat([
+      () => s0.response,
+      () => s1.response,
+      () => {
+        throw new Error("network error");
+      },
+      () => {
+        throw new Error("network error");
+      },
+    ]);
+
+    await waitFor(() => fetchMock.calls.length >= 1, "initial request");
+    s0.fail();
+    await waitFor(() => clock.sleeps.length === 1, "outage 1 wait");
+    clock.advance(250_000);
+    clock.release();
+    await waitFor(() => fetchMock.calls.length === 2, "outage 1 resume");
+
+    // Outage 2 starts at t = 250 s.
+    s1.fail();
+    await waitFor(() => clock.sleeps.length === 2, "outage 2 wait 1");
+    clock.advance(299_000);
+    clock.release();
+    await waitFor(() => fetchMock.calls.length === 3, "outage 2 attempt 1");
+
+    // 299 s into the outage: still within the allowance, so it waits again.
+    await waitFor(() => clock.sleeps.length === 3, "outage 2 wait 2");
+    expect(state.errored).toBeNull();
+    clock.advance(2_000);
+    clock.release();
+    await waitFor(() => fetchMock.calls.length === 4, "outage 2 attempt 2");
+
+    await chatPromise;
+    expect(state.completed).toBe(false);
+    expect(state.errored).not.toBeNull();
+    expect(fetchMock.calls.length).toBe(4);
+    expect(clock.sleeps.length).toBe(3);
+  });
+});
+
 describe("APIClient foreground resume (M4c, FR11/AC M4-AC3)", () => {
   it("(a) foreground during a pending read aborts that transport and resumes at once with no backoff wait", async () => {
     const clock = fakeClock();

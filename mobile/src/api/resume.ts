@@ -27,8 +27,10 @@ export function resumeDelayMs(attempt: number): number {
 }
 
 /**
- * Wall-clock budget, in milliseconds, for the whole resume loop for one
- * reply, measured from the first transport drop of that reply. Once elapsed
+ * Wall-clock budget, in milliseconds, for one outage's resume loop,
+ * measured from the transport drop that started that outage. It resets after
+ * every successful resume, so several short outages in one reply each get
+ * the full allowance. Once elapsed
  * time reaches this budget when the next attempt would start, the resume
  * loop stops and the caller sees an error instead of retrying further.
  */

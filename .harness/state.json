@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M19e",
+  "current_milestone": "M19f",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -11950,10 +11950,10 @@
         "FR45"
       ],
       "traces": "AC31 (resume allowance resets after a successful resume; an error reply with no text shows the error line with steps, on deep and ordinary replies), FR40 (amended: per-outage resume allowance and error line on ordinary and switch-off replies)",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
-      "baseline": null,
+      "baseline": "6897b7a42cb49268affdce55f299ded341f09646 on m19f-phone-liveness",
       "as_built": {
         "artifact": null,
         "result": "PENDING"
