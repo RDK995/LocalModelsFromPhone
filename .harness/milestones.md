@@ -344,71 +344,7 @@ A run has one overall time budget (server setting, about 8 minutes) with about a
 
 Owns: FR36. Traces to: AC28 (all backends failing, slow backend, deadline during write-up).
 
-### Architecture
-
-C6, C12, C13
-
-### As-Built
-
-.harness/as-built/M17.md — RECORDED; 7/7 files attributed; claim mismatches: C12 and C13 claimed but not changed (C12 only called differently by C6; D-M17-1 says C13 unchanged).
-
-### Acceptance Criteria
-
-- [x] **M17-AC1**: Server tests (fake Ollama and backends, shortened budget setting): the deadline is checked before every search, read and model call; when research time (budget minus the writing reserve of about a quarter) runs out the run moves to writing with what it has and ends `partial`; the run's events carry its status and elapsed time against the budget.
-- [x] **M17-AC2**: Server tests: with every search backend failing the run ends within the budget plus a small margin as `failed`, with a plain sentence saying the research could not search as its answer, plus its steps.
-- [x] **M17-AC3**: Server tests: with a slow search backend the run ends within the budget plus a small margin (each search and read keeps its FR24 time limit and one cancellation signal reaches every in-flight search, read and model request); with the deadline hitting during the write-up it ends within the budget plus a small margin as `partial` with a non-empty answer (the FR33-style note if the write-up produced nothing).
-
-### Baseline
-
-003da19138951edcc615474a3d57c944a320e089 on m17-research-time-budget
-
-### Evidence
-
-Tasks (tier routing; attempt numbers per the ladder):
-- M17-T1 — research deadline, one signal per phase, complete/partial/failed, elapsed on events. Top (opus), DIFFICULT_CONCURRENCY, attempt 4, PASS; verifier PASS (`.harness/evidence/M17-T1-verifier.log`); commit 0ccd1ab.
-- M17-T2 — budget server setting `PHONE_MODELS_RESEARCH_BUDGET_MS`, manager never ends with error-only, POST /v1/chat tests. Mid (sonnet), ORDINARY_IMPLEMENTATION, attempt 3, PASS; verifier PASS (`.harness/evidence/M17-T2-verifier.log`); commit 5a0a284.
-
-Per criterion (status left PENDING for review):
-- M17-AC1: research.test.ts deadline/elapsed tests (T1 log); deepResearch.test.ts "AC1: a slow step uses up research time..." via POST /v1/chat (T2 log).
-- M17-AC2: research.test.ts all-searches-fail test (T1 log); deepResearch.test.ts "AC2: every search failing..." (T2 log).
-- M17-AC3: research.test.ts in-flight search/read/model abort and write-deadline tests (T1 log); deepResearch.test.ts AC3a (search, read, model) and AC3b (hanging write) (T2 log).
-
-### Validation
-
-- `cd server && bun test && bun run typecheck` — PASS per verifier after T2 (239 pass, 0 fail; tsc clean). `.harness/evidence/M17-T2-verifier.log`
-- `cd mobile && bun run typecheck` — not run in implementation; `shared/api.ts` gained optional fields only. For the reviewer.
-- Architecture deviation recorded: D-M17-1 (Material: no).
-
-### Review
-
-Cycle 1: CHANGES REQUIRED (SUBSTANTIVE) — .harness/reviews/M17-cycle1.md (Finding 1 IMPORTANT, Finding 2 OPTIONAL; M17-AC1/AC2/AC3 PASS); review log .harness/evidence/M17-review.log
-Pre-correction: fa2ee80999ad98a28d22f9f55f8b175479b765b9
-Corrections (each verifier-confirmed, committed):
-- M17-C1 finding 1 (IMPORTANT) — Mid (sonnet, ORDINARY_IMPLEMENTATION), attempt 3 PASS; verifier PASS (focused 43 pass, full server suite 250 pass 0 fail, tsc clean) `.harness/evidence/M17-C1-verifier.log`; 7ad4019. Rule now `failed = searchesRun > 0 && notes.length === 0`; answer COULD_NOT_SEARCH_NOTE when no search returned results, else new COULD_NOT_READ_NOTE; write call skipped. Existing fixtures adjusted (not assertions) so they still gather a note: research.test.ts AC1 deadline test and AC3 read-abort test; deepResearch.test.ts AC1 and AC3a. Deleted research.test.ts "AC3: a write cut off by the deadline with nothing gathered ends partial with the no-report note" (scenario no longer reachable: no notes now skips the write); replaced by "FR36: pages read but note extraction yields no notes" and a COULD_NOT_READ_NOTE exact-text test. Write-cut-by-final-deadline with notes still proven (research.test.ts:848, deepResearch.test.ts AC3b).
-- M17-C2 finding 2 (OPTIONAL) — Cheap (haiku, BOUNDED_LOW_RISK), attempt 1 PASS; verifier PASS (9 pass, tsc clean) `.harness/evidence/M17-C2-verifier.log`; d677901.
-Cycle-1 validation: `cd server && bun test && bun run typecheck` 250 pass 0 fail, tsc clean, on the tree holding both corrections (`.harness/evidence/M17-C1-verifier.log`). shared/api.ts unchanged by corrections, so mobile typecheck unaffected.
-Correction diff: git diff fa2ee80999ad98a28d22f9f55f8b175479b765b9 HEAD
-Files changed by corrections (code): server/src/generations/research.ts; server/src/generations/research.test.ts; server/src/http/deepResearch.test.ts; server/src/index.test.ts (new). Plus .harness records.
-Outside the findings' named files: server/src/http/deepResearch.test.ts — not named by either finding; changed only in fixtures (AC1, AC3a) because the finding-1 status rule would otherwise turn those no-note runs `failed`. This widens the cycle-2 review beyond the findings.
-Correction tiers: Mid (C1), Cheap (C2); no Top.
-
-Cycle 1 review tier: Top (opus, DIFFICULT_CONCURRENCY — diff contains Top-routed M17-T1).
-Cycle 2: PASS — tier Mid (sonnet; correction tasks C1 Mid, C2 Cheap); scope widened to the whole milestone (003da19..b2d26f3) because deepResearch.test.ts changed outside the findings; per-criterion M17-AC1/AC2/AC3 PASS; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL; reviewer re-ran server bun test (250 pass, 0 fail) and server+mobile typecheck (clean). No report file (PASS).
-
-### Review Cycles
-
-1
-
-### Follow-ups
-
-- Status when only slow (not unavailable) searches ran and the deadline cut them all: current rule reports `failed` with the could-not-search sentence; FR36 could also be read as `partial` (stopped early by the deadline). Product reading to confirm.
-- When the write call is skipped (final deadline already passed, or `failed`), no `write` step is emitted; M18 display may want one.
-- Any error thrown in the research phase after the research deadline is treated as running out of time; an unrelated post-deadline bug would be masked.
-- No live check that a real qwen3.5:35b-a3b run now ends within ~8 min (the M16 run took ~24 min); it needs a restart of com.harness.server, which is not authorised beyond M16. Candidate for M21.
-- Cycle-1 correction makes a run cut by the research deadline before any note exists `failed` (no usable material) rather than `partial` (stopped early by the deadline); FR36 can be read either way. Product reading to confirm, together with the slow-search follow-up above.
-- NO_REPORT_NOTE is now reachable only when notes exist but cleaning the gathered-notes text yields nothing; consider whether it is still needed.
-- milestones.md is ~690 lines after archiving M15; nothing else archivable yet.
-
+Detail: `.harness/archive/M17.md`
 
 ## M18 — The phone offers Deep research only when the configured model is loaded, and shows the run live
 
@@ -476,7 +412,7 @@ Cycle 1: PASS — tier Mid (sonnet; tasks T1–T3 all Mid), whole milestone 9836
 
 ## M19 — Stop, resume and saving work for a deep research run
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -500,7 +436,11 @@ Pending.
 
 ### Baseline
 
+63d14e44a3ca8cb00411d0592d64b1804faf22e7 on m19-deep-research-stop-resume
+
 ### Evidence
+
+Size check: 3 criteria; real entry points POST /v1/chat, POST /v1/generations/{id}/cancel and GET /v1/generations/{id}/events (M19-AC1/AC2); one signal CONCURRENCY_LIFECYCLE already seam-checked at planning - run unsplit. State file archived M17 (670 -> 606 lines).
 
 ### Validation
 

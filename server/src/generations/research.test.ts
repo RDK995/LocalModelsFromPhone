@@ -917,3 +917,209 @@ describe("runResearch time budget (FR36)", () => {
     expect(fc.of("write").length).toBe(0);
   });
 });
+
+// ---------------------------------------------------------------------------
+// FR38: two-stage Stop. First Stop (stopSignal) cancels the research phase at
+// once and writes a short report (partial); the hard signal ends it cancelled.
+// ---------------------------------------------------------------------------
+
+describe("runResearch two-stage Stop (FR38)", () => {
+  const STOP_BASE: Partial<ResearchSettings> = { ...BASE, budgetMs: 20_000 };
+
+  /** fakeWeb whose `search`/`read` number `hangAt` (1-based) hangs until its signal aborts. */
+  function stoppableWeb(hang: { search?: number; read?: number }, onHang: () => void) {
+    const web = fakeWeb();
+    let searchCalls = 0;
+    let readCalls = 0;
+    const signals: { search: AbortSignal[]; read: AbortSignal[] } = { search: [], read: [] };
+    const tools: ResearchWebTools = {
+      async search(query, signal) {
+        signals.search.push(signal);
+        if (++searchCalls === hang.search) {
+          onHang();
+          await untilAborted(signal, []);
+        }
+        return web.tools.search(query, signal);
+      },
+      async read(url, signal, numberPage) {
+        signals.read.push(signal);
+        if (++readCalls === hang.read) {
+          onHang();
+          await untilAborted(signal, []);
+        }
+        return web.tools.read(url, signal, numberPage);
+      },
+    };
+    return { tools, signals, web };
+  }
+
+  async function runWith(
+    client: OllamaChatClient,
+    webTools: ResearchWebTools,
+    stop: AbortController,
+    hard: AbortController,
+    settings: Partial<ResearchSettings>,
+  ): Promise<ResearchEvent[]> {
+    const events: ResearchEvent[] = [];
+    for await (const e of runResearch({
+      model: "test",
+      question: "Tell me about cats",
+      client,
+      webTools,
+      signal: hard.signal,
+      stopSignal: stop.signal,
+      settings,
+    })) {
+      events.push(e);
+    }
+    return events;
+  }
+
+  it("default stopWriteMs is 60000", async () => {
+    const { DEFAULT_RESEARCH_SETTINGS } = await import("./research");
+    expect(DEFAULT_RESEARCH_SETTINGS.stopWriteMs).toBe(60_000);
+  });
+
+  it("(a) first Stop during a search cancels that search within ~50 ms, then a write step follows; complete + partial", async () => {
+    const stop = new AbortController();
+    const hard = new AbortController();
+    const fc = hangingClient(null);
+    let hangStart = 0;
+    const w = stoppableWeb({ search: 3 }, () => {
+      hangStart = Date.now();
+      setTimeout(() => stop.abort(), 20);
+    });
+    const events = await runWith(fc.client, w.tools, stop, hard, STOP_BASE);
+    const hungSignal = w.signals.search[2]!;
+    expect(hungSignal.aborted).toBe(true);
+    expect(Date.now() - hangStart).toBeLessThan(2000);
+    expect(fc.of("write").length).toBe(1);
+    expect(stepData(events).some((s) => s.kind === "write" && s.status === "done")).toBe(true);
+    expect(contentText(events).trim().length).toBeGreaterThan(0);
+    const done = doneData(events);
+    expect(done.status).toBe("complete");
+    expect(done.research.status).toBe("partial");
+  });
+
+  it("(a2) the in-flight search signal aborts promptly after the Stop", async () => {
+    const stop = new AbortController();
+    const hard = new AbortController();
+    const fc = hangingClient(null);
+    let stopAt = 0;
+    let abortedAt = 0;
+    const w = stoppableWeb({ search: 3 }, () => {
+      setTimeout(() => {
+        stopAt = Date.now();
+        stop.abort();
+      }, 20);
+    });
+    const origSearch = w.tools.search;
+    w.tools.search = async (q, signal) => {
+      signal.addEventListener("abort", () => (abortedAt = abortedAt || Date.now()), { once: true });
+      return origSearch(q, signal);
+    };
+    await runWith(fc.client, w.tools, stop, hard, STOP_BASE);
+    expect(abortedAt - stopAt).toBeLessThan(50);
+  });
+
+  it("(b) first Stop during a page read cancels that read, then a write step follows; complete + partial", async () => {
+    const stop = new AbortController();
+    const hard = new AbortController();
+    const fc = hangingClient(null);
+    const w = stoppableWeb({ read: 2 }, () => setTimeout(() => stop.abort(), 20));
+    const events = await runWith(fc.client, w.tools, stop, hard, STOP_BASE);
+    expect(w.signals.read[1]!.aborted).toBe(true);
+    expect(fc.of("write").length).toBe(1);
+    expect(contentText(events).trim().length).toBeGreaterThan(0);
+    const done = doneData(events);
+    expect(done.status).toBe("complete");
+    expect(done.research.status).toBe("partial");
+  });
+
+  it("(c) the short write-up is limited by stopWriteMs and never hangs", async () => {
+    const stop = new AbortController();
+    const hard = new AbortController();
+    const fc = hangingClient("write");
+    let stopAt = 0;
+    const w = stoppableWeb({ search: 3 }, () =>
+      setTimeout(() => {
+        stopAt = Date.now();
+        stop.abort();
+      }, 20),
+    );
+    const events = await runWith(fc.client, w.tools, stop, hard, { ...STOP_BASE, stopWriteMs: 200 });
+    const took = Date.now() - stopAt;
+    expect(took).toBeGreaterThanOrEqual(150);
+    expect(took).toBeLessThan(200 + MARGIN_MS);
+    const done = doneData(events);
+    expect(done.status).toBe("complete");
+    expect(done.research.status).toBe("partial");
+    expect(contentText(events).trim().length).toBeGreaterThan(0);
+  });
+
+  it("(c2) a Stop during the normal write-up caps its remaining time at stopWriteMs", async () => {
+    const stop = new AbortController();
+    const hard = new AbortController();
+    const fc = hangingClient("write");
+    const gen = runResearch({
+      model: "test",
+      question: "q",
+      client: fc.client,
+      webTools: fakeWeb().tools,
+      signal: hard.signal,
+      stopSignal: stop.signal,
+      settings: { ...STOP_BASE, stopWriteMs: 200 },
+    });
+    const events: ResearchEvent[] = [];
+    let stopAt = 0;
+    for await (const e of gen) {
+      events.push(e);
+      if (e.type === "step" && JSON.parse(e.data).kind === "write") {
+        stopAt = Date.now();
+        stop.abort();
+      }
+    }
+    expect(Date.now() - stopAt).toBeLessThan(200 + MARGIN_MS);
+    expect(doneData(events).research.status).toBe("partial");
+  });
+
+  it("(d) a hard abort during the short write-up ends cancelled with steps and sources but no report content", async () => {
+    const stop = new AbortController();
+    const hard = new AbortController();
+    const fc = hangingClient("write");
+    const w = stoppableWeb({ search: 3 }, () => setTimeout(() => stop.abort(), 20));
+    const events: ResearchEvent[] = [];
+    for await (const e of runResearch({
+      model: "test",
+      question: "q",
+      client: fc.client,
+      webTools: w.tools,
+      signal: hard.signal,
+      stopSignal: stop.signal,
+      settings: STOP_BASE,
+    })) {
+      events.push(e);
+      if (e.type === "step" && JSON.parse(e.data).kind === "write") setTimeout(() => hard.abort(), 20);
+    }
+    expect(doneData(events).status).toBe("cancelled");
+    expect(events.some((e) => e.type === "content")).toBe(false);
+    expect(stepData(events).some((s) => s.kind === "search")).toBe(true);
+    const sources = events.find((e) => e.type === "sources");
+    expect(sources).toBeDefined();
+    expect(JSON.parse(sources!.data).items.length).toBeGreaterThan(0);
+    expect(events.indexOf(sources!)).toBeLessThan(events.length - 1);
+  });
+
+  it("(e) a first Stop with no notes makes no write call and ends partial", async () => {
+    const stop = new AbortController();
+    const hard = new AbortController();
+    const fc = hangingClient(null);
+    const w = stoppableWeb({ search: 1 }, () => setTimeout(() => stop.abort(), 20));
+    const events = await runWith(fc.client, w.tools, stop, hard, STOP_BASE);
+    expect(fc.of("write").length).toBe(0);
+    const done = doneData(events);
+    expect(done.status).toBe("complete");
+    expect(done.research.status).toBe("partial");
+    expect(contentText(events).trim().length).toBeGreaterThan(0);
+  });
+});

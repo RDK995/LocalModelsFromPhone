@@ -3,6 +3,7 @@ import { GenerationManager, type GenerationWebTools, type OllamaChatClient } fro
 import type { OllamaChatRequest, OllamaChatResponse, OllamaToolCall, OllamaTool } from "../ollama/client";
 import type { WebEvent, WebToolCall } from "../web/tools";
 import { OllamaClient } from "../ollama/client";
+import type { ResearchWebTools } from "./research";
 
 describe("GenerationManager", () => {
   it("should create an instance", () => {
@@ -477,5 +478,54 @@ describe("GenerationManager", () => {
       const events = await collect(manager);
       expect(events.map((e) => e.type)).toEqual(["error"]);
     });
+  });
+});
+
+describe("GenerationManager deep research Stop (M19 FR38)", () => {
+  function hangingResearch() {
+    const client: OllamaChatClient = {
+      async *chat(_request, signal) {
+        await new Promise<void>((_, reject) => {
+          const fail = () => reject(signal?.reason ?? new DOMException("aborted", "AbortError"));
+          if (signal?.aborted) fail();
+          else signal?.addEventListener("abort", fail, { once: true });
+        });
+      },
+    };
+    const web: GenerationWebTools & Partial<ResearchWebTools> = {
+      tools: () => [],
+      systemNote: () => "",
+      execute: async () => ({ toolResult: "", events: [] }),
+      search: async () => ({ results: [], events: [] }),
+      read: async () => ({ page: null, events: [] }),
+    };
+    return new GenerationManager(client, web, { stopWriteMs: 60_000 });
+  }
+
+  it("cancelActive aborts a deep research run hard at once, ending it cancelled", async () => {
+    const manager = hangingResearch();
+    manager.startGeneration("gen-r", { model: "test", messages: [{ role: "user", content: "q" }], web: true, deep_research: true } as any);
+    await new Promise((r) => setTimeout(r, 20));
+    const t0 = Date.now();
+    expect(manager.cancelActive()).toBe(true);
+    const events = [];
+    for await (const e of manager.subscribe("gen-r")) events.push(e);
+    expect(Date.now() - t0).toBeLessThan(500);
+    expect(JSON.parse(events[events.length - 1].data).status).toBe("cancelled");
+    expect(events.some((e) => e.type === "content")).toBe(false);
+    expect(manager.getActiveGeneration()).toBeNull();
+  });
+
+  it("cancelGeneration on a deep research run: the first call is the wrap-up Stop (run ends partial, not cancelled)", async () => {
+    const manager = hangingResearch();
+    manager.startGeneration("gen-r", { model: "test", messages: [{ role: "user", content: "q" }], web: true, deep_research: true } as any);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(manager.cancelGeneration("gen-r")).toBe(true);
+    const events = [];
+    for await (const e of manager.subscribe("gen-r")) events.push(e);
+    const done = JSON.parse(events[events.length - 1].data);
+    expect(done.status).toBe("complete");
+    expect(done.research.status).toBe("partial");
+    expect(manager.cancelGeneration("gen-r")).toBe(false);
   });
 });

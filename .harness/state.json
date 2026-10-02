@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M18",
+  "current_milestone": "M19",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -11141,10 +11141,10 @@
         "FR38"
       ],
       "traces": "AC28 (first and second Stop, dropped-connection resume)",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
-      "baseline": null,
+      "baseline": "63d14e44a3ca8cb00411d0592d64b1804faf22e7 on m19-deep-research-stop-resume",
       "as_built": {
         "artifact": null,
         "result": "PENDING"

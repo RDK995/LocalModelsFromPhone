@@ -77,6 +77,8 @@ const LOG_RETENTION_MS = 10 * 60 * 1000;
 interface GenerationRecord {
   model: string;
   abortController: AbortController;
+  /** Deep research only (FR38): the first Stop aborts this ("wrap up"); a later Stop aborts the hard controller. */
+  stopController?: AbortController;
   log: GenerationEvent[];
   running: boolean;
   /** Resolvers for subscribers waiting for the next event. */
@@ -135,6 +137,7 @@ export class GenerationManager {
 
     const web = request.web === true;
     if (web && request.deep_research === true) {
+      record.stopController = new AbortController();
       void this.runDeepResearch(genId, record, request);
       return;
     }
@@ -163,6 +166,7 @@ export class GenerationManager {
         client: this.ollamaClient,
         webTools: { search: search.bind(this.webTools), read: read.bind(this.webTools) },
         signal,
+        stopSignal: record.stopController?.signal,
         settings: this.researchSettings,
       });
       for await (const event of events) {
@@ -463,6 +467,10 @@ export class GenerationManager {
     if (!record || !record.running) {
       return false;
     }
+    if (record.stopController && !record.stopController.signal.aborted) {
+      record.stopController.abort(); // FR38: first Stop wraps up with a short report
+      return true;
+    }
     record.abortController.abort();
     return true;
   }
@@ -473,7 +481,10 @@ export class GenerationManager {
    * generation's loop notices the abort; poll `getActiveGeneration()` for it.
    */
   cancelActive(): boolean {
-    return this.activeGenId !== null && this.cancelGeneration(this.activeGenId);
+    if (this.activeGenId === null) return false;
+    // A confirmed load/unload aborts a deep research run hard, never waiting for a write-up.
+    this.generations.get(this.activeGenId)?.stopController?.abort();
+    return this.cancelGeneration(this.activeGenId);
   }
 
   /**

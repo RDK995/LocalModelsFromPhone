@@ -1,0 +1,232 @@
+VERIFICATION LOG FOR TASK M19-T1: Two-stage Stop for Deep Research Run
+========================================================================
+
+TASK STARTED FROM COMMIT:
+63d14e44a3ca8cb00411d0592d64b1804faf22e7
+
+TEST COMMAND EXECUTED:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck
+
+TEST OUTPUT:
+bun test v1.4.0 (1381054db)
+
+ 270 pass
+ 0 fail
+ 1587 expect() calls
+Ran 270 tests across 15 files. [11.14s]
+
+TYPECHECK OUTPUT:
+$ tsc --noEmit
+(no output - passed)
+
+EXIT STATUS: 0
+
+================================================================================
+FILES CHANGED (outside .harness/ and mobile/):
+================================================================================
+
+server/src/generations/research.ts (modified, allowed)
+  - Added stopWriteMs to ResearchSettings interface with default 60000
+  - Added stopSignal parameter to ResearchRunOptions interface
+  - Updated runResearch to handle stopSignal for two-stage Stop logic
+  - Added sources event emission before cancelled done when hard abort occurs
+
+server/src/generations/manager.ts (modified, allowed)
+  - Added stopController to GenerationRecord for deep research runs
+  - Updated cancelGeneration to abort stopController before hard controller
+  - Updated cancelActive to abort both controllers hard immediately
+
+server/src/generations/research.test.ts (modified, allowed)
+  - Added tests in new "FR38: two-stage Stop" describe block (lines 926-1125)
+  - No existing tests deleted or weakened
+
+server/src/generations/manager.test.ts (modified, allowed)
+  - Added tests in new "GenerationManager deep research Stop (M19 FR38)" describe block
+  - No existing tests deleted or weakened
+
+server/src/http/deepResearchStop.test.ts (new, allowed)
+  - New HTTP-level tests modeled on deepResearch.test.ts
+  - Tests two-stage Stop behavior over HTTP
+
+================================================================================
+TESTS WEAKENED OR DELETED:
+================================================================================
+
+NO EXISTING TESTS WERE MODIFIED, DELETED, OR WEAKENED.
+
+Evidence: git diff HEAD shows:
+- research.test.ts: only additions after line 917 (new describe block, no existing test modifications)
+- manager.test.ts: only additions after line 480 (new describe block with import, no existing test modifications)
+- No test function bodies were modified or removed
+- All 270 tests pass, including all pre-existing tests
+
+================================================================================
+ACCEPTANCE CRITERIA EXERCISE VERIFICATION:
+================================================================================
+
+CRITERION 1: research.ts accepts stopSignal and stopWriteMs
+
+Tests that exercise this:
+  ✓ research.test.ts line 978-981: "default stopWriteMs is 60000"
+    Verifies: DEFAULT_RESEARCH_SETTINGS.stopWriteMs === 60000
+
+  ✓ research.test.ts line 956-976: runWith() helper
+    Verifies: runResearch accepts stopSignal parameter
+    Used by: All FR38 tests below
+
+CRITERION 2: stopSignal aborted during research phase → wrap-up with partial report
+
+Tests that exercise this:
+  ✓ research.test.ts line 983-1002: "(a) first Stop during a search"
+    Verifies:
+      - hungSignal.aborted === true (search signal aborted)
+      - fc.of("write").length === 1 (write step ran)
+      - stepData includes write step with status "done"
+      - done.status === "complete" && done.research.status === "partial"
+
+  ✓ research.test.ts line 1004-1023: "(a2) in-flight search signal aborts promptly"
+    Verifies:
+      - abortedAt - stopAt < 50ms (signal aborts within 50ms of Stop)
+
+  ✓ research.test.ts line 1025-1037: "(b) first Stop during a page read"
+    Verifies:
+      - read signal aborted
+      - write step ran
+      - done.status === "complete" && done.research.status === "partial"
+
+CRITERION 3: stopWriteMs limits the write-up time
+
+Tests that exercise this:
+  ✓ research.test.ts line 1039-1058: "(c) short write-up limited by stopWriteMs"
+    Verifies:
+      - Write completes within stopWriteMs (200ms) + margin
+      - done.research.status === "partial"
+      - content is non-empty (write happened)
+
+CRITERION 4: stopSignal during normal write → cap time at stopWriteMs
+
+Tests that exercise this:
+  ✓ research.test.ts line 1060-1084: "(c2) Stop during normal write-up"
+    Verifies:
+      - Stop aborts during write step
+      - Time from stop < stopWriteMs (200ms) + margin
+      - research.status === "partial"
+
+CRITERION 5: hard signal (abort) during short write-up → cancelled with sources
+
+Tests that exercise this:
+  ✓ research.test.ts line 1086-1111: "(d) hard abort during short write-up"
+    Verifies:
+      - done.status === "cancelled" (not "complete")
+      - No "content" event (report not sent)
+      - steps include "search" (search ran)
+      - sources event present with items > 0
+      - sources before done event (not cancelled immediately)
+
+CRITERION 6: stopSignal with no notes → no write call, partial
+
+Tests that exercise this:
+  ✓ research.test.ts line 1113-1124: "(e) first Stop with no notes"
+    Verifies:
+      - fc.of("write").length === 0 (no write call)
+      - done.status === "complete" && done.research.status === "partial"
+      - content is non-empty (fallback "gathered notes" text)
+
+CRITERION 7: manager.ts deep research two-stage Stop
+
+Tests that exercise this:
+  ✓ manager.test.ts "cancelGeneration on deep research run..."
+    Verifies:
+      - First cancelGeneration returns true (wrap-up)
+      - Run ends with done.status === "complete" && research.status === "partial"
+      - Second cancelGeneration returns false (already ending)
+
+  ✓ manager.test.ts "cancelActive aborts deep research..."
+    Verifies:
+      - cancelActive returns true
+      - Run ends cancelled quickly (< 500ms)
+      - No "content" event (hard abort behavior)
+
+CRITERION 8: HTTP cancel route response unchanged
+
+Tests that exercise this:
+  ✓ deepResearchStop.test.ts line 155-181: "one Stop"
+    Verifies:
+      - cancel() returns 200 with { status: "cancelled" }
+      - Stream ends with done { status: "complete", research.status: "partial" }
+      - One report content event present
+      - Write step marked done
+
+  ✓ deepResearchStop.test.ts line 183-212: "two Stops"
+    Verifies:
+      - First cancel() returns 200 with { status: "cancelled" }
+      - Second cancel() returns 200 with { status: "cancelled" }
+      - After complete, cancel() returns { status: "already_complete" }
+      - Stream ends with done { status: "cancelled" }
+      - No report content event
+      - Steps and sources present
+
+CRITERION 9: Existing tests remain passing unchanged
+
+Evidence:
+  ✓ All 270 tests pass (includes all pre-existing tests)
+  ✓ No test modifications in existing describe blocks
+  ✓ git diff shows only additions to test files
+
+================================================================================
+REASONING: TESTS WOULD FAIL AGAINST HEAD
+================================================================================
+
+The new tests depend on features not present in HEAD:
+
+1. stopSignal parameter: HEAD's ResearchRunOptions lacks this parameter
+   → All FR38 tests that pass stopSignal would fail with type error
+
+2. stopWriteMs setting: HEAD's ResearchSettings lacks this field
+   → Test "default stopWriteMs is 60000" would fail
+
+3. stopController in GenerationRecord: HEAD lacks this field
+   → Manager tests would fail to set up deep research with Stop behavior
+
+4. Two-stage Stop logic: HEAD has only one-stage Stop (hard abort)
+   → HTTP tests expecting wrap-up behavior would fail:
+     * First cancel would hard-abort (status: "cancelled")
+     * Write step would not run
+     * Report would be absent
+     * done.research.status would be absent or "cancelled"
+
+5. Sources emission on hard abort: HEAD lacks this code
+   → Test "(d) hard abort during short write-up" expects sources event
+     This would not be emitted in HEAD
+
+6. deepResearchStop.test.ts: File does not exist in HEAD
+   → All tests in this file would not run
+
+================================================================================
+SUMMARY
+================================================================================
+
+Command Run:             cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck
+Exit Status:            0
+Test Results:           270 pass, 0 fail
+Typecheck Results:      No errors
+
+Files Changed:          5 files (all in allowed list)
+  - research.ts, manager.ts (implementation)
+  - research.test.ts, manager.test.ts, deepResearchStop.test.ts (tests)
+
+Tests Weakened:         None
+
+Criteria Exercised:     All 9 criteria have demonstrating tests
+  - Default stopWriteMs: "default stopWriteMs is 60000"
+  - Stop during search: "(a)" and "(a2)"
+  - Stop during read: "(b)"
+  - stopWriteMs limit: "(c)"
+  - Stop during write: "(c2)"
+  - Hard abort: "(d)"
+  - Stop with no notes: "(e)"
+  - Manager two-stage: "cancelGeneration..." and "cancelActive..."
+  - HTTP behavior: "one Stop" and "two Stops"
+
+Tests Would Fail:       Yes, against HEAD
+  Reason: stopSignal, stopWriteMs, and stopController are not in HEAD

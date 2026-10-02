@@ -57,6 +57,8 @@ export interface ResearchSettings {
   budgetMs: number;
   /** FR36: share of the budget reserved for the write-up; research stops at budgetMs * (1 - this). */
   writeReserveFraction: number;
+  /** FR38: after a first Stop, the short report is written within this many milliseconds. */
+  stopWriteMs: number;
 }
 
 export const DEFAULT_RESEARCH_SETTINGS: ResearchSettings = {
@@ -71,6 +73,7 @@ export const DEFAULT_RESEARCH_SETTINGS: ResearchSettings = {
   think: true,
   budgetMs: 480_000,
   writeReserveFraction: 0.25,
+  stopWriteMs: 60_000,
 };
 
 /** One event in the generation event shape, without log seq/timestamp. */
@@ -81,7 +84,10 @@ export interface ResearchRunOptions {
   question: string;
   client: OllamaChatClient;
   webTools: ResearchWebTools;
+  /** Hard cancel (second Stop, disconnect, model change): the run ends cancelled. */
   signal: AbortSignal;
+  /** FR38 first Stop: cancel the research phase now and write a short `partial` report. */
+  stopSignal?: AbortSignal;
   settings?: Partial<ResearchSettings>;
 }
 
@@ -235,7 +241,7 @@ export function cleanReport(report: string, readNumbers: Set<number>): string {
 
 export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<ResearchEvent, void, unknown> {
   const s: ResearchSettings = { ...DEFAULT_RESEARCH_SETTINGS, ...opts.settings };
-  const { model, question, client, webTools, signal } = opts;
+  const { model, question, client, webTools, signal, stopSignal } = opts;
   const startTime = Date.now();
   let evalCount = 0;
   let evalDurationNs = 0;
@@ -256,19 +262,34 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
   const finalDeadline = startTime + budgetMs;
   const researchTimer = new AbortController();
   const finalTimer = new AbortController();
-  const timers = [
+  const stopWriteTimer = new AbortController();
+  const timers: ReturnType<typeof setTimeout>[] = [
     setTimeout(() => researchTimer.abort(new DOMException("Research time is over", "TimeoutError")), researchMs),
     setTimeout(() => finalTimer.abort(new DOMException("Research budget is spent", "TimeoutError")), budgetMs),
   ];
+  // FR38: a first Stop ends the research phase now and gives the write-up stopWriteMs from the Stop.
+  let stopWriteDeadline = Infinity;
+  const onStop = () => {
+    stopWriteDeadline = Date.now() + s.stopWriteMs;
+    timers.push(
+      setTimeout(() => stopWriteTimer.abort(new DOMException("Stop write-up time is over", "TimeoutError")), s.stopWriteMs)
+    );
+  };
+  if (stopSignal) {
+    if (stopSignal.aborted) onStop();
+    else stopSignal.addEventListener("abort", onStop, { once: true });
+  }
   // One signal per phase reaches every search, read and model request of that phase.
-  const researchSignal = AbortSignal.any([signal, researchTimer.signal]);
-  const writeSignal = AbortSignal.any([signal, finalTimer.signal]);
+  const researchSignal = AbortSignal.any([signal, researchTimer.signal, ...(stopSignal ? [stopSignal] : [])]);
+  const writeSignal = AbortSignal.any([signal, finalTimer.signal, stopWriteTimer.signal]);
   let phase: "research" | "write" = "research";
   const phaseSignal = () => (phase === "research" ? researchSignal : writeSignal);
   const phaseOver = () =>
     phase === "research"
-      ? researchTimer.signal.aborted || Date.now() >= researchDeadline
-      : finalTimer.signal.aborted || Date.now() >= finalDeadline;
+      ? researchTimer.signal.aborted || stopSignal?.aborted === true || Date.now() >= researchDeadline
+      : finalTimer.signal.aborted ||
+        stopWriteTimer.signal.aborted ||
+        Date.now() >= Math.min(finalDeadline, stopWriteDeadline);
 
   const ev = (type: ResearchEvent["type"], data: unknown): ResearchEvent => ({ type, data: JSON.stringify(data) });
   const step = (data: StepEvent["data"]) =>
@@ -535,11 +556,15 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
     // 4. Write the report from the notes only.
     checkAbort();
     phase = "write";
+    const userStopped = stopSignal?.aborted === true;
     // FR36 `failed`: searches were attempted but no note survived (nothing usable to write from).
-    const failed = searchesRun > 0 && notes.length === 0;
+    // A first Stop with no notes is `partial` instead, with the no-report text.
+    const failed = !userStopped && searchesRun > 0 && notes.length === 0;
     let written: string | null = null;
     let wroteNothing = false;
-    if (!failed && phaseOver()) {
+    if (userStopped && notes.length === 0) {
+      // First Stop with nothing gathered: no write call.
+    } else if (!failed && phaseOver()) {
       writeCutShort = true; // final deadline passed before the write call: skip it
     } else if (!failed) {
       yield step({ step_id: "write", kind: "write", status: "started" });
@@ -578,7 +603,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
       eval_count: evalCount,
       tokens_per_second: seconds > 0 ? evalCount / seconds : 0,
       research: {
-        status: failed ? "failed" : researchCutShort || writeCutShort || wroteNothing ? "partial" : "complete",
+        status: failed ? "failed" : researchCutShort || writeCutShort || wroteNothing || userStopped ? "partial" : "complete",
         elapsed_ms: Date.now() - startTime,
         budget_ms: budgetMs,
       },
@@ -586,9 +611,12 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
     yield ev("done", done);
   } catch (error) {
     if (!signal.aborted) throw error;
+    // A stopped run keeps the sources of the pages it read.
+    if (searchesRun > 0) yield ev("sources", { items: sources } satisfies SourcesEvent);
     const cancelled: DoneEvent = { status: "cancelled", model, eval_count: evalCount, tokens_per_second: 0 };
     yield ev("done", cancelled);
   } finally {
     for (const t of timers) clearTimeout(t);
+    stopSignal?.removeEventListener("abort", onStop);
   }
 }
