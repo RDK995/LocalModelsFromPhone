@@ -45,6 +45,9 @@ export interface OllamaStateClient extends OllamaChatClient {
 /** FR34: the one model deep research runs on unless the server setting overrides it. */
 export const DEFAULT_RESEARCH_MODEL = "qwen3.5:35b-a3b";
 
+/** FR45: an open reply stream gets an SSE comment at least this often (ms). */
+export const DEFAULT_KEEP_ALIVE_MS = 15000;
+
 export interface CreateServerOptions {
   ollama: OllamaStateClient;
   manager?: GenerationManager;
@@ -52,6 +55,8 @@ export interface CreateServerOptions {
   port?: number;
   /** FR34 deep-research model name; defaults to DEFAULT_RESEARCH_MODEL. */
   researchModel?: string;
+  /** FR45 SSE keep-alive comment interval in ms; defaults to DEFAULT_KEEP_ALIVE_MS. */
+  keepAliveMs?: number;
   /** C12 icon lookup; when absent, /v1/icon answers 502 icon_unavailable. */
   icon?: (host: string, signal: AbortSignal) => Promise<IconResult>;
 }
@@ -328,29 +333,51 @@ function sseResponse(
   manager: GenerationManager,
   genId: string,
   fromSeq: number,
-  extraHeaders: Record<string, string> = {}
+  extraHeaders: Record<string, string> = {},
+  keepAliveMs: number = DEFAULT_KEEP_ALIVE_MS
 ): Response {
   const events: AsyncGenerator<GenerationEvent, void, unknown> = manager.subscribe(genId, fromSeq);
+  let timer: ReturnType<typeof setInterval> | undefined;
+  let closed = false;
+  const stopTimer = () => {
+    closed = true;
+    if (timer !== undefined) clearInterval(timer);
+    timer = undefined;
+  };
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
       // Bun holds the response headers until the first body chunk. An SSE
       // comment (ignored by SSE parsers) sends them now, so the client gets
       // x-generation-id before the first token or the next live event.
-      controller.enqueue(new TextEncoder().encode(": connected\n\n"));
+      const encoder = new TextEncoder();
+      controller.enqueue(encoder.encode(": connected\n\n"));
+      // FR45: a comment (no id/event/data, so resume is untouched) keeps the
+      // connection visibly alive while a long model call or page read is quiet.
+      timer = setInterval(() => {
+        if (closed) return;
+        try {
+          controller.enqueue(encoder.encode(": keep-alive\n\n"));
+        } catch {
+          stopTimer();
+        }
+      }, keepAliveMs);
     },
     async pull(controller) {
       const { value, done } = await events.next();
       try {
         if (done) {
+          stopTimer();
           controller.close();
           return;
         }
         controller.enqueue(encodeSSE(`${genId}-${value.seq}`, value.type, value.data));
       } catch {
         // The client went away while we waited; nothing to deliver to.
+        stopTimer();
       }
     },
     cancel() {
+      stopTimer();
       // Drop this subscription only. Not awaited: the subscriber may be
       // waiting for the next event and finishes on its own when it arrives.
       events.return(undefined).catch(() => {});
@@ -415,6 +442,7 @@ export function createServer({
   port = DEFAULT_PORT,
   icon,
   researchModel = DEFAULT_RESEARCH_MODEL,
+  keepAliveMs = DEFAULT_KEEP_ALIVE_MS,
 }: CreateServerOptions): ReturnType<typeof Bun.serve> {
   const genManager = manager ?? new GenerationManager(ollama);
   const modelManager = models ?? new ModelManager(ollama, genManager, {}, { model: researchModel, numCtx: genManager.researchNumCtx() });
@@ -626,7 +654,7 @@ export function createServer({
           );
         }
 
-        return sseResponse(genManager, genId, 0, { "x-generation-id": genId });
+        return sseResponse(genManager, genId, 0, { "x-generation-id": genId }, keepAliveMs);
       },
     },
     {
@@ -639,7 +667,7 @@ export function createServer({
         }
 
         const fromSeq = parseResumeSeq(req.headers.get("Last-Event-ID"));
-        return sseResponse(genManager, genId, fromSeq);
+        return sseResponse(genManager, genId, fromSeq, {}, keepAliveMs);
       },
     },
     {
