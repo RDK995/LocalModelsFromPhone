@@ -412,7 +412,7 @@ Cycle 1: PASS — tier Mid (sonnet; tasks T1–T3 all Mid), whole milestone 9836
 
 ## M19 — Stop, resume and saving work for a deep research run
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -426,13 +426,13 @@ C1, C2, C3, C5, C6
 
 ### As-Built
 
-Pending.
+`.harness/as-built/M19.md` — RECORDED: 9/9 files attributed; components C1, C2, C3, C4, C6; 6 edges; 1 claim mismatch (claimed C5 Model manager, but no server/src/models/ files changed).
 
 ### Acceptance Criteria
 
-- [ ] **M19-AC1**: Server tests: a first Stop during searching or reading cancels in-flight searches and reads at once and the run writes a short report from the notes so far under its own short time limit (about a minute), ending `partial`; a second Stop during that write-up cancels it and the reply ends stopped with its steps and sources but no report.
-- [ ] **M19-AC2**: Server tests: a dropped connection does not stop the run and resuming from the last seen event yields steps, clock and text with no gaps or duplicates; while a run is in progress a new message is refused as a reply in progress, and unloading the model mid-run needs the FR6 confirmation and, if confirmed, ends the run `partial` or stopped without hanging.
-- [ ] **M19-AC3**: App tests: a deep research reply is saved with its report as the answer plus steps, sources and status; page text and notes are not persisted; the next prompt carries the report like any prior answer; a second-Stop reply reopens with its steps and sources and no report; backgrounding and returning resumes without gaps or duplicates.
+- [x] **M19-AC1**: Server tests: a first Stop during searching or reading cancels in-flight searches and reads at once and the run writes a short report from the notes so far under its own short time limit (about a minute), ending `partial`; a second Stop during that write-up cancels it and the reply ends stopped with its steps and sources but no report.
+- [x] **M19-AC2**: Server tests: a dropped connection does not stop the run and resuming from the last seen event yields steps, clock and text with no gaps or duplicates; while a run is in progress a new message is refused as a reply in progress, and unloading the model mid-run needs the FR6 confirmation and, if confirmed, ends the run `partial` or stopped without hanging.
+- [x] **M19-AC3**: App tests: a deep research reply is saved with its report as the answer plus steps, sources and status; page text and notes are not persisted; the next prompt carries the report like any prior answer; a second-Stop reply reopens with its steps and sources and no report; backgrounding and returning resumes without gaps or duplicates.
 
 ### Baseline
 
@@ -461,7 +461,7 @@ Per criterion (status left PENDING for review):
 
 ### Review
 
-Pending.
+Cycle 1: PASS — tier Mid (sonnet; highest substantive task tier Mid: T1 Mid, T2 escalated Cheap→Mid, T3 Cheap), whole milestone 63d14e4..f6e69ad; per-criterion M19-AC1/AC2/AC3 PASS; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL; reviewer re-ran server bun test (273 pass, 0 fail) + typecheck, mobile bun test (493 pass, 0 fail) + typecheck + eslint on changed files (clean); repo-wide mobile lint failure pre-existing (webQuietSession.test.ts). Review log `.harness/evidence/M19-review.log`. No report file (PASS).
 
 ### Review Cycles
 
