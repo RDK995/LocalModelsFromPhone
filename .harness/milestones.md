@@ -377,7 +377,7 @@ b48673499df9aa0d846bad7bbefe1548d57cb272 on m15-deep-research-skeleton
 
 ## M16 — The deep research run works on the real qwen3.5:35b-a3b on the Mac
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -411,8 +411,8 @@ Accepted tasks:
 - M16-T3 (explicit `think: false` reaches Ollama): Cheap (`haiku`), BOUNDED_LOW_RISK, attempt 1 PASS. Verifier: `cd server && bun test && bun run typecheck` exit 0, 221 pass, existing think tests unchanged - `.harness/evidence/M16-T3-verifier.log`. Commit 986af8f.
 - M16-T4 (live probe + default): Cheap (`haiku`), BOUNDED_LOW_RISK, attempt 1 PASS. Probe `bun run scripts/probe-format-think.ts --model qwen3.5:35b-a3b --calls 5`: think-on 7/7 schema-valid, think-off 7/7 schema-valid (one call per step schema: brief, plan, queries, select, note, gap, write; num_ctx 32768). Decision rule -> `DEFAULT_RESEARCH_SETTINGS.think = true`. Verifier: tests exit 0, 221 pass, both think values still covered - `.harness/evidence/M16-T4-probe.json`, `M16-T4-probe.log`, `M16-T4-verifier.log`. Commit 8bdee34.
 
-Blocked:
-- M16-T5 (live deep research via POST /v1/chat, M16-AC3): Mid (`sonnet`), ORDINARY_IMPLEMENTATION, attempt 3 BLOCKED (environmental, not a failed rung). The running server on :7789 (LaunchAgent `com.harness.server`, pid 42026, started 2026-10-01 09:56:39, bun without watch) predates commits 79fa999/986af8f/8bdee34, so a live run would exercise old code. Packet reserves a LaunchAgent restart for a human. No evidence created.
+- M16-T5 (live deep research via POST /v1/chat, M16-AC3): Mid (`sonnet`), ORDINARY_IMPLEMENTATION. Attempt 3 first dispatch BLOCKED (environmental, not a failed rung; detail below); after the human-authorised restart (`.harness/evidence/M16-T5-restart.log`: `launchctl kickstart -k` exit 0, new pid 30541 started 2026-10-02 07:09:09, after latest server commit 8bdee34 at 00:32:17; model resident), attempt 3 re-dispatch PASS. Run ended `complete`: 5 sources, citations [1]-[5], unresolved [], 4 cited read pages; ~1433 s elapsed. The client's 900 s timeout cut the first capture at seq 19; the remainder was re-attached via GET /v1/generations/<id>/events with Last-Event-ID, and `M16-T5-stream.txt` is part1 + resume (verifier: cmp exact, no seq gap/duplicate, no token in evidence). Verifier PASS: `bun .harness/evidence/M16-T5-check.ts .harness/evidence/M16-T5-stream.txt` exit 0 - `.harness/evidence/M16-T5-check.json`, `M16-T5-live.log`, `M16-T5-verifier.log`.
+- First-dispatch block detail: The running server on :7789 (LaunchAgent `com.harness.server`, pid 42026, started 2026-10-01 09:56:39, bun without watch) predates commits 79fa999/986af8f/8bdee34, so a live run would exercise old code. Packet reserves a LaunchAgent restart for a human. No evidence created.
 
 Human Escalation Contract:
 
@@ -431,9 +431,12 @@ The server must be restarted onto the current branch before M16-T5 can run.
 Recommended decision:
 Run `launchctl kickstart -k gui/$(id -u)/com.harness.server`, confirm `qwen3.5:35b-a3b` is still resident (reload it from the phone or via POST /v1/models/load if not), then resume M16 (re-dispatch M16-T5 with its packet unchanged). Alternatively, authorise the harness to perform that restart itself.
 
-Human decision (2026-10-02): the harness is authorised to restart LaunchAgent `com.harness.server` itself (`launchctl kickstart -k gui/$(id -u)/com.harness.server`), confirm `qwen3.5:35b-a3b` is resident (POST /v1/models/load if not), then re-dispatch M16-T5 with its packet unchanged. Status returned to IN_PROGRESS.
+Human decision (2026-10-02): the harness is authorised to restart LaunchAgent `com.harness.server` itself (`launchctl kickstart -k gui/$(id -u)/com.harness.server`), confirm `qwen3.5:35b-a3b` is resident (POST /v1/models/load if not), then re-dispatch M16-T5 with its packet unchanged. Status returned to IN_PROGRESS. Carried out by the harness 2026-10-02 07:09 BST (see `.harness/evidence/M16-T5-restart.log`).
 
 ### Validation
+
+- `cd server && bun test && bun run typecheck` (unit tests + typecheck for T2-T4)
+- `bun .harness/evidence/M16-T5-check.ts .harness/evidence/M16-T5-stream.txt` (M16-AC3 over the captured live stream; the live run itself takes ~24 min and is not re-run as validation)
 
 ### Review
 
@@ -445,6 +448,8 @@ Pending.
 
 ### Follow-ups
 
+- Live deep research run took ~1433 s (~24 min), with ~14 min of stream silence between step seq 19 and the final events - far beyond the ~8 minute bound M17 introduces. Not diagnosed here; relevant to M17.
+- M16-T5 packet's 900 s client timeout was too short; the run was completed by re-attaching to the generation's event stream.
 
 - `bun run typecheck` in server/ covers only `src/**`; `server/scripts/` (incl. the new probe) is not typechecked by the project command.
 - `check-state.py` reports pre-existing missing artifacts: `.harness/evidence/M13-T4-verifier.log`, `.harness/as-built/M13.md`, `M14.md`, `M15.md`, `.harness/reviews/M15-cycle1.md` (not caused by M16).

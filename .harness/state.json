@@ -10503,7 +10503,7 @@
       "architecture": "C6, C7, C11, C12, C13",
       "requirements": [],
       "traces": "AC29 (first live question), Constraints (format with thinking unverified)",
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": "d4037fb0e9652dc2113bf33816bf63205c893d03 on m16-real-model-live-proof",
@@ -10537,7 +10537,14 @@
           "id": "M16-AC3",
           "text": "Live on the Mac: one real research-style question sent through POST /v1/chat as deep research ends with status `complete` or `partial`, a report citing at least 1 read page, and no citation number that fails to resolve to a source of that reply.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            ".harness/evidence/M16-T5-check.json",
+            ".harness/evidence/M16-T5-stream.txt",
+            ".harness/evidence/M16-T5-check.ts",
+            ".harness/evidence/M16-T5-live.log",
+            ".harness/evidence/M16-T5-restart.log",
+            ".harness/evidence/M16-T5-verifier.log"
+          ]
         }
       ],
       "tasks": [
@@ -10644,7 +10651,7 @@
         {
           "id": "M16-T5",
           "packet": ".harness/tasks/M16-T5.md",
-          "status": "BLOCKED",
+          "status": "ACCEPTED",
           "detail": "live deep research via POST /v1/chat (AC3)",
           "routing": {
             "tier": "Mid",
@@ -10659,16 +10666,36 @@
               "model": "sonnet",
               "result": "BLOCKED",
               "detail": "running server (LaunchAgent com.harness.server, pid 42026, started 2026-10-01 09:56) predates T2-T4 commits; restart needs human: launchctl kickstart -k gui/$(id -u)/com.harness.server. Not a failed rung."
+            },
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M16-T5-verifier.log",
+              "detail": "re-dispatch after human-authorised LaunchAgent restart (.harness/evidence/M16-T5-restart.log); status complete, 5 sources, citations [1]-[5], unresolved [], 4 cited read pages; ~1433 s elapsed, client timeout at 900 s then re-attached via GET /v1/generations/<id>/events with Last-Event-ID (stream.txt = part1 + resume, cmp-verified)"
             }
           ]
         }
       ],
       "reviews": [],
       "findings": [],
-      "validation": [],
+      "validation": [
+        {
+          "command": "cd server && bun test && bun run typecheck",
+          "purpose": "unit tests + typecheck for T2-T4 changes"
+        },
+        {
+          "command": "bun .harness/evidence/M16-T5-check.ts .harness/evidence/M16-T5-stream.txt",
+          "purpose": "M16-AC3 citation/status check over the captured live stream"
+        }
+      ],
       "follow_ups": [
         "server typecheck excludes server/scripts/",
-        "pre-existing missing artifacts reported by check-state (M13/M14/M15 as-built, M15 cycle1 review, M13-T4 verifier log)"
+        "pre-existing missing artifacts reported by check-state (M13/M14/M15 as-built, M15 cycle1 review, M13-T4 verifier log)",
+        "Live deep research run took ~1433 s (~24 min), with ~14 min of stream silence between step seq 19 and the final events; far beyond the ~8 minute bound M17 introduces. Not diagnosed here; relevant to M17.",
+        "M16-T5 packet's 900 s client timeout was too short; the run was completed by re-attaching to the generation's event stream."
       ],
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
@@ -10682,7 +10709,7 @@
         ],
         "remaining": "Restart the server so it runs the current branch, then re-dispatch M16-T5 unchanged.",
         "recommended": "Run: launchctl kickstart -k gui/$(id -u)/com.harness.server ; then confirm qwen3.5:35b-a3b is still resident (re-load it from the phone or POST /v1/models/load if not) and resume M16.",
-        "resolution": "Human decision 2026-10-02: authorised the harness to restart LaunchAgent com.harness.server itself (launchctl kickstart -k gui/$(id -u)/com.harness.server), confirm qwen3.5:35b-a3b is resident (POST /v1/models/load if not), then re-dispatch M16-T5 with its packet unchanged."
+        "resolution": "Human decision 2026-10-02: authorised the harness to restart LaunchAgent com.harness.server itself (launchctl kickstart -k gui/$(id -u)/com.harness.server), confirm qwen3.5:35b-a3b is resident (POST /v1/models/load if not), then re-dispatch M16-T5 with its packet unchanged. Carried out 2026-10-02 07:09 BST: new pid 30541 started after latest server commit 8bdee34; model resident (.harness/evidence/M16-T5-restart.log)."
       }
     },
     "M17": {
