@@ -404,7 +404,7 @@ Human decision (2026-10-02): the harness is authorised to restart LaunchAgent `c
 
 ## M17 — A deep research run always ends within about 8 minutes with its status shown
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -418,13 +418,13 @@ C6, C12, C13
 
 ### As-Built
 
-Pending.
+.harness/as-built/M17.md — RECORDED; 7/7 files attributed; claim mismatches: C12 and C13 claimed but not changed (C12 only called differently by C6; D-M17-1 says C13 unchanged).
 
 ### Acceptance Criteria
 
-- [ ] **M17-AC1**: Server tests (fake Ollama and backends, shortened budget setting): the deadline is checked before every search, read and model call; when research time (budget minus the writing reserve of about a quarter) runs out the run moves to writing with what it has and ends `partial`; the run's events carry its status and elapsed time against the budget.
-- [ ] **M17-AC2**: Server tests: with every search backend failing the run ends within the budget plus a small margin as `failed`, with a plain sentence saying the research could not search as its answer, plus its steps.
-- [ ] **M17-AC3**: Server tests: with a slow search backend the run ends within the budget plus a small margin (each search and read keeps its FR24 time limit and one cancellation signal reaches every in-flight search, read and model request); with the deadline hitting during the write-up it ends within the budget plus a small margin as `partial` with a non-empty answer (the FR33-style note if the write-up produced nothing).
+- [x] **M17-AC1**: Server tests (fake Ollama and backends, shortened budget setting): the deadline is checked before every search, read and model call; when research time (budget minus the writing reserve of about a quarter) runs out the run moves to writing with what it has and ends `partial`; the run's events carry its status and elapsed time against the budget.
+- [x] **M17-AC2**: Server tests: with every search backend failing the run ends within the budget plus a small margin as `failed`, with a plain sentence saying the research could not search as its answer, plus its steps.
+- [x] **M17-AC3**: Server tests: with a slow search backend the run ends within the budget plus a small margin (each search and read keeps its FR24 time limit and one cancellation signal reaches every in-flight search, read and model request); with the deadline hitting during the write-up it ends within the budget plus a small margin as `partial` with a non-empty answer (the FR33-style note if the write-up produced nothing).
 
 ### Baseline
 
@@ -459,6 +459,9 @@ Correction diff: git diff fa2ee80999ad98a28d22f9f55f8b175479b765b9 HEAD
 Files changed by corrections (code): server/src/generations/research.ts; server/src/generations/research.test.ts; server/src/http/deepResearch.test.ts; server/src/index.test.ts (new). Plus .harness records.
 Outside the findings' named files: server/src/http/deepResearch.test.ts — not named by either finding; changed only in fixtures (AC1, AC3a) because the finding-1 status rule would otherwise turn those no-note runs `failed`. This widens the cycle-2 review beyond the findings.
 Correction tiers: Mid (C1), Cheap (C2); no Top.
+
+Cycle 1 review tier: Top (opus, DIFFICULT_CONCURRENCY — diff contains Top-routed M17-T1).
+Cycle 2: PASS — tier Mid (sonnet; correction tasks C1 Mid, C2 Cheap); scope widened to the whole milestone (003da19..b2d26f3) because deepResearch.test.ts changed outside the findings; per-criterion M17-AC1/AC2/AC3 PASS; 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL; reviewer re-ran server bun test (250 pass, 0 fail) and server+mobile typecheck (clean). No report file (PASS).
 
 ### Review Cycles
 
