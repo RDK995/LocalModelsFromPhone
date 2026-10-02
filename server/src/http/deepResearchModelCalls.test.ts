@@ -2,7 +2,7 @@ import { describe, it, expect, spyOn } from "bun:test";
 import { createServer, setValidToken, type OllamaStateClient } from "./server";
 import type { OllamaChatResponse } from "../ollama/client";
 import { GenerationManager, type GenerationWebTools } from "../generations/manager";
-import type { ModelCallLog, ResearchSettings, ResearchWebTools } from "../generations/research";
+import { DEFAULT_RESEARCH_SETTINGS, type ModelCallLog, type ResearchSettings, type ResearchWebTools } from "../generations/research";
 import type { WebEvent } from "../web/tools";
 
 const TOKEN = "test-token";
@@ -371,6 +371,224 @@ describe("deep research model-call logging and load num_ctx (M19b FR41)", () => 
       expect(consoleLog.mock.calls.some((c) => String(c[0]).includes("deep_research_model_call"))).toBe(false);
     } finally {
       consoleLog.mockRestore();
+      s.server.stop(true);
+    }
+  });
+});
+
+/** A stream that sends nothing (or one thinking chunk) and then waits until its signal aborts. */
+function hangUntilAbort(signal: AbortSignal | undefined, thinking: boolean, record: (abortedAt: number) => void) {
+  return (async function* (): AsyncGenerator<OllamaChatResponse> {
+    if (thinking) yield chunk("", false, "still thinking");
+    await new Promise<never>((_, reject) => {
+      const fail = () => {
+        record(Date.now());
+        reject(signal!.reason ?? new DOMException("aborted", "AbortError"));
+      };
+      if (signal?.aborted) fail();
+      else signal?.addEventListener("abort", fail, { once: true });
+    });
+  })();
+}
+
+async function runToDone(s: ReturnType<typeof setup>) {
+  const chat = await s.post(deepBody);
+  expect(chat.status).toBe(200);
+  const events = parseSSE(await chat.text());
+  const last = events[events.length - 1]!;
+  expect(last.event).toBe("done");
+  const done = JSON.parse(last.data);
+  const content = events.filter((e) => e.event === "content").map((e) => JSON.parse(e.data).text as string);
+  return { events, done, content };
+}
+
+describe("deep research call time limits (M19b FR42)", () => {
+  it("the default write guard fits inside the default FR36 write reserve", () => {
+    const d = DEFAULT_RESEARCH_SETTINGS;
+    expect(d.routineCapMs).toBe(30_000);
+    expect(d.planGuardMs).toBe(30_000);
+    expect(d.writeGuardMs).toBe(60_000);
+    expect(d.writeGuardMs).toBeLessThan(d.budgetMs * d.writeReserveFraction);
+  });
+
+  it("AC3: a thinking-off call past its cap is aborted, logged 'timeout', retried and the run completes", async () => {
+    const sent: number[] = [];
+    const aborted: number[] = [];
+    const s = setup({
+      research: { routineCapMs: 100 },
+      chat: (request, signal) => {
+        if (stepOf(request) !== "queries") return undefined;
+        sent.push(Date.now());
+        if (sent.length !== 1) return undefined;
+        return hangUntilAbort(signal, false, (t) => aborted.push(t));
+      },
+    });
+    try {
+      const { done, content } = await runToDone(s);
+      expect(aborted.length).toBe(1);
+      expect(aborted[0]! - sent[0]!).toBeGreaterThanOrEqual(90);
+      expect(aborted[0]! - sent[0]!).toBeLessThan(2000);
+      const q = s.logs.filter((l) => l.step === "queries");
+      expect(q[0]).toMatchObject({ think: false, attempt: 1, outcome: "timeout" });
+      expect(q[1]).toMatchObject({ think: false, attempt: 2, outcome: "ok" });
+      expect(s.logs.length).toBe(s.requests.length);
+      expect(done.status).toBe("complete");
+      expect(done.research.status).toBe("complete");
+      expect(content.length).toBe(1);
+      expect(content[0]).toContain("Cats sleep a lot [1]");
+    } finally {
+      s.server.stop(true);
+    }
+  });
+
+  it("AC3: a thinking-off step that hits its cap on every attempt is skipped after retries + 1 and the run carries on", async () => {
+    let abortedCount = 0;
+    const s = setup({
+      research: { routineCapMs: 60 },
+      chat: (request, signal) =>
+        stepOf(request) === "gap" ? hangUntilAbort(signal, false, () => abortedCount++) : undefined,
+    });
+    try {
+      const { done, content } = await runToDone(s);
+      const gapLogs = s.logs.filter((l) => l.step === "gap");
+      // Two sub-questions, each with one gap step skipped after 3 timed-out attempts.
+      expect(gapLogs.map((l) => l.attempt)).toEqual([1, 2, 3, 1, 2, 3]);
+      for (const l of gapLogs) expect(l.outcome).toBe("timeout");
+      expect(abortedCount).toBe(6);
+      expect(done.status).toBe("complete");
+      expect(done.research.status).toBe("complete");
+      expect(content[0]).toContain("Cats sleep a lot [1]");
+      expect(s.requests.filter((r) => stepOf(r) === "write").length).toBe(1);
+    } finally {
+      s.server.stop(true);
+    }
+  });
+
+  it("AC4: plan thinking past its guard is aborted and re-issued once with think:false and no num_predict; its reply is used", async () => {
+    const aborted: number[] = [];
+    let plans = 0;
+    const s = setup({
+      research: { planGuardMs: 100 },
+      chat: (request, signal) => {
+        if (stepOf(request) !== "plan") return undefined;
+        plans++;
+        if (plans !== 1) return undefined;
+        return hangUntilAbort(signal, true, (t) => aborted.push(t));
+      },
+    });
+    try {
+      const { done } = await runToDone(s);
+      expect(aborted.length).toBe(1);
+      const planRequests = s.requests.filter((r) => stepOf(r) === "plan");
+      expect(planRequests.length).toBe(2);
+      expect(planRequests[0].think).toBe(true);
+      expect(planRequests[1].think).toBe(false);
+      expect("num_predict" in planRequests[1].options).toBe(false);
+      expect(planRequests[1].options.num_ctx).toBe(DEFAULT_RESEARCH_SETTINGS.numCtx);
+      const planLogs = s.logs.filter((l) => l.step === "plan");
+      expect(planLogs).toEqual([
+        expect.objectContaining({ think: true, attempt: 1, outcome: "guard" }),
+        expect.objectContaining({ think: false, attempt: 2, outcome: "ok" }),
+      ]);
+      const queryTexts = s.requests.filter((r) => stepOf(r) === "queries").map((r) => r.messages[1].content as string);
+      expect(queryTexts.some((t) => t.includes("Current sub-question (1 of 2): sq one"))).toBe(true);
+      expect(queryTexts.some((t) => t.includes("Current sub-question (2 of 2): sq two"))).toBe(true);
+      expect(done.research.status).toBe("complete");
+    } finally {
+      s.server.stop(true);
+    }
+  });
+
+  it("AC4: write thinking past its guard is re-issued with think:false and its valid report is the answer", async () => {
+    let writes = 0;
+    let aborted = 0;
+    const s = setup({
+      research: { writeGuardMs: 100 },
+      chat: (request, signal) => {
+        if (stepOf(request) !== "write") return undefined;
+        writes++;
+        return writes === 1 ? hangUntilAbort(signal, true, () => aborted++) : undefined;
+      },
+    });
+    try {
+      const { done, content } = await runToDone(s);
+      expect(aborted).toBe(1);
+      const writeRequests = s.requests.filter((r) => stepOf(r) === "write");
+      expect(writeRequests.map((r) => r.think)).toEqual([true, false]);
+      expect("num_predict" in writeRequests[1].options).toBe(false);
+      expect(s.logs.filter((l) => l.step === "write").map((l) => [l.think, l.attempt, l.outcome])).toEqual([
+        [true, 1, "guard"],
+        [false, 2, "ok"],
+      ]);
+      expect(content).toEqual(["Cats sleep a lot [1] and purr [2]. Also see and for more."]);
+      expect(done.research.status).toBe("complete");
+    } finally {
+      s.server.stop(true);
+    }
+  });
+
+  it("AC4: write guard fires and the re-issue is invalid: exactly two write requests, run ends partial with the gathered notes", async () => {
+    let writes = 0;
+    const s = setup({
+      research: { writeGuardMs: 100 },
+      chat: (request, signal) => {
+        if (stepOf(request) !== "write") return undefined;
+        writes++;
+        if (writes === 1) return hangUntilAbort(signal, true, () => {});
+        return (async function* () {
+          yield chunk("not json {", false);
+          yield chunk("", true);
+        })();
+      },
+    });
+    try {
+      const { done, content } = await runToDone(s);
+      expect(s.requests.filter((r) => stepOf(r) === "write").length).toBe(2);
+      expect(s.logs.filter((l) => l.step === "write").map((l) => [l.think, l.attempt, l.outcome])).toEqual([
+        [true, 1, "guard"],
+        [false, 2, "invalid"],
+      ]);
+      expect(done.status).toBe("complete");
+      expect(done.research.status).toBe("partial");
+      expect(content.length).toBe(1);
+      expect(content[0]!.startsWith("The report could not be written. Notes gathered:")).toBe(true);
+    } finally {
+      s.server.stop(true);
+    }
+  });
+
+  it("AC4: an answer that starts before the write guard and finishes after it is never cut off", async () => {
+    let writeSignal: AbortSignal | undefined;
+    const s = setup({
+      research: { writeGuardMs: 100 },
+      chat: (request, signal) => {
+        if (stepOf(request) !== "write") return undefined;
+        writeSignal = signal;
+        const full = JSON.stringify({ report: REPORT });
+        const parts = [full.slice(0, 10), full.slice(10, 30), full.slice(30)];
+        return (async function* () {
+          yield chunk("", false, "brief thought");
+          yield chunk(parts[0]!, false);
+          for (const part of parts.slice(1)) {
+            await Bun.sleep(80);
+            if (signal?.aborted) throw signal.reason;
+            yield chunk(part, false);
+          }
+          yield chunk("", true);
+        })();
+      },
+    });
+    try {
+      const { done, content } = await runToDone(s);
+      expect(writeSignal?.aborted).toBe(false);
+      expect(s.requests.filter((r) => stepOf(r) === "write").length).toBe(1);
+      const w = s.logs.filter((l) => l.step === "write");
+      expect(w.length).toBe(1);
+      expect(w[0]).toMatchObject({ think: true, attempt: 1, outcome: "ok" });
+      expect(w[0]!.wall_ms).toBeGreaterThanOrEqual(150);
+      expect(content).toEqual(["Cats sleep a lot [1] and purr [2]. Also see and for more."]);
+      expect(done.research.status).toBe("complete");
+    } finally {
       s.server.stop(true);
     }
   });

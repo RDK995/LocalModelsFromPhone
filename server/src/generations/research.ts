@@ -63,6 +63,12 @@ export interface ResearchSettings {
   writeReserveFraction: number;
   /** FR38: after a first Stop, the short report is written within this many milliseconds. */
   stopWriteMs: number;
+  /** FR42: hard wall-clock cap on each thinking-off model request; hitting it is a failed attempt. */
+  routineCapMs: number;
+  /** FR42: thinking guard on plan; no answer content by then -> cancelled and re-issued once with think:false. */
+  planGuardMs: number;
+  /** FR42: thinking guard on write; must fit inside the FR36 write reserve. */
+  writeGuardMs: number;
 }
 
 export const DEFAULT_RESEARCH_SETTINGS: ResearchSettings = {
@@ -79,6 +85,9 @@ export const DEFAULT_RESEARCH_SETTINGS: ResearchSettings = {
   budgetMs: 480_000,
   writeReserveFraction: 0.25,
   stopWriteMs: 60_000,
+  routineCapMs: 30_000,
+  planGuardMs: 30_000,
+  writeGuardMs: 60_000,
 };
 
 /** One event in the generation event shape, without log seq/timestamp. */
@@ -114,7 +123,8 @@ export interface ModelCallLog {
   thinking_chars: number;
   /** True when a `think: false` request still got `message.thinking` text back. */
   thinking_detected: boolean;
-  outcome: "ok" | "invalid" | "error" | "aborted";
+  /** "timeout": a thinking-off request hit its hard cap; "guard": plan/write still thinking at its guard. */
+  outcome: "ok" | "invalid" | "error" | "aborted" | "timeout" | "guard";
 }
 
 /** Default logger: one JSON line on stdout. */
@@ -391,68 +401,124 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
       think: thinks,
       keep_alive: -1,
     };
-    for (let attempt = 0; attempt <= s.retries; attempt++) {
-      checkDeadline();
-      let content = "";
-      let outcome: ModelCallLog["outcome"] = "error";
-      let thinkingChars = 0;
-      let last: Partial<OllamaChatResponse> | null = null;
-      const sentAt = Date.now();
-      try {
-        try {
-          for await (const chunk of client.chat(structuredClone(request), phaseSignal())) {
-            checkDeadline();
-            if (chunk.message?.content) content += chunk.message.content;
-            if (chunk.message?.thinking) thinkingChars += chunk.message.thinking.length;
-            if (chunk.done) {
-              last = chunk;
-              if (typeof chunk.eval_count === "number") evalCount += chunk.eval_count;
-              if (typeof chunk.eval_duration === "number") evalDurationNs += chunk.eval_duration;
-              break;
-            }
-          }
-        } catch (error) {
-          if (signal.aborted) {
-            outcome = "aborted";
-            throw error;
-          }
-          if (error instanceof PhaseTimeUp || phaseOver()) {
-            outcome = "aborted";
-            throw new PhaseTimeUp(); // never retried
-          }
-          continue; // counts as a failed attempt
-        }
-        let parsed: unknown;
-        try {
-          parsed = JSON.parse(content.trim());
-        } catch {
-          outcome = "invalid";
-          continue;
-        }
-        const value = isObj(parsed) ? validate(parsed) : null;
-        if (value !== null) {
-          outcome = "ok";
-          return value;
-        }
-        outcome = "invalid";
-      } finally {
-        log({
-          step: name,
-          think: request.think,
-          attempt: attempt + 1,
-          wall_ms: Date.now() - sentAt,
-          load_duration: last?.load_duration ?? null,
-          prompt_eval_count: last?.prompt_eval_count ?? null,
-          prompt_eval_duration: last?.prompt_eval_duration ?? null,
-          eval_count: last?.eval_count ?? null,
-          eval_duration: last?.eval_duration ?? null,
-          thinking_chars: thinkingChars,
-          thinking_detected: request.think === false && thinkingChars > 0,
-          outcome,
-        });
+    // FR42: thinking-off steps get a hard cap; plan and write a thinking guard (until answer content starts).
+    const limit = thinks
+      ? { ms: name === "plan" ? s.planGuardMs : s.writeGuardMs, kind: "guard" as const }
+      : { ms: s.routineCapMs, kind: "timeout" as const };
+    for (let attempt = 1; attempt <= s.retries + 1; attempt++) {
+      const result = await sendAttempt(name, request, attempt, limit, validate);
+      if (result.ok) return result.value;
+      if (result.guardFired) {
+        // Re-issued exactly once with thinking off: no num_predict, no routine cap, only the phase deadline.
+        const reissue: OllamaChatRequest = { ...request, think: false, options: { num_ctx: s.numCtx } };
+        const again = await sendAttempt(name, reissue, attempt + 1, null, validate);
+        return again.ok ? again.value : null;
       }
     }
     return null;
+  }
+
+  type AttemptResult<T> = { ok: true; value: T } | { ok: false; guardFired: boolean };
+
+  /**
+   * One model request (one logged attempt). Throws on a hard cancel (rethrown as is) or when the
+   * phase is over (PhaseTimeUp, never retried). Otherwise returns the validated value or a failure;
+   * a failure caused by this attempt's own cap or guard timer is told apart from the phase's aborts.
+   */
+  async function sendAttempt<T>(
+    name: ModelStepName,
+    request: OllamaChatRequest,
+    attempt: number,
+    limit: { ms: number; kind: "timeout" | "guard" } | null,
+    validate: (v: unknown) => T | null
+  ): Promise<AttemptResult<T>> {
+    checkDeadline();
+    let content = "";
+    let outcome: ModelCallLog["outcome"] = "error";
+    let thinkingChars = 0;
+    let last: Partial<OllamaChatResponse> | null = null;
+    const sentAt = Date.now();
+    // Timer-driven, so it fires even when no chunk ever arrives.
+    const own = new AbortController();
+    let fired = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    if (limit) {
+      timer = setTimeout(() => {
+        fired = true;
+        own.abort(new DOMException(`Model call ${limit.kind}`, "TimeoutError"));
+      }, limit.ms);
+    }
+    const stopTimer = () => {
+      if (timer !== undefined) clearTimeout(timer);
+      timer = undefined;
+    };
+    try {
+      try {
+        for await (const chunk of client.chat(structuredClone(request), AbortSignal.any([phaseSignal(), own.signal]))) {
+          checkDeadline();
+          if (chunk.message?.content) {
+            content += chunk.message.content;
+            // The guard only covers thinking: once the answer starts it is never cut off.
+            if (limit?.kind === "guard" && !fired) stopTimer();
+          }
+          if (chunk.message?.thinking) thinkingChars += chunk.message.thinking.length;
+          if (chunk.done) {
+            last = chunk;
+            if (typeof chunk.eval_count === "number") evalCount += chunk.eval_count;
+            if (typeof chunk.eval_duration === "number") evalDurationNs += chunk.eval_duration;
+            break;
+          }
+        }
+        // A stream that ended quietly after this attempt's own abort is still a cut-off call.
+        if (!last && fired) throw own.signal.reason;
+      } catch (error) {
+        // Order matters: hard cancel, then phase deadline/Stop, then this attempt's own timer.
+        if (signal.aborted) {
+          outcome = "aborted";
+          throw error;
+        }
+        if (error instanceof PhaseTimeUp || phaseOver()) {
+          outcome = "aborted";
+          throw new PhaseTimeUp(); // never retried
+        }
+        if (fired && limit) {
+          outcome = limit.kind;
+          return { ok: false, guardFired: limit.kind === "guard" };
+        }
+        return { ok: false, guardFired: false }; // counts as a failed attempt
+      } finally {
+        stopTimer();
+      }
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(content.trim());
+      } catch {
+        outcome = "invalid";
+        return { ok: false, guardFired: false };
+      }
+      const value = isObj(parsed) ? validate(parsed) : null;
+      if (value !== null) {
+        outcome = "ok";
+        return { ok: true, value };
+      }
+      outcome = "invalid";
+      return { ok: false, guardFired: false };
+    } finally {
+      log({
+        step: name,
+        think: request.think,
+        attempt,
+        wall_ms: Date.now() - sentAt,
+        load_duration: last?.load_duration ?? null,
+        prompt_eval_count: last?.prompt_eval_count ?? null,
+        prompt_eval_duration: last?.prompt_eval_duration ?? null,
+        eval_count: last?.eval_count ?? null,
+        eval_duration: last?.eval_duration ?? null,
+        thinking_chars: thinkingChars,
+        thinking_detected: request.think === false && thinkingChars > 0,
+        outcome,
+      });
+    }
   }
 
   function absorb(events: WebEvent[]): ResearchEvent[] {
