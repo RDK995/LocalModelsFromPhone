@@ -505,7 +505,7 @@ C4, C6, C7, C11, C12, C13
 
 ## M19h — On the phone, a deep research reply rides out airplane mode and its clock never stalls
 
-Status: TODO
+Status: BLOCKED
 
 ### Outcome
 
@@ -531,17 +531,44 @@ Pending.
 
 ### Evidence
 
+- T1 — Mac-side readiness (read-only)   Cheap (haiku), attempt 1, PASS; verifier PASS (re-ran `bash ops/scripts/boot-readiness-check.sh` exit 0 "PASS: ALL CHECKS PASSED"). com.harness.server pid 4781 started 2026-10-02 21:56:12 +01:00, after the last server/ commit 22c9a00 (21:53:11 +01:00); bundle host 8081 listener pid 64430 started 2026-10-02 15:28:23 (Metro serves the working tree live; `git status --porcelain -- server mobile` empty, so it serves HEAD's app code incl. M19f 01ac82e); health 401; qwen3.5:35b-a3b in `ollama ps`; no ac29-live-run in flight. No restart was needed. Commit 92fa7c4. .harness/evidence/M19h-T1-readiness.log, .harness/evidence/M19h-T1-verifier.log.
+- M19h-AC1: NOT YET PROVEN. Needs the owner's phone run below; agents cannot toggle airplane mode on the phone or observe its screen.
+
 ### Validation
+
+- Mac side: `bash ops/scripts/boot-readiness-check.sh` exit 0 (read-only) - .harness/evidence/M19h-T1-verifier.log. M19h-AC1 itself is validated only by the owner's files: .harness/evidence/M19h-AC1-owner-report.md and .harness/evidence/M19h-AC1-screenshot.png (plus optional -screenshot-2.png, -screenshot-3.png for mid-run shots).
 
 ### Review
 
 Pending.
+
+Human Escalation (BLOCKED):
+
+Problem:
+M19h-AC1 (AC33) is a live proof only the owner can perform: turning airplane mode on and off on the real iPhone during a deep research reply and watching the screen. Agents have no access to the phone, so the observation and the screenshot cannot be produced or inferred here. The Mac side is ready (T1).
+
+Requirement/milestone affected:
+M19h / M19h-AC1 (AC33; proof of FR45 from M19e and M19f).
+
+Attempts made:
+1. M19h-T1: read-only readiness check - server running the current server code (pid 4781 started after the last server/ commit), bundle host serving the clean working tree, Ollama with qwen3.5:35b-a3b resident, boot-readiness-check.sh PASS (.harness/evidence/M19h-T1-readiness.log, M19h-T1-verifier.log).
+2. Nothing else is agent-performable: no production change is in scope, and the phone run must not be simulated.
+
+Remaining issue:
+The owner's phone run, the owner's written report, and a screenshot of the finished reply.
+
+Recommended decision:
+Owner performs the run (about 5-6 minutes): (1) On the iPhone, with Tailscale connected, force-quit Expo Go and reopen it, then open the project (exp://ryans-mac-studio.tailc3648a.ts.net:8081) so it loads the latest app. (2) Open or start a chat, turn web search on, and check that the "Deep research" button beside Send is usable (it needs qwen3.5:35b-a3b loaded; it currently is). (3) Type a research question (for example "What are the running costs of an air source heat pump versus a gas boiler in the UK?") and tap "Deep research". (4) Once steps start appearing and the clock is counting, turn airplane mode ON, count about 30 s while watching the clock, then turn it OFF. (5) Wait about a minute for the reply to carry on, then do step 4 a second time. (6) Leave the app open until the reply finishes (a report, or a status line - not an empty bubble). (7) Take a screenshot of the finished reply. Then save, on the Mac: the screenshot as .harness/evidence/M19h-AC1-screenshot.png, and a short note as .harness/evidence/M19h-AC1-owner-report.md answering: did the clock keep ticking every second the whole time (including while offline)? did the reply end with its steps and a report or a status line? anything odd? Then set M19h to REVIEW (or tell the harness to). If the reply fails, write down what you saw in the same note; that is a finding to route, not a failed proof to hide.
 
 ### Review Cycles
 
 0
 
 ### Follow-ups
+
+- milestones.md was 743 lines at pickup; M19f (DONE, not the most recently settled) archived to .harness/archive/M19f.md (55 lines moved unchanged, 13-line stub left; 743 -> 699). Still over 400: the remaining full entries are M19g (most recently settled), M19h (active), M20/M21 (TODO) and M5a (BLOCKED), none archivable.
+- The bundle host (pid 64430) has run since 15:28 on 2026-10-02, before M19f's app commits; Metro serves the working tree live, but Expo Go may hold an older cached bundle, hence the force-quit and reopen in step (1).
+- The orchestrator could not read the harness planning reference (agents/references/planning.md, outside this session's allowed directories); the size/shape/complexity checks were applied from the orchestrator contract: 1 criterion, real entry point (the phone), one signal IMPLEMENTATION_PLUS_LIVE_PROOF (proof only) - not split.
 
 
 ## M20 — Search backends rest after being blocked, and repeated searches and page reads come from cache
