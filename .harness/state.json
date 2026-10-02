@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M19f",
+  "current_milestone": "M19g",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -12093,10 +12093,10 @@
       "architecture": "C4, C6, C7, C11, C12, C13",
       "requirements": [],
       "traces": "AC32, AC29 (pass bar)",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
-      "baseline": null,
+      "baseline": "8fcf6b9ebabed670d86d3a1fd14cccc230977638 on m19g-live-mac-proof",
       "as_built": {
         "artifact": null,
         "result": "PENDING"
@@ -12106,7 +12106,12 @@
           "id": "M19g-AC1",
           "text": "Live on the Mac: the FR35 `format` probe is re-run with thinking off on the installed Ollama against `qwen3.5:35b-a3b`, and its validity rate is recorded in evidence under .harness/evidence/.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            ".harness/evidence/M19g-T1-probe.log",
+            ".harness/evidence/M19g-T1-probe.json",
+            ".harness/evidence/M19g-T1-restart.log",
+            ".harness/evidence/M19g-T1-verifier.log"
+          ]
         },
         {
           "id": "M19g-AC2",
@@ -12115,7 +12120,52 @@
           "evidence": []
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M19g-T1",
+          "title": "restart com.harness.server onto current code and re-run the FR35 format probe with thinking off",
+          "packet": ".harness/tasks/M19g-T1.md",
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "two existing documented commands; settled by exit status and probe JSON"
+          },
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M19g-T1-verifier.log",
+              "commit": null
+            }
+          ]
+        },
+        {
+          "id": "M19g-T2",
+          "title": "ac29-live-run script: one question through the server API, SSE capture, AC29 pass bar and AC32 speed figures from FR41 lines",
+          "packet": ".harness/tasks/M19g-T2.md",
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "metric definitions mapped onto existing FR41 log lines and SSE events; bun test oracle on pure functions"
+          },
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS (return not captured; previous orchestrator cut off)",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M19g-T2-verifier.log",
+              "commit": null
+            }
+          ]
+        }
+      ],
       "reviews": [],
       "findings": [],
       "validation": [],
@@ -12123,7 +12173,11 @@
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
       ],
-      "ordering_decision": "Human decision 2026-10-02: build fast deep research (FR41-FR45) before M20; M20 and M21 stay TODO after M19b-M19h; M5a stays BLOCKED and parked, its record unchanged."
+      "ordering_decision": "Human decision 2026-10-02: build fast deep research (FR41-FR45) before M20; M20 and M21 stay TODO after M19b-M19h; M5a stays BLOCKED and parked, its record unchanged.",
+      "planning_notes": [
+        "AC29's three 'real research-style questions' are not fixed by requirements; chosen at planning 2026-10-02: (1) the M16 Raft vs Paxos question, (2) LFP vs NMC home batteries, (3) WebAssembly component model. The heat-pump question text was recovered verbatim from the 2026-10-02 Claude session that sent it (POST /v1/chat): 'How do heat pumps compare with gas boilers for heating a typical UK home in 2026? Cover running costs, installation costs, grants available and how well they work in cold weather.'",
+        "Shape/size check: 2 criteria, both through real entry points (Ollama /api/chat probe, server POST /v1/chat); one signal IMPLEMENTATION_PLUS_LIVE_PROOF, seam check: the only implementation is an evidence-capture script, not production code - not split."
+      ]
     },
     "M19h": {
       "id": "M19h",

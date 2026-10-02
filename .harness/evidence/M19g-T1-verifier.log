@@ -1,0 +1,117 @@
+=== M19g-T1 VERIFIER RUN ===
+
+Task: Restart com.harness.server onto the current code and re-run the FR35 `format` probe with thinking off
+Baseline commit: 8fcf6b9ebabed670d86d3a1fd14cccc230977638 2026-10-02T21:01:28+01:00
+
+=== EVIDENCE FILES CHECK ===
+Files required:
+✓ .harness/evidence/M19g-T1-restart.log (1.6K, 2 Oct 21:09)
+✓ .harness/evidence/M19g-T1-probe.log (1.6K, 2 Oct 21:18)
+✓ .harness/evidence/M19g-T1-probe.json (1.3K, 2 Oct 21:18)
+
+=== RESTART VERIFICATION ===
+From M19g-T1-restart.log:
+Old PID: 2034, started Fri 2 Oct 21:08:42 2026
+New PID: 2057, started Fri 2 Oct 21:08:52 2026
+Server commit: 30043cc5f86aa6b7f91b775559a679dca3940e6f 2026-10-02T20:37:00+01:00
+HTTP health check result: 401 (server listening)
+
+Current process verification (Fri 2 Oct 21:18):
+PID 2057 running: yes
+Started: Fri 2 Oct 21:08:52 2026
+Branch: m19g-live-mac-proof (verified)
+Ollama model: qwen3.5:35b-a3b resident (100% GPU)
+
+Comparison: process started 2026-10-02 21:08:52 is after server commit 2026-10-02T20:37:00+01:00
+Time zone: commit is UTC+1 (20:37:00+01:00 = 19:37:00 UTC = 20:37:00 BST or earlier), process time is local
+If local is UTC: 20:37:00+01:00 → 19:37:00 local, process at 21:08:52 local ✓ (after)
+Result: PASS - new process started after latest server code commit
+
+=== PROBE SCRIPT ANALYSIS ===
+File: server/scripts/probe-format-think.ts
+Unchanged from HEAD (not modified by this task)
+
+Parameter analysis for --calls 5:
+- Default calls parameter: 5
+- Actual loop iterations: Math.max(calls, stepNames.length)
+- Number of steps: 7 (brief, plan, queries, select, note, gap, write)
+- Actual iterations: Math.max(5, 7) = 7
+- Behavior: cycles through steps, ensuring >= 1 call per step
+- Expected result per step: 1/1 if all valid
+
+=== PROBE RUN VERIFICATION (VERIFIER) ===
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/probe-format-think.ts --model qwen3.5:35b-a3b --calls 5
+Exit status: 0
+
+Output shows:
+think:true results:
+  - valid: 7, total: 7 (100%)
+  - per step (all 1/1): brief, plan, queries, select, note, gap, write
+  - failures: []
+
+think:false results:
+  - valid: 7, total: 7 (100%)
+  - per step (all 1/1): brief, plan, queries, select, note, gap, write
+  - failures: []
+
+callsPerSetting: 5 (matches input parameter)
+Actual calls per setting: 7 (one per step, cycling through)
+
+=== WORKER'S EVIDENCE CONTENT ===
+From M19g-T1-probe.log (line 81):
+"think-off validity: 7/7 (100%) per step: brief: 1/1, plan: 1/1, queries: 1/1, select: 1/1, note: 1/1, gap: 1/1, write: 1/1"
+
+From M19g-T1-probe.json:
+JSON contains:
+- "callsPerSetting": 5
+- "think:false": { "valid": 7, "total": 7 }
+- Per-step validity recorded for all 7 steps
+
+=== ACCEPTANCE CRITERIA VERIFICATION ===
+M19g-AC1 (required): "Live on the Mac: the FR35 `format` probe is re-run with thinking off on the installed Ollama against `qwen3.5:35b-a3b`, and its validity rate is recorded in evidence under .harness/evidence/."
+
+Evidence:
+1. Probe re-run on live Ollama: ✓ (qwen3.5:35b-a3b resident, 100% GPU)
+2. Run with thinking off: ✓ (JSON shows think:false results)
+3. Probe output format: ✓ (probe-format-think.ts ran against qwen3.5:35b-a3b)
+4. Validity rate recorded: ✓ (probe.log line 81 and probe.json both contain 7/7 (100%) for think:false)
+5. Evidence under .harness/evidence/: ✓ (M19g-T1-probe.json and M19g-T1-probe.log present)
+
+=== TEST COMMANDS FROM PACKET ===
+Test 1: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/probe-format-think.ts --model qwen3.5:35b-a3b --calls 5
+- Exit status: 0 ✓
+- Output includes valid/total/perStep for think:false ✓
+- Validity rate: 7/7 (100%) ✓
+
+Test 2: launchctl list | grep com.harness.server shows new pid with start time after git log
+- Current: PID 2057, Fri 2 Oct 21:08:52 2026
+- Commit: 2026-10-02T20:37:00+01:00
+- After?: Yes ✓
+
+=== FILES CHANGED ANALYSIS ===
+Files in allowed list:
+- .harness/evidence/M19g-T1-restart.log (present) ✓
+- .harness/evidence/M19g-T1-probe.log (present) ✓
+- .harness/evidence/M19g-T1-probe.json (present) ✓
+
+Untracked files outside allowed scope:
+- server/scripts/ac29-live-run.test.ts (not part of M19g-T1)
+- server/scripts/ac29-live-run.ts (not part of M19g-T1)
+- server/scripts/ac29-questions.json (not part of M19g-T1)
+
+These are pre-existing per the status report, not created by this task.
+
+=== SUMMARY ===
+All task requirements met:
+1. Restart performed: PID 2034 → 2057, new process after server code
+2. Readiness verified: HTTP 401 response (listening)
+3. Probe ran with --calls 5: exit 0, JSON output with think:false validity
+4. Think-off validity rate recorded: 7/7 (100%) in both log and JSON
+5. All evidence files present in .harness/evidence/
+6. No source/test/config files modified
+7. No tests weakened (no tests in this task's scope)
+
+Verifier re-ran probe at 2026-10-02 21:18:xx and got identical results: 
+- Exit 0
+- Think-false: 7/7 (100%)
+- All steps 1/1 valid

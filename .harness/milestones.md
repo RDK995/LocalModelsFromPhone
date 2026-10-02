@@ -418,49 +418,7 @@ Over GET /v1/generations/{id}/events, a deep research run emits a "started" step
 
 Owns: none owned. Traces to: AC31 (started steps precede each await; keep-alives every 15 s on deep, ordinary web and switch-off streams without disturbing resume), FR45 (server half; FR45 owned by M19f), FR40 (amended: keep-alive on ordinary and switch-off replies).
 
-### Architecture
-
-C4, C6
-
-### As-Built
-
-.harness/as-built/M19e.md - RECORDED: C4, C6 observed, 3 edges, 7 of 7 files attributed, no claim mismatches.
-
-### Acceptance Criteria
-
-- [x] **M19e-AC1**: Server tests through POST /v1/chat and GET /v1/generations/{id}/events with a scripted fake Ollama and fake backends that hold each call open: a deep research run emits a "started" step, carrying `elapsed_ms`, before awaiting every search, read and model call (not only after it returns), with model-call steps such as "Choosing pages", "Taking notes: <domain>" and "Checking for gaps".
-- [x] **M19e-AC2**: Server tests: while a reply stream is open the server sends an SSE comment keep-alive at least every 15 s on deep research, ordinary web and switch-off streams; the comments carry no event ID, and a Last-Event-ID resume still yields every event with no gaps or duplicates; all existing server tests pass.
-
-### Baseline
-
-755fbc5594ddbb162ebb827b22c8be7f0661f6da on m19e-stream-liveness (branched from m19d-breadth-first-prefetch at fe412b6 plus a .harness-only commit archiving M19c; the human's untracked reports/ and research_notes/ left untouched). Baseline validation: `cd server && bun test` 339 pass (M19d record).
-
-### Evidence
-
-- T1 (Mid, sonnet, attempt 3, PASS; ORDINARY_IMPLEMENTATION; commit eafdab3): SSE comment keep-alive in sseResponse, keepAliveMs option (default 15000). Packet .harness/tasks/M19e-T1.md; verifier .harness/evidence/M19e-T1-verifier.log (its full-suite run caught T2 mid-flight; combined full suite below).
-- T2 (Top, opus, attempt 4, routed Top: DIFFICULT_CONCURRENCY; commit 582130f): started steps before every search, read and model call; new step kind "model" with detail label. Returned BLOCKED only because the packet forbade editing research.test.ts:182 (exact kind list); accepted with T3. Packet .harness/tasks/M19e-T2.md; verifier .harness/evidence/M19e-T2-verifier.log.
-- T3 (Cheap, haiku, attempt 1, PASS; BOUNDED_LOW_RISK; commit 30043cc): research.test.ts exact kind list now includes the model steps, plus an assertion on their labels; verifier NO weakening. Packet .harness/tasks/M19e-T3.md.
-- M19e-AC1: server/src/http/deepResearchStartedSteps.test.ts S1 (search started step, with elapsed_ms/budget_ms, delivered while the fake search is held), S2 (both prefetched reads announced before either is released), S3 (Choosing searches / Choosing pages / Taking notes: <domain> / Checking for gaps started while each fake Ollama call is held, then done with the same step_id), S4 (no step_id has two started steps); research.test.ts exact kind sequence and started model labels - .harness/evidence/M19e-T2-verifier.log (4 pass x3; full suite 349 pass; server and mobile tsc clean)
-- M19e-AC2: server/src/http/streamKeepAlive.test.ts KA1-KA3 (deep research, ordinary web and switch-off streams get >=4 keep-alives while a call is held, no chunk gap > keepAliveMs+250 ms), KA4 (Last-Event-ID resume across keep-alives: every seq exactly once, keep-alive lines carry no id/event/data), KA5 (interval cleared on close and on client cancel), DEFAULT_KEEP_ALIVE_MS <= 15000 - .harness/evidence/M19e-T1-verifier.log (6 pass x3); full suite with all tasks 349 pass, tsc clean - .harness/evidence/M19e-T2-verifier.log
-
-### Validation
-
-- `cd server && bun test && bunx tsc --noEmit` - PASS (verifier after T1-T3: 349 pass, 0 fail; tsc clean; mobile tsc clean) - .harness/evidence/M19e-T2-verifier.log. The reviewer re-runs this.
-
-### Review
-
-- Cycle 1: PASS — tier Top (opus), reason_code DIFFICULT_CONCURRENCY, diff 755fbc5..3a4e4bf (whole milestone), scope SUBSTANTIVE. Per-criterion: M19e-AC1 PASS, M19e-AC2 PASS. Findings: 0 BLOCKER, 0 IMPORTANT, 2 OPTIONAL (no report written). Reviewer re-ran `cd server && bun test` (349 pass, 0 fail), server and mobile tsc clean - .harness/evidence/M19e-review.log.
-
-### Review Cycles
-
-0
-
-### Follow-ups
-
-- A prefetched read still in flight when the deadline, a Stop or a cancel hits now has a 'started' step with no matching done/failed step (drainReads skips unfinished reads); before M19e such reads were never announced. The app may show them as still running - consider a 'failed' read step in drainReads, or handle in M19f. Review cycle 1 (OPTIONAL): the same gap also covers a search cut off by the deadline/Stop/cancel and a read that ended in an error after its started step (research.ts ~760, ~812-813, ~882); model calls already close with 'failed'.
-- New wire value StepEventData.kind 'model' (detail = label); the app's stepLabel (mobile/src/ui/chatItems.ts) does not know it yet and would fall through to the read branch - M19f (app half of FR45) must render kind 'model' by its detail.
-- search/read steps now carry the run's own step_id (the web tool's random id is replaced) so the pre-await started step and the tool's later done/failed/unavailable step share one id.
-- milestones.md is still over 400 lines after archiving M19c (remaining entries are active, most recently settled, TODO or BLOCKED).
+Detail: `.harness/archive/M19e.md`
 
 
 ## M19f — On the phone the clock ticks every second, each outage gets its own resume allowance, and a failed reply shows a plain line
@@ -522,7 +480,7 @@ C1, C2, C3
 
 ## M19g — Faster deep research proven live on the Mac
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -545,7 +503,12 @@ Pending.
 
 ### Baseline
 
+8fcf6b9ebabed670d86d3a1fd14cccc230977638 on m19g-live-mac-proof
+
 ### Evidence
+
+- T1 — restart + FR35 format probe   Cheap (haiku), attempt 1, PASS; verifier PASS (re-ran probe, exit 0). com.harness.server pid 2034 -> 2057 started 2026-10-02 21:08:52, after last server/ commit 30043cc (20:37 +01:00); health 401. Probe `--calls 5` runs max(5,7)=7 calls, one per step: think-off validity 7/7 (100%), think-on 7/7. M19g-AC1: .harness/evidence/M19g-T1-probe.log, M19g-T1-probe.json, M19g-T1-restart.log, M19g-T1-verifier.log.
+- T2 — ac29-live-run script         Mid (sonnet), attempt 3, PASS (worker return not captured: previous orchestrator cut off); verifier PASS: `bun test scripts/ac29-live-run.test.ts` 11 pass; `bun test && bun run typecheck` 360 pass, exit 0; `--check-only ../.harness/evidence/M16-T5-stream.txt --log /dev/null` cited_read_pages 4, unresolved [] (matches M16-T5-check.json). FR41 lines carry no run id or timestamp; selected by server.log byte offset from before POST to after `done`. Budget 480 s (server/src/generations/research.ts:106), margin 60 s. Gap: `notes_kept` is null - the server exposes no notes count; addressed by T3. .harness/evidence/M19g-T2-verifier.log.
 
 ### Validation
 

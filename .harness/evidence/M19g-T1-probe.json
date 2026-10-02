@@ -1,0 +1,77 @@
+{
+  "model": "qwen3.5:35b-a3b",
+  "num_ctx": 32768,
+  "callsPerSetting": 5,
+  "settings": {
+    "think:true": {
+      "valid": 7,
+      "total": 7,
+      "perStep": {
+        "brief": {
+          "valid": 1,
+          "total": 1
+        },
+        "plan": {
+          "valid": 1,
+          "total": 1
+        },
+        "queries": {
+          "valid": 1,
+          "total": 1
+        },
+        "select": {
+          "valid": 1,
+          "total": 1
+        },
+        "note": {
+          "valid": 1,
+          "total": 1
+        },
+        "gap": {
+          "valid": 1,
+          "total": 1
+        },
+        "write": {
+          "valid": 1,
+          "total": 1
+        }
+      },
+      "failures": []
+    },
+    "think:false": {
+      "valid": 7,
+      "total": 7,
+      "perStep": {
+        "brief": {
+          "valid": 1,
+          "total": 1
+        },
+        "plan": {
+          "valid": 1,
+          "total": 1
+        },
+        "queries": {
+          "valid": 1,
+          "total": 1
+        },
+        "select": {
+          "valid": 1,
+          "total": 1
+        },
+        "note": {
+          "valid": 1,
+          "total": 1
+        },
+        "gap": {
+          "valid": 1,
+          "total": 1
+        },
+        "write": {
+          "valid": 1,
+          "total": 1
+        }
+      },
+      "failures": []
+    }
+  }
+}

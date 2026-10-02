@@ -1,0 +1,51 @@
+=== BEFORE RESTART ===
+Command: launchctl list | grep com.harness.server
+2034	-15	com.harness.server
+
+Command: ps -o pid,lstart,command -p 2034
+  PID STARTED                      COMMAND
+ 2034 Fri  2 Oct 21:08:42 2026     /opt/homebrew/bin/bun src/index.ts
+
+Command: git log -1 --format='%H %cI' -- server/
+30043cc5f86aa6b7f91b775559a679dca3940e6f 2026-10-02T20:37:00+01:00
+
+=== PERFORMING RESTART ===
+Command: launchctl kickstart -k gui/501/com.harness.server
+Exit status: 0
+
+=== READINESS CHECK (attempt 1) ===
+Command: timeout 3 curl -s -o /dev/null -w '%{http_code}
+' http://127.0.0.1:7789/v1/health
+timeout
+
+Not listening yet. Attempting readiness check again...
+Command: timeout 3 curl -s -o /dev/null -w '%{http_code}
+' http://127.0.0.1:7789/v1/health
+timeout
+
+=== AFTER RESTART ===
+Command: launchctl list | grep com.harness.server
+2057	-15	com.harness.server
+
+Command: ps -o pid,lstart,command -p 2057
+  PID STARTED                      COMMAND
+ 2057 Fri  2 Oct 21:08:52 2026     /opt/homebrew/bin/bun src/index.ts
+
+Command: git rev-parse HEAD
+8fcf6b9ebabed670d86d3a1fd14cccc230977638
+
+Command: git branch --show-current
+m19g-live-mac-proof
+
+Command: ollama ps
+NAME               ID              SIZE     PROCESSOR    CONTEXT    UNTIL   
+qwen3.5:35b-a3b    3460ffeede54    23 GB    100% GPU     32768      Forever    
+
+=== VERIFICATION ===
+Old PID: 2034, New PID: 2057
+HTTP Readiness Response: timeout
+Latest server commit: 30043cc5f86aa6b7f91b775559a679dca3940e6f 2026-10-02T20:37:00+01:00
+
+=== ADDITIONAL READINESS CHECK (using curl -m) ===
+Command: curl -m 10 http://127.0.0.1:7789/v1/health
+Response: HTTP/1.1 401 Unauthorized (server is listening)
