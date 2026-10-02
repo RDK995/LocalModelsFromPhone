@@ -10503,19 +10503,19 @@
       "architecture": "C6, C7, C11, C12, C13",
       "requirements": [],
       "traces": "AC29 (first live question), Constraints (format with thinking unverified)",
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 0,
       "review_override": null,
       "baseline": "d4037fb0e9652dc2113bf33816bf63205c893d03 on m16-real-model-live-proof",
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M16.md",
+        "result": "RECORDED \u2014 5/5 files attributed; components C6, C7, C11, C12, C13; 5 edges; claim mismatches NONE"
       },
       "criteria": [
         {
           "id": "M16-AC1",
           "text": "`qwen3.5:35b-a3b` is downloaded on the Mac with `ollama pull`, appears in the server's installed-model list (GET /v1/models) and loads resident through the server's swap-load.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             ".harness/evidence/M16-T1-live.log",
             ".harness/evidence/M16-T1-verifier.log",
@@ -10525,7 +10525,7 @@
         {
           "id": "M16-AC2",
           "text": "A live probe against the resident `qwen3.5:35b-a3b` records whether `format`-constrained replies are schema-valid with thinking on and with thinking off (at least 5 calls each, using the run's step schemas), and deep research uses the setting the probe supports; the result and the chosen setting are recorded in the evidence.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             ".harness/evidence/M16-T4-probe.json",
             ".harness/evidence/M16-T4-probe.log",
@@ -10536,7 +10536,7 @@
         {
           "id": "M16-AC3",
           "text": "Live on the Mac: one real research-style question sent through POST /v1/chat as deep research ends with status `complete` or `partial`, a report citing at least 1 read page, and no citation number that fails to resolve to a source of that reply.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             ".harness/evidence/M16-T5-check.json",
             ".harness/evidence/M16-T5-stream.txt",
@@ -10679,7 +10679,25 @@
           ]
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "PASS",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "DIFF_MID_CHEAP_ONLY",
+          "diff_range": "d4037fb0e9652dc2113bf33816bf63205c893d03..985a177",
+          "artifact": null,
+          "review_log": ".harness/evidence/M16-review.log",
+          "findings": "0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL",
+          "per_criterion": {
+            "M16-AC1": "PASS",
+            "M16-AC2": "PASS",
+            "M16-AC3": "PASS"
+          },
+          "note": "AC1 graded against GET /v1/state (GET /v1/models does not exist), as recorded in the milestone evidence"
+        }
+      ],
       "findings": [],
       "validation": [
         {

@@ -377,7 +377,7 @@ b48673499df9aa0d846bad7bbefe1548d57cb272 on m15-deep-research-skeleton
 
 ## M16 — The deep research run works on the real qwen3.5:35b-a3b on the Mac
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -391,13 +391,13 @@ C6, C7, C11, C12, C13
 
 ### As-Built
 
-Pending.
+.harness/as-built/M16.md — RECORDED — 5/5 files attributed; components C6, C7, C11, C12, C13; 5 edges; claim mismatches NONE
 
 ### Acceptance Criteria
 
-- [ ] **M16-AC1**: `qwen3.5:35b-a3b` is downloaded on the Mac with `ollama pull`, appears in the server's installed-model list (GET /v1/models) and loads resident through the server's swap-load.
-- [ ] **M16-AC2**: A live probe against the resident `qwen3.5:35b-a3b` records whether `format`-constrained replies are schema-valid with thinking on and with thinking off (at least 5 calls each, using the run's step schemas), and deep research uses the setting the probe supports; the result and the chosen setting are recorded in the evidence.
-- [ ] **M16-AC3**: Live on the Mac: one real research-style question sent through POST /v1/chat as deep research ends with status `complete` or `partial`, a report citing at least 1 read page, and no citation number that fails to resolve to a source of that reply.
+- [x] **M16-AC1**: `qwen3.5:35b-a3b` is downloaded on the Mac with `ollama pull`, appears in the server's installed-model list (GET /v1/models) and loads resident through the server's swap-load.
+- [x] **M16-AC2**: A live probe against the resident `qwen3.5:35b-a3b` records whether `format`-constrained replies are schema-valid with thinking on and with thinking off (at least 5 calls each, using the run's step schemas), and deep research uses the setting the probe supports; the result and the chosen setting are recorded in the evidence.
+- [x] **M16-AC3**: Live on the Mac: one real research-style question sent through POST /v1/chat as deep research ends with status `complete` or `partial`, a report citing at least 1 read page, and no citation number that fails to resolve to a source of that reply.
 
 ### Baseline
 
@@ -440,7 +440,7 @@ Human decision (2026-10-02): the harness is authorised to restart LaunchAgent `c
 
 ### Review
 
-Pending.
+- Cycle 1: PASS — tier Mid (sonnet), reason: diff holds only Mid/Cheap tasks (M16-T1..T5). Diff reviewed: d4037fb0e9652dc2113bf33816bf63205c893d03..985a177. Per criterion: AC1 PASS (graded against GET /v1/state; GET /v1/models does not exist), AC2 PASS, AC3 PASS. Findings: none. Validation re-run: 221 pass, 0 fail, tsc clean; M16-T5-check.ts re-run (.harness/evidence/M16-review.log).
 
 ### Review Cycles
 
