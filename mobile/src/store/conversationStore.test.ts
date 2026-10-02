@@ -373,6 +373,27 @@ describe("conversation store: web search switch and web steps (M10)", () => {
     expect(loaded!.messages[0]?.sources).toEqual(message.sources);
   });
 
+  it("round-trips a deep research reply (plan/write steps, research status)", async () => {
+    const storage = createMemoryStorage();
+    const store = newStore(storage);
+    const c = await store.create();
+    const message: Message = {
+      id: "r1",
+      role: "assistant",
+      content: "report [1]",
+      status: "complete",
+      steps: [
+        { step_id: "p", kind: "plan", status: "done", elapsed_ms: 1000, budget_ms: 480000 },
+        { step_id: "w", kind: "write", status: "done", elapsed_ms: 400000, budget_ms: 480000 },
+      ],
+      sources: [{ title: "X", url: "https://x.test", n: 1 }],
+      research: { status: "partial", elapsed_ms: 400000, budget_ms: 480000 },
+    };
+    await store.appendMessage(c.id, message);
+    const loaded = await newStore(storage).get(c.id);
+    expect(loaded!.messages[0]).toEqual(message);
+  });
+
   const badMessages: Array<[string, Record<string, unknown>]> = [
     ["steps not an array", { steps: "x" }],
     ["sources not an array", { sources: {} }],
@@ -385,6 +406,10 @@ describe("conversation store: web search switch and web steps (M10)", () => {
     ["step that is null", { steps: [null] }],
     ["source without url", { sources: [{ title: "t" }] }],
     ["source without title", { sources: [{ url: "u" }] }],
+    ["research not an object", { research: "partial" }],
+    ["research with bad status", { research: { status: "ok", elapsed_ms: 1, budget_ms: 2 } }],
+    ["research with non-number elapsed", { research: { status: "failed", elapsed_ms: "1", budget_ms: 2 } }],
+    ["research without budget", { research: { status: "failed", elapsed_ms: 1 } }],
   ];
 
   for (const [name, extra] of badMessages) {

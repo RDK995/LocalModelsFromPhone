@@ -62,6 +62,7 @@ import {
   stepsToggleLabel,
 } from "@/ui/chatItems";
 import type { PendingTurn } from "@/ui/chatItems";
+import { researchStatusLabel } from "@/ui/deepResearch";
 import { webSwitchDisplayValue, webSwitchState } from "@/ui/webSwitch";
 import type { WebSwitchState } from "@/ui/webSwitch";
 import { deepResearchAction } from "@/ui/deepResearch";
@@ -385,6 +386,13 @@ export default function ChatScreen() {
                         </View>
                       )}
                     </View>
+                  )}
+                  {(item.streaming ? item.clockLabel : item.research) && (
+                    <Text style={styles.stepText}>
+                      {item.streaming
+                        ? item.clockLabel
+                        : item.research && researchStatusLabel(item.research.status)}
+                    </Text>
                   )}
                   {item.steps && (
                     <View style={styles.stepsContainer}>

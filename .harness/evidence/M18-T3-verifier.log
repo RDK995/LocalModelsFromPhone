@@ -1,0 +1,137 @@
+VERIFICATION LOG FOR M18-T3
+
+Date: 2026-10-02
+Verifier: Claude Haiku 4.5
+Working Directory: /Users/ryankenny/Projects/CodingHarnessv2
+
+COMMAND 1: Tests
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun test
+Exit Status: 0
+Output:
+ 488 pass
+ 0 fail
+ 12191 expect() calls
+Ran 488 tests across 32 files. [230.00ms]
+
+COMMAND 2: Type Checking
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck
+Exit Status: 0
+Output: (no errors)
+
+COMMAND 3: ESLint on Changed Files
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && npx eslint --max-warnings 0 \
+  src/api/client.ts \
+  src/api/client.test.ts \
+  src/app/chat.tsx \
+  src/chat/conversationSession.ts \
+  src/chat/conversationSession.test.ts \
+  src/store/conversationStore.ts \
+  src/store/conversationStore.test.ts \
+  src/ui/chatItems.ts \
+  src/ui/chatItems.test.ts \
+  src/ui/deepResearch.ts \
+  src/ui/deepResearch.test.ts \
+  src/ui/streamReducer.ts \
+  src/ui/streamReducer.test.ts
+Exit Status: 0
+Output: (no warnings or errors)
+
+CHANGED FILES VERIFICATION:
+- mobile/src/api/client.test.ts (allowed)
+- mobile/src/api/client.ts (allowed)
+- mobile/src/app/chat.tsx (allowed)
+- mobile/src/chat/conversationSession.test.ts (allowed)
+- mobile/src/chat/conversationSession.ts (allowed)
+- mobile/src/store/conversationStore.test.ts (allowed)
+- mobile/src/store/conversationStore.ts (allowed)
+- mobile/src/ui/chatItems.test.ts (allowed)
+- mobile/src/ui/chatItems.ts (allowed)
+- mobile/src/ui/deepResearch.test.ts (allowed)
+- mobile/src/ui/deepResearch.ts (allowed)
+- mobile/src/ui/streamReducer.test.ts (allowed)
+- mobile/src/ui/streamReducer.ts (allowed)
+All files in allowed list.
+
+TEST WEAKENING VERIFICATION:
+Checked git diff for deleted test cases - no deletions found in:
+- chatItems.test.ts
+- streamReducer.test.ts
+- conversationStore.test.ts
+- conversationSession.test.ts
+- client.test.ts
+All existing tests remain intact; only new test cases were added.
+
+ACCEPTANCE CRITERIA MAPPING:
+
+1. stepLabel labels kind "plan" as "Planning" and kind "write" as "Writing report"
+   Test: chatItems.test.ts lines 522-529
+   - Line 523: expect(stepLabel(researchSteps[0] as StepEventData)).toBe("Planning");
+   - Line 524: expect(stepLabel(researchSteps[3] as StepEventData)).toBe("Writing report");
+   - Lines 525-526: Failed step cases
+   Implementation: chatItems.ts lines 146-151
+
+2. researchClockLabel(elapsedMs, budgetMs) -> "m:ss of m:ss"
+   Test: deepResearch.test.ts lines 73-79
+   - Line 75: expect(researchClockLabel(192000, 480000)).toBe("3:12 of 8:00");
+   - Line 76: expect(researchClockLabel(0, 480000)).toBe("0:00 of 8:00");
+   - Line 78: expect(researchClockLabel(3725000, 480000)).toBe("62:05 of 8:00");
+   Implementation: deepResearch.ts lines 60-68
+
+3. streamReducer.ts tracks research clock and result
+   Tests: streamReducer.test.ts lines 79-128
+   - Line 99: expects clock from steps with elapsed_ms/budget_ms
+   - Line 107: expects research result from done event
+   - Line 121: expects done without research changes nothing
+   Implementation: streamReducer.ts lines 16-19, 51-58, 63-65
+
+4. Message gains optional research field and validation
+   Test: conversationStore.test.ts lines 376-395
+   - Line 390: message with research field
+   - Line 394: fresh store returns the same
+   Tests: conversationStore.test.ts lines 397-424 (validation tests)
+   Implementation: conversationStore.ts line 52, lines 129-137, line 156
+
+5. conversationSession persists research/steps/sources/n
+   Test: conversationSession.test.ts lines 876-940
+   - Lines 889-929: persists content, steps, sources with n and research status
+   - Lines 934-939: ordinary reply stores no research key
+   Implementation: conversationSession.ts (persistReply function, line with research: accumulator.research)
+
+6. ChatItem carries research and exposes live clock
+   Tests: chatItems.test.ts lines 509-606
+   - Line 531: persisted message has research, steps, sources
+   - Line 548: streaming item exposes clockLabel
+   - Line 565: streaming item with done result has research
+   - Line 593: report's [n] marks resolve to logos through citation path
+   Implementation: chatItems.ts lines 42-45, 68, 96-97, 106-109
+
+7. Logos through citation path + "Sources (n)" label
+   Test: chatItems.test.ts lines 593-605
+   - Line 599: parseInline extracts citations [1][2]
+   - Line 600-603: presentCitation resolves to source
+   - Line 604: sourceListHeader labels "Sources (2)"
+   Implementation: uses existing functions (inlineLink.ts, sourceListModel.ts)
+
+8. chat.tsx renders clock/status for deep research
+   Implementation: chat.tsx lines 390-394
+   - Renders clockLabel while streaming
+   - Renders researchStatusLabel when finished
+
+9. client.ts parses plan/write steps with elapsed_ms/budget_ms and done.research
+   Tests: client.test.ts lines 539-577
+   - Line 539: keeps plan/write steps with elapsed_ms/budget_ms and done.research
+   - Line 569: drops malformed done.research
+   Implementation: client.ts
+   - STEP_KINDS includes plan/write (lines 45-52)
+   - Parses elapsed_ms/budget_ms (lines 1008-1011)
+   - Parses research from done (lines 968-980)
+
+VERIFICATION OF ORDINARY WEB REPLIES:
+- Tests for ordinary (non-research) replies remain unchanged
+- conversationStore.test.ts lines 336-354 test web steps without research
+- chatItems.test.ts lines 222-317 test web steps/sources without research
+- conversationSession.test.ts lines 176-189 test ordinary reply persistence
+- deepResearch.ts lines 20-57 show research action is hidden when web off
+- deepResearch.test.ts lines 6-70 test visibility/enablement logic
+No existing assertions altered, only new test cases added for deep research.
+

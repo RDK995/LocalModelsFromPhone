@@ -20,6 +20,7 @@
 import type { Message } from "@/store/conversationStore";
 import type { StreamAccumulator } from "@/ui/streamReducer";
 import type { StepEventData } from "@shared/api";
+import { researchClockLabel } from "@/ui/deepResearch";
 
 export interface PendingTurn {
   userMessageId: string;
@@ -38,6 +39,10 @@ export interface ChatItem {
   model?: string;
   steps?: StepEventData[];
   sources?: Array<{ title: string; url: string }>;
+  /** Deep research result (finished run); absent for ordinary replies. */
+  research?: Message["research"];
+  /** Live "m:ss of m:ss" clock for a streaming deep research reply. */
+  clockLabel?: string;
   streaming: boolean;
 }
 
@@ -60,6 +65,7 @@ export function buildChatItems(
     ...(m.model ? { model: m.model } : {}),
     ...(m.steps && m.steps.length > 0 ? { steps: m.steps } : {}),
     ...(m.sources && m.sources.length > 0 ? { sources: m.sources } : {}),
+    ...(m.research ? { research: m.research } : {}),
     streaming: false,
   }));
 
@@ -87,12 +93,19 @@ export function buildChatItems(
         ...(pending.accumulator.sources && pending.accumulator.sources.length > 0
           ? { sources: pending.accumulator.sources }
           : {}),
+        ...(pending.accumulator.research ? { research: pending.accumulator.research } : {}),
+        ...streamingClock(pending.accumulator),
         streaming: true,
       });
     }
   }
 
   return items;
+}
+
+function streamingClock(acc: StreamAccumulator): { clockLabel?: string } {
+  const clock = acc.research ?? acc.clock;
+  return clock ? { clockLabel: researchClockLabel(clock.elapsed_ms, clock.budget_ms) } : {};
 }
 
 /** Label for the thinking-section toggle button, by its current state. */
@@ -128,6 +141,13 @@ export function stepLabel(step: StepEventData): string {
   }
   if (kind === "answer_now") {
     return "Asked the model to answer now";
+  }
+
+  if (kind === "plan") {
+    return status === "failed" ? "Planning (failed)" : "Planning";
+  }
+  if (kind === "write") {
+    return status === "failed" ? "Writing report (failed)" : "Writing report";
   }
 
   if (status === "unavailable") {

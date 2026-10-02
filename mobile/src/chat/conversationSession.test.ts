@@ -872,3 +872,70 @@ describe("sendInConversation: deep research (M18)", () => {
     expect(result.blocked).toBe("Load dr:7b to use deep research");
   });
 });
+
+describe("sendInConversation: deep research run persistence (M18-T3)", () => {
+  function chatClient(respond: () => Response, _bodies: Array<Record<string, unknown>>): APIClient {
+    const fetchMock = mock(async (url: string) => {
+      if (url.endsWith("/v1/state")) {
+        return stateResponse({ name: "qwen" }, [{ name: "qwen", size_bytes: 1, tools: true }], "qwen");
+      }
+      return respond();
+    });
+    const client = new APIClient(BASE_URL, fetchMock as unknown as typeof fetch);
+    client.setToken("t");
+    return client;
+  }
+
+  it("persists content, steps, sources with n and research status; a fresh store returns the same", async () => {
+    const storage = createMemoryStorage();
+    const store = createConversationStore(storage);
+    const c = await store.create();
+    await store.setWebSearch(c.id, true);
+    const client = chatClient(() => {
+      const s = controlledSseResponse("gen-dr");
+      const step = (id: string, kind: string, status: string, extra: Record<string, unknown>, elapsed: number) =>
+        s.push(
+          `event: step\ndata: ${JSON.stringify({ step_id: id, kind, status, ...extra, elapsed_ms: elapsed, budget_ms: 480000 })}\n\n`
+        );
+      step("p", "plan", "started", {}, 0);
+      step("p", "plan", "done", {}, 1000);
+      step("s1", "search", "done", { query: "q" }, 2000);
+      step("r1", "read", "done", { url: "https://x.test/a" }, 3000);
+      step("w", "write", "started", {}, 360000);
+      step("w", "write", "done", {}, 400000);
+      s.push("event: sources\ndata: {\"items\":[{\"title\":\"X\",\"url\":\"https://x.test/a\",\"n\":1},{\"title\":\"Y\",\"url\":\"https://y.test/b\",\"n\":2}]}\n\n");
+      s.push("event: content\ndata: {\"text\":\"Report [1] and [2].\"}\n\n");
+      s.push(
+        "event: done\ndata: {\"status\":\"complete\",\"model\":\"qwen\",\"eval_count\":1,\"tokens_per_second\":1,\"research\":{\"status\":\"partial\",\"elapsed_ms\":400000,\"budget_ms\":480000}}\n\n"
+      );
+      s.close();
+      return s.response;
+    }, []);
+    await sendInConversation(client, store, c.id, "research x", newCallbacks().callbacks, {
+      deepResearch: true,
+    });
+    const reply = (await store.get(c.id))!.messages[1]!;
+    expect(reply.content).toBe("Report [1] and [2].");
+    expect(reply.steps?.map((s) => [s.step_id, s.kind, s.status])).toEqual([
+      ["p", "plan", "done"],
+      ["s1", "search", "done"],
+      ["r1", "read", "done"],
+      ["w", "write", "done"],
+    ]);
+    expect(reply.sources).toEqual([
+      { title: "X", url: "https://x.test/a", n: 1 },
+      { title: "Y", url: "https://y.test/b", n: 2 },
+    ]);
+    expect(reply.research).toEqual({ status: "partial", elapsed_ms: 400000, budget_ms: 480000 });
+    const reopened = (await createConversationStore(storage).get(c.id))!.messages[1];
+    expect(reopened).toEqual(reply);
+  });
+
+  it("an ordinary reply stores no research key", async () => {
+    const store = createConversationStore(createMemoryStorage());
+    const c = await store.create();
+    const client = chatClient(() => completedChatResponse("ok", "llama3"), []);
+    await sendInConversation(client, store, c.id, "hi", newCallbacks().callbacks);
+    expect("research" in (await store.get(c.id))!.messages[1]!).toBe(false);
+  });
+});

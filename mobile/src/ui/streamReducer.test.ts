@@ -75,3 +75,54 @@ describe("applyStreamEvent web steps and sources", () => {
     expect(acc.content).toBe("c");
   });
 });
+
+describe("applyStreamEvent deep research clock and result", () => {
+  const dstep = (id: string, kind: StepEventData["kind"], elapsed_ms?: number) => ({
+    type: "step" as const,
+    data: {
+      step_id: id,
+      kind,
+      status: "started" as const,
+      ...(elapsed_ms === undefined ? {} : { elapsed_ms, budget_ms: 480000 }),
+    },
+  });
+
+  it("leaves clock and research absent for ordinary replies", () => {
+    const acc = [step("a", "started"), step("a", "done")].reduce(
+      applyStreamEvent,
+      initialStreamAccumulator
+    );
+    expect("clock" in acc).toBe(false);
+    expect("research" in acc).toBe(false);
+  });
+
+  it("tracks the latest clock from step events that carry it", () => {
+    const acc = [dstep("p", "plan", 1000), dstep("s", "search", 5000), dstep("x", "continue")].reduce(
+      applyStreamEvent,
+      initialStreamAccumulator
+    );
+    expect(acc.clock).toEqual({ elapsed_ms: 5000, budget_ms: 480000 });
+  });
+
+  it("records the research result from done", () => {
+    const acc = applyStreamEvent(initialStreamAccumulator, {
+      type: "done",
+      data: {
+        status: "complete",
+        model: "m",
+        eval_count: 1,
+        tokens_per_second: 1,
+        research: { status: "partial", elapsed_ms: 400000, budget_ms: 480000 },
+      },
+    });
+    expect(acc.research).toEqual({ status: "partial", elapsed_ms: 400000, budget_ms: 480000 });
+  });
+
+  it("a done without research changes nothing", () => {
+    const acc = applyStreamEvent(initialStreamAccumulator, {
+      type: "done",
+      data: { status: "complete", model: "m", eval_count: 1, tokens_per_second: 1 },
+    });
+    expect(acc).toEqual(initialStreamAccumulator);
+  });
+});

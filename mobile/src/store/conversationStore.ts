@@ -48,6 +48,8 @@ export interface Message {
   steps?: StepEventData[];
   /** Sources list the reply ended with (FR22). */
   sources?: SourcesEvent["items"];
+  /** Deep research result (FR36); absent for ordinary replies. */
+  research?: { status: "complete" | "partial" | "failed"; elapsed_ms: number; budget_ms: number };
 }
 
 export interface Conversation {
@@ -103,7 +105,7 @@ function defaultNewId(): string {
 
 const MESSAGE_STATUSES: MessageStatus[] = ["complete", "stopped", "error", "streaming"];
 
-const STEP_KINDS = ["search", "read", "continue", "answer_now"];
+const STEP_KINDS = ["search", "read", "continue", "answer_now", "plan", "write"];
 const STEP_STATUSES = ["started", "done", "failed", "unavailable"];
 
 function isValidStep(value: unknown): boolean {
@@ -124,6 +126,16 @@ function isValidSource(value: unknown): boolean {
   return typeof v.title === "string" && typeof v.url === "string";
 }
 
+function isValidResearch(value: unknown): boolean {
+  if (value === null || typeof value !== "object") return false;
+  const v = value as Record<string, unknown>;
+  return (
+    (v.status === "complete" || v.status === "partial" || v.status === "failed") &&
+    typeof v.elapsed_ms === "number" &&
+    typeof v.budget_ms === "number"
+  );
+}
+
 function isValidMessage(value: unknown): value is Message {
   if (value === null || typeof value !== "object") return false;
   const v = value as Record<string, unknown>;
@@ -141,6 +153,7 @@ function isValidMessage(value: unknown): value is Message {
   if (v.sources !== undefined && !(Array.isArray(v.sources) && v.sources.every(isValidSource))) {
     return false;
   }
+  if (v.research !== undefined && !isValidResearch(v.research)) return false;
   return true;
 }
 

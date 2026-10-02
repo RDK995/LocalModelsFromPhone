@@ -42,7 +42,14 @@ type SSEEventName =
   | "step"
   | "sources";
 
-const STEP_KINDS = ["search", "read", "continue", "answer_now"];
+const STEP_KINDS = [
+  "search",
+  "read",
+  "continue",
+  "answer_now",
+  "plan",
+  "write",
+];
 const STEP_STATUSES = ["started", "done", "failed", "unavailable"];
 
 interface StreamOptions {
@@ -951,16 +958,28 @@ export class APIClient {
             type: "content",
             data: { text: parsed.text || "" } as ContentEvent,
           };
-        case "done":
-          return {
-            type: "done",
-            data: {
-              status: parsed.status || "complete",
-              model: parsed.model || "",
-              eval_count: parsed.eval_count || 0,
-              tokens_per_second: parsed.tokens_per_second || 0,
-            } as DoneEvent,
-          };
+        case "done": {
+          const done = {
+            status: parsed.status || "complete",
+            model: parsed.model || "",
+            eval_count: parsed.eval_count || 0,
+            tokens_per_second: parsed.tokens_per_second || 0,
+          } as DoneEvent;
+          const r = parsed.research;
+          if (
+            r &&
+            ["complete", "partial", "failed"].includes(r.status) &&
+            typeof r.elapsed_ms === "number" &&
+            typeof r.budget_ms === "number"
+          ) {
+            done.research = {
+              status: r.status,
+              elapsed_ms: r.elapsed_ms,
+              budget_ms: r.budget_ms,
+            };
+          }
+          return { type: "done", data: done };
+        }
         case "error":
           return {
             type: "error",
@@ -986,6 +1005,10 @@ export class APIClient {
           if (typeof parsed.query === "string") step.query = parsed.query;
           if (typeof parsed.url === "string") step.url = parsed.url;
           if (typeof parsed.detail === "string") step.detail = parsed.detail;
+          if (typeof parsed.elapsed_ms === "number")
+            step.elapsed_ms = parsed.elapsed_ms;
+          if (typeof parsed.budget_ms === "number")
+            step.budget_ms = parsed.budget_ms;
           return { type: "step", data: step };
         }
         case "sources": {

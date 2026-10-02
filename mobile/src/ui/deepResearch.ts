@@ -55,3 +55,21 @@ export function deepResearchAction(
     explanation: loadDeepResearchModelMessage(model),
   };
 }
+
+/** "m:ss of m:ss" for the run clock against its budget (seconds floor). */
+export function researchClockLabel(elapsedMs: number, budgetMs: number): string {
+  const mmss = (ms: number): string => {
+    const total = Math.max(0, Math.floor(ms / 1000));
+    const minutes = Math.floor(total / 60);
+    const seconds = total % 60;
+    return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+  };
+  return `${mmss(elapsedMs)} of ${mmss(budgetMs)}`;
+}
+
+/** Label for a finished deep research run's status. */
+export function researchStatusLabel(
+  status: "complete" | "partial" | "failed"
+): string {
+  return `Deep research: ${status}`;
+}

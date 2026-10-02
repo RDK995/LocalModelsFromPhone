@@ -536,6 +536,47 @@ describe("APIClient step and sources events", () => {
 
   const req = { model: "m", messages: [{ role: "user" as const, content: "hi" }] };
 
+  it("keeps plan/write steps with elapsed_ms/budget_ms and done.research", async () => {
+    const { events, errored } = await run(
+      [
+        "event: step\ndata: {\"step_id\":\"p\",\"kind\":\"plan\",\"status\":\"started\",\"elapsed_ms\":1000,\"budget_ms\":480000}\n\n",
+        "event: step\ndata: {\"step_id\":\"w\",\"kind\":\"write\",\"status\":\"done\",\"elapsed_ms\":\"x\",\"budget_ms\":480000}\n\n",
+        "event: done\ndata: {\"status\":\"complete\",\"model\":\"m\",\"eval_count\":1,\"tokens_per_second\":1,\"research\":{\"status\":\"partial\",\"elapsed_ms\":5,\"budget_ms\":10}}\n\n",
+      ],
+      req
+    );
+    expect(errored).toBeNull();
+    expect(events[0]).toEqual({
+      type: "step",
+      data: {
+        step_id: "p",
+        kind: "plan",
+        status: "started",
+        elapsed_ms: 1000,
+        budget_ms: 480000,
+      },
+    });
+    expect(events[1]).toEqual({
+      type: "step",
+      data: { step_id: "w", kind: "write", status: "done", budget_ms: 480000 },
+    });
+    expect(events[2]).toMatchObject({
+      type: "done",
+      data: { research: { status: "partial", elapsed_ms: 5, budget_ms: 10 } },
+    });
+  });
+
+  it("drops a malformed done.research", async () => {
+    const { events } = await run(
+      [
+        "event: done\ndata: {\"status\":\"complete\",\"model\":\"m\",\"research\":{\"status\":\"bogus\",\"elapsed_ms\":5,\"budget_ms\":10}}\n\n",
+      ],
+      req
+    );
+    expect(events[0].type).toBe("done");
+    expect((events[0] as { data: { research?: unknown } }).data.research).toBeUndefined();
+  });
+
   it("delivers step, step, sources, done in order with parsed data", async () => {
     const { events, errored } = await run(
       [

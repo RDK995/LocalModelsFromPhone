@@ -5,7 +5,7 @@
  */
 
 import type { StreamEvent } from "@/api/client";
-import type { SourcesEvent, StepEventData } from "@shared/api";
+import type { DoneEvent, SourcesEvent, StepEventData } from "@shared/api";
 
 export interface StreamAccumulator {
   thinking: string;
@@ -13,6 +13,10 @@ export interface StreamAccumulator {
   /** Web steps in arrival order, one entry per step_id. */
   steps: StepEventData[];
   sources: SourcesEvent["items"];
+  /** Latest deep research clock from a step event; absent for ordinary replies. */
+  clock?: { elapsed_ms: number; budget_ms: number };
+  /** Deep research result from the done event; absent for ordinary replies. */
+  research?: NonNullable<DoneEvent["research"]>;
 }
 
 export const initialStreamAccumulator: StreamAccumulator = {
@@ -44,11 +48,21 @@ export function applyStreamEvent(
         i === -1
           ? [...acc.steps, event.data]
           : acc.steps.map((s, j) => (j === i ? event.data : s));
-      return { ...acc, steps };
+      const { elapsed_ms, budget_ms } = event.data;
+      return {
+        ...acc,
+        steps,
+        ...(elapsed_ms !== undefined && budget_ms !== undefined
+          ? { clock: { elapsed_ms, budget_ms } }
+          : {}),
+      };
     }
     case "sources":
       return { ...acc, sources: event.data.items };
     case "done":
+      return event.data.research
+        ? { ...acc, research: event.data.research }
+        : acc;
     case "error":
       return acc;
   }

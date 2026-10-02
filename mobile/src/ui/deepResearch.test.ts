@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { deepResearchAction } from "./deepResearch";
+import { deepResearchAction, researchClockLabel, researchStatusLabel } from "./deepResearch";
 
 const resident = (name: string) => ({ name, loaded_by_server: true });
 
@@ -67,5 +67,22 @@ describe("deepResearchAction", () => {
     };
     expect(deepResearchAction(true, null)).toEqual(unknown);
     expect(deepResearchAction(true, { resident: resident("llama3") })).toEqual(unknown);
+  });
+});
+
+describe("researchClockLabel", () => {
+  it("formats elapsed against the budget as m:ss of m:ss", () => {
+    expect(researchClockLabel(192000, 480000)).toBe("3:12 of 8:00");
+    expect(researchClockLabel(0, 480000)).toBe("0:00 of 8:00");
+    expect(researchClockLabel(59999, 480000)).toBe("0:59 of 8:00");
+    expect(researchClockLabel(3725000, 480000)).toBe("62:05 of 8:00");
+  });
+});
+
+describe("researchStatusLabel", () => {
+  it("names the finished status", () => {
+    expect(researchStatusLabel("complete")).toBe("Deep research: complete");
+    expect(researchStatusLabel("partial")).toBe("Deep research: partial");
+    expect(researchStatusLabel("failed")).toBe("Deep research: failed");
   });
 });

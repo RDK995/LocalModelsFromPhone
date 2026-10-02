@@ -162,6 +162,7 @@ export async function sendInConversation(
       ...(accumulator.thinking ? { thinking: accumulator.thinking } : {}),
       ...(accumulator.steps.length > 0 ? { steps: accumulator.steps } : {}),
       ...(accumulator.sources.length > 0 ? { sources: accumulator.sources } : {}),
+      ...(accumulator.research ? { research: accumulator.research } : {}),
       ...(doneModel || sentModel ? { model: doneModel ?? sentModel ?? undefined } : {}),
     };
     pendingPersist = store.appendMessage(conversationId, message).then(() => undefined);
@@ -183,6 +184,7 @@ export async function sendInConversation(
       if (event.type === "done") {
         doneStatus = event.data.status;
         doneModel = event.data.model || null;
+        accumulator = applyStreamEvent(accumulator, event);
         callbacks.onEvent(event);
         return;
       }

@@ -18,6 +18,9 @@ import {
 import type { Message } from "@/store/conversationStore";
 import type { StepEventData } from "@shared/api";
 import { initialStreamAccumulator } from "@/ui/streamReducer";
+import { parseInline } from "@/ui/markdown";
+import { presentCitation } from "@/ui/inlineLink";
+import { sourceListHeader } from "@/ui/sourceListModel";
 
 function userMessage(id: string, content: string): Message {
   return { id, role: "user", content, status: "complete" };
@@ -500,5 +503,104 @@ describe("sourceLabel", () => {
     const source = { title: "", url: "not a valid url" };
     // Should either return the URL or handle gracefully
     expect(() => sourceLabel(source)).not.toThrow();
+  });
+});
+
+describe("deep research items", () => {
+  const research = { status: "partial" as const, elapsed_ms: 400000, budget_ms: 480000 };
+  const researchSteps: StepEventData[] = [
+    { step_id: "p", kind: "plan", status: "done", elapsed_ms: 1000, budget_ms: 480000 },
+    { step_id: "s", kind: "search", status: "done", query: "q", elapsed_ms: 2000, budget_ms: 480000 },
+    { step_id: "r", kind: "read", status: "done", url: "https://www.x.test/a", elapsed_ms: 3000, budget_ms: 480000 },
+    { step_id: "w", kind: "write", status: "done", elapsed_ms: 400000, budget_ms: 480000 },
+  ];
+  const sources = [
+    { title: "X", url: "https://x.test/a", n: 1 },
+    { title: "Y", url: "https://y.test/b", n: 2 },
+  ];
+
+  it("labels plan and write steps", () => {
+    expect(stepLabel(researchSteps[0] as StepEventData)).toBe("Planning");
+    expect(stepLabel(researchSteps[3] as StepEventData)).toBe("Writing report");
+    expect(stepLabel({ step_id: "w", kind: "write", status: "failed" })).toBe("Writing report (failed)");
+    expect(stepLabel({ step_id: "p", kind: "plan", status: "failed" })).toBe("Planning (failed)");
+    expect(stepLabel(researchSteps[2] as StepEventData)).toBe("Reading: x.test");
+    expect(stepLabel(researchSteps[1] as StepEventData)).toBe("Searching: q");
+  });
+
+  it("a persisted deep research message builds an item with research, steps and sources (n)", () => {
+    const [item] = buildChatItems(
+      [assistantMessage("a1", "report [1][2]", { steps: researchSteps, sources, research })],
+      null
+    );
+    expect(item?.research).toEqual(research);
+    expect(item?.steps).toEqual(researchSteps);
+    expect(item?.sources).toEqual(sources);
+    expect(item?.streaming).toBe(false);
+    expect(item && "clockLabel" in item).toBe(false);
+  });
+
+  it("an ordinary message has no research", () => {
+    const [item] = buildChatItems([assistantMessage("a1", "hi")], null);
+    expect(item && "research" in item).toBe(false);
+  });
+
+  it("a streaming item exposes the live clock label from the latest clock", () => {
+    const pending: PendingTurn = {
+      userMessageId: "u",
+      prompt: "p",
+      assistantMessageId: "a",
+      blocked: false,
+      accumulator: {
+        ...initialStreamAccumulator,
+        steps: researchSteps.slice(0, 2),
+        clock: { elapsed_ms: 192000, budget_ms: 480000 },
+      },
+    };
+    const item = buildChatItems([], pending)[1];
+    expect(item?.clockLabel).toBe("3:12 of 8:00");
+    expect(item && "research" in item).toBe(false);
+  });
+
+  it("a streaming item whose done result arrived carries research and the clock from it", () => {
+    const pending: PendingTurn = {
+      userMessageId: "u",
+      prompt: "p",
+      assistantMessageId: "a",
+      blocked: false,
+      accumulator: {
+        ...initialStreamAccumulator,
+        clock: { elapsed_ms: 1000, budget_ms: 480000 },
+        research,
+      },
+    };
+    const item = buildChatItems([], pending)[1];
+    expect(item?.research).toEqual(research);
+    expect(item?.clockLabel).toBe("6:40 of 8:00");
+  });
+
+  it("an ordinary streaming item has no clock label", () => {
+    const pending: PendingTurn = {
+      userMessageId: "u",
+      prompt: "p",
+      assistantMessageId: "a",
+      blocked: false,
+      accumulator: initialStreamAccumulator,
+    };
+    expect(buildChatItems([], pending)[1] && "clockLabel" in (buildChatItems([], pending)[1] as object)).toBe(false);
+  });
+
+  it("the report's [n] marks resolve to site logos through the ordinary citation path, and Sources counts the pages", () => {
+    const [item] = buildChatItems(
+      [assistantMessage("a1", "Fact [1] and more [2].", { sources, research })],
+      null
+    );
+    const cites = parseInline(item?.content ?? []).flatMap((n) => (n.type === "cite" ? n.numbers : []));
+    expect(cites).toEqual([1, 2]);
+    expect(cites.map((n) => presentCitation(n, item?.sources))).toEqual([
+      { kind: "source", url: "https://x.test/a", host: "x.test" },
+      { kind: "source", url: "https://y.test/b", host: "y.test" },
+    ]);
+    expect(sourceListHeader(item?.sources ?? [])).toBe("Sources (2)");
   });
 });
