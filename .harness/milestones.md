@@ -441,7 +441,7 @@ Verdict: PASS (completion gate: every criterion PASS, no BLOCKER/IMPORTANT open)
 
 ## M19c — A note call gets the page's most relevant passages, and useless pages cost no model call
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -455,13 +455,13 @@ C6
 
 ### As-Built
 
-Pending.
+.harness/as-built/M19c.md — RECORDED: component C6, 3 edges, claim mismatches NONE
 
 ### Acceptance Criteria
 
-- [ ] **M19c-AC1**: Server tests through POST /v1/chat with a scripted fake Ollama and fake page backend: the note request carries the page title, its first paragraph and the top passages (stored page text split on headings and paragraphs into passages of about 150-400 words, ranked in-process by BM25 or equivalent against the sub-question and the main question's terms) within the excerpt size cap (server setting, about 2-3K tokens), with page text first and the task last; its fixed instructions form a byte-stable prefix, with per-step task text at the end of the user message and not in the system message.
-- [ ] **M19c-AC2**: Server tests: a note quote taken from the full stored page text but outside the excerpt still passes the FR37 quote check, a quote matching neither is dropped, and raw page text is still discarded once noted (FR35).
-- [ ] **M19c-AC3**: Server tests: a page with no passage above the relevance threshold, with almost no extracted text, or showing bot-challenge markers makes no note call and is logged "empty" or "blocked"; FR37's numbering and Sources rules for pages read are unchanged by the skip.
+- [x] **M19c-AC1**: Server tests through POST /v1/chat with a scripted fake Ollama and fake page backend: the note request carries the page title, its first paragraph and the top passages (stored page text split on headings and paragraphs into passages of about 150-400 words, ranked in-process by BM25 or equivalent against the sub-question and the main question's terms) within the excerpt size cap (server setting, about 2-3K tokens), with page text first and the task last; its fixed instructions form a byte-stable prefix, with per-step task text at the end of the user message and not in the system message.
+- [x] **M19c-AC2**: Server tests: a note quote taken from the full stored page text but outside the excerpt still passes the FR37 quote check, a quote matching neither is dropped, and raw page text is still discarded once noted (FR35).
+- [x] **M19c-AC3**: Server tests: a page with no passage above the relevance threshold, with almost no extracted text, or showing bot-challenge markers makes no note call and is logged "empty" or "blocked"; FR37's numbering and Sources rules for pages read are unchanged by the skip.
 
 ### Baseline
 
@@ -493,7 +493,7 @@ Per criterion (claimed by implementation; the reviewer's table decides):
 
 ### Review
 
-Pending.
+Cycle 1: PASS — tier Mid, model sonnet (reason ORDINARY_IMPLEMENTATION; T1 Cheap, T2 Mid), diff 5abbe7a..28aa1e2. Per criterion: M19c-AC1 PASS, M19c-AC2 PASS, M19c-AC3 PASS. Findings 0/0/0; no report file. Reviewer re-ran `cd server && bun test` (319 pass, 0 fail) and `bunx tsc --noEmit` (clean).
 
 ### Review Cycles
 

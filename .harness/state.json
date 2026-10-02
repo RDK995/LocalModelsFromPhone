@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M19c",
+  "current_milestone": "M19d",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -11508,19 +11508,19 @@
         "FR43"
       ],
       "traces": "AC31 (note excerpt within the size cap, quote outside the excerpt still matches, empty/blocked/no-match pages make no note call)",
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 0,
       "review_override": null,
       "baseline": "5abbe7a93651ca550d160438d2e6a9291af71797 on m19c-note-passages",
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M19c.md",
+        "result": "RECORDED: component C6, 3 edges, claim mismatches NONE"
       },
       "criteria": [
         {
           "id": "M19c-AC1",
           "text": "Server tests through POST /v1/chat with a scripted fake Ollama and fake page backend: the note request carries the page title, its first paragraph and the top passages (stored page text split on headings and paragraphs into passages of about 150-400 words, ranked in-process by BM25 or equivalent against the sub-question and the main question's terms) within the excerpt size cap (server setting, about 2-3K tokens), with page text first and the task last; its fixed instructions form a byte-stable prefix, with per-step task text at the end of the user message and not in the system message.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "server/src/http/deepResearchPassages.test.ts lines 163-195 (POST /v1/chat deep_research, ~6000-word page: note request carries title, first paragraph and the relevant middle section, not the end sentence; <untrusted_data> page block first, estimateTokens <= noteExcerptTokens 2500; user message ends with the task; every request's system message === SYSTEM_INSTRUCTIONS, none contains 'Task:') and lines 197-210 (cap 600 honoured); passages.ts splitPassages/rankPassages (BM25 k1 1.2, b 0.75) unit tests in server/src/generations/passages.test.ts - .harness/evidence/M19c-T2-verifier.log (319 pass, tsc clean)"
           ]
@@ -11528,7 +11528,7 @@
         {
           "id": "M19c-AC2",
           "text": "Server tests: a note quote taken from the full stored page text but outside the excerpt still passes the FR37 quote check, a quote matching neither is dropped, and raw page text is still discarded once noted (FR35).",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "server/src/http/deepResearchPassages.test.ts lines 212-244: a quote absent from the note request but in the full stored page survives to the write request and the report keeps [1]; an invented quote is dropped; unquoted raw page sentences appear in no later request; research.ts quote check still against normaliseWhitespace(page.text) - .harness/evidence/M19c-T2-verifier.log"
           ]
@@ -11536,7 +11536,7 @@
         {
           "id": "M19c-AC3",
           "text": "Server tests: a page with no passage above the relevance threshold, with almost no extracted text, or showing bot-challenge markers makes no note call and is logged \"empty\" or \"blocked\"; FR37's numbering and Sources rules for pages read are unchanged by the skip.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "server/src/http/deepResearchPassages.test.ts lines 246-290: ~10-word page -> 'empty', Cloudflare bot page -> 'blocked', no-term-match page -> 'empty'; no notes request for any of them, one deep_research_page_skipped log line each with its n; all four pages in sources with sequential first-read numbers - .harness/evidence/M19c-T2-verifier.log"
           ]
@@ -11586,7 +11586,24 @@
           ]
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "PASS",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "ORDINARY_IMPLEMENTATION",
+          "diff_range": "5abbe7a93651ca550d160438d2e6a9291af71797..28aa1e2",
+          "artifact": null,
+          "findings": "0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL",
+          "per_criterion": {
+            "M19c-AC1": "PASS",
+            "M19c-AC2": "PASS",
+            "M19c-AC3": "PASS"
+          },
+          "note": "reviewer re-ran cd server && bun test (319 pass, 0 fail) and bunx tsc --noEmit (clean)"
+        }
+      ],
       "findings": [],
       "validation": [
         {
