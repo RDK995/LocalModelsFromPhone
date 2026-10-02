@@ -12383,19 +12383,19 @@
       "architecture": "C1, C2, C4, C6",
       "requirements": [],
       "traces": "AC33",
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 0,
       "review_override": null,
       "baseline": "3294301e2631ab7796ee0cc131ecb225022dc96f on m19h-phone-airplane-proof",
       "as_built": {
         "artifact": null,
-        "result": "PENDING"
+        "result": "NOTHING TO RECORD (no source change in diff 3294301..HEAD)"
       },
       "criteria": [
         {
           "id": "M19h-AC1",
           "text": "On the owner's phone: during a deep research run, airplane mode is turned on for about 30 s twice; the reply still ends showing its steps and either the report or a visible status line (never an empty bubble), and the elapsed clock visibly advances every second throughout; the owner's report and a screenshot of the finished reply are saved under .harness/evidence/.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             ".harness/evidence/M19h-AC1-owner-report.md",
             ".harness/evidence/M19h-AC1-screenshot.png"
@@ -12426,7 +12426,23 @@
           ]
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "PASS",
+          "scope": "SUBSTANTIVE",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "BOUNDED_LOW_RISK",
+          "diff_range": "3294301e2631ab7796ee0cc131ecb225022dc96f..4c1b48c",
+          "artifact": null,
+          "findings": "0 BLOCKER, 0 IMPORTANT, 1 OPTIONAL",
+          "per_criterion": {
+            "M19h-AC1": "PASS"
+          },
+          "note": "whole-milestone scope; sonnet review floor (only task Cheap/haiku); AC1 judged on the owner's report and screenshot; Mac side not rerun, diff is .harness/ only"
+        }
+      ],
       "findings": [],
       "validation": [
         {
@@ -12442,7 +12458,8 @@
       "follow_ups": [
         "milestones.md was 743 lines at pickup; M19f archived to .harness/archive/M19f.md (743 -> 699); remaining full entries (M19g most recently settled, M19h active, M20/M21 TODO, M5a BLOCKED) are not archivable.",
         "Bundle host pid 64430 has run since 2026-10-02 15:28, before M19f's app commits; Metro serves the working tree live, but Expo Go may hold an older cached bundle, so the owner force-quits and reopens it first.",
-        "The orchestrator could not read agents/references/planning.md (outside this session's allowed directories); size/shape/complexity checks applied from the orchestrator contract: 1 criterion, real entry point, one signal - not split."
+        "The orchestrator could not read agents/references/planning.md (outside this session's allowed directories); size/shape/complexity checks applied from the orchestrator contract: 1 criterion, real entry point, one signal - not split.",
+        "Review cycle 1 OPTIONAL: the AC1 screenshot is scrolled to the bottom of the reply, so the steps list and elapsed clock are covered only by the owner's words; a top-of-reply screenshot could be added if wanted."
       ],
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"

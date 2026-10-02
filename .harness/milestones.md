@@ -505,7 +505,7 @@ C4, C6, C7, C11, C12, C13
 
 ## M19h — On the phone, a deep research reply rides out airplane mode and its clock never stalls
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -519,11 +519,11 @@ C1, C2, C4, C6
 
 ### As-Built
 
-Pending.
+NOTHING TO RECORD - the diff 3294301..HEAD changes no source, only .harness/ records and evidence. No artifact written.
 
 ### Acceptance Criteria
 
-- [ ] **M19h-AC1**: On the owner's phone: during a deep research run, airplane mode is turned on for about 30 s twice; the reply still ends showing its steps and either the report or a visible status line (never an empty bubble), and the elapsed clock visibly advances every second throughout; the owner's report and a screenshot of the finished reply are saved under .harness/evidence/.
+- [x] **M19h-AC1**: On the owner's phone: during a deep research run, airplane mode is turned on for about 30 s twice; the reply still ends showing its steps and either the report or a visible status line (never an empty bubble), and the elapsed clock visibly advances every second throughout; the owner's report and a screenshot of the finished reply are saved under .harness/evidence/.
 
 ### Baseline
 
@@ -540,7 +540,9 @@ Pending.
 
 ### Review
 
-Pending.
+Cycle 1: PASS - reviewer tier Mid (sonnet, review floor; only task routed Cheap/haiku), diff 3294301..4c1b48c. M19h-AC1 PASS. Findings: 0 BLOCKER, 0 IMPORTANT, 1 OPTIONAL (recorded under Follow-ups). No report file (PASS writes none).
+
+The escalation below is resolved: the owner ran the test and confirmed it 2026-10-02.
 
 Human Escalation (BLOCKED):
 
@@ -566,6 +568,7 @@ Owner performs the run (about 5-6 minutes): (1) On the iPhone, with Tailscale co
 
 ### Follow-ups
 
+- Review cycle 1 OPTIONAL: the AC1 screenshot is scrolled to the bottom of the reply, so the steps list and elapsed clock are covered only by the owner's words; a top-of-reply screenshot could be added if wanted.
 - milestones.md was 743 lines at pickup; M19f (DONE, not the most recently settled) archived to .harness/archive/M19f.md (55 lines moved unchanged, 13-line stub left; 743 -> 699). Still over 400: the remaining full entries are M19g (most recently settled), M19h (active), M20/M21 (TODO) and M5a (BLOCKED), none archivable.
 - The bundle host (pid 64430) has run since 15:28 on 2026-10-02, before M19f's app commits; Metro serves the working tree live, but Expo Go may hold an older cached bundle, hence the force-quit and reopen in step (1).
 - The orchestrator could not read the harness planning reference (agents/references/planning.md, outside this session's allowed directories); the size/shape/complexity checks were applied from the orchestrator contract: 1 criterion, real entry point (the phone), one signal IMPLEMENTATION_PLUS_LIVE_PROOF (proof only) - not split.
