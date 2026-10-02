@@ -452,7 +452,7 @@ Cycle 1: PASS — tier Mid, model sonnet (reason ORDINARY_IMPLEMENTATION; T1 Che
 
 ## M19d — Research covers every sub-question first, reads chosen pages ahead, and keeps partial notes
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -480,7 +480,15 @@ Pending.
 
 ### Evidence
 
+- T1 (Mid, sonnet, attempt 3, PASS; commit 33284ca): deadline-cut note salvage and ran-out-of-time sentence. Packet .harness/tasks/M19d-T1.md; verifier .harness/evidence/M19d-T1-verifier.log.
+- T2 (Top, opus, attempt 4, PASS; routed Top: DIFFICULT_CONCURRENCY; commit b9e3db7): breadth-first rounds, parallel prefetch, early end on no new URLs. Packet .harness/tasks/M19d-T2.md; verifier .harness/evidence/M19d-T2-verifier.log.
+- M19d-AC1: server/src/http/deepResearchBreadthFirst.test.ts AC1a (first three note decisions are sub-questions 1,2,3 in plan order; all searches before the 4th note; also when a first chosen read fails) and AC1b (second search adding no new URLs -> no further search and no gap check for that sub-question; a later empty search ends searching) - .harness/evidence/M19d-T2-verifier.log (7 pass; full suite 336 pass twice; tsc clean)
+- M19d-AC2: server/src/http/deepResearchBreadthFirst.test.ts AC2a (max concurrent fake Ollama requests === 1; >=2 reads in flight; second chosen read starts before the first note request), AC2b (research deadline: every hanging prefetched read's signal aborted, run ends partial in time, Sources == completed reads), AC2c (first Stop aborts every in-flight prefetched read, short write-up); FR24 per-read limits unchanged in webTools.read - .harness/evidence/M19d-T2-verifier.log
+- M19d-AC3: server/src/http/deepResearchPartialNotes.test.ts AC3a (deadline-cut note call: complete note with a page quote reaches the write request, invalid-quote and incomplete notes dropped, status partial), AC3b (deadline with no notes: status failed, report exactly 'The research ran out of time before it could take notes.'), AC3c regressions (could-not-read, could-not-search); completeNotesFromPartial unit tests in research.test.ts - .harness/evidence/M19d-T1-verifier.log (51 pass; full suite 329 pass)
+
 ### Validation
+
+- `cd server && bun test && bunx tsc --noEmit` - PASS (verifier after T2: 336 pass, 0 fail, run twice; tsc clean) - .harness/evidence/M19d-T2-verifier.log
 
 ### Review
 
@@ -491,6 +499,13 @@ Pending.
 0
 
 ### Follow-ups
+
+- Behaviour change from T2: a sub-question whose page quota is used is done once its prefetched pages are noted (no gap check or further searches), so default-settings runs (pagesPerSubQuestion 2, two pages chosen) make no gap calls. Before M19d those gap calls and extra searches could not produce reads anyway (quota used). Existing tests needing the gap step now pass pagesPerSubQuestion 3 (research.test.ts:158, deepResearchModelCalls.test.ts:244, :452). Watch in M19g live runs.
+- A sub-question whose search adds no new URLs gets no further page choice over leftover unchosen candidates (except its round-1 first page choice).
+- Prefetched reads that ignore their aborted signal and finish after the post-deadline drain would number a page absent from Sources; nothing cites it and shown numbers stay gap-free. Real webTools.read honours the signal.
+- T1 salvages complete notes on a first Stop as well as on the research deadline (same PhaseTimeUp path); FR38 partial report then uses them.
+- A deadline during the plan phase (no searches run) still ends partial with NO_REPORT_NOTE, not the ran-out-of-time sentence; FR44 'stays failed' read as applying to runs that searched.
+- Full-suite expect() count differed by one between the verifier's two runs (2212 vs 2211), both 336 pass; some deep research test has a timing-dependent number of assertions.
 
 
 ## M19e — Reply streams show they are alive: started steps for deep research and keep-alives for every reply
