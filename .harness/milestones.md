@@ -320,60 +320,7 @@ Status: DONE
 
 Walking skeleton of deep research: a chat sent through POST /v1/chat with web on and deep research requested is run by server code (not a model tool loop) as brief -> plan -> search/read/note per sub-question -> gap check -> one write call, each model step a narrow JSON-schema-constrained Ollama request with an explicit num_ctx, and ends with a report whose [n] citations are only pages read in this run. Planned 2026-10-01 from FR34-FR40/AC28-AC30. Human decision 2026-10-01: build deep research (FR34-FR40) now, ahead of M5a; M5a stays BLOCKED and parked, its record unchanged, and is picked up after M15-M21. Size check: 4 criteria; real entry point POST /v1/chat; one operational-complexity signal SUBSYSTEMS_GT_3 (C4, C6, C7, C12; seam check: C4 only accepts one request field and C7 only passes `format`/`num_ctx` through, and cutting either off leaves no entry point) - not split.
 
-Owns: FR35, FR37. Traces to: AC28 (loop, format/num_ctx, malformed step, citation removal, quote check).
-
-### Architecture
-
-C4, C6, C7, C12
-
-### As-Built
-
-.harness/as-built/M15.md — RECORDED — 10/10 files attributed; components C4, C6, C7, C12; 5 edges; claim mismatches NONE
-
-### Acceptance Criteria
-
-- [x] **M15-AC1**: Server tests with a scripted fake Ollama and fake search/page backends: POST /v1/chat with web on and deep research requested runs brief -> plan (server-set sub-question count) -> for each sub-question at least the server-set minimum number of searches (exact repeats after normalising skipped), reads of pages chosen only from server-parsed result URLs, notes -> gap check -> one write call, and ends `complete` with the report as the answer; its phases stream live as web steps ("Planning", "Searching: <query>", "Reading: <domain>", "Writing report") and its sources are the pages read.
-- [x] **M15-AC2**: Server tests: every Ollama request in a run carries a JSON-schema `format` and the same explicit `num_ctx`, keeps the model resident, and contains only the stable instructions, brief, plan, capped rolling notes and latest result - no raw page text other than the page currently being noted, and no model thinking; the model judging it has enough may end a sub-question early but a server cap always bounds it.
-- [x] **M15-AC3**: Server tests: a malformed or empty JSON step is retried a bounded number of times and then skipped, and the run continues to a report; page text instructing the model to do something can influence only notes and the choice among server-parsed URLs (no other URL is read and no other action is taken).
-- [x] **M15-AC4**: Server tests: each distinct page read gets a number in first-read order (FR31 numbering and distinctness); a report `[n]` with no read page, and any URL the model types into the report, are removed before the report is streamed as final; a note whose quote does not substring-match the page's stored text (after whitespace normalisation) is dropped before writing.
-
-### Baseline
-
-b48673499df9aa0d846bad7bbefe1548d57cb272 on m15-deep-research-skeleton
-
-### Evidence
-
-- M15-T1 — Cheap (BOUNDED_LOW_RISK): attempt 1 PASS; verifier PASS (exit 0, `bun test src/ollama` 23 pass, typecheck clean; .harness/evidence/M15-T1-verifier.log).
-- M15-T2 — Top (ARCHITECTURE: research loop shape inside C6 across C7/C12 seams): attempt 4 PASS; verifier PASS (exit 0, `bun test && bun run typecheck` 207 pass 0 fail, tsc clean; files within allowed list; tests not weakened; .harness/evidence/M15-T2-verifier.log, worker log .harness/evidence/M15-T2-worker.log). Adds runResearch() in server/src/generations/research.ts, C12 search()/read() helpers and step kinds plan/write.
-- M15-T3 — Mid (ORDINARY_IMPLEMENTATION): attempt 3 PASS; verifier PASS (exit 0 run without a pipe, `bun test && bun run typecheck` 209 pass 0 fail across 12 files, tsc clean; files within allowed list incl. additive shared/api.ts; tests not weakened; .harness/evidence/M15-T3-verifier.log). Commit 20230d5.
-- M15-T4 (cycle 1, F1) — Mid (ORDINARY_IMPLEMENTATION): attempt 3 PASS; verifier PASS (exit 0, 211 pass, tsc clean; .harness/evidence/M15-T4-verifier.log). Commit 30003f2. Tests: "a sub-question that runs out of new queries before minSearches still reads its collected results (every step fails)", "a later sub-question whose proposed queries were all run earlier still reads from its own search results" (default minSearches 2).
-- M15-T5 (cycle 1, F2-F4) — Cheap (BOUNDED_LOW_RISK): attempt 1 FAIL (tests green but redirect case missing and distinctness assertions vacuous; judged against packet), attempt 2 PASS; verifier PASS (exit 0, 217 pass, tsc clean; removing the readNumbers guard makes the redirect test fail, 4 vs 2 note steps; .harness/evidence/M15-T5-verifier.log). Commit f1e2785. AC4 distinctness tests: "reads a page only once when it appears in multiple search results across sub-questions", "does not create duplicate notes when a read redirects to an already-read page".
-- Criteria mapping (worker/verifier evidence, for the reviewer to confirm): M15-AC1 -> research.test.ts "runs brief -> plan -> searches -> reads -> notes -> gap -> write..." and deepResearch.test.ts (POST /v1/chat + SSE: step order, sources first-read numbering, done complete); M15-AC2 -> research.test.ts "every request is a narrow, schema-constrained request...", gap-check enough:true/enough:false/repeat-only cap tests, deepResearch.test.ts Ollama body checks; M15-AC3 -> research.test.ts malformed-retry, fail-every-step, and page-text-injection tests; M15-AC4 -> research.test.ts citation/URL/quote-removal test and deepResearch.test.ts cleaned final content.
-
-### Validation
-
-- Milestone validation: `cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck` (last verifier run exit 0, 209 pass, 0 fail; .harness/evidence/M15-T3-verifier.log). Diff: `git diff b48673499df9aa0d846bad7bbefe1548d57cb272 HEAD`.
-
-### Review
-
-- Cycle 1: CHANGES REQUIRED, scope SUBSTANTIVE (.harness/reviews/M15-cycle1.md; validation re-run .harness/evidence/M15-review.log, 209 pass, tsc clean). Diff reviewed: b48673499df9aa0d846bad7bbefe1548d57cb272..7034424. Per criterion: AC1 PASS, AC2 PASS, AC3 PASS, AC4 FAIL. Findings: F1 IMPORTANT, F2 IMPORTANT, F3 OPTIONAL, F4 OPTIONAL.
-  - Pre-correction: 703442411430b4f3e3ea7b84591e2b99da031ba5
-  - Corrections: F1 -> M15-T4 (commit 30003f2); F2, F3, F4 -> M15-T5 (commit f1e2785). Validation after corrections: verifier exit 0, 217 pass, 0 fail, tsc clean (.harness/evidence/M15-T5-verifier.log).
-  - Correction diff: `git diff 703442411430b4f3e3ea7b84591e2b99da031ba5 HEAD`. Files changed (code): server/src/generations/research.ts, server/src/generations/research.test.ts; plus .harness/ records, packets and evidence only.
-  - Files outside those the findings named: none (Findings 1-4 all name research.ts / research.test.ts).
-- Cycle 2: PASS — tier Mid (sonnet), reason: correction diff holds only Mid/Cheap tasks (M15-T4, M15-T5). Diff reviewed: 703442411430b4f3e3ea7b84591e2b99da031ba5..6fc67d8; all four criteria re-graded. Per criterion: AC1 PASS, AC2 PASS, AC3 PASS, AC4 PASS. Findings: none. Validation re-run: 217 pass, 0 fail, tsc clean (.harness/evidence/M15-review.log). F1-F4 resolved.
-
-### Review Cycles
-
-1
-
-### Follow-ups
-
-- Architecture does not yet list FR34-FR40 in Requirement Coverage; record D-M15-1 (deep research loop realised inside C6, server/src/generations/, using C12 and C7) as a non-material deviation in this milestone. (Recorded: D-M15-1 in .harness/architecture.md.)
-- M15-T2 worker choices for the reviewer to confirm: a skipped select step reads the top unread server-parsed results; query repeats are skipped across the whole run, not per sub-question; the gap check emits no step event; a skipped write step reports `failed` while a fallback report still streams; thinking is not streamed as `thinking` events during a run.
-- POST /v1/chat still requires the model to support tool calling when `web: true`, even for deep research (no tools are offered in a research run); revisit in M16/M18.
-- Research settings are server defaults only; no per-request or config override yet.
-- Page text in a note step is bounded only by C13's own limit; a per-page character cap against num_ctx may be needed (M16 live run will show).
+Detail: `.harness/archive/M15.md`
 
 ## M16 — The deep research run works on the real qwen3.5:35b-a3b on the Mac
 
@@ -457,7 +404,7 @@ Human decision (2026-10-02): the harness is authorised to restart LaunchAgent `c
 
 ## M17 — A deep research run always ends within about 8 minutes with its status shown
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -480,6 +427,8 @@ Pending.
 - [ ] **M17-AC3**: Server tests: with a slow search backend the run ends within the budget plus a small margin (each search and read keeps its FR24 time limit and one cancellation signal reaches every in-flight search, read and model request); with the deadline hitting during the write-up it ends within the budget plus a small margin as `partial` with a non-empty answer (the FR33-style note if the write-up produced nothing).
 
 ### Baseline
+
+003da19138951edcc615474a3d57c944a320e089 on m17-research-time-budget
 
 ### Evidence
 

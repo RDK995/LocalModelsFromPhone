@@ -539,3 +539,22 @@ loop is a module of C6 (`server/src/generations/research.ts`), selected by an op
 Why: FR34-FR40 were added after this architecture was agreed. C6 already owns running a reply
 against the resident model, its event log, resume and cancellation; a deep research run is a reply.
 No new component, boundary or technology (still Ollama, Bun, the existing search service).
+
+### D-M17-1 — Deep research time budget and run status carried on existing SSE events
+
+Milestone: M17 (implementation 2026-10-02)
+Material: no
+Change: FR36's budget is enforced inside C6's research module (`runResearch`): settings
+`budgetMs` (default 480000, server setting `PHONE_MODELS_RESEARCH_BUDGET_MS` read by the server
+entry point and passed through the generation manager) and `writeReserveFraction` (0.25). One
+run-owned cancellation signal per phase (research, then write) combines the user's Stop with the
+phase deadline and is passed to every C7 chat request and C12 search/read call; C12's FR24
+per-request limits are unchanged. Additive optional fields on existing SSE events: `step` gains
+`elapsed_ms` and `budget_ms`; `done` gains `research {status:"complete"|"partial"|"failed",
+elapsed_ms, budget_ms}`. A deep research reply's `done.status` stays `"complete"` (the reply ended
+with an answer); Stop stays `"cancelled"`. An unexpected failure inside the run ends with a plain
+content sentence and `research.status:"failed"` rather than an `error` event.
+Why: FR36 needs the run's status and elapsed time visible to the phone (M18) without a new event
+type or a change to `done.status` values that ordinary replies and the phone already parse.
+Additive optional fields; no component boundary, technology or responsibility changes. C13 is not
+changed by M17.

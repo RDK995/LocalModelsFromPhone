@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M15",
+  "current_milestone": "M17",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -10740,10 +10740,10 @@
         "FR36"
       ],
       "traces": "AC28 (all backends failing, slow backend, deadline during write-up)",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
-      "baseline": null,
+      "baseline": "003da19138951edcc615474a3d57c944a320e089 on m17-research-time-budget",
       "as_built": {
         "artifact": null,
         "result": "PENDING"
