@@ -424,7 +424,7 @@ Cycle 1: PASS — tier Mid (sonnet; highest substantive task tier Mid: T1 Mid, T
 
 ## M19b — Every deep research model call is logged, thinks only at plan and write, and is time-capped
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -438,14 +438,14 @@ C5, C6, C7
 
 ### As-Built
 
-Pending.
+.harness/as-built/M19b.md - RECORDED: components C4, C5, C6, C7, 4 edges, claim mismatches NONE
 
 ### Acceptance Criteria
 
-- [ ] **M19b-AC1**: Server tests through POST /v1/chat with a scripted fake Ollama: every deep research model call writes exactly one structured log line with step name, the `think` value sent, attempt number, wall time, Ollama's `load_duration`, `prompt_eval_count`, `prompt_eval_duration`, `eval_count`, `eval_duration`, and the character count of `message.thinking`; when the server loads or warms the deep-research model it sends the same `num_ctx` the research calls use; no global Ollama context setting is changed and ordinary replies' Ollama requests are unchanged.
-- [ ] **M19b-AC2**: Server tests: brief, query proposal, page choice, note-taking and gap check are sent with top-level `think: false`, a `num_predict` output cap (server settings, defaults about 200 tokens and about 800 for notes) and non-thinking sampling (temperature 0.7, top_p 0.8, top_k 20 unless a schema step uses a lower temperature); plan and write are sent with thinking on, streamed, and never with `num_predict`; `format` and `num_ctx` are sent as before; a thinking-off step whose fake reply contains `message.thinking` text is detected and logged (not trusted from the setting) and used only if its content validates.
-- [ ] **M19b-AC3**: Server tests: a thinking-off model call that exceeds its hard wall-clock cap (server setting, default about 30 s) is cancelled and counts as a failed attempt under FR35's retry-then-skip rule, and the run carries on.
-- [ ] **M19b-AC4**: Server tests: a plan or write call whose thinking exceeds its guard (server settings, defaults about 30 s for plan and about 60 s for write, the write guard fitting inside the FR36 write reserve) is cancelled and re-issued once with `think: false`, never truncating an answer; if the re-issue also fails, FR35's skip and FR36's write-up rules apply and the run still ends `complete`, `partial` or `failed`.
+- [x] **M19b-AC1**: Server tests through POST /v1/chat with a scripted fake Ollama: every deep research model call writes exactly one structured log line with step name, the `think` value sent, attempt number, wall time, Ollama's `load_duration`, `prompt_eval_count`, `prompt_eval_duration`, `eval_count`, `eval_duration`, and the character count of `message.thinking`; when the server loads or warms the deep-research model it sends the same `num_ctx` the research calls use; no global Ollama context setting is changed and ordinary replies' Ollama requests are unchanged.
+- [x] **M19b-AC2**: Server tests: brief, query proposal, page choice, note-taking and gap check are sent with top-level `think: false`, a `num_predict` output cap (server settings, defaults about 200 tokens and about 800 for notes) and non-thinking sampling (temperature 0.7, top_p 0.8, top_k 20 unless a schema step uses a lower temperature); plan and write are sent with thinking on, streamed, and never with `num_predict`; `format` and `num_ctx` are sent as before; a thinking-off step whose fake reply contains `message.thinking` text is detected and logged (not trusted from the setting) and used only if its content validates.
+- [x] **M19b-AC3**: Server tests: a thinking-off model call that exceeds its hard wall-clock cap (server setting, default about 30 s) is cancelled and counts as a failed attempt under FR35's retry-then-skip rule, and the run carries on.
+- [x] **M19b-AC4**: Server tests: a plan or write call whose thinking exceeds its guard (server settings, defaults about 30 s for plan and about 60 s for write, the write guard fitting inside the FR36 write reserve) is cancelled and re-issued once with `think: false`, never truncating an answer; if the re-issue also fails, FR35's skip and FR36's write-up rules apply and the run still ends `complete`, `partial` or `failed`.
 
 ### Baseline
 
@@ -471,7 +471,10 @@ Per criterion (status left PENDING for review):
 
 ### Review
 
-Pending.
+Cycle 1 (2026-10-02): CHANGES REQUIRED, scope RECORD_ONLY - tier Top (opus), reason DIFFICULT_CONCURRENCY, diff ba44206..85836a9; report .harness/reviews/M19b-cycle1.md, log .harness/evidence/M19b-review.log; findings 0 BLOCKER, 1 IMPORTANT, 3 OPTIONAL; per-criterion M19b-AC1..AC4 all PASS.
+Pre-correction: 85836a909001abe439719b07cc70f8f2be594cbb
+Record-only correction: e9c49a9 adds D-M19b-1 to .harness/architecture.md (resolves M19b-R1-F1); `check-state.py --record-only 85836a9 HEAD` OK. Optional findings F2-F4 left open (see Follow-ups).
+Verdict: PASS (completion gate: every criterion PASS, no BLOCKER/IMPORTANT open), review tier Top (opus).
 
 ### Review Cycles
 
@@ -479,6 +482,9 @@ Pending.
 
 ### Follow-ups
 
+- Review cycle 1 OPTIONAL F2: with a budget set via environment below 240 s, the 60 s write guard no longer fits inside the write reserve, so the think:false re-issue never happens in that case.
+- Review cycle 1 OPTIONAL F3: no test covers the plan guard firing and the plan re-issue then failing.
+- Review cycle 1 OPTIONAL F4: tests without a log function print deep_research_model_call lines to stdout (same as the logger follow-up below).
 - The plan/write think:false re-issue sends options {num_ctx} only (model default sampling, not the routine 0.7/0.8/20); FR42 does not specify its sampling. Revisit in M19g if live validity is poor.
 - Deep research tests now print deep_research_model_call JSON lines to stdout (default logger is console.log); harmless noise.
 - The new FR42 settings (routineNumPredict, notesNumPredict, routineSampling, routineCapMs, planGuardMs, writeGuardMs) are ResearchSettings fields with no environment variable override, like the other research settings except the budget.
