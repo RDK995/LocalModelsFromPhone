@@ -13678,7 +13678,7 @@
       "reviews": [],
       "findings": [],
       "validation": [
-        "cd server && for id in q1 q2 q3 heat; do bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M21-T6-$id-stream.txt --log ../.harness/evidence/validation/M21-review-$id-check.log || exit 1; done && cd .. && shasum -a 256 <both upload sources and both M21-AC2-phone-screenshot copies> && (cd server && bun test && bun run typecheck)"
+        "cd server && for id in q1 q2 q3 heat; do bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M21-T6-$id-stream.txt --log ../.harness/evidence/M21-T6-$id-fr41.log || exit 1; done && cd .. && shasum -a 256 <both upload sources and both M21-AC2-phone-screenshot copies> && (cd server && bun test && bun run typecheck)"
       ],
       "follow_ups": [
         "AC29 amended 2026-10-02 to add the 2026-10-02 heat-pump question: M21-AC1, title and outcome updated at planning on 2026-10-02 to the four-question set. M19g runs the same set before M20 for AC32; M21 re-runs it after M20 because M20 changes the search path. M21-AC2 is unaffected.",
