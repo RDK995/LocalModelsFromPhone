@@ -469,55 +469,8 @@ Through POST /v1/chat, every deep research model step (brief, plan, queries, pag
 
 Owns: FR46. Traces to: AC34 (date in every step's user message from an injected clock, byte-identical system message, current-prices plan instruction, write rules), FR40 (ordinary web replies unchanged), FR43 (byte-stable prefix).
 
-### Architecture
+Detail: `.harness/archive/M19i.md`
 
-C4, C6, C7
-
-### As-Built
-
-RECORDED - .harness/as-built/M19i.md. 5 of 5 files attributed; components C4, C6, C7, C12; 1 claim mismatch: C12 (web tools) modified but not in the Architecture field (todayLine() for FR46(a)).
-
-### Acceptance Criteria
-
-- [x] **M19i-AC1**: Server tests through POST /v1/chat with a scripted fake Ollama and an injected clock: every deep research model request (brief, plan, queries, pages, notes, gap, write) carries today's date from that clock (weekday, date and ISO date, formatted as in server/src/web/tools.ts) in its user message, not its system message; the system message is byte-identical across all steps of a run and across two runs on different injected days.
-- [x] **M19i-AC2**: Server tests through POST /v1/chat with a scripted fake Ollama: the plan request carries the instruction that when the question asks about costs, prices, bills or running costs the plan must include a sub-question for current unit prices relevant to the question (e.g. electricity and gas per kWh in the user's country); no server-side classifier decides whether the question is about cost.
-- [x] **M19i-AC3**: Server tests through POST /v1/chat with a scripted fake Ollama: the write request carries (i) the rule never to call a price or period "current" or "today's", or name a period such as "early 2024", unless a cited note gives that period, with a quoted price carrying the date or period its page gives (or no date claim if the page gives none); (ii) the rule that where notes give a quantity and a unit price the report states the money figure in the question's currency with the sum shown and both pages cited; and (iii) the rule that when the question asks about cost but no note gives a price, the report says plainly that no current price was found. FR37 citation handling is unchanged.
-- [x] **M19i-AC4**: Ordinary web and switch-off replies are unchanged: their model requests carry no FR46 text, and all existing server tests pass with `cd server && bun test && bun run typecheck` exiting 0.
-
-### Baseline
-
-602333e53e116e7829ab83fbb1acd962193c9333 on m19i-dated-priced-reports
-
-### Evidence
-
-- M19i-AC1: server/src/http/deepResearchDate.test.ts (two POST /v1/chat runs on injected 2026-10-03 and 2026-12-25; all seven step kinds; pinned date literals in user messages, between step content and `Task:`; none in system messages; system message identical across steps and days) - .harness/evidence/M19i-T2-verifier.log
-- M19i-AC2: server/src/http/deepResearchPrices.test.ts AC2 tests (cost and non-cost questions both get PLAN_PRICES_RULE: unconditional, no classifier) - .harness/evidence/M19i-T3-verifier.log
-- M19i-AC3: server/src/http/deepResearchPrices.test.ts AC3 tests (write request carries WRITE_DATE_RULE, WRITE_SUM_RULE, WRITE_NO_PRICE_RULE after the unchanged citation text; rules absent from other steps; existing citation tests unmodified) - .harness/evidence/M19i-T3-verifier.log
-- M19i-AC4: server/src/http/deepResearchPrices.test.ts AC4 tests (ordinary web and switch-off: exactly one request, exact messages, no rule constant in any message) and full suite - .harness/evidence/M19i-T3-verifier.log
-
-Tasks (routing):
-- T1 archive M19g - Cheap (haiku) attempt 1 PASS, commit 82f95e7
-- T2 date line from injectable clock - Mid (sonnet), ORDINARY_IMPLEMENTATION: first run PASS but superseded by an orchestrator design revision (date first broke FR43 page-text-first; no rung spent); revision run PASS, verifier PASS, commit 2544604
-- T3 plan/write rules + ordinary-reply tests - Cheap (haiku) attempt 1 FAIL (orchestrator: AC4 tests vacuous, no exact-message asserts) -> Cheap attempt 2 PASS, verifier PASS, commit a1d08f3
-
-### Validation
-
-- `cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck` - verifier: exit 0, 373 pass 0 fail (26 files), tsc clean. Focused: `bun test src/http/deepResearchDate.test.ts src/http/deepResearchPrices.test.ts`.
-
-### Review
-
-Cycle 1: PASS - reviewer tier Mid (sonnet; highest task tier Mid: T2 sonnet, T1 and T3 Cheap/haiku), diff 602333e..379619a. M19i-AC1 PASS, M19i-AC2 PASS, M19i-AC3 PASS, M19i-AC4 PASS. Findings: 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL. Reviewer re-ran cd server && bun test && bun run typecheck (373 pass, tsc clean). No report file (PASS writes none).
-
-### Review Cycles
-
-0
-
-### Follow-ups
-
-- FR46 out of scope (requirements, 2026-10-03): no server check that a cost report contains a money figure, no extra price search or rewrite, no server verification of the model's arithmetic, no change to ordinary web replies' prompts.
-- C12 (server/src/web/tools.ts) touched though not in the Architecture field: todayLine() extracted as a pure exported formatter; systemNote output byte-identical; C6 already depended on C12, so no new boundary (not a deviation).
-- The date line sits between step content and the `Task:` line (not first) so FR43's page-text-first / task-last holds; user messages now differ by day, which FR46(a) accepts.
-- milestones.md 816 -> 759 lines after archiving M19g; still over ~400 because the remaining entries are M19h (most recently settled), M19i (active), M19j/M20/M21 (TODO) and M5a (BLOCKED).
 
 ## M19j — Dated, priced deep research reports proven live on the Mac
 
@@ -683,7 +636,13 @@ Pending.
 - [ ] **M20-AC2**: Search service tests: a repeated search (after query normalisation) and a repeated page read (by final URL) within 24 hours are served from the Mac-side cache without contacting a backend or the page; after 24 hours they are fetched again.
 - [ ] **M20-AC3**: Ordinary web replies go through the same breakers and cache; all existing ordinary-web and switch-off tests pass unchanged, and the existing live proofs (server/scripts/web-chat-proof.sh, server/scripts/web-failure-proof.sh) still pass.
 
+### Plan
+
+`.harness/plans/M20.md` — DRAFT
+
 ### Baseline
+
+7adc092e938134a3455fabdf19f1f02043f381d2 on m20-search-breakers-cache
 
 ### Evidence
 

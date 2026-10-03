@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M19j",
+  "current_milestone": "M20",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -13097,7 +13097,7 @@
       "status": "TODO",
       "review_cycles": 0,
       "review_override": null,
-      "baseline": null,
+      "baseline": "7adc092e938134a3455fabdf19f1f02043f381d2 on m20-search-breakers-cache",
       "as_built": {
         "artifact": null,
         "result": "PENDING"
@@ -13122,7 +13122,82 @@
           "evidence": []
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M20-T1",
+          "title": "helper tries each allowed ddgs engine alone and reports per-backend outcome",
+          "scope": [
+            "M20-AC1"
+          ],
+          "packet": ".harness/tasks/M20-T1.md",
+          "artifact": ".harness/tasks/M20-T1.md",
+          "after": [],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "one Python file + tests; changes I17 output contract that T2 depends on; rate-limit/CAPTCHA classification needs judgement"
+          },
+          "attempts": []
+        },
+        {
+          "id": "M20-T2",
+          "title": "per-backend circuit breakers in the search service (1 h rate-limit, 24 h CAPTCHA)",
+          "scope": [
+            "M20-AC1"
+          ],
+          "packet": ".harness/tasks/M20-T2.md",
+          "artifact": ".harness/tasks/M20-T2.md",
+          "after": [
+            "M20-T1"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "new module + handler wiring, settled by HTTP tests with fake helper and injected clock; single-threaded state"
+          },
+          "attempts": []
+        },
+        {
+          "id": "M20-T3",
+          "title": "24 h in-memory cache for searches (normalised query) and page reads (final URL)",
+          "scope": [
+            "M20-AC2"
+          ],
+          "packet": ".harness/tasks/M20-T3.md",
+          "artifact": ".harness/tasks/M20-T3.md",
+          "after": [
+            "M20-T2"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "new module + handler wiring, settled by HTTP tests with controlled clock and hit counters"
+          },
+          "attempts": []
+        },
+        {
+          "id": "M20-T4",
+          "title": "run suites unchanged, restart com.harness.search, live cache hit, re-run web-chat and web-failure proofs",
+          "scope": [
+            "M20-AC3"
+          ],
+          "packet": ".harness/tasks/M20-T4.md",
+          "artifact": ".harness/tasks/M20-T4.md",
+          "after": [
+            "M20-T3"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "no source change; existing suites and proof scripts settled by exit status"
+          },
+          "attempts": []
+        }
+      ],
       "reviews": [],
       "findings": [],
       "validation": [],
@@ -13132,7 +13207,11 @@
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
       ],
-      "ordering_decision": "Human decision 2026-10-01: build deep research (FR34-FR40) now, ahead of M5a; M5a stays BLOCKED and parked, its record unchanged, and is picked up after M15-M21."
+      "ordering_decision": "Human decision 2026-10-01: build deep research (FR34-FR40) now, ahead of M5a; M5a stays BLOCKED and parked, its record unchanged, and is picked up after M15-M21.",
+      "plan": {
+        "status": "DRAFT",
+        "artifact": ".harness/plans/M20.md"
+      }
     },
     "M21": {
       "id": "M21",
