@@ -519,7 +519,7 @@ Owner performs the run (about 5-6 minutes): (1) On the iPhone, with Tailscale co
 
 ## M19i — A deep research report knows today's date, looks up current prices for a cost question, and shows the money sum
 
-Status: TODO
+Status: REVIEW
 
 ### Outcome
 
@@ -544,9 +544,23 @@ Pending.
 
 ### Baseline
 
+602333e53e116e7829ab83fbb1acd962193c9333 on m19i-dated-priced-reports
+
 ### Evidence
 
+- M19i-AC1: server/src/http/deepResearchDate.test.ts (two POST /v1/chat runs on injected 2026-10-03 and 2026-12-25; all seven step kinds; pinned date literals in user messages, between step content and `Task:`; none in system messages; system message identical across steps and days) - .harness/evidence/M19i-T2-verifier.log
+- M19i-AC2: server/src/http/deepResearchPrices.test.ts AC2 tests (cost and non-cost questions both get PLAN_PRICES_RULE: unconditional, no classifier) - .harness/evidence/M19i-T3-verifier.log
+- M19i-AC3: server/src/http/deepResearchPrices.test.ts AC3 tests (write request carries WRITE_DATE_RULE, WRITE_SUM_RULE, WRITE_NO_PRICE_RULE after the unchanged citation text; rules absent from other steps; existing citation tests unmodified) - .harness/evidence/M19i-T3-verifier.log
+- M19i-AC4: server/src/http/deepResearchPrices.test.ts AC4 tests (ordinary web and switch-off: exactly one request, exact messages, no rule constant in any message) and full suite - .harness/evidence/M19i-T3-verifier.log
+
+Tasks (routing):
+- T1 archive M19g - Cheap (haiku) attempt 1 PASS, commit 82f95e7
+- T2 date line from injectable clock - Mid (sonnet), ORDINARY_IMPLEMENTATION: first run PASS but superseded by an orchestrator design revision (date first broke FR43 page-text-first; no rung spent); revision run PASS, verifier PASS, commit 2544604
+- T3 plan/write rules + ordinary-reply tests - Cheap (haiku) attempt 1 FAIL (orchestrator: AC4 tests vacuous, no exact-message asserts) -> Cheap attempt 2 PASS, verifier PASS, commit a1d08f3
+
 ### Validation
+
+- `cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck` - verifier: exit 0, 373 pass 0 fail (26 files), tsc clean. Focused: `bun test src/http/deepResearchDate.test.ts src/http/deepResearchPrices.test.ts`.
 
 ### Review
 
@@ -559,6 +573,9 @@ Pending.
 ### Follow-ups
 
 - FR46 out of scope (requirements, 2026-10-03): no server check that a cost report contains a money figure, no extra price search or rewrite, no server verification of the model's arithmetic, no change to ordinary web replies' prompts.
+- C12 (server/src/web/tools.ts) touched though not in the Architecture field: todayLine() extracted as a pure exported formatter; systemNote output byte-identical; C6 already depended on C12, so no new boundary (not a deviation).
+- The date line sits between step content and the `Task:` line (not first) so FR43's page-text-first / task-last holds; user messages now differ by day, which FR46(a) accepts.
+- milestones.md 816 -> 759 lines after archiving M19g; still over ~400 because the remaining entries are M19h (most recently settled), M19i (active), M19j/M20/M21 (TODO) and M5a (BLOCKED).
 
 ## M19j — Dated, priced deep research reports proven live on the Mac
 

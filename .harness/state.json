@@ -12477,10 +12477,10 @@
         "FR46"
       ],
       "traces": "AC34 (date in every deep research user message from an injected clock, byte-identical system message, current-prices plan instruction, write rules), FR40 (ordinary web replies unchanged), FR43 (byte-stable prefix)",
-      "status": "TODO",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
-      "baseline": null,
+      "baseline": "602333e53e116e7829ab83fbb1acd962193c9333 on m19i-dated-priced-reports",
       "as_built": {
         "artifact": null,
         "result": "PENDING"
@@ -12490,33 +12490,142 @@
           "id": "M19i-AC1",
           "text": "Server tests through POST /v1/chat with a scripted fake Ollama and an injected clock: every deep research model request (brief, plan, queries, pages, notes, gap, write) carries today's date from that clock (weekday, date and ISO date, formatted as in server/src/web/tools.ts) in its user message, not its system message; the system message is byte-identical across all steps of a run and across two runs on different injected days.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "server/src/http/deepResearchDate.test.ts",
+            ".harness/evidence/M19i-T2-verifier.log"
+          ]
         },
         {
           "id": "M19i-AC2",
           "text": "Server tests through POST /v1/chat with a scripted fake Ollama: the plan request carries the instruction that when the question asks about costs, prices, bills or running costs the plan must include a sub-question for current unit prices relevant to the question (e.g. electricity and gas per kWh in the user's country); no server-side classifier decides whether the question is about cost.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "server/src/http/deepResearchPrices.test.ts (AC2 tests: cost and non-cost questions)",
+            ".harness/evidence/M19i-T3-verifier.log"
+          ]
         },
         {
           "id": "M19i-AC3",
           "text": "Server tests through POST /v1/chat with a scripted fake Ollama: the write request carries (i) the rule never to call a price or period \"current\" or \"today's\", or name a period such as \"early 2024\", unless a cited note gives that period, with a quoted price carrying the date or period its page gives (or no date claim if the page gives none); (ii) the rule that where notes give a quantity and a unit price the report states the money figure in the question's currency with the sum shown and both pages cited; and (iii) the rule that when the question asks about cost but no note gives a price, the report says plainly that no current price was found. FR37 citation handling is unchanged.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "server/src/http/deepResearchPrices.test.ts (AC3 tests: write rules present, exclusivity; existing citation tests unchanged)",
+            ".harness/evidence/M19i-T3-verifier.log"
+          ]
         },
         {
           "id": "M19i-AC4",
           "text": "Ordinary web and switch-off replies are unchanged: their model requests carry no FR46 text, and all existing server tests pass with `cd server && bun test && bun run typecheck` exiting 0.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "server/src/http/deepResearchPrices.test.ts (AC4 tests: ordinary web and switch-off exact messages)",
+            ".harness/evidence/M19i-T3-verifier.log (bun test 373 pass 0 fail; tsc clean)"
+          ]
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M19i-T1",
+          "title": "archive settled M19g to .harness/archive/M19g.md (milestones.md 816 -> 759)",
+          "packet": ".harness/tasks/M19i-T1.md",
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "mechanical move of settled milestone text, verified by line reconciliation"
+          },
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "orchestrator diff of HEAD:milestones.md 437-505 vs archive (identical bar 2 trailing blank lines); one extra blank line removed by orchestrator",
+              "evidence": ".harness/evidence/M19i-T1-worker.log",
+              "commit": "82f95e7"
+            }
+          ]
+        },
+        {
+          "id": "M19i-T2",
+          "title": "today's date from an injectable clock in every deep research user message (between step content and task); system message unchanged",
+          "packet": ".harness/tasks/M19i-T2.md",
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "threads an injectable clock through GenerationManager -> runResearch plus a route-level test; three production files"
+          },
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS (superseded)",
+              "verifier": "not run",
+              "note": "implemented the packet as first written (date line first); it broke FR43 page-text-first assertions in deepResearchPassages.test.ts, which the worker edited. Orchestrator revised the design (Revision 2) - not a worker failure, no rung spent."
+            },
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M19i-T2-verifier.log",
+              "commit": "2544604",
+              "note": "Revision 2: date line between step content and Task; deepResearchPassages.test.ts restored to HEAD"
+            }
+          ]
+        },
+        {
+          "id": "M19i-T3",
+          "title": "plan current-prices rule; write date/sum/no-price rules; ordinary and switch-off replies unchanged",
+          "packet": ".harness/tasks/M19i-T3.md",
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "exact prompt text given in packet; string-presence route tests"
+          },
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "FAIL",
+              "verifier": "PASS",
+              "note": "orchestrator rejected: AC4 tests could pass vacuously (no request-count assertion), ignored system messages, no exact-message assertions required by the packet"
+            },
+            {
+              "attempt": 2,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M19i-T3-verifier.log",
+              "commit": "a1d08f3"
+            }
+          ]
+        }
+      ],
       "reviews": [],
       "findings": [],
-      "validation": [],
+      "validation": [
+        {
+          "command": "cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck",
+          "note": "focused: bun test src/http/deepResearchDate.test.ts src/http/deepResearchPrices.test.ts",
+          "artifacts": [
+            ".harness/evidence/M19i-T2-verifier.log",
+            ".harness/evidence/M19i-T3-verifier.log"
+          ],
+          "status": "PASS (verifier: 373 pass, 0 fail, 26 files; tsc clean)"
+        }
+      ],
       "follow_ups": [
-        "FR46 out of scope (requirements, 2026-10-03): no server check that a cost report contains a money figure, no extra price search or rewrite, no server verification of the model's arithmetic, no change to ordinary web replies' prompts."
+        "FR46 out of scope (requirements, 2026-10-03): no server check that a cost report contains a money figure, no extra price search or rewrite, no server verification of the model's arithmetic, no change to ordinary web replies' prompts.",
+        "C12 (server/src/web/tools.ts) was touched though not in the Architecture field: todayLine() extracted as a pure exported formatter, systemNote output byte-identical; C6 already depended on C12, so no new boundary (not a deviation).",
+        "Date line placed between step content and the Task line (not first) so FR43's \"page text first, task last\" holds; the user message is no longer byte-stable across days, which FR46(a) accepts (only the system message must be).",
+        "milestones.md 816 -> 759 lines after archiving M19g; still over ~400 because remaining entries are M19h (most recently settled), M19i (active), M19j/M20/M21 (TODO) and M5a (BLOCKED), none archivable."
       ],
       "complexity_signals": [],
       "ordering_decision": "Human decision 2026-10-03: build FR46 (dated, priced deep research reports) next, before M20, so M21's final live run includes it; M20 and M21 stay TODO after M19i-M19j; M5a stays BLOCKED and parked, its record unchanged. Standing permission to restart com.harness.server extends to FR46 work.",
