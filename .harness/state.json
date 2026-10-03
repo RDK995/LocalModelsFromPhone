@@ -2035,10 +2035,6 @@
         ],
         "active_dispatch": null
       },
-      "plan": {
-        "sha256": "bb1e52bffc414a900041b0c2de382fbb19c7d611be86cb9f3ac50eb485b57005",
-        "task_count": 8
-      },
       "decisions": [
         {
           "date": "2026-09-24",
@@ -2081,7 +2077,11 @@
         }
       ],
       "budget_note": "Worker dispatch events used: 20 of 22 (T1 x2, T2 x5, T3 x1, T4 x3, T6 x4, T5a x1, T7 x2, T5b x1). Remaining 2.",
-      "blocked": null
+      "blocked": null,
+      "legacy_plan_fingerprint": {
+        "sha256": "bb1e52bffc414a900041b0c2de382fbb19c7d611be86cb9f3ac50eb485b57005",
+        "task_count": 8
+      }
     },
     "M2a": {
       "id": "M2a",
