@@ -601,6 +601,9 @@ Pending.
 
 - M21-T6 q3 WebAssembly component model re-run (Cheap, BOUNDED_LOW_RISK) attempt 1 PASS; verifier PASS: run log `exit=0`; generation a6c5a24e-5ebe-4f39-852d-19cb066ed006, final_status complete, total_wall_s 201.347 (limit 540), distinct_pages_read 6, notes_kept 22, cited_read_pages 6, unresolved_citations [], research_phase_calls 12; check-only exit 0, pass true; all 6 read done URLs found in the final sources event — .harness/evidence/M21-T6-q3-result.json, .harness/evidence/M21-T6-q3-verifier.log.
 
+- M21-T6 heat 2026-10-02 heat-pump question re-run (Cheap, BOUNDED_LOW_RISK) attempt 1 PASS; verifier PASS: run log `exit=0`; generation 51ae9df5-784f-472c-b675-ce5e6c63e391, final_status complete, total_wall_s 215.151 (limit 540), distinct_pages_read 6, notes_kept 15, cited_read_pages 6, unresolved_citations [], research_phase_calls 12; check-only exit 0, pass true; all 6 read done URLs found in the final sources event. Observation for the owner (not a gate): one of the six read pages is an alfalaval.co.uk plate-heat-exchanger product page reached via a Bing ad URL, off-topic for the question — .harness/evidence/M21-T6-heat-result.json, .harness/evidence/M21-T6-heat-verifier.log.
+- M21-T6 summary: all four re-runs on the fixed server meet the M21-AC1 bar (q1 211.3 s / 6 cited, q2 196.1 s / 6, q3 201.3 s / 6, heat 215.2 s / 6; all complete, no unresolved citations). These supersede the M21-T2 runs for M21-AC1.
+
 ### Validation
 
 ### Review

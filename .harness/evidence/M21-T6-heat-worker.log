@@ -1,0 +1,97 @@
+=== M21-T6 Heat Question Run ===
+Run ID: heat
+Task: Run the 2026-10-02 heat-pump question live through the AC29 server API
+Started: 2026-10-03T16:41:36.068Z
+Ended: 2026-10-03T16:45:11.219Z
+Total Duration: 215.151 seconds (within 540s budget + 60s margin)
+
+=== Pre-Run Verification ===
+Process check (pgrep -fl ac29-live-run): PASS (no existing processes)
+Server readiness: PASS (from .harness/evidence/M21-T6-readiness.log)
+Model resident: qwen3.5:35b-a3b (confirmed in readiness check)
+
+=== Run Execution ===
+Command executed:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --id heat --out-dir ../.harness/evidence --prefix M21-T6
+
+Exit Status: 0 (SUCCESS)
+
+=== Result JSON (M21-T6-heat-result.json) ===
+{
+  "id": "heat",
+  "generation_id": "51ae9df5-784f-472c-b675-ce5e6c63e391",
+  "started_at": "2026-10-03T16:41:36.068Z",
+  "ended_at": "2026-10-03T16:45:11.219Z",
+  "budget_s": 480,
+  "total_wall_s": 215.151,
+  "planning_s": 33.012,
+  "research_phase_calls": 12,
+  "routine_calls": 13,
+  "routine_p50_s": 7.263,
+  "routine_p95_s": 13.166,
+  "fr41_lines": 17,
+  "distinct_pages_read": 6,
+  "notes_kept": 15,
+  "final_status": "complete",
+  "cited_read_pages": 6,
+  "unresolved_citations": [],
+  "pass": true
+}
+
+=== Pass-Bar Checks ===
+✓ status_ok: complete (passed)
+✓ within_budget: 215.151s (passed, limit 540s)
+✓ cited_read_pages_ok: 6 (passed, requirement ≥3)
+✓ no_unresolved_citations: [] (passed, empty list)
+✓ Overall pass: true
+
+=== Validation Check (--check-only) ===
+Command executed:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M21-T6-heat-stream.txt --log ../.harness/evidence/M21-T6-heat-fr41.log
+
+Exit Status: 0 (SUCCESS)
+
+Validation Output:
+{
+  "budget_s": 480,
+  "total_wall_s": 215.144,
+  "planning_s": 33.012,
+  "research_phase_calls": 12,
+  "routine_calls": 13,
+  "routine_p50_s": 7.263,
+  "routine_p95_s": 13.166,
+  "fr41_lines": 17,
+  "distinct_pages_read": 6,
+  "notes_kept": 15,
+  "final_status": "complete",
+  "cited_read_pages": 6,
+  "unresolved_citations": [],
+  "pass": true
+}
+
+Validation checks all passed.
+
+=== Output Files Created ===
+✓ M21-T6-heat-run.log (1.2K) - Raw run output
+✓ M21-T6-heat-result.json (1.2K) - Result JSON
+✓ M21-T6-heat-stream.txt (16K) - Streaming output
+✓ M21-T6-heat-fr41.log (4.8K) - FR41 analysis log
+✓ M21-T6-heat-check.log (1.2K) - Validation check output
+
+=== Acceptance Criteria M21-AC1 Verification ===
+Criterion: "Live on the Mac with `qwen3.5:35b-a3b` resident: 3 real research-style questions plus the 2026-10-02 heat-pump question each end within the budget plus a small margin with status `complete` or `partial`, a report citing at least 3 distinct read pages, and no citation number that fails to resolve to a saved source; the owner's opinion of report quality is recorded in the evidence (not a gate)."
+
+✓ Model: qwen3.5:35b-a3b resident (confirmed in readiness log)
+✓ Question: 2026-10-02 heat-pump question
+✓ Status: complete
+✓ Within budget: 215.151s (budget 480s, margin until 540s)
+✓ Distinct read pages: 6 (requirement ≥3)
+✓ Unresolved citations: 0 (no failures)
+✓ Report quality: Will be owner-evaluated in post-run analysis
+
+=== Summary ===
+PASS: The heat question completed successfully with all pass-bar checks satisfied.
+- Run completed in 215.151 seconds (well within budget)
+- Final status: complete
+- All citation pages resolved
+- Validation check reproduced all pass-bar values exactly
