@@ -13379,7 +13379,24 @@
             "reason_code": "BOUNDED_LOW_RISK",
             "detail": "read-only checks with an existing read-only script; settled by pid/start times and exit status"
           },
-          "attempts": []
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "FAIL",
+              "note": "packet defect, not capability: server start-time test compared against last server/ commit 64a2d77 (scripts-only). Orchestrator amended test to exclude server/scripts/ (logged in plan Changes during implementation); all other checks PASS"
+            },
+            {
+              "attempt": "1-amended",
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M21-T1-verifier.log",
+              "note": "verifier re-ran amended checks: readiness script exit 0; server start 07:25:16 BST after da9ef0f 07:23:31; search start 15:54:11 after 15:53:08; qwen3.5:35b-a3b resident; nothing in flight"
+            }
+          ]
         },
         {
           "id": "M21-T2",

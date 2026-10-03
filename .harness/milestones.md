@@ -574,6 +574,8 @@ Pending.
 
 ### Evidence
 
+- M21-T1 readiness (Cheap, BOUNDED_LOW_RISK) attempt 1 FAIL on a packet defect (server start-time test counted the scripts-only commit 64a2d77; test amended to exclude server/scripts/, see plan Changes during implementation, no ladder rung) -> verifier PASS on the amended packet: `bash ops/scripts/boot-readiness-check.sh` exit 0 "PASS: ALL CHECKS PASSED"; com.harness.server started 2026-10-03T07:25:16+01:00 after last non-scripts server/ commit da9ef0f 07:23:31+01:00 (LaunchAgent runs `bun src/index.ts`; server/src references no scripts/); com.harness.search started 15:54:11 after last search/ commit 15:53:08; `git status --porcelain -- server search mobile` empty; `ollama ps` lists qwen3.5:35b-a3b; no ac29-live-run in flight — .harness/evidence/M21-T1-readiness.log, .harness/evidence/M21-T1-verifier.log.
+
 ### Validation
 
 ### Review

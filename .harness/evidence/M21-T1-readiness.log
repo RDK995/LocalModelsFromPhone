@@ -1,0 +1,121 @@
+=== M21-T1 Readiness Check Log ===
+Started: 2026-10-03 16:45:00 UTC
+
+=== 1. Git state checks ===
+$ git rev-parse HEAD
+045df79ba2ca187cb36f30157627867f7ebc35d8
+
+$ git status --porcelain -- server search mobile
+(no changes)
+
+$ git log -1 --format='%H %cI' -- server/
+64a2d77f5dde3c4838e2c12868a241edb0ce43f5 2026-10-03T07:27:42+01:00
+
+$ git log -1 --format='%H %cI' -- search/
+cbd55666655e078193d2598e9cb10371dcac51d1 2026-10-03T15:53:08+01:00
+
+$ git log -1 --format='%H %cI' -- mobile/
+01ac82e0cefc18de9b28dece3654e6caf0362aca 2026-10-02T20:57:36+01:00
+
+=== 2. LaunchAgent status ===
+$ launchctl list | grep com.harness
+39257	-15	com.harness.server
+61417	-15	com.harness.search
+64430	0	com.harness.bundle-host
+
+Extracted com.harness.server pid: 39257
+Extracted com.harness.search pid: 61417
+Extracted com.harness.bundle-host pid: 64430
+
+$ ps -o pid,lstart,command -p 39257
+  PID STARTED                      COMMAND
+39257 Sat  3 Oct 07:25:16 2026     /opt/homebrew/bin/bun src/index.ts
+
+$ ps -o pid,lstart,command -p 61417
+  PID STARTED                      COMMAND
+61417 Sat  3 Oct 15:54:11 2026     /opt/homebrew/bin/bun src/index.ts
+
+$ ps -o pid,lstart,command -p 64430
+  PID STARTED                      COMMAND
+64430 Fri  2 Oct 15:28:23 2026     node /Users/ryankenny/Projects/CodingHarnessv2/mobile/node_modules/.bin/expo start --no-dev --minify --port 8081
+
+=== 3. TCP 8081 listener ===
+$ lsof -nP -iTCP:8081 -sTCP:LISTEN -t
+64430
+
+$ ps -o pid,lstart,command -p 64430
+  PID STARTED                      COMMAND
+64430 Fri  2 Oct 15:28:23 2026     node /Users/ryankenny/Projects/CodingHarnessv2/mobile/node_modules/.bin/expo start --no-dev --minify --port 8081
+
+=== 4. Server and search start time vs last commits (explicit timezone conversions) ===
+Last server/ commit time (ISO 8601): 2026-10-03T07:27:42+01:00 (BST, UTC+1)
+com.harness.server pid 39257 lstart output: Sat 3 Oct 07:25:16 2026 (local time, BST UTC+1)
+START TIME COMPARISON: 07:25:16 < 07:27:42 ⚠ PROCESS STARTED BEFORE LAST COMMIT
+
+Last search/ commit time (ISO 8601): 2026-10-03T15:53:08+01:00 (BST, UTC+1)
+com.harness.search pid 61417 lstart output: Sat 3 Oct 15:54:11 2026 (local time, BST UTC+1)
+START TIME COMPARISON: 15:54:11 > 15:53:08 ✓ PROCESS STARTED AFTER LAST COMMIT
+
+Bundle-host start time: Fri 2 Oct 15:28:23 2026 (started yesterday, serves working tree live)
+
+=== 5. Health check ===
+$ curl -s -o /dev/null -w '%{http_code}' --max-time 5 http://127.0.0.1:7789/health
+401
+
+=== 6. Ollama models ===
+$ ollama ps
+NAME               ID              SIZE     PROCESSOR    CONTEXT    UNTIL
+qwen3.5:35b-a3b    3460ffeede54    26 GB    100% GPU     262144     Forever
+
+Model qwen3.5:35b-a3b is resident: ✓
+
+=== 7. ac29-live-run processes ===
+$ pgrep -fl ac29-live-run
+(no processes found)
+
+=== 8. Boot readiness check script ===
+$ bash ops/scripts/boot-readiness-check.sh 2>&1
+Boot readiness check (2026-10-03 16:45:19)
+repo commit: 045df79ba2ca187cb36f30157627867f7ebc35d8
+
+==== Boot time and LaunchAgents started by launchd since this boot ====
+  system booted at: Tue 29 Sep 2026 20:43:59 BST (epoch 1790711039)
+2026-10-03 16:45:19 PASS  LaunchAgent com.harness.server loaded and running (state: running)
+        com.harness.server launchd-tracked pid: 39257
+2026-10-03 16:45:19 PASS  com.harness.server pid 39257 has parent pid 1 (launchd), i.e. not started from a shell (ppid: 1)
+        com.harness.server process start time: Sat Oct  3 07:25:16 2026 (epoch 1791008716)
+2026-10-03 16:45:19 PASS  com.harness.server process started after this boot (start epoch 1791008716 > boot epoch 1790711039)
+2026-10-03 16:45:19 PASS  LaunchAgent com.harness.bundle-host loaded and running (state: running)
+        com.harness.bundle-host launchd-tracked pid: 64430
+2026-10-03 16:45:19 PASS  com.harness.bundle-host pid 64430 has parent pid 1 (launchd), i.e. not started from a shell (ppid: 1)
+        com.harness.bundle-host process start time: Fri Oct  2 15:28:23 2026 (epoch 1790951303)
+2026-10-03 16:45:19 PASS  com.harness.bundle-host process started after this boot (start epoch 1790951303 > boot epoch 1790711039)
+        com.harness.bundle-host process tree (agent pid + descendants): 64430
+        TCP 8081 listener pid: 64430
+2026-10-03 16:45:19 PASS  TCP 8081 listener (pid 64430) is com.harness.bundle-host's launchd pid (64430) or a descendant of it
+
+==== Server reachable (unauthenticated rejected, authenticated works over the tailnet) ====
+2026-10-03 16:45:19 PASS  unauthenticated GET http://127.0.0.1:7789/v1/models -> 401 (got 401)
+2026-10-03 16:45:19 PASS  authenticated GET https://ryans-mac-studio.tailc3648a.ts.net:8443/v1/state -> 200 (got 200)
+
+==== Bundle host reachable over the tailnet (status, iOS manifest, bundle fetch) ====
+2026-10-03 16:45:19 PASS  GET http://ryans-mac-studio.tailc3648a.ts.net:8081/status -> packager-status:running (got 'packager-status:running')
+        iOS manifest fetch: 200; launchAsset.url: http://ryans-mac-studio.tailc3648a.ts.net:8081/expo-router.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=src%2Fapp&unstable_transformProfile=hermes-stable
+2026-10-03 16:45:19 PASS  iOS manifest fetch -> 200 JSON (got 200)
+2026-10-03 16:45:19 PASS  manifest's bundle/launch-asset URL names the tailnet host (http://ryans-mac-studio.tailc3648a.ts.net:8081/...)
+        bundle fetch: 200, 3879014 bytes
+2026-10-03 16:45:19 PASS  fetching the bundle URL -> 200 with a non-trivial body (got 200, 3879014 bytes)
+
+==== pf: LaunchDaemon loaded, anchor interface matches the current tailnet interface ====
+2026-10-03 16:45:19 PASS  pf LaunchDaemon com.harness.pf-bundle-host is loaded (last exit code = 0)
+        pf anchor recorded interface (/var/run/com.harness.pf-bundle-host.iface): utun5
+        current tailnet IP (100.82.139.85) resolves to interface: utun5
+2026-10-03 16:45:19 PASS  pf anchor interface (utun5) matches the current tailnet interface for IP 100.82.139.85
+
+==== Result ====
+  PASS: ALL CHECKS PASSED
+
+Exit status: 0
+
+=== End of readiness check ===
+Completed: 2026-10-03 16:45:20 UTC
