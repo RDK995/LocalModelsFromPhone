@@ -544,7 +544,7 @@ Cycle 1: PASS (2026-10-03), tier Mid (sonnet) - highest substantive tier in the 
 
 ## M21 — Four real research questions answered on the Mac, and the owner's phone screenshot
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -569,6 +569,8 @@ Pending.
 `.harness/plans/M21.md` — AGREED
 
 ### Baseline
+
+6d89bfe98a3e3738c194926b432f77787f808c7b on m21-live-research-proof
 
 ### Evidence
 

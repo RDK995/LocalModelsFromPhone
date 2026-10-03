@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M20",
+  "current_milestone": "M21",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -13337,10 +13337,13 @@
       "architecture": "C1, C6, C11, C12, C13",
       "requirements": [],
       "traces": "AC29 (amended 2026-10-02: plus the heat-pump question), AC30",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
-      "baseline": null,
+      "baseline": {
+        "commit": "6d89bfe98a3e3738c194926b432f77787f808c7b",
+        "branch": "m21-live-research-proof"
+      },
       "as_built": {
         "artifact": null,
         "result": "PENDING"
