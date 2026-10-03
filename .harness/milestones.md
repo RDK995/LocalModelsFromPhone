@@ -593,6 +593,8 @@ Pending.
 
 - HANDOFF (orchestrator 2, CONTINUE, 2026-10-03; supersedes handoff 1 item 1): fix committed 1034b0c. Remaining, in order: (1) M21-T6R (Cheap) — kickstart com.harness.server onto 1034b0c and repeat readiness to .harness/evidence/M21-T6-readiness.log, + verifier; (2) M21-T6 (Cheap) — q1, q2, q3, heat, one fresh worker each, sequential, prefix M21-T6, + verifier each; a run that fails the bar is recorded, not re-run, and goes to the owner; (3) M21-T7 (Cheap) — .harness/evidence/M21-T7-reports.md from the T6 streams, + verifier; (4) only then return to ask the owner for their opinion of M21-T7-reports.md (recorded verbatim) and the phone screenshot path(s) for M21-T4 (Mid; its packet reads M21-T2 timing — the screenshot must come after the T6 runs); (5) M21-T4 + verifier, record ### Validation, set REVIEW. Packets for T6R/T6/T7 are written under .harness/tasks/.
 
+- M21-T6R restart + readiness (Cheap, BOUNDED_LOW_RISK) attempt 1 PASS; verifier PASS: `launchctl kickstart -k gui/$(id -u)/com.harness.server` (pid 4781 -> 71661); server start 17:20:10+01:00 after last non-scripts server/ commit 1034b0c 2026-10-03T17:19:02+01:00; search pid 61417 start 15:54:11 after search/ commit cbd5566 15:53:08; health 401; `ollama ps` lists qwen3.5:35b-a3b; `pgrep -fl ac29-live-run` empty; `git status --porcelain -- server search mobile` empty; `bash ops/scripts/boot-readiness-check.sh` exit 0 "PASS: ALL CHECKS PASSED" — .harness/evidence/M21-T6-readiness.log, .harness/evidence/M21-T6R-verifier.log.
+
 ### Validation
 
 ### Review
