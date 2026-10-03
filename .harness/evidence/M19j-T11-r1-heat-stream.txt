@@ -1,0 +1,248 @@
+: connected
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-0
+event: step
+data: {"step_id":"plan","kind":"plan","status":"started","elapsed_ms":0,"budget_ms":480000}
+
+: keep-alive
+
+: keep-alive
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-1
+event: step
+data: {"step_id":"plan","kind":"plan","status":"done","elapsed_ms":34728,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-2
+event: step
+data: {"step_id":"774b9b73-8868-4d27-8311-9ed386e391e9","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":34730,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-3
+event: step
+data: {"step_id":"774b9b73-8868-4d27-8311-9ed386e391e9","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":37655,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-4
+event: step
+data: {"step_id":"00e3bb2a-bee3-41c1-a9b9-dd2aa26579ce","kind":"search","status":"started","query":"UK air source heat pump installation cost 2026 average","elapsed_ms":37655,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-5
+event: step
+data: {"step_id":"00e3bb2a-bee3-41c1-a9b9-dd2aa26579ce","kind":"search","status":"done","query":"UK air source heat pump installation cost 2026 average","elapsed_ms":39318,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-6
+event: step
+data: {"step_id":"be26174b-f6c5-4342-8c1a-61c3e31eef89","kind":"search","status":"started","query":"gas boiler replacement cost UK 2026","elapsed_ms":39319,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-7
+event: step
+data: {"step_id":"be26174b-f6c5-4342-8c1a-61c3e31eef89","kind":"search","status":"done","query":"gas boiler replacement cost UK 2026","elapsed_ms":40918,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-8
+event: step
+data: {"step_id":"cae716ec-04e7-4a05-aa07-d97e7e6aaf50","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":40922,"budget_ms":480000}
+
+: keep-alive
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-9
+event: step
+data: {"step_id":"cae716ec-04e7-4a05-aa07-d97e7e6aaf50","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":47414,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-10
+event: step
+data: {"step_id":"4ab91330-4247-4464-a021-c5e9c1523536","kind":"read","status":"started","url":"https://www.bestbuilders.co.uk/guides/costs/gas-boiler-installation-cost","elapsed_ms":47417,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-11
+event: step
+data: {"step_id":"201dc667-1e47-4d52-ac44-574ee4cd8206","kind":"read","status":"started","url":"https://www.bing.com/aclick?ld=e852AOscyw_WNSRSCYfUkeJTVUCUygS_PJ0hvhZ2ay4A0yo37EdJKBARm7VNttwhuC-bQBAgX8APCBeIrWOEJtpjn1jVKbreaumvnm0XdEpbJOKz3-q2IGIFjKN8cYYkpxhizVvPYtYkDAta2Yjnilv_H3KyMS0CSYMOj13xyI-7VS-BlM-s0sbLvbByoFUHexHPwz5A&u=aHR0cHMlM2ElMmYlMmZhZC5kb3VibGVjbGljay5uZXQlMmZzZWFyY2hhZHMlMmZsaW5rJTJmY2xpY2slM2ZsaWQlM2Q0MzcwMDA4MTI1MTI4ODM2NiUyNmRzX3Nfa3dnaWQlM2Q1ODcwMDAwODgyNTIyNDUwNCUyNmRzX2FfY2lkJTNkMTYxODk2MDIzNCUyNmRzX2FfY2FpZCUzZDIyMDMyNzg3NTkyJTI2ZHNfYV9hZ2lkJTNkMTc3ODU4MTE4MDQ4JTI2ZHNfYV9saWQlM2Rrd2QtMTAwMjU4NTk3NSUyNiUyNmRzX2VfYWRpZCUzZDgwMDU4Mzk2MzMzNDY1JTI2ZHNfZV90YXJnZXRfaWQlM2Rrd2QtODAwNTg1NzI3MDI5OTclM2Fsb2MtNDA3NiUyNiUyNmRzX2VfbmV0d29yayUzZG8lMjZkc191cmxfdiUzZDIlMjZkc19kZXN0X3VybCUzZGh0dHBzJTNhJTJmJTJmY2xlYW5lbmVyZ3kuY2FtcGFpZ24uZ292LnVrJTJmaGVhdC1wdW1wJTJmJTNmZ2NsaWQlM2RjZDM2MWI3YzlhMTYxODIwNzQwYjcxYmMzYTgyZGRiYiUyNmdjbHNyYyUzZDNwLmRzJTI2JTI2bXNjbGtpZCUzZGNkMzYxYjdjOWExNjE4MjA3NDBiNzFiYzNhODJkZGJiJTI2dXRtX3NvdXJjZSUzZGJpbmclMjZ1dG1fbWVkaXVtJTNkY3BjJTI2dXRtX2NhbXBhaWduJTNkMDQ5OTM0NDRfREVTTlpfREVTTlpfSEVBVCUyNTIwUFVNUFMlMjUyMCUyNTI2JTI1MjBCVVNfQUJDMV9CU1RBUlRfTk9ORV9XMDFfMDc3WS1ITUcyNC0wNjhfUGFpZCUyNTIwU2VhcmNoX1NFX19HQ1MtWV9HZW5lcmljJTI2dXRtX3Rlcm0lM2RhJTI1MjBoZWF0JTI1MjBwdW1wJTI2dXRtX2NvbnRlbnQlM2RIZWF0JTI1MjBQdW1wc19Ccm9hZA&rlid=cd361b7c9a161820740b71bc3a82ddbb","elapsed_ms":47417,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-12
+event: step
+data: {"step_id":"4ab91330-4247-4464-a021-c5e9c1523536","kind":"read","status":"done","url":"https://www.bestbuilders.co.uk/guides/costs/gas-boiler-installation-cost","elapsed_ms":47699,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-13
+event: step
+data: {"step_id":"893b8658-e06e-4579-b764-b5bd5a395c5b","kind":"model","status":"started","detail":"Taking notes: bestbuilders.co.uk","elapsed_ms":47724,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-14
+event: step
+data: {"step_id":"893b8658-e06e-4579-b764-b5bd5a395c5b","kind":"model","status":"done","detail":"Taking notes: bestbuilders.co.uk","elapsed_ms":57927,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-15
+event: step
+data: {"step_id":"9572ee4c-ed3d-4972-86f8-202443b638ef","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":57929,"budget_ms":480000}
+
+: keep-alive
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-16
+event: step
+data: {"step_id":"9572ee4c-ed3d-4972-86f8-202443b638ef","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":61084,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-17
+event: step
+data: {"step_id":"321fef96-8761-4303-94e3-9ceac39e77ec","kind":"search","status":"started","query":"UK gas and electricity unit prices October 2026","elapsed_ms":61084,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-18
+event: step
+data: {"step_id":"321fef96-8761-4303-94e3-9ceac39e77ec","kind":"search","status":"done","query":"UK gas and electricity unit prices October 2026","elapsed_ms":62342,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-19
+event: step
+data: {"step_id":"72319fa3-6fd9-4231-80f5-0682b9648f6e","kind":"search","status":"started","query":"current UK energy price cap September 2026 per kWh","elapsed_ms":62343,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-20
+event: step
+data: {"step_id":"72319fa3-6fd9-4231-80f5-0682b9648f6e","kind":"search","status":"done","query":"current UK energy price cap September 2026 per kWh","elapsed_ms":63904,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-21
+event: step
+data: {"step_id":"1a618432-9507-4e06-99ca-f936bf316a4d","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":63906,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-22
+event: step
+data: {"step_id":"1a618432-9507-4e06-99ca-f936bf316a4d","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":66649,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-23
+event: step
+data: {"step_id":"d5a8c622-1aa8-489b-805a-019084b0fc8a","kind":"read","status":"started","url":"https://octopus.energy/blog/energy-prices-from-october-2026-and-what-they-mean-for-you/","elapsed_ms":66650,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-24
+event: step
+data: {"step_id":"7a95d034-f712-4df5-8154-cc2c8bfb0362","kind":"read","status":"started","url":"https://freepricecompare.com/home-energy/guides/energy-price-cap-per-kwh/","elapsed_ms":66650,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-25
+event: step
+data: {"step_id":"d5a8c622-1aa8-489b-805a-019084b0fc8a","kind":"read","status":"done","url":"https://octopus.energy/blog/energy-prices-from-october-2026-and-what-they-mean-for-you/","elapsed_ms":66995,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-26
+event: step
+data: {"step_id":"4d7e2cef-cc41-4c92-89f3-62d541ee70c1","kind":"model","status":"started","detail":"Taking notes: octopus.energy","elapsed_ms":67008,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-27
+event: step
+data: {"step_id":"4d7e2cef-cc41-4c92-89f3-62d541ee70c1","kind":"model","status":"done","detail":"Taking notes: octopus.energy","elapsed_ms":73879,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-28
+event: step
+data: {"step_id":"7b9f84ae-616d-4326-9399-af72b00267d3","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":73880,"budget_ms":480000}
+
+: keep-alive
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-29
+event: step
+data: {"step_id":"7b9f84ae-616d-4326-9399-af72b00267d3","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":77518,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-30
+event: step
+data: {"step_id":"743afadf-c4f6-4c41-9c64-8dba45924157","kind":"search","status":"started","query":"UK air source heat pump performance in -5C to -10C weather 2026","elapsed_ms":77518,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-31
+event: step
+data: {"step_id":"743afadf-c4f6-4c41-9c64-8dba45924157","kind":"search","status":"done","query":"UK air source heat pump performance in -5C to -10C weather 2026","elapsed_ms":79555,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-32
+event: step
+data: {"step_id":"a6d11bcc-2f78-4ee9-a0d7-b50c0d813d6a","kind":"search","status":"started","query":"heat pump efficiency drop vs gas boiler during UK winter cold snaps","elapsed_ms":79556,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-33
+event: step
+data: {"step_id":"a6d11bcc-2f78-4ee9-a0d7-b50c0d813d6a","kind":"search","status":"done","query":"heat pump efficiency drop vs gas boiler during UK winter cold snaps","elapsed_ms":81505,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-34
+event: step
+data: {"step_id":"324cc18b-17ee-4b04-96d7-712c7276785a","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":81506,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-35
+event: step
+data: {"step_id":"324cc18b-17ee-4b04-96d7-712c7276785a","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":84351,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-36
+event: step
+data: {"step_id":"fb707241-6e59-4061-b16a-3ddd6dfaf92f","kind":"read","status":"started","url":"https://axiomecohomes.co.uk/air-source-heat-pump-in-cold-weather-uk-2026/","elapsed_ms":84351,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-37
+event: step
+data: {"step_id":"98169f66-6971-4a43-bdf5-a20372df8a15","kind":"read","status":"started","url":"https://www.hpmmag.com/news/cold-snaps-show-heat-pump-efficiency-research-reveals","elapsed_ms":84351,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-38
+event: step
+data: {"step_id":"fb707241-6e59-4061-b16a-3ddd6dfaf92f","kind":"read","status":"done","url":"https://axiomecohomes.co.uk/air-source-heat-pump-in-cold-weather-uk-2026/","elapsed_ms":85369,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-39
+event: step
+data: {"step_id":"6a0cda7f-0417-4f03-849c-c67b9388b065","kind":"model","status":"started","detail":"Taking notes: axiomecohomes.co.uk","elapsed_ms":85417,"budget_ms":480000}
+
+: keep-alive
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-40
+event: step
+data: {"step_id":"6a0cda7f-0417-4f03-849c-c67b9388b065","kind":"model","status":"done","detail":"Taking notes: axiomecohomes.co.uk","elapsed_ms":95169,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-41
+event: step
+data: {"step_id":"201dc667-1e47-4d52-ac44-574ee4cd8206","kind":"read","status":"done","url":"https://www.bing.com/aclick?ld=e852AOscyw_WNSRSCYfUkeJTVUCUygS_PJ0hvhZ2ay4A0yo37EdJKBARm7VNttwhuC-bQBAgX8APCBeIrWOEJtpjn1jVKbreaumvnm0XdEpbJOKz3-q2IGIFjKN8cYYkpxhizVvPYtYkDAta2Yjnilv_H3KyMS0CSYMOj13xyI-7VS-BlM-s0sbLvbByoFUHexHPwz5A&u=aHR0cHMlM2ElMmYlMmZhZC5kb3VibGVjbGljay5uZXQlMmZzZWFyY2hhZHMlMmZsaW5rJTJmY2xpY2slM2ZsaWQlM2Q0MzcwMDA4MTI1MTI4ODM2NiUyNmRzX3Nfa3dnaWQlM2Q1ODcwMDAwODgyNTIyNDUwNCUyNmRzX2FfY2lkJTNkMTYxODk2MDIzNCUyNmRzX2FfY2FpZCUzZDIyMDMyNzg3NTkyJTI2ZHNfYV9hZ2lkJTNkMTc3ODU4MTE4MDQ4JTI2ZHNfYV9saWQlM2Rrd2QtMTAwMjU4NTk3NSUyNiUyNmRzX2VfYWRpZCUzZDgwMDU4Mzk2MzMzNDY1JTI2ZHNfZV90YXJnZXRfaWQlM2Rrd2QtODAwNTg1NzI3MDI5OTclM2Fsb2MtNDA3NiUyNiUyNmRzX2VfbmV0d29yayUzZG8lMjZkc191cmxfdiUzZDIlMjZkc19kZXN0X3VybCUzZGh0dHBzJTNhJTJmJTJmY2xlYW5lbmVyZ3kuY2FtcGFpZ24uZ292LnVrJTJmaGVhdC1wdW1wJTJmJTNmZ2NsaWQlM2RjZDM2MWI3YzlhMTYxODIwNzQwYjcxYmMzYTgyZGRiYiUyNmdjbHNyYyUzZDNwLmRzJTI2JTI2bXNjbGtpZCUzZGNkMzYxYjdjOWExNjE4MjA3NDBiNzFiYzNhODJkZGJiJTI2dXRtX3NvdXJjZSUzZGJpbmclMjZ1dG1fbWVkaXVtJTNkY3BjJTI2dXRtX2NhbXBhaWduJTNkMDQ5OTM0NDRfREVTTlpfREVTTlpfSEVBVCUyNTIwUFVNUFMlMjUyMCUyNTI2JTI1MjBCVVNfQUJDMV9CU1RBUlRfTk9ORV9XMDFfMDc3WS1ITUcyNC0wNjhfUGFpZCUyNTIwU2VhcmNoX1NFX19HQ1MtWV9HZW5lcmljJTI2dXRtX3Rlcm0lM2RhJTI1MjBoZWF0JTI1MjBwdW1wJTI2dXRtX2NvbnRlbnQlM2RIZWF0JTI1MjBQdW1wc19Ccm9hZA&rlid=cd361b7c9a161820740b71bc3a82ddbb","elapsed_ms":95170,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-42
+event: step
+data: {"step_id":"108760dc-31d8-4899-8334-5985b30119f6","kind":"model","status":"started","detail":"Taking notes: cleanenergy.campaign.gov.uk","elapsed_ms":95261,"budget_ms":480000}
+
+: keep-alive
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-43
+event: step
+data: {"step_id":"108760dc-31d8-4899-8334-5985b30119f6","kind":"model","status":"done","detail":"Taking notes: cleanenergy.campaign.gov.uk","elapsed_ms":107004,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-44
+event: step
+data: {"step_id":"7a95d034-f712-4df5-8154-cc2c8bfb0362","kind":"read","status":"done","url":"https://freepricecompare.com/home-energy/guides/energy-price-cap-per-kwh/","elapsed_ms":107005,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-45
+event: step
+data: {"step_id":"02251114-3094-4035-837c-891ec8e236dc","kind":"model","status":"started","detail":"Taking notes: freepricecompare.com","elapsed_ms":107109,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-46
+event: step
+data: {"step_id":"02251114-3094-4035-837c-891ec8e236dc","kind":"model","status":"done","detail":"Taking notes: freepricecompare.com","elapsed_ms":115397,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-47
+event: step
+data: {"step_id":"98169f66-6971-4a43-bdf5-a20372df8a15","kind":"read","status":"done","url":"https://www.hpmmag.com/news/cold-snaps-show-heat-pump-efficiency-research-reveals","elapsed_ms":115397,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-48
+event: step
+data: {"step_id":"92b9c640-a7ea-4958-9397-83b606c8c1ac","kind":"model","status":"started","detail":"Taking notes: hpmmag.com","elapsed_ms":115405,"budget_ms":480000}
+
+: keep-alive
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-49
+event: step
+data: {"step_id":"92b9c640-a7ea-4958-9397-83b606c8c1ac","kind":"model","status":"done","detail":"Taking notes: hpmmag.com","elapsed_ms":125806,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-50
+event: step
+data: {"step_id":"write","kind":"write","status":"started","elapsed_ms":125808,"budget_ms":480000}
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-51
+event: step
+data: {"step_id":"write","kind":"write","status":"done","elapsed_ms":198153,"budget_ms":480000}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-52
+event: content
+data: {"text":"Installation costs for typical UK heating systems in 2026 vary by type, with standard gas combi swaps ranging from £1,800 to £3,500 [1]. System boilers typically cost between £2,500 and £4,000 to install, while conventional or regular gas boilers range from £2,500 to £4,200 [1]. Complex projects involving boiler conversion or relocation can exceed £3,500 to over £5,500 [1]. Additionally, a required system power flush may add an extra £300 to £600 to gas boiler installation costs [1]. In contrast, the government Boiler Upgrade Scheme offers a £7,500 grant for eligible households installing heat pumps, rising to £9,000 for homes currently heated by oil or LPG [2]. This enhanced grant of £9,000 remains available for qualifying installations until March 2027 [2].\n\nRegarding running costs and unit prices as of October 2026, natural gas unit prices have risen by 8.7%, whereas electricity unit rates have increased by only 0.2% [4]. Despite the sharp rise in gas prices, average dual-fuel energy bills are projected to increase by approximately 4% starting October 1, 2026 [4]. While the provided notes do not supply a specific kWh quantity for a typical home's annual usage, the price differential indicates that electricity rates remain relatively stable compared to the recent sharp increases in natural gas costs [4].\n\nIn terms of performance during cold UK winters, modern air source heat pumps maintain significant efficiency, retaining a Coefficient of Performance (CoP) above 2.0 even at temperatures as low as -10°C [5]. Although efficiency drops when temperatures fall, shifting from a Seasonal Performance Factor (SPF) of 3.5 to 2.5 results in a 40% rise in electricity consumption for the same heat output, yet this impact on annual bills is modest due to the rarity of extreme cold days [5]. Supplementary electric heating is rarely required, with built-in auxiliary heaters activating only if the system drops below the setpoint temperature for just a few hours per year [5]. User satisfaction data reflects this reliability, with 89% of heat pump owners reporting satisfaction with their systems during cold snaps compared to 78% of gas boiler users [6]. Furthermore, 85% of heat pump owners felt their homes were kept warm effectively during cold weather, outperforming the 80% satisfaction rate reported by gas boiler users [6]."}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-53
+event: sources
+data: {"items":[{"title":"Gas Boiler Installation Cost UK 2026","url":"https://www.bestbuilders.co.uk/guides/costs/gas-boiler-installation-cost","n":1},{"title":"Install a heat pump","url":"https://cleanenergy.campaign.gov.uk/heat-pump/?&msclkid=cd361b7c9a161820740b71bc3a82ddbb&utm_source=bing&utm_medium=cpc&utm_campaign=04993444_DESNZ_DESNZ_HEAT%20PUMPS%20%26%20BUS_ABC1_BSTART_NONE_W01_077Y-HMG24-068_Paid%20Search_SE__GCS-Y_Generic&utm_term=a%20heat%20pump&utm_content=Heat%20Pumps_Broad&gclid=cd361b7c9a161820740b71bc3a82ddbb&gclsrc=3p.ds&gad_source=7&gad_campaignid=22032787592","n":2},{"title":"Energy Price Cap Per kWh Explained (2026)","url":"https://freepricecompare.com/home-energy/guides/energy-price-cap-per-kwh/","n":3},{"title":"Energy prices from October 2026, and what they mean for you","url":"https://octopus.energy/blog/energy-prices-from-october-2026-and-what-they-mean-for-you/","n":4},{"title":"Air Source Heat Pump in Cold Weather UK 2026","url":"https://axiomecohomes.co.uk/air-source-heat-pump-in-cold-weather-uk-2026/","n":5},{"title":"Cold snap shows heat pump efficiency, research reveals","url":"https://www.hpmmag.com/news/cold-snaps-show-heat-pump-efficiency-research-reveals","n":6}]}
+
+id: c70f4c60-c885-4b83-b0a9-ae3a7997f47b-54
+event: done
+data: {"status":"complete","model":"qwen3.5:35b-a3b","eval_count":2962,"tokens_per_second":46.97472762825425,"research":{"status":"complete","elapsed_ms":198154,"budget_ms":480000}}
+

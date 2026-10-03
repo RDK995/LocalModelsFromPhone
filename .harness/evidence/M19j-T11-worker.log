@@ -1,0 +1,113 @@
+M19j-T11: Five live deep research runs executed sequentially
+
+RUN r1 (heat):
+- Started: 2026-10-03T06:27:57.636Z
+- Ended: 2026-10-03T06:31:15.810Z
+- Duration: 198.174s (within budget 480s + 60s margin = 540s)
+- Status: complete
+- Pass: true
+- Generation ID: c70f4c60-c885-4b83-b0a9-ae3a7997f47b
+- distinct_pages_read: 6 (requirement >= 3) ✓
+- cited_read_pages: 4
+- unresolved_citations: [] (none) ✓
+- Run log exit: 0 ✓
+- Check-only: pass=true ✓
+
+RUN r2 (heat):
+- Started: 2026-10-03T06:31:21.306Z
+- Ended: 2026-10-03T06:35:20.674Z
+- Duration: 239.368s (within budget 540s) ✓
+- Status: complete
+- Pass: true
+- Generation ID: 0b63da49-f1e2-48e3-93fa-5fb2ab9c211f
+- distinct_pages_read: 6 (requirement >= 3) ✓
+- cited_read_pages: 6
+- unresolved_citations: [] (none) ✓
+- Run log exit: 0 ✓
+- Check-only: pass=true ✓
+
+RUN r3 (heat):
+- Started: 2026-10-03T06:35:24.294Z
+- Ended: 2026-10-03T06:39:08.332Z
+- Duration: 224.038s (within budget 540s) ✓
+- Status: complete
+- Pass: true
+- Generation ID: e65d745c-c52c-46ee-89af-0d90fcbd9c6a
+- distinct_pages_read: 6 (requirement >= 3) ✓
+- cited_read_pages: 4
+- unresolved_citations: [] (none) ✓
+- Run log exit: 0 ✓
+- Check-only: pass=true ✓
+
+RUN r4 (ev):
+- Started: 2026-10-03T06:39:11.520Z
+- Ended: 2026-10-03T06:42:26.315Z
+- Duration: 194.795s (within budget 540s) ✓
+- Status: complete
+- Pass: true
+- Generation ID: 6c98e963-cf26-4384-b942-41bb1f7a9e0d
+- distinct_pages_read: 4 (requirement >= 3) ✓
+- cited_read_pages: 4
+- unresolved_citations: [] (none) ✓
+- Run log exit: 0 ✓
+- Check-only: pass=true ✓
+
+RUN r5 (gfc2008):
+- Started: 2026-10-03T06:42:30.504Z
+- Ended: 2026-10-03T06:45:40.772Z
+- Duration: 190.268s (within budget 540s) ✓
+- Status: complete
+- Pass: true (recorded but does not gate M19j-AC1)
+- Generation ID: bf00f87c-bf88-4536-8fc1-2395d7365e98
+- distinct_pages_read: 5 (requirement >= 3) ✓
+- cited_read_pages: 4
+- unresolved_citations: [] (none) ✓
+- Run log exit: 0 ✓
+- Check-only: pass=true ✓
+
+TIMING VERIFICATION (no overlaps):
+- r1 end (06:31:15) → r2 start (06:31:21) = 6s gap ✓
+- r2 end (06:35:20) → r3 start (06:35:24) = 4s gap ✓
+- r3 end (06:39:08) → r4 start (06:39:11) = 3s gap ✓
+- r4 end (06:42:26) → r5 start (06:42:30) = 4s gap ✓
+
+ACCEPTANCE CRITERION M19j-AC1 VERIFICATION:
+✓ Heat-pump question run 3 times (r1, r2, r3): all status=complete, pass=true
+✓ Electric car question run once (r4): status=complete, pass=true
+✓ Each run ends within budget + margin (540s): max 239.368s
+✓ Each report cites at least 3 distinct read pages: min 4 pages
+✓ No unresolved citations: all runs have empty unresolved_citations arrays
+✓ All runs saved as M19j-T11-<RUN>-<ID>-{stream.txt,fr41.log,result.json}
+✓ All check-only validations passed
+
+EVIDENCE FILES:
+M19j-T11-r1-heat-stream.txt (18K)
+M19j-T11-r1-heat-fr41.log (4.8K)
+M19j-T11-r1-heat-result.json (1.2K)
+M19j-T11-r1-heat-run.log (1.2K)
+
+M19j-T11-r2-heat-stream.txt (16K)
+M19j-T11-r2-heat-fr41.log (4.8K)
+M19j-T11-r2-heat-result.json (1.2K)
+M19j-T11-r2-heat-run.log (1.2K)
+
+M19j-T11-r3-heat-stream.txt (15K)
+M19j-T11-r3-heat-fr41.log (4.8K)
+M19j-T11-r3-heat-result.json (1.2K)
+M19j-T11-r3-heat-run.log (1.2K)
+
+M19j-T11-r4-ev-stream.txt (14K)
+M19j-T11-r4-ev-fr41.log (4.2K)
+M19j-T11-r4-ev-result.json (1.1K)
+M19j-T11-r4-ev-run.log (1.1K)
+
+M19j-T11-r5-gfc2008-stream.txt (16K)
+M19j-T11-r5-gfc2008-fr41.log (4.5K)
+M19j-T11-r5-gfc2008-result.json (1.0K)
+M19j-T11-r5-gfc2008-run.log (1.0K)
+
+VALIDATION TESTS PASSED:
+✓ Run logs all end with exit=0
+✓ Result JSONs all have pass=true (r1-r4 gate, r5 recorded)
+✓ Check-only validation passed for all runs
+✓ No overlapping execution verified by timestamps

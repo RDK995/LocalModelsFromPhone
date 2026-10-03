@@ -1,0 +1,44 @@
+{
+  "id": "ev",
+  "question": "What does it cost to run an electric car compared with a petrol car in the UK in 2026? Cover charging and fuel costs per year for typical mileage.",
+  "generation_id": "6c98e963-cf26-4384-b942-41bb1f7a9e0d",
+  "started_at": "2026-10-03T06:39:11.520Z",
+  "ended_at": "2026-10-03T06:42:26.315Z",
+  "fr41_selection": "server.log bytes written between just before the POST and after done (lines carry no run id)",
+  "saw_done": true,
+  "budget_s": 480,
+  "total_wall_s": 194.795,
+  "planning_s": 32.364,
+  "research_phase_calls": 10,
+  "routine_calls": 11,
+  "routine_p50_s": 3.51,
+  "routine_p95_s": 17.405,
+  "fr41_lines": 15,
+  "distinct_pages_read": 4,
+  "notes_kept": 13,
+  "final_status": "complete",
+  "cited_read_pages": 4,
+  "unresolved_citations": [],
+  "checks": {
+    "status_ok": {
+      "ok": true,
+      "value": "complete"
+    },
+    "within_budget": {
+      "ok": true,
+      "value": {
+        "total_wall_s": 194.795,
+        "limit_s": 540
+      }
+    },
+    "cited_read_pages_ok": {
+      "ok": true,
+      "value": 4
+    },
+    "no_unresolved_citations": {
+      "ok": true,
+      "value": []
+    }
+  },
+  "pass": true
+}

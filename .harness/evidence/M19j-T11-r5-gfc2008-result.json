@@ -1,0 +1,44 @@
+{
+  "id": "gfc2008",
+  "question": "What caused the 2008 financial crisis?",
+  "generation_id": "bf00f87c-bf88-4536-8fc1-2395d7365e98",
+  "started_at": "2026-10-03T06:42:30.504Z",
+  "ended_at": "2026-10-03T06:45:40.772Z",
+  "fr41_selection": "server.log bytes written between just before the POST and after done (lines carry no run id)",
+  "saw_done": true,
+  "budget_s": 480,
+  "total_wall_s": 190.268,
+  "planning_s": 32.239,
+  "research_phase_calls": 11,
+  "routine_calls": 12,
+  "routine_p50_s": 2.908,
+  "routine_p95_s": 12.042,
+  "fr41_lines": 16,
+  "distinct_pages_read": 5,
+  "notes_kept": 14,
+  "final_status": "complete",
+  "cited_read_pages": 4,
+  "unresolved_citations": [],
+  "checks": {
+    "status_ok": {
+      "ok": true,
+      "value": "complete"
+    },
+    "within_budget": {
+      "ok": true,
+      "value": {
+        "total_wall_s": 190.268,
+        "limit_s": 540
+      }
+    },
+    "cited_read_pages_ok": {
+      "ok": true,
+      "value": 4
+    },
+    "no_unresolved_citations": {
+      "ok": true,
+      "value": []
+    }
+  },
+  "pass": true
+}

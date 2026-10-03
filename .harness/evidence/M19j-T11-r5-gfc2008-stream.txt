@@ -1,0 +1,238 @@
+: connected
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-0
+event: step
+data: {"step_id":"plan","kind":"plan","status":"started","elapsed_ms":0,"budget_ms":480000}
+
+: keep-alive
+
+: keep-alive
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-1
+event: step
+data: {"step_id":"plan","kind":"plan","status":"done","elapsed_ms":33844,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-2
+event: step
+data: {"step_id":"352053da-b551-49b1-832f-943d197dbfac","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":33844,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-3
+event: step
+data: {"step_id":"352053da-b551-49b1-832f-943d197dbfac","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":36445,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-4
+event: step
+data: {"step_id":"bdf8c36c-955c-4544-8601-6286dcaf5f70","kind":"search","status":"started","query":"subprime mortgage bubble expansion and collapse timeline 2008","elapsed_ms":36445,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-5
+event: step
+data: {"step_id":"bdf8c36c-955c-4544-8601-6286dcaf5f70","kind":"search","status":"done","query":"subprime mortgage bubble expansion and collapse timeline 2008","elapsed_ms":38386,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-6
+event: step
+data: {"step_id":"f800ab16-02d6-4695-9d8f-ab8be1ec2ccf","kind":"search","status":"started","query":"how subprime defaults triggered 2008 financial crisis","elapsed_ms":38387,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-7
+event: step
+data: {"step_id":"f800ab16-02d6-4695-9d8f-ab8be1ec2ccf","kind":"search","status":"done","query":"how subprime defaults triggered 2008 financial crisis","elapsed_ms":41058,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-8
+event: step
+data: {"step_id":"b133fdda-465c-47e0-89f5-890d8fd6f0ee","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":41059,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-9
+event: step
+data: {"step_id":"b133fdda-465c-47e0-89f5-890d8fd6f0ee","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":42997,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-10
+event: step
+data: {"step_id":"f5cb3297-0398-40d9-9b61-faf15276c53d","kind":"read","status":"started","url":"https://www.investopedia.com/terms/s/subprime-meltdown.asp","elapsed_ms":42998,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-11
+event: step
+data: {"step_id":"24611536-5d52-4ff8-893e-930b4b52c8a3","kind":"read","status":"started","url":"https://en.wikipedia.org/wiki/2008_financial_crisis","elapsed_ms":42998,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-12
+event: step
+data: {"step_id":"f5cb3297-0398-40d9-9b61-faf15276c53d","kind":"read","status":"done","url":"https://www.investopedia.com/terms/s/subprime-meltdown.asp","elapsed_ms":44401,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-13
+event: step
+data: {"step_id":"ac32e878-d918-4eaf-b76a-69d802b2d3c1","kind":"model","status":"started","detail":"Taking notes: investopedia.com","elapsed_ms":44430,"budget_ms":480000}
+
+: keep-alive
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-14
+event: step
+data: {"step_id":"ac32e878-d918-4eaf-b76a-69d802b2d3c1","kind":"model","status":"done","detail":"Taking notes: investopedia.com","elapsed_ms":54455,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-15
+event: step
+data: {"step_id":"b79e7105-22ad-4332-9e54-11054a2904a4","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":54455,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-16
+event: step
+data: {"step_id":"b79e7105-22ad-4332-9e54-11054a2904a4","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":57364,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-17
+event: step
+data: {"step_id":"609ca300-107d-451d-8bb2-82c9b84c9777","kind":"search","status":"started","query":"how excessive leverage amplified 2008 financial crisis losses","elapsed_ms":57364,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-18
+event: step
+data: {"step_id":"609ca300-107d-451d-8bb2-82c9b84c9777","kind":"search","status":"done","query":"how excessive leverage amplified 2008 financial crisis losses","elapsed_ms":59172,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-19
+event: step
+data: {"step_id":"4d099099-e018-49bd-8443-96189fe7e3c1","kind":"search","status":"started","query":"impact of mortgage-backed securities on financial institutions 2008","elapsed_ms":59173,"budget_ms":480000}
+
+: keep-alive
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-20
+event: step
+data: {"step_id":"4d099099-e018-49bd-8443-96189fe7e3c1","kind":"search","status":"done","query":"impact of mortgage-backed securities on financial institutions 2008","elapsed_ms":63571,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-21
+event: step
+data: {"step_id":"ddece0d4-4a10-4f19-a89b-c0e0c151796d","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":63572,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-22
+event: step
+data: {"step_id":"ddece0d4-4a10-4f19-a89b-c0e0c151796d","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":65848,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-23
+event: step
+data: {"step_id":"a554ebbd-7016-4fb4-a0d8-3e1504b8821a","kind":"read","status":"started","url":"https://www.investopedia.com/ask/answers/041515/what-role-did-securitization-play-us-subprime-mortgage-crisis.asp","elapsed_ms":65848,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-24
+event: step
+data: {"step_id":"a4970f45-fb92-4b53-ab41-b01ce9e04034","kind":"read","status":"started","url":"https://www.ijnrd.org/papers/IJNRD2509174.pdf","elapsed_ms":65848,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-25
+event: step
+data: {"step_id":"a554ebbd-7016-4fb4-a0d8-3e1504b8821a","kind":"read","status":"done","url":"https://www.investopedia.com/ask/answers/041515/what-role-did-securitization-play-us-subprime-mortgage-crisis.asp","elapsed_ms":66314,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-26
+event: step
+data: {"step_id":"b1d0d694-aa14-4da9-aa78-b2337b8d789e","kind":"model","status":"started","detail":"Taking notes: investopedia.com","elapsed_ms":66339,"budget_ms":480000}
+
+: keep-alive
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-27
+event: step
+data: {"step_id":"b1d0d694-aa14-4da9-aa78-b2337b8d789e","kind":"model","status":"done","detail":"Taking notes: investopedia.com","elapsed_ms":75820,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-28
+event: step
+data: {"step_id":"22e1ad1b-3a86-485c-8df4-cb76287930f0","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":75821,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-29
+event: step
+data: {"step_id":"22e1ad1b-3a86-485c-8df4-cb76287930f0","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":79595,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-30
+event: step
+data: {"step_id":"0998e030-f4f1-4089-af34-094933293fb2","kind":"search","status":"started","query":"failures of regulatory oversight in 2008 financial crisis","elapsed_ms":79595,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-31
+event: step
+data: {"step_id":"0998e030-f4f1-4089-af34-094933293fb2","kind":"search","status":"done","query":"failures of regulatory oversight in 2008 financial crisis","elapsed_ms":81118,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-32
+event: step
+data: {"step_id":"b73aad6c-aae1-44cb-8707-3985df7a419b","kind":"search","status":"started","query":"SEC deregulation role in 2008 housing bubble","elapsed_ms":81119,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-33
+event: step
+data: {"step_id":"b73aad6c-aae1-44cb-8707-3985df7a419b","kind":"search","status":"done","query":"SEC deregulation role in 2008 housing bubble","elapsed_ms":82735,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-34
+event: step
+data: {"step_id":"2fa93aaf-f4af-4563-9a5e-6e5df59db2d8","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":82736,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-35
+event: step
+data: {"step_id":"2fa93aaf-f4af-4563-9a5e-6e5df59db2d8","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":85507,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-36
+event: step
+data: {"step_id":"e0d0abb1-e0ab-4390-859e-5480191c7ccb","kind":"read","status":"started","url":"https://www.learningwhistle.com/learn/economics-finance/the-2008-financial-crisis-causes-consequences-and-global-impact/S07","elapsed_ms":85508,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-37
+event: step
+data: {"step_id":"26ebb0e6-c954-499d-9301-7e4f3703824c","kind":"read","status":"started","url":"https://www.linkedin.com/pulse/legislative-roots-2008-housing-crash-how-deregulation-burdette-jr-quhjc","elapsed_ms":85508,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-38
+event: step
+data: {"step_id":"e0d0abb1-e0ab-4390-859e-5480191c7ccb","kind":"read","status":"done","url":"https://www.learningwhistle.com/learn/economics-finance/the-2008-financial-crisis-causes-consequences-and-global-impact/S07","elapsed_ms":85967,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-39
+event: step
+data: {"step_id":"a3d91a5d-2677-4cc6-a607-92bc354bf5f9","kind":"model","status":"started","detail":"Taking notes: learningwhistle.com","elapsed_ms":85980,"budget_ms":480000}
+
+: keep-alive
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-40
+event: step
+data: {"step_id":"a3d91a5d-2677-4cc6-a607-92bc354bf5f9","kind":"model","status":"done","detail":"Taking notes: learningwhistle.com","elapsed_ms":94198,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-41
+event: step
+data: {"step_id":"24611536-5d52-4ff8-893e-930b4b52c8a3","kind":"read","status":"done","url":"https://en.wikipedia.org/wiki/2008_financial_crisis","elapsed_ms":94199,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-42
+event: step
+data: {"step_id":"63090740-4d31-4231-a0fd-a077835ad999","kind":"model","status":"started","detail":"Taking notes: en.wikipedia.org","elapsed_ms":94292,"budget_ms":480000}
+
+: keep-alive
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-43
+event: step
+data: {"step_id":"63090740-4d31-4231-a0fd-a077835ad999","kind":"model","status":"done","detail":"Taking notes: en.wikipedia.org","elapsed_ms":106334,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-44
+event: step
+data: {"step_id":"a4970f45-fb92-4b53-ab41-b01ce9e04034","kind":"read","status":"failed","url":"https://www.ijnrd.org/papers/IJNRD2509174.pdf","detail":"unsupported_content","elapsed_ms":106335,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-45
+event: step
+data: {"step_id":"26ebb0e6-c954-499d-9301-7e4f3703824c","kind":"read","status":"done","url":"https://www.linkedin.com/pulse/legislative-roots-2008-housing-crash-how-deregulation-burdette-jr-quhjc","elapsed_ms":106335,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-46
+event: step
+data: {"step_id":"3bc1b6eb-3a17-470e-bb0d-f17d882ad594","kind":"model","status":"started","detail":"Taking notes: linkedin.com","elapsed_ms":106350,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-47
+event: step
+data: {"step_id":"3bc1b6eb-3a17-470e-bb0d-f17d882ad594","kind":"model","status":"done","detail":"Taking notes: linkedin.com","elapsed_ms":117785,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-48
+event: step
+data: {"step_id":"write","kind":"write","status":"started","elapsed_ms":117786,"budget_ms":480000}
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-49
+event: step
+data: {"step_id":"write","kind":"write","status":"done","elapsed_ms":190264,"budget_ms":480000}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-50
+event: content
+data: {"text":"The primary causes of the 2008 financial crisis were the expansion and collapse of the subprime mortgage bubble, excessive leverage within financial institutions, and significant failures in regulatory oversight. The direct trigger of the crisis was the mass default on high-risk mortgages when many high-risk mortgages stopped being repaid, causing widespread economic damage [2]. This collapse of the housing bubble, combined with poor lending practices initiated the downturn, as the financial crisis was driven by risky mortgages given to borrowers with weak credit and a real estate bubble with fast-rising home prices that fell sharply [2].\n\nExcessive leverage and complex financial instruments played a critical role in amplifying losses across major financial institutions. Mortgage-backed securities (MBSs) and collateralized debt obligations (CDOs) encouraged excessive risk-taking, as lenders and investors chased higher returns while underestimating default risk [3]. These assets were used as leverage to control many trillions of dollars, which were many times the face value of the underlying assets [3]. Consequently, banks that held these securitizations as investments lost tens of billions of dollars which almost caused the US banking system to collapse [3]. The securitization process detached lenders from the risk of default, leading to a collapse in lending standards and an increase in risky loans that fueled systemic losses; because lenders issuing the loans passed them along to big banks for securitization, they were no longer at risk if the homeowner defaulted [3].\n\nFailures in regulatory oversight and risk management policies contributed heavily to the lack of prevention or mitigation. When government regulators failed to monitor the growing risks, private firms pushed their luck to maximize short-term profits [4]. This lack of oversight created a dangerous culture where reckless behavior became the standard practice for many major institutions [4]. The fragmentation of the regulatory structure meant that many regulators operated in silos, focusing only on specific parts of the industry rather than the system as a whole [4]. Private firms exploited these gaps by moving their most dangerous activities into unregulated corners of the market [4], and the lack of a unified oversight body left the global economy vulnerable to the exact kind of systemic failure that eventually occurred [4]. Legislative changes further exacerbated these issues; with the passage of the Alternative Mortgage Transaction Parity Act in 1982, lenders began pushing risky mortgage products that offered low introductory rates but sharp payment increases over time [5]. Additionally, the Gramm-Leach-Bliley Act (1999) repealed the Glass-Steagall Act, which had previously kept commercial banking, investment banking, and insurance separate, further fueling speculation by allowing financial institutions to engage in high-risk activities without adequate oversight [5]. Ultimately, when homeowners began defaulting in 2007, the entire financial system built on speculative debt collapsed [5]."}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-51
+event: sources
+data: {"items":[{"title":"2008 financial crisis","url":"https://en.wikipedia.org/wiki/2008_financial_crisis","n":1},{"title":"Subprime Crisis of 2007—2009: What Happened and Why","url":"https://www.investopedia.com/terms/s/subprime-meltdown.asp","n":2},{"title":"Securitization's Impact on the 2008 Global Financial Crisis","url":"https://www.investopedia.com/ask/answers/041515/what-role-did-securitization-play-us-subprime-mortgage-crisis.asp","n":3},{"title":"2008 Financial Crisis Regulatory Failures · The 2008 Financial Crisis Causes Consequences and Global Impact","url":"https://www.learningwhistle.com/learn/economics-finance/the-2008-financial-crisis-causes-consequences-and-global-impact/S07","n":4},{"title":"The Legislative Roots of the 2008 Housing Crash: How Deregulation, Speculation, and Economic Instability Led to Financial Ruin","url":"https://www.linkedin.com/pulse/legislative-roots-2008-housing-crash-how-deregulation-burdette-jr-quhjc","n":5}]}
+
+id: bf00f87c-bf88-4536-8fc1-2395d7365e98-52
+event: done
+data: {"status":"complete","model":"qwen3.5:35b-a3b","eval_count":2765,"tokens_per_second":47.33891359538843,"research":{"status":"complete","elapsed_ms":190265,"budget_ms":480000}}
+
