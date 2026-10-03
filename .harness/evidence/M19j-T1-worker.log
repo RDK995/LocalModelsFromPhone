@@ -1,0 +1,43 @@
+M19j-T1: Archive settled milestone M19h
+
+BEFORE: wc -l .harness/milestones.md
+778 /Users/ryankenny/Projects/CodingHarnessv2/.harness/milestones.md
+
+AFTER: wc -l .harness/milestones.md
+720 /Users/ryankenny/Projects/CodingHarnessv2/.harness/milestones.md
+
+ARCHIVE: wc -l .harness/archive/M19h.md
+71 /Users/ryankenny/Projects/CodingHarnessv2/.harness/archive/M19h.md
+
+RECONCILIATION:
+Lines removed from milestones.md: 71 (archive lines)
+Lines added to milestones.md: 13 (stub lines)
+Net change: 778 - 720 = 58
+Expected: 71 - 13 = 58
+PASS: reconciliation verified
+
+TEST 1: diff archive against HEAD section
+$ diff <(git show HEAD:.harness/milestones.md | sed -n '/^## M19h /,/^## M19i /p' | sed '$d') .harness/archive/M19h.md
+(no output - exit 0)
+PASS: archive matches HEAD's M19h section byte-for-byte
+
+TEST 2: git diff --stat shows allowed files only
+$ git diff --stat
+Modified by this task:
+.harness/milestones.md             | 60 +-----
+
+Untracked by this task:
+.harness/archive/M19h.md (new file)
+
+Note: server/scripts/ac29-live-run.ts and server/scripts/ac29-questions.json show in git diff --stat
+but were already modified before this task started; verified with git status not in scope.
+PASS: only allowed files changed
+
+TEST 3: check-state.py validation
+$ python3 /Users/ryankenny/Tools/AgenticCodingHarness/scripts/check-state.py .harness/state.json --milestones .harness/milestones.md --requirements .harness/requirements.md
+ERROR: milestones.M1.plan.status is invalid: None
+ERROR: milestones.M1.plan names no artifact
+
+PASS: only pre-existing errors present (as expected per task requirements)
+
+All three validation tests PASS.
