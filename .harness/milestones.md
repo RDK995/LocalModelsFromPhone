@@ -614,7 +614,7 @@ Human decisions:
 
 ## M20 — Search backends rest after being blocked, and repeated searches and page reads come from cache
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -628,13 +628,13 @@ C12, C13, C14
 
 ### As-Built
 
-Pending.
+.harness/as-built/M20.md - RECORDED - 10 of 10 files attributed; components C13, C14; 1 claim mismatch: C12 claimed but not modified (server/src/web unchanged, as M20-AC3 requires)
 
 ### Acceptance Criteria
 
-- [ ] **M20-AC1**: Search service tests through its HTTP search API with faked backends and a controlled clock: a backend returning rate-limit / too-many-requests is skipped for 1 hour and one returning a CAPTCHA or bot-check for 24 hours, searches go to the remaining backends then the headless browser meanwhile, and with every backend resting or failing the search is "unavailable" as in FR20.
-- [ ] **M20-AC2**: Search service tests: a repeated search (after query normalisation) and a repeated page read (by final URL) within 24 hours are served from the Mac-side cache without contacting a backend or the page; after 24 hours they are fetched again.
-- [ ] **M20-AC3**: Ordinary web replies go through the same breakers and cache; all existing ordinary-web and switch-off tests pass unchanged, and the existing live proofs (server/scripts/web-chat-proof.sh, server/scripts/web-failure-proof.sh) still pass.
+- [x] **M20-AC1**: Search service tests through its HTTP search API with faked backends and a controlled clock: a backend returning rate-limit / too-many-requests is skipped for 1 hour and one returning a CAPTCHA or bot-check for 24 hours, searches go to the remaining backends then the headless browser meanwhile, and with every backend resting or failing the search is "unavailable" as in FR20.
+- [x] **M20-AC2**: Search service tests: a repeated search (after query normalisation) and a repeated page read (by final URL) within 24 hours are served from the Mac-side cache without contacting a backend or the page; after 24 hours they are fetched again.
+- [x] **M20-AC3**: Ordinary web replies go through the same breakers and cache; all existing ordinary-web and switch-off tests pass unchanged, and the existing live proofs (server/scripts/web-chat-proof.sh, server/scripts/web-failure-proof.sh) still pass.
 
 ### Plan
 `.harness/plans/M20.md` — AGREED
@@ -658,7 +658,7 @@ Pending.
 
 ### Review
 
-Pending.
+Cycle 1: PASS (2026-10-03), tier Mid (sonnet) - highest substantive tier in the diff is Mid (T1-T3 sonnet; T4 Cheap); whole milestone 7adc092..6f9dc20. Per-criterion: AC1 PASS, AC2 PASS, AC3 PASS. Findings: 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL. Reviewer re-ran search bun test (175 pass) + typecheck, helper unittest (52 OK), server bun test (379 pass) + typecheck, web-chat-proof.sh (exit 0) and web-failure-proof.sh (exit 0); restored proof-rewritten M9-T5-*/M13-T3 evidence via git checkout.
 
 ### Review Cycles
 

@@ -13094,19 +13094,19 @@
         "FR40"
       ],
       "traces": "AC28 (rate-limit 1 h, CAPTCHA 24 h, cache, ordinary replies unchanged)",
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 0,
       "review_override": null,
       "baseline": "7adc092e938134a3455fabdf19f1f02043f381d2 on m20-search-breakers-cache",
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M20.md",
+        "result": "RECORDED - 10 of 10 files attributed; components C13, C14; 1 claim mismatch: C12 claimed but not modified (server/src/web unchanged, as M20-AC3 requires)"
       },
       "criteria": [
         {
           "id": "M20-AC1",
           "text": "Search service tests through its HTTP search API with faked backends and a controlled clock: a backend returning rate-limit / too-many-requests is skipped for 1 hour and one returning a CAPTCHA or bot-check for 24 hours, searches go to the remaining backends then the headless browser meanwhile, and with every backend resting or failing the search is \"unavailable\" as in FR20.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "search/src/http/breakers.test.ts",
             ".harness/evidence/M20-T1-verifier.log",
@@ -13116,7 +13116,7 @@
         {
           "id": "M20-AC2",
           "text": "Search service tests: a repeated search (after query normalisation) and a repeated page read (by final URL) within 24 hours are served from the Mac-side cache without contacting a backend or the page; after 24 hours they are fetched again.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "search/src/http/cache.test.ts",
             ".harness/evidence/M20-T3-verifier.log",
@@ -13126,7 +13126,7 @@
         {
           "id": "M20-AC3",
           "text": "Ordinary web replies go through the same breakers and cache; all existing ordinary-web and switch-off tests pass unchanged, and the existing live proofs (server/scripts/web-chat-proof.sh, server/scripts/web-failure-proof.sh) still pass.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             ".harness/evidence/M20-T4-verifier.log",
             ".harness/evidence/M20-T4-verify-web-chat-proof.log",
@@ -13264,7 +13264,25 @@
           ]
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "PASS",
+          "scope": "SUBSTANTIVE",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "MID_ROUTED_TASKS_ONLY",
+          "diff_range": "7adc092e938134a3455fabdf19f1f02043f381d2..6f9dc20",
+          "artifact": null,
+          "findings": "0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL",
+          "per_criterion": {
+            "M20-AC1": "PASS",
+            "M20-AC2": "PASS",
+            "M20-AC3": "PASS"
+          },
+          "note": "whole-milestone scope; sonnet because T1-T3 routed Mid and T4 Cheap; reviewer re-ran search (175 pass, tsc clean), helper (52 OK), server (379 pass, tsc clean), web-chat-proof.sh exit 0, web-failure-proof.sh exit 0"
+        }
+      ],
       "findings": [],
       "validation": [
         {
