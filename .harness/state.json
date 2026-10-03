@@ -13505,6 +13505,92 @@
             "detail": "image-content check has no command oracle; low risk, no structural concern; orchestrator views the image when judging"
           },
           "attempts": []
+        },
+        {
+          "id": "M21-T5",
+          "title": "diagnose and fix read-step URL vs saved-source URL mismatch on redirected pages",
+          "scope": [
+            "M21-AC1"
+          ],
+          "packet": ".harness/tasks/M21-T5.md",
+          "artifact": ".harness/tasks/M21-T5.md",
+          "after": [
+            "M21-T2"
+          ],
+          "routing": {
+            "tier": "Top",
+            "model": "opus",
+            "reason_code": "AMBIGUOUS",
+            "detail": "unclear bug; cause and fix location unknown in advance"
+          },
+          "attempts": [
+            {
+              "attempt": 4,
+              "tier": "Top",
+              "model": "opus",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M21-T5-verifier.log",
+              "note": "server/src/web/tools.ts done step url -> finalUrl; new red/green test; server suite 380 pass; typecheck 0"
+            }
+          ]
+        },
+        {
+          "id": "M21-T6R",
+          "title": "restart com.harness.server onto the M21-T5 fix and repeat readiness",
+          "scope": [
+            "M21-AC1"
+          ],
+          "packet": ".harness/tasks/M21-T6R.md",
+          "artifact": ".harness/tasks/M21-T6R.md",
+          "after": [
+            "M21-T5"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "existing scripts/procedures, settled by exit status and recorded values"
+          },
+          "attempts": []
+        },
+        {
+          "id": "M21-T6",
+          "title": "re-run q1, q2, q3, heat live after the fix (prefix M21-T6)",
+          "scope": [
+            "M21-AC1"
+          ],
+          "packet": ".harness/tasks/M21-T6.md",
+          "artifact": ".harness/tasks/M21-T6.md",
+          "after": [
+            "M21-T6R"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "existing scripts/procedures, settled by exit status and recorded values"
+          },
+          "attempts": []
+        },
+        {
+          "id": "M21-T7",
+          "title": "regenerate the owner reading file from the M21-T6 runs",
+          "scope": [
+            "M21-AC1"
+          ],
+          "packet": ".harness/tasks/M21-T7.md",
+          "artifact": ".harness/tasks/M21-T7.md",
+          "after": [
+            "M21-T6"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "existing scripts/procedures, settled by exit status and recorded values"
+          },
+          "attempts": []
         }
       ],
       "reviews": [],

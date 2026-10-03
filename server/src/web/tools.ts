@@ -185,7 +185,9 @@ export function createWebTools(opts: WebToolsOptions = {}) {
       const b = o.body ?? {};
       const finalUrl: string = typeof b.final_url === "string" ? b.final_url : url;
       const title: string = typeof b.title === "string" ? b.title : "";
-      events.push({ type: "step", data: { step_id, kind: "read", status: "done", url } });
+      // The done step names the page actually read (FR31: the final URL after redirects), the same URL
+      // as its source, so a citation of this page resolves to a read step.
+      events.push({ type: "step", data: { step_id, kind: "read", status: "done", url: finalUrl } });
       const n = numberPage?.(finalUrl);
       events.push({ type: "source", data: n === undefined ? { title, url: finalUrl } : { title, url: finalUrl, n } });
       const label = n === undefined ? "" : `Page [${n}] - cite this page as [${n}]\n`;

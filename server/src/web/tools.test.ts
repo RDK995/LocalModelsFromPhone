@@ -420,12 +420,30 @@ describe("createWebTools structured search()/read() (deep research helper)", () 
       expect(out.page).toEqual({ n: 3, title: "T", url: "https://final.example/p", text: "Body text", truncated: true });
       expect(steps(out.events).map((s) => [s.data.kind, s.data.status, s.data.url])).toEqual([
         ["read", "started", "https://start.example/p"],
-        ["read", "done", "https://start.example/p"],
+        ["read", "done", "https://final.example/p"],
       ]);
       expect(out.events.find((e) => e.type === "source")).toEqual({
         type: "source",
         data: { title: "T", url: "https://final.example/p", n: 3 },
       });
+    } finally {
+      f.server.stop(true);
+    }
+  });
+
+  it("M21-T5: a redirected read's done step and its saved source name the same final URL", async () => {
+    // Live q2: the search result `...-real-data-1` redirected to `...-real-data`; the done step kept the
+    // requested URL while the source took the final URL, so the cited source matched no read step.
+    const requested = "https://agaicpower.com/blogs/news/are-home-batteries-safe-lifepo4-vs-nmc-fire-risk-the-real-data-1";
+    const final = "https://agaicpower.com/blogs/news/are-home-batteries-safe-lifepo4-vs-nmc-fire-risk-the-real-data";
+    const f = fakeSearch(() => json(200, { url: requested, final_url: final, title: "T", markdown: "Body", truncated: false }));
+    try {
+      const out = await createWebTools({ baseUrl: f.baseUrl }).read(requested, new AbortController().signal, () => 4);
+      const done = steps(out.events).filter((s) => s.data.kind === "read" && s.data.status === "done");
+      const sources = out.events.filter((e) => e.type === "source");
+      expect(done.map((s) => s.data.url)).toEqual([final]);
+      expect(sources.map((e) => e.data.url)).toEqual([final]);
+      expect(out.page?.url).toBe(final);
     } finally {
       f.server.stop(true);
     }
