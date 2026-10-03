@@ -482,134 +482,8 @@ With com.harness.server restarted onto the M19i code (standing human permission 
 
 Owns: none owned. Traces to: AC35, AC29 (pass bar).
 
-### Architecture
+Detail: `.harness/archive/M19j.md`
 
-C4, C6, C7, C11, C12, C13
-
-### As-Built
-
-.harness/as-built/M19j.md - RECORDED - 5 of 7 files attributed; components C4, C6, C7, C12; 2 claim mismatches: C11 (Ollama) and C13 (Search service) claimed but not observed - external components unchanged.
-
-### Acceptance Criteria
-
-- [x] **M19j-AC1**: Live on the Mac with `qwen3.5:35b-a3b` resident and com.harness.server restarted onto the M19i code: the 2026-10-02 heat-pump question is run 3 times and the question "What does it cost to run an electric car compared with a petrol car in the UK in 2026? Cover charging and fuel costs per year for typical mileage." once, one at a time, through the server API; each run ends within the budget plus a small margin with status `complete` or `partial`, a report citing at least 3 distinct read pages, and no citation number that fails to resolve to a saved source; each report, stream and run result is saved under .harness/evidence/.
-- [x] **M19j-AC2**: At least 3 of the 4 reports give a GBP running-cost figure with a citation - either stated by a cited page or worked from cited usage and a cited unit price; the per-report judgement (figure, citations, which kind) is recorded in evidence.
-  - **Amended 2026-10-03, owner-approved** (human decision below, verbatim "Accept and move on", option (b)): for this milestone the accepted bar is **2 of 4** reports with a cited GBP running-cost figure, in place of "at least 3 of the 4" in the original wording above, which is kept unchanged. Everything else in the criterion stands. AC35 in .harness/requirements.md still states 3 of 4; the requirement text is not changed here (see Follow-ups).
-- [x] **M19j-AC3**: None of the 4 reports names a past period (e.g. "early 2024") as current prices unless a note it cites gives that period; the per-report check is recorded in evidence, and the owner's opinion of report quality is recorded (not a gate).
-
-### Baseline
-
-6a56912889985f168d355548965a977c0ecc7a7c on m19j-live-priced-reports
-
-### Evidence
-
-- T1 — archive M19h                  Cheap (haiku), attempt 1, PASS; orchestrator check: archive diffs clean against HEAD's section (exit 0); milestones.md 778 -> 720. Commit 3aceb69. .harness/evidence/M19j-T1-worker.log.
-- T2 — ev question in live-run set     Cheap (haiku), attempt 1, PASS; verifier PASS: ids q1,q2,q3,heat,ev; `bun test && bun run typecheck` 373 pass, tsc clean. Commit bc73e80. .harness/evidence/M19j-T2-verifier.log.
-- T3 — restart onto M19i code          Cheap (haiku), attempt 1, PASS; verifier PASS. com.harness.server pid 4781 (started 2026-10-02 21:56:12) -> 29953 started 2026-10-03 06:39:40 +01:00, after last server/src commit a1d08f3 (06:25:09 +01:00); health 401; qwen3.5:35b-a3b in `ollama ps` (100% GPU). Deviation from packet: the worker ran kickstart twice 11 s apart (4781 -> 29827 -> 29953); no run was in flight (pgrep empty), no harm. Commit df41d9c. .harness/evidence/M19j-T3-restart.log, M19j-T3-verifier.log.
-- T4 — four live runs, sequential      Cheap (haiku), attempt 1, task executed as specified; verifier FAIL on the packet's pass test for r1 only (check-only reproduces every value). Budget 480 s, limit with margin 540 s. Not retried: a rerun would replace a failing live sample, which is a human decision.
-
-  | run | generation | window (Z) | wall s | status | research calls | pages read | notes | cited read pages | unresolved | pass |
-  | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-  | r1 heat | 73a99094 | 05:42:37-05:44:42 | 124.417 | complete | 4 | 2 | 2 | 1 | [] | false |
-  | r2 heat | 7b09a10e | 05:44:55-05:48:25 | 209.827 | complete | 12 | 6 | 18 | 6 | [] | true |
-  | r3 heat | 80786cbb | 05:48:30-05:52:08 | 217.701 | complete | 12 | 6 | 15 | 5 | [] | true |
-  | r4 ev | cca85262 | 05:52:13-05:55:19 | 186.212 | complete | 12 | 6 | 13 | 5 | [] | true |
-
-  Commit 4884fd1. .harness/evidence/M19j-T4-<r1-heat|r2-heat|r3-heat|r4-ev>-{stream.txt,fr41.log,result.json,run.log}, M19j-T4-verifier.log.
-- T5 — report extraction + judgement   Top (opus), attempt 4, routed Top: NO_TEST_ORACLE; PASS (extraction byte-equal to streams); orchestrator spot-check confirmed no GBP running-cost figure in r1 or r3. AC2: 2 of 4 (r2 "£1.91 to run per hour [3]" gas boiler only, borderline; r4 "£8.80 per 100 miles [6]"); r1, r3 NO. AC3: 4 of 4 pass on the literal wording, 3 borderline (r4 labels 26.11p "October 2026" though r3 cites it as July-September). Cited note/page text is not saved by the server, so judgements rest on report text, source titles/urls and cross-run agreement. Commit 018d0ca. .harness/evidence/M19j-T5-<run>-report.md, M19j-T5-judgement.md.
-- T6 — r1 diagnosis                    Top (opus), attempt 4, routed Top: AMBIGUOUS; PASS; orchestrator spot-check: r1 fr41 has 1 queries call vs 3 in r2-r4; research.ts:974 `plan = p ? p.slice(0, Math.max(1, s.subQuestionCount)) : [brief];` (a maximum only). Cause (c) model behaviour: the thinking-off plan returned one sub-question (eval_count 47 vs 88-140), and pagesPerSubQuestion 2 caps reads at 2; no search or page failure; outside M20's scope. .harness/evidence/M19j-T6-diagnosis.md.
-- T7 — write rule: always a running-cost figure   Cheap (haiku), attempt 1 FAIL (packet error: exact text reused PLAN_PRICES_RULE's opening phrase, breaking the existing AC3 plan-only test; worker stopped correctly) -> Cheap attempt 2 PASS; verifier PASS: `bun test src/http/deepResearchPrices.test.ts && bun test && bun run typecheck` exit 0, 374 pass, tsc clean, additions-only test diff. .harness/evidence/M19j-T7-worker.log, M19j-T7-verifier.log.
-- T8 — plan top-up (server sets sub-question count)  Mid (sonnet), ORDINARY_IMPLEMENTATION. Run 1: implementation correct, but 4 existing tests scripted short plans and the packet barred editing them (packet error, no rung spent, precedent M19i-T2). Run 2 (packet revision: fixture-only edits) PASS; verifier PASS: `bun test src/http/deepResearchPlanCount.test.ts && bun test && bun run typecheck` exit 0, 379 pass (27 files), tsc clean. Only changed assertions: "(1 of 2): sq one" -> "(1 of 3)", "(2 of 2): sq two" -> "(2 of 3)" (fixture plan now 3 items). New behaviour (research.ts ~984-1006): de-dup plan (trim/lower/collapse spaces), if short ONE thinking-off extra plan request for the missing count, then top up with brief, then question; null plan still [brief]; full plan no extra call. .harness/evidence/M19j-T8-worker.log, M19j-T8-verifier.log.
-- T9 — gfc2008 question in live-run set   Cheap (haiku), attempt 1, PASS; verifier PASS: ids q1,q2,q3,heat,ev,gfc2008; `bun test && bun run typecheck` 379 pass, tsc clean. Commit 64a2d77. .harness/evidence/M19j-T9-verifier.log.
-- T10 — restart onto fixed code          Cheap (haiku), attempt 1, PASS; verifier PASS: pid 29953 -> 39257 started 2026-10-03T07:25:16+01:00, after last server/src commit 07:23:31+01:00 (T8); health 401; qwen3.5:35b-a3b resident; no run in flight. Commit a79692c. .harness/evidence/M19j-T10-restart.log, M19j-T10-verifier.log.
-- T11 — five live re-runs, sequential    Cheap (haiku), attempt 1, PASS; verifier PASS: all five `--check-only` exit 0. Budget 480 s.
-
-  | run | generation | window (Z) | wall s | status | research calls | pages read | cited read pages | unresolved | pass |
-  | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-  | r1 heat | c70f4c60 | 06:27:57-06:31:15 | 198.174 | complete | 12 | 6 | 4 | [] | true |
-  | r2 heat | 0b63da49 | 06:31:21-06:35:20 | 239.368 | complete | 12 | 6 | 6 | [] | true |
-  | r3 heat | e65d745c | 06:35:24-06:39:08 | 224.038 | complete | 12 | 6 | 4 | [] | true |
-  | r4 ev | 6c98e963 | 06:39:11-06:42:26 | 194.795 | complete | 10 | 4 | 4 | [] | true |
-  | r5 gfc2008 (extra, not gating) | bf00f87c | 06:42:30-06:45:40 | 190.268 | complete | 11 | 5 | 4 | [] | true |
-
-  Commit 01809e0. .harness/evidence/M19j-T11-<run>-{stream.txt,fr41.log,result.json,run.log}, M19j-T11-verifier.log.
-- T12 — re-run report extraction + judgement   Top (opus), attempt 4, routed Top: NO_TEST_ORACLE; PASS (extraction byte-equal to streams, worker log). Orchestrator spot-check: r1 and r3 contain no GBP running-cost figure (r1 gives % price changes and says the notes give no kWh usage; r3: "a calculated running cost figure in pounds sterling cannot be derived from the provided sources"). AC2: 2 of 4 (r2 "£1,067 per year" gas / "£848 per year" ASHP [4][3], borderline - 12,000 kWh assumed, £848 does not reproduce; r4 "£480 to £530", "£690" [4], EV only). AC3: 4 of 4 pass (r2, r4 borderline: current-period labels not verifiable from titles). Extra 2008 check (not a gate): no misplaced price/cost content. .harness/evidence/M19j-T12-<run>-report.md, M19j-T12-judgement.md.
-- Re-run after T7-T8 (T11-T12) is the AC35 evidence; the first attempt (T4-T6) is kept below for history.
-- M19j-AC1: MET on the re-run - r1-r4 all complete within budget, cited read pages 4/6/4/4, no unresolved citations (M19j-T11-verifier.log).
-- M19j-AC2: MET against the owner-amended bar of 2 of 4 - re-run 2 of 4 (r2 YES borderline, r4 YES; r1, r3 NO) (M19j-T12-judgement.md); the original bar of 3 of 4 is not met; owner decision 2026-10-03 "Accept and move on".
-- M19j-AC3: MET - per-report check PASS 4 of 4 on the re-run (M19j-T12-judgement.md); owner's opinion of report quality: asked twice on 2026-10-03, not given (recorded as "asked, not given"; not a gate).
-- First live attempt (T4-T6, before the fixes):
-- M19j-AC1: NOT MET - r1 fails the >= 3 cited read pages bar; r2-r4 meet it.
-- M19j-AC2: NOT MET - 2 of 4 (needs 3).
-- M19j-AC3: per-report check PASS 4 of 4 (literal; borderline calls in M19j-T5-judgement.md); owner's opinion of the first four reports: not given (2026-10-03); to be asked again after the re-run.
-
-### Validation
-
-- For each of r1-heat r2-heat r3-heat r4-ev: `cd server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M19j-T4-<run>-stream.txt --log ../.harness/evidence/M19j-T4-<run>-fr41.log` - verifier: r1 exit 1 (cited_read_pages 1), r2 r3 r4 exit 0 (.harness/evidence/M19j-T4-verifier.log). `cd server && bun test && bun run typecheck` 373 pass, tsc clean (.harness/evidence/M19j-T2-verifier.log).
-- Re-run (the reviewer's validation): for each of r1-heat r2-heat r3-heat r4-ev r5-gfc2008: `cd server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M19j-T11-<run>-stream.txt --log ../.harness/evidence/M19j-T11-<run>-fr41.log` - verifier: all five exit 0 (.harness/evidence/M19j-T11-verifier.log). `cd server && bun test && bun run typecheck` 379 pass, tsc clean (.harness/evidence/M19j-T9-verifier.log; T8 was the last source change).
-
-### Review
-
-Cycle 1: PASS (2026-10-03), tier Top (opus) - diff contains Top-routed tasks (T5, T6, T12); whole milestone 6a56912..447a7b0. Per-criterion: AC1 PASS, AC2 PASS on the owner-amended 2-of-4 bar (original 3-of-4 not met), AC3 PASS. Findings: 0 BLOCKER, 0 IMPORTANT, 2 OPTIONAL (recorded under Follow-ups). Reviewer re-ran bun test (379 pass), typecheck (clean) and --check-only on all five T11 runs (exit 0); log .harness/evidence/M19j-review.log.
-
-Human Escalation (BLOCKED, 2026-10-03, after the re-run; resolved 2026-10-03 - owner chose (b), see Human decisions below):
-
-Problem:
-After the owner's option (a) fixes (M19j-T7 stronger write money rule, M19j-T8 plan top-up) and a fresh re-run, M19j-AC2 still fails: 2 of 4 reports give a cited GBP running-cost figure (needs 3). M19j-AC1 now passes (the plan top-up fixed the short run). M19j-AC3's per-report check passes 4 of 4; owner opinion pending.
-
-Requirement/milestone affected:
-M19j / M19j-AC2 (AC35, FR46(d)).
-
-Attempts made:
-1. M19j-T4/T5: first live attempt - AC2 2 of 4.
-2. M19j-T7 + T8: write step told to give a running-cost money figure per compared option; plan topped up to the server's sub-question count.
-3. M19j-T10/T11: server restarted onto the fixed code; five fresh runs, all meet the AC29 bar.
-4. M19j-T12: AC2 2 of 4 again (r1, r3 NO; r2 YES borderline; r4 YES); AC3 4 of 4.
-
-Remaining issue:
-The failing heat-pump reports say why: their notes held no typical yearly usage figure in kWh (r1, r3) and r3 had no per-kWh unit prices either, so the model, told to cite its inputs, declines to work a sum. A stronger instruction cannot supply missing inputs; nothing in the research step looks for typical usage. FR46 excludes a server-side money-figure check. Repeating the runs unchanged would most likely land at 2 of 4 again.
-
-Recommended decision:
-(a) For a cost question, the plan's prices sub-question also asks for typical yearly usage (kWh of gas and electricity, miles driven), so the notes carry both inputs of the sum; prove it with the scripted fake Ollama, then re-run the four AC35 questions fresh (about an hour). Alternatives: (b) accept 2 of 4 by lowering AC35's bar through roast-requirements; (c) leave M19j BLOCKED and move to M20.
-
-Human Escalation (BLOCKED, resolved 2026-10-03 - see Human decisions below):
-
-Problem:
-The live proof did not meet AC35. M19j-AC1: run r1 (heat pump) read 2 pages and cited 1 (bar: 3), because the model's plan came back with one sub-question and the server accepts a short plan (research.ts:974 enforces the count as a maximum only; FR35 says the count "is set by the server, not the model"). M19j-AC2: only 2 of 4 reports give a cited GBP running-cost figure (bar: 3); r1 and r3 give unit prices or grants but no running-cost sum, although the M19i write rules ask for it. M19j-AC3 passes on its wording, with borderline calls; the owner's opinion is not yet recorded.
-
-Requirement/milestone affected:
-M19j / M19j-AC1, M19j-AC2 (AC35, FR46, AC29 bar; FR35 sub-question count).
-
-Attempts made:
-1. M19j-T3: server restarted onto the M19i code; model resident.
-2. M19j-T4: the four runs, one at a time - r2, r3, r4 meet the AC29 bar, r1 does not (table above).
-3. M19j-T5: per-report judgement - AC2 2 of 4, AC3 4 of 4 (3 borderline).
-4. M19j-T6: r1 diagnosis - short plan (model behaviour, server accepts it); no search/page failure; not M20's scope; recurrence estimated 10-25% per run.
-
-Remaining issue:
-Meeting AC35 needs either a code change (server tops up or retries a plan shorter than the set sub-question count; a stronger write instruction to always state a £ running-cost sum) followed by four fresh runs, or a human decision to accept or re-run. FR46 excludes a server-side money-figure check, so AC2 can only be pushed through the prompt. Rerunning unchanged would replace failing samples and likely fail again at similar rates.
-
-Recommended decision:
-Add a small fix milestone (M19k) before M20: (1) the server enforces the sub-question count as a minimum too - retry the plan once, then top up with the brief - as FR35 already says; (2) strengthen the write step's money rule with a worked example so a cost report always states a £ running-cost figure or says none was found; proven with the scripted fake Ollama. Then re-run M19j's four runs fresh. Record the owner's opinion of the four saved reports (.harness/evidence/M19j-T5-*-report.md) now.
-
-Human decisions:
-- 2026-10-03, owner, answer verbatim "Do a": option (a) - fix both first: the server insists on a full plan (tops up a short plan so the server, not the model, sets the sub-question count, per FR35) and the write step gets a clearer instruction to always do the running-cost sum (FR46(d)); then run the four AC35 questions again, fresh. Owner's opinion of the first four reports: not given. Status BLOCKED -> IN_PROGRESS. Shape: not split - M19j has work recorded (T1-T6), so per the pickup rule the fixes run as further M19j tasks on its branch; acceptance criteria unchanged.
-- 2026-10-03, owner, answer "Yes": add ONE non-price question, "What caused the 2008 financial crisis?", to the live re-run, one at a time through the server API after the fixes; save report, stream and run result under .harness/evidence/ and record a per-report check for misplaced price/cost content (a price/cost section, a current-unit-prices sub-question, or a "no current price was found" statement). Extra recorded check outside AC35: not an acceptance criterion, does not gate pass/fail.
-- 2026-10-03, owner, answer verbatim "Accept and move on": interpreted as option (b) of the post-re-run escalation - accept the M19j-T11/T12 result of 2 of 4 reports with a cited GBP running-cost figure as meeting M19j-AC2's intent for this milestone; M19j-AC2 amended explicitly (original wording kept, accepted bar 2 of 4); finish M19j and move to the next milestone; no further code and no further live runs. Owner's opinion of report quality asked twice, not given (does not gate AC3). requirements.md (AC35, FR46) not changed here. Status BLOCKED -> REVIEW.
-
-### Review Cycles
-
-0
-
-### Follow-ups
-
-- FR46 out of scope (requirements, 2026-10-03): no phone check - Mac runs only.
-- The server logs neither the plan's sub-question text nor per-search result counts, and saves no note text; diagnosis and the AC3 note check had to infer from titles and counts (M19j-T6, M19j-T5).
-- check-state.py (harness updated 2026-10-03 06:33) reports two pre-existing errors on M1's legacy plan object (`milestones.M1.plan.status is invalid: None`, `milestones.M1.plan names no artifact`); unrelated to M19j, left untouched.
-- AC35 / FR46 in .harness/requirements.md still state the original bar (at least 3 of 4 reports with a cited GBP running-cost figure); the owner accepted 2 of 4 for M19j on 2026-10-03 ("Accept and move on"). Update AC35 / FR46 via roast-requirements to reflect that acceptance.
-- Unaddressed root cause of M19j-AC2's shortfall: research finds per-unit prices but not typical yearly usage (kWh of gas and electricity, miles driven), so the model cannot work a cited running-cost sum (M19j-T12-judgement.md). Candidate fix (escalation option (a)): a cost question's prices sub-question also asks for typical yearly usage, proven with the scripted fake Ollama, then a fresh re-run.
-- Review M19j cycle 1 OPTIONAL: the M19j Outcome text still says 'at least three of the four reports'; fold into the AC35/FR46 roast-requirements update.
-- Review M19j cycle 1 OPTIONAL: the M19j-T8 plan top-up request runs thinking off with no per-call time cap, output cap or routine sampling settings (only the plan phase deadline bounds it), unlike FR42; either pass s.routineCapMs / s.routineNumPredict or record the exception in FR42.
 
 
 ## M20 — Search backends rest after being blocked, and repeated searches and page reads come from cache
@@ -690,6 +564,9 @@ Pending.
 
 - [ ] **M21-AC1**: Live on the Mac with `qwen3.5:35b-a3b` resident: 3 real research-style questions plus the 2026-10-02 heat-pump question each end within the budget plus a small margin with status `complete` or `partial`, a report citing at least 3 distinct read pages, and no citation number that fails to resolve to a saved source; the owner's opinion of report quality is recorded in the evidence (not a gate).
 - [ ] **M21-AC2**: The owner's phone screenshot of a finished deep research reply showing its steps, its status, logo citations and "Sources (n)" is saved under .harness/evidence/.
+
+### Plan
+`.harness/plans/M21.md` — DRAFT
 
 ### Baseline
 

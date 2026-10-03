@@ -13359,7 +13359,83 @@
           "evidence": []
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M21-T1",
+          "title": "read-only readiness: server and search service on committed code, bundle host up, qwen3.5:35b-a3b resident, nothing in flight",
+          "scope": [
+            "M21-AC1",
+            "M21-AC2"
+          ],
+          "packet": ".harness/tasks/M21-T1.md",
+          "artifact": ".harness/tasks/M21-T1.md",
+          "after": [],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "read-only checks with an existing read-only script; settled by pid/start times and exit status"
+          },
+          "attempts": []
+        },
+        {
+          "id": "M21-T2",
+          "title": "run one AC29 question live through the server API (one worker per id: q1, q2, q3, heat, sequential)",
+          "scope": [
+            "M21-AC1"
+          ],
+          "packet": ".harness/tasks/M21-T2.md",
+          "artifact": ".harness/tasks/M21-T2.md",
+          "after": [
+            "M21-T1"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "runs an existing, tested evidence script once per invocation; settled by its exit status, result JSON and --check-only"
+          },
+          "attempts": []
+        },
+        {
+          "id": "M21-T3",
+          "title": "extract the four live reports and source lists verbatim into one owner reading file",
+          "scope": [
+            "M21-AC1"
+          ],
+          "packet": ".harness/tasks/M21-T3.md",
+          "artifact": ".harness/tasks/M21-T3.md",
+          "after": [
+            "M21-T2"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "verbatim copy from saved streams; settled by verbatim-match and source-count checks"
+          },
+          "attempts": []
+        },
+        {
+          "id": "M21-T4",
+          "title": "save the owner's phone screenshot unchanged under .harness/evidence/ and record which of the four required items are visible",
+          "scope": [
+            "M21-AC2"
+          ],
+          "packet": ".harness/tasks/M21-T4.md",
+          "artifact": ".harness/tasks/M21-T4.md",
+          "after": [
+            "M21-T2"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "NOT_EASILY_VERIFIED",
+            "detail": "image-content check has no command oracle; low risk, no structural concern; orchestrator views the image when judging"
+          },
+          "attempts": []
+        }
+      ],
       "reviews": [],
       "findings": [],
       "validation": [],
@@ -13369,7 +13445,11 @@
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
       ],
-      "ordering_decision": "Human decision 2026-10-01: build deep research (FR34-FR40) now, ahead of M5a; M5a stays BLOCKED and parked, its record unchanged, and is picked up after M15-M21."
+      "ordering_decision": "Human decision 2026-10-01: build deep research (FR34-FR40) now, ahead of M5a; M5a stays BLOCKED and parked, its record unchanged, and is picked up after M15-M21.",
+      "plan": {
+        "status": "DRAFT",
+        "artifact": ".harness/plans/M21.md"
+      }
     },
     "M5a": {
       "id": "M5a",
