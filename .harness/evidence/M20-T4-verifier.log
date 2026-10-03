@@ -1,0 +1,71 @@
+=== VERIFIER RUN FOR M20-T4 ===
+
+Date: 2026-10-03
+
+=== STEP 1: Offline suites verification ===
+
+Server tests (from M20-T4-server-tests.log):
+- 379 pass
+- 0 fail
+- Ran 379 tests across 27 files. [18.62s]
+
+Search tests (from M20-T4-search-tests.log):
+- 175 pass
+- 0 fail
+- Ran 175 tests across 11 files. [3.99s]
+
+Helper tests (from M20-T4-helper-tests.log):
+- Ran 52 tests in 0.208s
+- OK
+
+=== STEP 2: Git diff check ===
+Command: git diff --stat 7adc092e938134a3455fabdf19f1f02043f381d2 HEAD -- server/
+Result: (empty - no changes to server/)
+
+=== STEP 3: Health check ===
+Command: curl -s -o /dev/null -w '%{http_code}' --max-time 10 http://127.0.0.1:7790/v1/health
+Result: 200
+
+=== STEP 4: Cache verification ===
+From M20-T4-cache-live.log:
+- First search POST: x-cache: miss
+- Second search POST: x-cache: hit
+
+=== STEP 5: Live proofs ===
+
+Web chat proof (from M20-T4-verify-web-chat-proof.log):
+- PASS: M9-AC1: GET /v1/state reports tools capability
+- PASS: M9-AC3: web absent/false sends no tools
+- PASS: M9-AC2: web:true offered both tools with a dated system note
+- "All M9 live proofs passed"
+- EXIT_STATUS=0
+
+Web failure proof (from M20-T4-verify-web-failure-proof.log):
+- Check 1 (search backends forced to fail): 5 assertions passed
+- Check 2 (search exceeds time limit): 5 assertions passed
+- "All M13 web failure checks passed"
+- EXIT_STATUS=0
+
+=== FILES CHANGED (git status --porcelain) ===
+M .harness/evidence/M13-T3-proof.log (modified by proof scripts - expected)
+ M .harness/evidence/M9-T5-ollama-proxy.jsonl (modified by proof scripts - expected)
+ M .harness/evidence/M9-T5-search-proxy.jsonl (modified by proof scripts - expected)
+ M .harness/evidence/M9-T5-sse.log (modified by proof scripts - expected)
+?? .harness/evidence/M20-T4-cache-live.log
+?? .harness/evidence/M20-T4-helper-tests.log
+?? .harness/evidence/M20-T4-restart.log
+?? .harness/evidence/M20-T4-search-tests.log
+?? .harness/evidence/M20-T4-server-tests.log
+?? .harness/evidence/M20-T4-verify-web-chat-proof.log (newly created)
+?? .harness/evidence/M20-T4-verify-web-failure-proof.log (newly created)
+?? "reports/Fast local deep research redesign.md"
+?? "research_notes/Fast local deep research redesign/"
+
+All source files in server/ are unchanged.
+
+=== VERIFICATION SUMMARY ===
+All tests passed: server (379), search (175), helper (52)
+No source files changed
+Cache working properly (hit on second request)
+Both live proofs passed
+All acceptance criteria exercised and met
