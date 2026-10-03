@@ -13415,7 +13415,18 @@
             "reason_code": "BOUNDED_LOW_RISK",
             "detail": "runs an existing, tested evidence script once per invocation; settled by its exit status, result JSON and --check-only"
           },
-          "attempts": []
+          "attempts": [
+            {
+              "attempt": 1,
+              "id": "q1",
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M21-T2-q1-verifier.log",
+              "note": "q1 complete, 239.6 s of 540 s, 5 pages read, 4 cited read pages, 0 unresolved; check-only exit 0 reproduces"
+            }
+          ]
         },
         {
           "id": "M21-T3",

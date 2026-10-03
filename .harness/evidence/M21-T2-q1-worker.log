@@ -1,0 +1,77 @@
+M21-T2 Worker Run Log (q1)
+
+COMMAND RUN:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --id q1 --out-dir ../.harness/evidence --prefix M21-T2 > ../.harness/evidence/M21-T2-q1-run.log 2>&1; echo "exit=$?" >> ../.harness/evidence/M21-T2-q1-run.log
+
+RUN RESULT (from M21-T2-q1-run.log):
+{
+  "id": "q1",
+  "question": "What are the main differences between the Raft and Paxos consensus algorithms, and when would you choose one over the other?",
+  "generation_id": "5486fcf9-9821-4182-b554-bc3e4093275a",
+  "started_at": "2026-10-03T15:48:42.705Z",
+  "ended_at": "2026-10-03T15:52:42.274Z",
+  "fr41_selection": "server.log bytes written between just before the POST and after done (lines carry no run id)",
+  "saw_done": true,
+  "budget_s": 480,
+  "total_wall_s": 239.569,
+  "planning_s": 32.081,
+  "research_phase_calls": 11,
+  "routine_calls": 12,
+  "routine_p50_s": 3.22,
+  "routine_p95_s": 12.56,
+  "fr41_lines": 16,
+  "distinct_pages_read": 5,
+  "notes_kept": 9,
+  "final_status": "complete",
+  "cited_read_pages": 4,
+  "unresolved_citations": [],
+  "checks": {
+    "status_ok": {
+      "ok": true,
+      "value": "complete"
+    },
+    "within_budget": {
+      "ok": true,
+      "value": {
+        "total_wall_s": 239.569,
+        "limit_s": 540
+      }
+    },
+    "cited_read_pages_ok": {
+      "ok": true,
+      "value": 4
+    },
+    "no_unresolved_citations": {
+      "ok": true,
+      "value": []
+    }
+  },
+  "pass": true
+}
+exit=0
+
+CHECK-ONLY VALIDATION:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M21-T2-q1-stream.txt --log ../.harness/evidence/M21-T2-q1-fr41.log
+Exit code: 0
+
+Result matches original run with pass=true and all checks passing.
+
+VERIFICATION SUMMARY:
+- Generated ID: 5486fcf9-9821-4182-b554-bc3e4093275a
+- Status: complete
+- Total wall time: 239.569s (budget: 480s, limit with margin: 540s)
+- Planning time: 32.081s
+- Research phase calls: 11
+- Routine calls: 12 (p50: 3.22s, p95: 12.56s)
+- Distinct pages read: 5
+- Notes kept: 9
+- Cited read pages: 4
+- Unresolved citations: 0
+- Pass: true
+- Run time: 2026-10-03T15:48:42.705Z to 2026-10-03T15:52:42.274Z (3m59.569s)
+
+FILES CREATED:
+- .harness/evidence/M21-T2-q1-run.log
+- .harness/evidence/M21-T2-q1-result.json
+- .harness/evidence/M21-T2-q1-stream.txt
+- .harness/evidence/M21-T2-q1-fr41.log

@@ -576,6 +576,8 @@ Pending.
 
 - M21-T1 readiness (Cheap, BOUNDED_LOW_RISK) attempt 1 FAIL on a packet defect (server start-time test counted the scripts-only commit 64a2d77; test amended to exclude server/scripts/, see plan Changes during implementation, no ladder rung) -> verifier PASS on the amended packet: `bash ops/scripts/boot-readiness-check.sh` exit 0 "PASS: ALL CHECKS PASSED"; com.harness.server started 2026-10-03T07:25:16+01:00 after last non-scripts server/ commit da9ef0f 07:23:31+01:00 (LaunchAgent runs `bun src/index.ts`; server/src references no scripts/); com.harness.search started 15:54:11 after last search/ commit 15:53:08; `git status --porcelain -- server search mobile` empty; `ollama ps` lists qwen3.5:35b-a3b; no ac29-live-run in flight — .harness/evidence/M21-T1-readiness.log, .harness/evidence/M21-T1-verifier.log.
 
+- M21-T2 q1 Raft vs Paxos (Cheap, BOUNDED_LOW_RISK) attempt 1 PASS; verifier PASS: run log `exit=0`; generation 5486fcf9-9821-4182-b554-bc3e4093275a, final_status complete, total_wall_s 239.569 (limit 540), distinct_pages_read 5, cited_read_pages 4, unresolved_citations [], research_phase_calls 11, notes_kept 9; `bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M21-T2-q1-stream.txt --log ../.harness/evidence/M21-T2-q1-fr41.log` exit 0, pass true — .harness/evidence/M21-T2-q1-result.json, .harness/evidence/M21-T2-q1-verifier.log.
+
 ### Validation
 
 ### Review
