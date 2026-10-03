@@ -13425,6 +13425,16 @@
               "verifier": "PASS",
               "evidence": ".harness/evidence/M21-T2-q1-verifier.log",
               "note": "q1 complete, 239.6 s of 540 s, 5 pages read, 4 cited read pages, 0 unresolved; check-only exit 0 reproduces"
+            },
+            {
+              "attempt": 1,
+              "id": "q2",
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "FAIL",
+              "verifier": "FAIL (confirmed)",
+              "evidence": ".harness/evidence/M21-T2-q2-verifier.log",
+              "note": "q2 pass-bar FAIL: cited_read_pages 2 (needs 3); complete, 173.5 s, 4 pages read, 3 notes, 0 unresolved. Report cites [1],[3],[4]; [4] is a page that was read (read step URL ...-the-real-data-1) but the saved source URL is ...-the-real-data (no -1), so the exact-URL check does not count it. Not re-run; owner decision pending."
             }
           ]
         },
