@@ -519,7 +519,7 @@ Owner performs the run (about 5-6 minutes): (1) On the iPhone, with Tailscale co
 
 ## M19i — A deep research report knows today's date, looks up current prices for a cost question, and shows the money sum
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -533,14 +533,14 @@ C4, C6, C7
 
 ### As-Built
 
-Pending.
+RECORDED - .harness/as-built/M19i.md. 5 of 5 files attributed; components C4, C6, C7, C12; 1 claim mismatch: C12 (web tools) modified but not in the Architecture field (todayLine() for FR46(a)).
 
 ### Acceptance Criteria
 
-- [ ] **M19i-AC1**: Server tests through POST /v1/chat with a scripted fake Ollama and an injected clock: every deep research model request (brief, plan, queries, pages, notes, gap, write) carries today's date from that clock (weekday, date and ISO date, formatted as in server/src/web/tools.ts) in its user message, not its system message; the system message is byte-identical across all steps of a run and across two runs on different injected days.
-- [ ] **M19i-AC2**: Server tests through POST /v1/chat with a scripted fake Ollama: the plan request carries the instruction that when the question asks about costs, prices, bills or running costs the plan must include a sub-question for current unit prices relevant to the question (e.g. electricity and gas per kWh in the user's country); no server-side classifier decides whether the question is about cost.
-- [ ] **M19i-AC3**: Server tests through POST /v1/chat with a scripted fake Ollama: the write request carries (i) the rule never to call a price or period "current" or "today's", or name a period such as "early 2024", unless a cited note gives that period, with a quoted price carrying the date or period its page gives (or no date claim if the page gives none); (ii) the rule that where notes give a quantity and a unit price the report states the money figure in the question's currency with the sum shown and both pages cited; and (iii) the rule that when the question asks about cost but no note gives a price, the report says plainly that no current price was found. FR37 citation handling is unchanged.
-- [ ] **M19i-AC4**: Ordinary web and switch-off replies are unchanged: their model requests carry no FR46 text, and all existing server tests pass with `cd server && bun test && bun run typecheck` exiting 0.
+- [x] **M19i-AC1**: Server tests through POST /v1/chat with a scripted fake Ollama and an injected clock: every deep research model request (brief, plan, queries, pages, notes, gap, write) carries today's date from that clock (weekday, date and ISO date, formatted as in server/src/web/tools.ts) in its user message, not its system message; the system message is byte-identical across all steps of a run and across two runs on different injected days.
+- [x] **M19i-AC2**: Server tests through POST /v1/chat with a scripted fake Ollama: the plan request carries the instruction that when the question asks about costs, prices, bills or running costs the plan must include a sub-question for current unit prices relevant to the question (e.g. electricity and gas per kWh in the user's country); no server-side classifier decides whether the question is about cost.
+- [x] **M19i-AC3**: Server tests through POST /v1/chat with a scripted fake Ollama: the write request carries (i) the rule never to call a price or period "current" or "today's", or name a period such as "early 2024", unless a cited note gives that period, with a quoted price carrying the date or period its page gives (or no date claim if the page gives none); (ii) the rule that where notes give a quantity and a unit price the report states the money figure in the question's currency with the sum shown and both pages cited; and (iii) the rule that when the question asks about cost but no note gives a price, the report says plainly that no current price was found. FR37 citation handling is unchanged.
+- [x] **M19i-AC4**: Ordinary web and switch-off replies are unchanged: their model requests carry no FR46 text, and all existing server tests pass with `cd server && bun test && bun run typecheck` exiting 0.
 
 ### Baseline
 
@@ -564,7 +564,7 @@ Tasks (routing):
 
 ### Review
 
-Pending.
+Cycle 1: PASS - reviewer tier Mid (sonnet; highest task tier Mid: T2 sonnet, T1 and T3 Cheap/haiku), diff 602333e..379619a. M19i-AC1 PASS, M19i-AC2 PASS, M19i-AC3 PASS, M19i-AC4 PASS. Findings: 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL. Reviewer re-ran cd server && bun test && bun run typecheck (373 pass, tsc clean). No report file (PASS writes none).
 
 ### Review Cycles
 
