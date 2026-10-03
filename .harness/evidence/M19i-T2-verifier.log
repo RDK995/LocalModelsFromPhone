@@ -1,0 +1,21 @@
+Test Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/http/deepResearchDate.test.ts && bun test && bun run typecheck
+
+Exit Status: 0
+
+Output (summary lines):
+ 1 pass
+ 0 fail
+ 249 expect() calls
+Ran 1 test across 1 file. [24.00ms]
+
+[...]
+
+ 366 pass
+ 0 fail
+ 2766 expect() calls
+Ran 366 tests across 25 files. [18.47s]
+$ tsc --noEmit
+EXIT_CODE: 0
+
+Full output: /Users/ryankenny/.claude/projects/-Users-ryankenny-Projects-CodingHarnessv2/22c52b4d-bd46-4627-a933-8dd3c9c24650/tool-results/bwmpw2jre.txt

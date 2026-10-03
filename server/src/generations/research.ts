@@ -35,7 +35,7 @@
  */
 
 import type { OllamaChatRequest, OllamaChatResponse } from "../ollama/client";
-import type { ReadPage, SearchResult, StepEvent, WebEvent } from "../web/tools";
+import { todayLine, type ReadPage, type SearchResult, type StepEvent, type WebEvent } from "../web/tools";
 import { createPageNumberer, pageUrlKey } from "../web/pageNumbers";
 import type { ContentEvent, DoneEvent, SourcesEvent, StepEventData } from "@shared/api";
 import type { GenerationEvent, OllamaChatClient } from "./manager";
@@ -133,6 +133,8 @@ export interface ResearchRunOptions {
   log?: (line: ModelCallLog) => void;
   /** FR43: receives one line per page skipped without a note call; defaults to `logPageSkip`. */
   logPage?: (line: PageSkipLog) => void;
+  /** FR46(a): the clock for the date line in every user message; defaults to the real time. */
+  now?: () => Date;
 }
 
 /** FR43: one page read but not noted (no model call). */
@@ -405,6 +407,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
   const { model, question, client, webTools, signal, stopSignal } = opts;
   const log = opts.log ?? logModelCall;
   const logPage = opts.logPage ?? logPageSkip;
+  const now = opts.now ?? (() => new Date());
   const startTime = Date.now();
   let evalCount = 0;
   let evalDurationNs = 0;
@@ -509,7 +512,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
       model,
       messages: [
         { role: "system", content: SYSTEM_INSTRUCTIONS },
-        { role: "user", content: `${userContent}\n\nTask: ${task}` },
+        { role: "user", content: `${userContent}\n\n${todayLine(now())}\n\nTask: ${task}` },
       ],
       format: schema,
       options: thinks

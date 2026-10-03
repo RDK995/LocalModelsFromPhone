@@ -101,12 +101,16 @@ export class GenerationManager {
 
   private log: (line: ModelCallLog) => void;
 
+  private now: () => Date;
+
   constructor(
     ollamaClient: OllamaChatClient,
     webTools: GenerationWebTools & Partial<ResearchWebTools> = createWebTools(),
     researchSettings: Partial<ResearchSettings> = {},
-    logModelCallLine: (line: ModelCallLog) => void = logModelCall
+    logModelCallLine: (line: ModelCallLog) => void = logModelCall,
+    now: () => Date = () => new Date()
   ) {
+    this.now = now;
     this.log = logModelCallLine;
     this.ollamaClient = ollamaClient;
     this.webTools = webTools;
@@ -151,7 +155,7 @@ export class GenerationManager {
       return;
     }
     if (web) {
-      chatRequest.messages.unshift({ role: "system", content: this.webTools.systemNote(new Date()) });
+      chatRequest.messages.unshift({ role: "system", content: this.webTools.systemNote(this.now()) });
     }
 
     void this.run(genId, record, chatRequest, web);
@@ -178,6 +182,7 @@ export class GenerationManager {
         stopSignal: record.stopController?.signal,
         settings: this.researchSettings,
         log: this.log,
+        now: this.now,
       });
       for await (const event of events) {
         if (event.type === "done" || event.type === "error") {

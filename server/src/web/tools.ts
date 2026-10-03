@@ -62,6 +62,12 @@ const MONTHS = [
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
+/** "Today's date is <Weekday>, <Month> <d>, <yyyy> (<yyyy-mm-dd>)." in local time (FR46a). */
+export function todayLine(now: Date): string {
+  const iso = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  return `Today's date is ${WEEKDAYS[now.getDay()]}, ${MONTHS[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()} (${iso}).`;
+}
+
 type Outcome =
   | { kind: "http"; status: number; body: any }
   | { kind: "timeout" }
@@ -250,9 +256,8 @@ export function createWebTools(opts: WebToolsOptions = {}) {
     },
 
     systemNote(now: Date): string {
-      const iso = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
       return (
-        `Today's date is ${WEEKDAYS[now.getDay()]}, ${MONTHS[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()} (${iso}). ` +
+        `${todayLine(now)} ` +
         `You may use the web_search and read_page tools to get current information. ` +
         `For a broad or open-ended question (for example "today's news trends"), make at least two web_search calls (more than one query) with different angles and wording. ` +
         `Do not put the exact date into search queries. ` +

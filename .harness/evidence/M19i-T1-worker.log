@@ -1,0 +1,53 @@
+TASK: M19i-T1 — Archive settled milestone M19g
+
+VALIDATION TEST
+===============
+
+Test Command (adjusted for archive header):
+diff <(git -C /Users/ryankenny/Projects/CodingHarnessv2 show HEAD:.harness/milestones.md | sed -n '437,505p' | head -67) /Users/ryankenny/Projects/CodingHarnessv2/.harness/archive/M19g.md
+
+Test Result: PASS
+No differences found (archive content matches original M19g section, excluding trailing blank lines that separate M19g from M19h)
+
+LINE RECONCILIATION
+===================
+
+Before archiving:
+- .harness/milestones.md: 816 lines
+- M19g section: lines 437-505 (69 lines total)
+
+After archiving:
+- .harness/milestones.md: 760 lines
+- M19g section: lines 437-447 (13 lines - summary only)
+- New archive file: .harness/archive/M19g.md (67 lines of content)
+
+Calculation:
+- Old file - New file: 816 - 760 = 56 lines removed
+- Original M19g (69) - New M19g summary (13) = 56 lines moved
+- Result: RECONCILED ✓
+
+VERIFICATION OF CONSTRAINTS
+============================
+
+✓ M19g summary in milestones.md keeps:
+  - Heading: ## M19g — Faster deep research proven live on the Mac
+  - Status: DONE
+  - ### Outcome and outcome text verbatim
+  - Detail: `.harness/archive/M19g.md` pointer
+
+✓ Format matches archived M19f entry (lines 424-434) exactly
+
+✓ M19h is NOT archived (Status: DONE but most recently settled, protected)
+  - M19h still fully present in milestones.md at line 450
+  - No other milestone touched
+
+✓ Archive file follows M19f convention:
+  - Header starts with ## M19g — ...
+  - Full original content byte-for-byte unchanged
+  - Contains all sections: Status, Outcome, Architecture, As-Built, Acceptance Criteria, Baseline, Evidence, Validation, Review, Review Cycles, Follow-ups
+
+✓ No production code changed (state.json untouched)
+
+✓ Git status: ready for commit (per task constraint, did not commit)
+
+RESULT: PASS
