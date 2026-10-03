@@ -1,0 +1,166 @@
+VERIFIER LOG FOR M21-T2 (heat)
+==============================
+
+TASK: M21-T2 — Run the "heat" AC29 question live through the server API
+VERIFIER RUN: 2026-10-03
+
+PACKET: /Users/ryankenny/Projects/CodingHarnessv2/.harness/tasks/M21-T2.md
+DIFF RANGE: 1323e6b..HEAD (uncommitted new evidence files)
+
+PRECONDITION CHECK
+==================
+Command: pgrep -fl ac29-live-run
+Exit Status: 1
+Output: (no ac29-live-run process found)
+RESULT: PASS - no process running
+
+GIT STATUS CHECK
+================
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2 && git status --porcelain
+Exit Status: 0
+Output:
+?? .harness/evidence/M21-T2-heat-fr41.log
+?? .harness/evidence/M21-T2-heat-result.json
+?? .harness/evidence/M21-T2-heat-run.log
+?? .harness/evidence/M21-T2-heat-stream.txt
+?? .harness/evidence/M21-T2-heat-worker.log
+?? "reports/Fast local deep research redesign.md"
+?? "research_notes/Fast local deep research redesign/"
+
+Committed diff check (git diff HEAD --name-only): no output (no committed files changed)
+
+RESULT: PASS - only new evidence files and owner's untracked reports/research_notes (allowed)
+
+EXISTING RESULT.JSON CHECK
+===========================
+File: .harness/evidence/M21-T2-heat-result.json
+Content verified:
+- generation_id: 29feea53-c764-4bd6-91cf-63884e023650
+- status: complete
+- total_wall_s: 220.239 (within limit 540)
+- distinct_pages_read: 6
+- notes_kept: 13
+- cited_read_pages: 5 (meets minimum 3)
+- unresolved_citations: [] (empty, no failures)
+- pass: true
+Run log ends with: exit=0
+
+RESULT: PASS - result.json exists with pass=true, run.log ends with exit=0
+
+CHECK-ONLY COMMAND VERIFICATION
+================================
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M21-T2-heat-stream.txt --log ../.harness/evidence/M21-T2-heat-fr41.log
+
+Exit Status: 0
+
+Output JSON:
+{
+  "stream_file": "../.harness/evidence/M21-T2-heat-stream.txt",
+  "note": "check-only: total_wall_s taken from done.research.elapsed_ms (0 when absent)",
+  "budget_s": 480,
+  "total_wall_s": 220.234,
+  "planning_s": 32.833,
+  "research_phase_calls": 12,
+  "routine_calls": 13,
+  "routine_p50_s": 6.358,
+  "routine_p95_s": 12.989,
+  "fr41_lines": 17,
+  "distinct_pages_read": 6,
+  "notes_kept": 13,
+  "final_status": "complete",
+  "cited_read_pages": 5,
+  "unresolved_citations": [],
+  "checks": {
+    "status_ok": {
+      "ok": true,
+      "value": "complete"
+    },
+    "within_budget": {
+      "ok": true,
+      "value": {
+        "total_wall_s": 220.234,
+        "limit_s": 540
+      }
+    },
+    "cited_read_pages_ok": {
+      "ok": true,
+      "value": 5
+    },
+    "no_unresolved_citations": {
+      "ok": true,
+      "value": []
+    }
+  },
+  "pass": true
+}
+
+COMPARISON WITH ORIGINAL RUN
+=============================
+Original run.log result.json values:
+- total_wall_s: 220.239
+- distinct_pages_read: 6
+- notes_kept: 13
+- cited_read_pages: 5
+- unresolved_citations: []
+- final_status: complete
+- pass: true
+
+Check-only reproduction:
+- total_wall_s: 220.234 (MATCH - within rounding)
+- distinct_pages_read: 6 (MATCH)
+- notes_kept: 13 (MATCH)
+- cited_read_pages: 5 (MATCH)
+- unresolved_citations: [] (MATCH)
+- final_status: complete (MATCH)
+- pass: true (MATCH)
+
+RESULT: PASS - check-only command exit 0, all pass-bar values reproduced
+
+ACCEPTANCE CRITERION M21-AC1 VERIFICATION
+===========================================
+Criterion (verbatim): "Live on the Mac with qwen3.5:35b-a3b resident: 3 real
+research-style questions plus the 2026-10-02 heat-pump question each end within the
+budget plus a small margin with status `complete` or `partial`, a report citing at
+least 3 distinct read pages, and no citation number that fails to resolve to a
+saved source; the owner's opinion of report quality is recorded in the evidence
+(not a gate)."
+
+Verification for "heat" question:
+1. "each end within the budget plus a small margin" → total_wall_s: 220.234 <= 540 (budget 480 + 60 margin)
+   PASS: well within budget
+
+2. "status `complete` or `partial`" → final_status: complete
+   PASS: status is complete
+
+3. "report citing at least 3 distinct read pages" → cited_read_pages: 5, distinct_pages_read: 6
+   PASS: 5 >= 3 required
+
+4. "no citation number that fails to resolve to a saved source" → unresolved_citations: []
+   PASS: no unresolved citations
+
+5. "owner's opinion of report quality is recorded in the evidence" → see M21-T2-heat-worker.log
+   (This is recorded in worker's claim, not tested by this verifier)
+
+OVERALL RESULT
+==============
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M21-T2-heat-stream.txt --log ../.harness/evidence/M21-T2-heat-fr41.log
+
+Exit Status: 0
+
+Files Changed: 
+- .harness/evidence/M21-T2-heat-fr41.log (allowed)
+- .harness/evidence/M21-T2-heat-result.json (allowed)
+- .harness/evidence/M21-T2-heat-run.log (allowed)
+- .harness/evidence/M21-T2-heat-stream.txt (allowed)
+- .harness/evidence/M21-T2-heat-worker.log (allowed)
+
+All checks passed:
+✓ Precondition (no process running)
+✓ Git status (only allowed files changed)
+✓ Result.json exists with pass=true
+✓ Run log ends with exit=0
+✓ Check-only command exits 0
+✓ All pass-bar values reproduced
+✓ Acceptance criterion M21-AC1 verified
+
+FINAL RESULT: PASS

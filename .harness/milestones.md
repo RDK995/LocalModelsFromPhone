@@ -582,6 +582,8 @@ Pending.
 
 - M21-T2 q3 WebAssembly component model (Cheap, BOUNDED_LOW_RISK) attempt 1 PASS; verifier PASS: run log `exit=0`; generation 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8, final_status complete, total_wall_s 205.117 (limit 540), distinct_pages_read 6, notes_kept 10, cited_read_pages 3, unresolved_citations []; check-only exit 0, pass true — .harness/evidence/M21-T2-q3-result.json, .harness/evidence/M21-T2-q3-verifier.log.
 
+- M21-T2 heat 2026-10-02 heat-pump question (Cheap, BOUNDED_LOW_RISK) attempt 1 PASS; verifier PASS: run log `exit=0`; generation 29feea53-c764-4bd6-91cf-63884e023650, final_status complete, total_wall_s 220.239 (limit 540), distinct_pages_read 6, notes_kept 13, cited_read_pages 5, unresolved_citations []; check-only exit 0, pass true — .harness/evidence/M21-T2-heat-result.json, .harness/evidence/M21-T2-heat-verifier.log.
+
 ### Validation
 
 ### Review

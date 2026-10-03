@@ -13445,6 +13445,16 @@
               "verifier": "PASS",
               "evidence": ".harness/evidence/M21-T2-q3-verifier.log",
               "note": "q3 complete, 205.1 s of 540 s, 6 pages read, 3 cited read pages, 0 unresolved; check-only exit 0 reproduces"
+            },
+            {
+              "attempt": 1,
+              "id": "heat",
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M21-T2-heat-verifier.log",
+              "note": "heat complete, 220.2 s of 540 s, 6 pages read, 5 cited read pages, 0 unresolved; check-only exit 0 reproduces"
             }
           ]
         },

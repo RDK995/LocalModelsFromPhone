@@ -1,0 +1,250 @@
+: connected
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-0
+event: step
+data: {"step_id":"plan","kind":"plan","status":"started","elapsed_ms":0,"budget_ms":480000}
+
+: keep-alive
+
+: keep-alive
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-1
+event: step
+data: {"step_id":"plan","kind":"plan","status":"done","elapsed_ms":34372,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-2
+event: step
+data: {"step_id":"492977e2-1c43-4615-b726-c2a5a1f8253f","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":34372,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-3
+event: step
+data: {"step_id":"492977e2-1c43-4615-b726-c2a5a1f8253f","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":37634,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-4
+event: step
+data: {"step_id":"7e3736ac-b8fe-47a1-875c-c4f832065ca2","kind":"search","status":"started","query":"UK Boiler Upgrade Scheme grant amounts October 2026","elapsed_ms":37634,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-5
+event: step
+data: {"step_id":"7e3736ac-b8fe-47a1-875c-c4f832065ca2","kind":"search","status":"done","query":"UK Boiler Upgrade Scheme grant amounts October 2026","elapsed_ms":38988,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-6
+event: step
+data: {"step_id":"6ea0cb25-1c07-444e-a164-caa791ff5a5d","kind":"search","status":"started","query":"average heat pump installation cost UK 2026 typical home","elapsed_ms":38989,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-7
+event: step
+data: {"step_id":"6ea0cb25-1c07-444e-a164-caa791ff5a5d","kind":"search","status":"done","query":"average heat pump installation cost UK 2026 typical home","elapsed_ms":43967,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-8
+event: step
+data: {"step_id":"f3c53550-e97d-495c-a380-4e641ad248f6","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":43968,"budget_ms":480000}
+
+: keep-alive
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-9
+event: step
+data: {"step_id":"f3c53550-e97d-495c-a380-4e641ad248f6","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":46152,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-10
+event: step
+data: {"step_id":"f16f86d3-c28c-40e1-9e82-207541d0a8e5","kind":"read","status":"started","url":"https://www.gov.uk/government/publications/boiler-upgrade-scheme-regulations-approved-standards-grant-categories-and-grant-levels/notice-of-approved-grant-categories-and-values-for-the-boiler-upgrade-scheme","elapsed_ms":46153,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-11
+event: step
+data: {"step_id":"fafbc03b-a795-42ec-b387-9bcbd7127761","kind":"read","status":"started","url":"https://warmhomeuk.co.uk/grants/boiler-upgrade/","elapsed_ms":46153,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-12
+event: step
+data: {"step_id":"f16f86d3-c28c-40e1-9e82-207541d0a8e5","kind":"read","status":"done","url":"https://www.gov.uk/government/publications/boiler-upgrade-scheme-regulations-approved-standards-grant-categories-and-grant-levels/notice-of-approved-grant-categories-and-values-for-the-boiler-upgrade-scheme","elapsed_ms":46377,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-13
+event: step
+data: {"step_id":"df4b7603-8df5-43af-90b1-e5360833d225","kind":"model","status":"started","detail":"Taking notes: gov.uk","elapsed_ms":46392,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-14
+event: step
+data: {"step_id":"df4b7603-8df5-43af-90b1-e5360833d225","kind":"model","status":"done","detail":"Taking notes: gov.uk","elapsed_ms":58751,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-15
+event: step
+data: {"step_id":"fe9e30f8-81b0-49e1-8e58-fa2a49217616","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":58752,"budget_ms":480000}
+
+: keep-alive
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-16
+event: step
+data: {"step_id":"fe9e30f8-81b0-49e1-8e58-fa2a49217616","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":62024,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-17
+event: step
+data: {"step_id":"85d66f25-12dd-449c-944e-17212ea7e8c7","kind":"search","status":"started","query":"UK electricity unit price per kWh October 2026","elapsed_ms":62024,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-18
+event: step
+data: {"step_id":"85d66f25-12dd-449c-944e-17212ea7e8c7","kind":"search","status":"done","query":"UK electricity unit price per kWh October 2026","elapsed_ms":64316,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-19
+event: step
+data: {"step_id":"5c24d97e-ccbb-45c4-99e0-9afef75cb27c","kind":"search","status":"started","query":"UK natural gas unit price per kWh October 2026","elapsed_ms":64317,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-20
+event: step
+data: {"step_id":"5c24d97e-ccbb-45c4-99e0-9afef75cb27c","kind":"search","status":"done","query":"UK natural gas unit price per kWh October 2026","elapsed_ms":66829,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-21
+event: step
+data: {"step_id":"20c37ada-6138-46d7-b244-1268e23be6b6","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":66831,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-22
+event: step
+data: {"step_id":"20c37ada-6138-46d7-b244-1268e23be6b6","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":73321,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-23
+event: step
+data: {"step_id":"0ba021dd-82dc-4227-a803-369e70199e33","kind":"read","status":"started","url":"https://electricitycostcalc.com/electricity-cost-per-unit-uk.html","elapsed_ms":73323,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-24
+event: step
+data: {"step_id":"3f9332c4-c2c6-40cd-915e-878d6082207c","kind":"read","status":"started","url":"https://britishenergycompliance.co.uk/gas-unit-rate/","elapsed_ms":73323,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-25
+event: step
+data: {"step_id":"0ba021dd-82dc-4227-a803-369e70199e33","kind":"read","status":"done","url":"https://electricitycostcalc.com/electricity-cost-per-unit-uk.html","elapsed_ms":73606,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-26
+event: step
+data: {"step_id":"6010b73d-cce6-4723-bc22-e92aa0fab232","kind":"model","status":"started","detail":"Taking notes: electricitycostcalc.com","elapsed_ms":73663,"budget_ms":480000}
+
+: keep-alive
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-27
+event: step
+data: {"step_id":"6010b73d-cce6-4723-bc22-e92aa0fab232","kind":"model","status":"done","detail":"Taking notes: electricitycostcalc.com","elapsed_ms":81997,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-28
+event: step
+data: {"step_id":"c5c9b981-07ef-4fb3-95e1-b469a396ef79","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":81998,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-29
+event: step
+data: {"step_id":"c5c9b981-07ef-4fb3-95e1-b469a396ef79","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":85084,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-30
+event: step
+data: {"step_id":"7da9669d-9bce-4efc-bd7f-2269b19392c1","kind":"search","status":"started","query":"UK air source heat pump efficiency at -5C vs gas boiler 2026","elapsed_ms":85084,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-31
+event: step
+data: {"step_id":"7da9669d-9bce-4efc-bd7f-2269b19392c1","kind":"search","status":"done","query":"UK air source heat pump efficiency at -5C vs gas boiler 2026","elapsed_ms":87478,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-32
+event: step
+data: {"step_id":"8c92a168-59a4-4148-b927-efcff642e9fd","kind":"search","status":"started","query":"heat pump performance drop in cold UK winter temperatures","elapsed_ms":87479,"budget_ms":480000}
+
+: keep-alive
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-33
+event: step
+data: {"step_id":"8c92a168-59a4-4148-b927-efcff642e9fd","kind":"search","status":"done","query":"heat pump performance drop in cold UK winter temperatures","elapsed_ms":93024,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-34
+event: step
+data: {"step_id":"6deff872-b68c-4f6b-8270-07592d63c287","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":93025,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-35
+event: step
+data: {"step_id":"6deff872-b68c-4f6b-8270-07592d63c287","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":99384,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-36
+event: step
+data: {"step_id":"f0a888e8-8777-4eea-a115-f9740b7a6830","kind":"read","status":"started","url":"https://www.heatpumpcompared.co.uk/blog/heat-pumps-uk-winter-2026-cold-weather-performance","elapsed_ms":99385,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-37
+event: step
+data: {"step_id":"a4339a7b-cef1-46b0-b045-3bac824a2e32","kind":"read","status":"started","url":"https://www.energysavinghub.co.uk/do-heat-pumps-work-in-winter/","elapsed_ms":99385,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-38
+event: step
+data: {"step_id":"f0a888e8-8777-4eea-a115-f9740b7a6830","kind":"read","status":"done","url":"https://www.heatpumpcompared.co.uk/blog/heat-pumps-uk-winter-2026-cold-weather-performance","elapsed_ms":102867,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-39
+event: step
+data: {"step_id":"080b1c3a-8227-4686-8c3b-6b7fa6586fef","kind":"model","status":"started","detail":"Taking notes: heatpumpcompared.co.uk","elapsed_ms":102922,"budget_ms":480000}
+
+: keep-alive
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-40
+event: step
+data: {"step_id":"080b1c3a-8227-4686-8c3b-6b7fa6586fef","kind":"model","status":"done","detail":"Taking notes: heatpumpcompared.co.uk","elapsed_ms":115912,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-41
+event: step
+data: {"step_id":"fafbc03b-a795-42ec-b387-9bcbd7127761","kind":"read","status":"done","url":"https://warmhomeuk.co.uk/grants/boiler-upgrade/","elapsed_ms":115912,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-42
+event: step
+data: {"step_id":"91e1ecd4-eefa-49e1-976c-158f435a0887","kind":"model","status":"started","detail":"Taking notes: warmhomeuk.co.uk","elapsed_ms":115920,"budget_ms":480000}
+
+: keep-alive
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-43
+event: step
+data: {"step_id":"91e1ecd4-eefa-49e1-976c-158f435a0887","kind":"model","status":"done","detail":"Taking notes: warmhomeuk.co.uk","elapsed_ms":121308,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-44
+event: step
+data: {"step_id":"3f9332c4-c2c6-40cd-915e-878d6082207c","kind":"read","status":"done","url":"https://britishenergycompliance.co.uk/gas-unit-rate/","elapsed_ms":121308,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-45
+event: step
+data: {"step_id":"87832013-2711-49a5-a823-8d68402df108","kind":"model","status":"started","detail":"Taking notes: britishenergycompliance.co.uk","elapsed_ms":121331,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-46
+event: step
+data: {"step_id":"87832013-2711-49a5-a823-8d68402df108","kind":"model","status":"done","detail":"Taking notes: britishenergycompliance.co.uk","elapsed_ms":134213,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-47
+event: step
+data: {"step_id":"a4339a7b-cef1-46b0-b045-3bac824a2e32","kind":"read","status":"done","url":"https://www.energysavinghub.co.uk/do-heat-pumps-work-in-winter/","elapsed_ms":134214,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-48
+event: step
+data: {"step_id":"aeaf2d69-65be-4734-bc17-668bb0f29e6d","kind":"model","status":"started","detail":"Taking notes: energysavinghub.co.uk","elapsed_ms":134305,"budget_ms":480000}
+
+: keep-alive
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-49
+event: step
+data: {"step_id":"aeaf2d69-65be-4734-bc17-668bb0f29e6d","kind":"model","status":"done","detail":"Taking notes: energysavinghub.co.uk","elapsed_ms":145812,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-50
+event: step
+data: {"step_id":"write","kind":"write","status":"started","elapsed_ms":145813,"budget_ms":480000}
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-51
+event: step
+data: {"step_id":"write","kind":"write","status":"done","elapsed_ms":220233,"budget_ms":480000}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-52
+event: content
+data: {"text":"### Total Installed Costs and Grants\nAs of October 3, 2026, the government grants under the Boiler Upgrade Scheme provide significant but partial financial support for heating installations. For a typical air-to-water heat pump in a property not on the gas grid, the grant value is £7,500 [1]. If the property is an off-gas grid replacement of a liquefied petroleum gas system with high-efficiency requirements, the grant increases to £9,000 [1]. Ground source heat pumps also receive a grant value of £7,500 for eligible off-gas properties [1], whereas air-to-air heat pumps in typical homes receive a lower grant of £2,500 [1]. These grant categories became effective from July 21, 2026, and the scheme remains active under the 2022 regulatory framework in October 2026 [1]. While homeowners can access upfront vouchers for eligible low-carbon heating, it is explicitly not a free-boiler scheme, meaning households must pay the remaining balance after the voucher deduction [2]. Consequently, while specific gas boiler installation costs are not detailed in the provided notes, heat pump installations require an initial outlay that is reduced by these grant amounts but remains substantial due to the uncovered portion of the total cost.\n\n### Running Costs and Energy Prices\nFor October 2026, the average unit price for natural gas is 7.97p per kWh for Direct Debit customers, subject to the price cap effective from October 1, 2026 [3]. This gas price varies slightly by region, ranging from 7.82p in the East Midlands to 8.17p in Southern England [3]. Electricity costs approximately three times more per kilowatt-hour than natural gas during this period [3]. To match the running costs of a gas boiler under these conditions, a heat pump must achieve a coefficient of performance (COP) of at least 3 [3]. The specific annual running costs in pounds for a typical home cannot be calculated precisely without a stated quantity of energy consumption (kWh) for a typical year, as the notes provide unit prices but no consumption figures; however, the relative cost comparison indicates that gas heating is currently cheaper to run than direct electric heating or heat pumping unless the specific efficiency threshold is met [3].\n\n### Performance During Cold Weather\nRegarding thermal performance in typical UK winter conditions, air-source heat pumps maintain operational functionality and heating output even when temperatures drop well below freezing. Modern cold-climate heat pumps can operate effectively at temperatures as low as minus 15°C to minus 25°C depending on the specific model [5]. Although the efficiency advantage of heat pumps decreases as outdoor temperatures drop, they consistently outperform gas boilers across all tested cold weather scenarios, with the performance gap narrowing but never reversing [6]. Properly sized modern units are designed to sustain high heat output levels during sub-zero temperatures typical of UK winters, ensuring radiators remain warm even when the outside air is freezing [5]. These conditions reflect the typical UK winter environment where temperatures rarely drop below -3°C [5]."}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-53
+event: sources
+data: {"items":[{"title":"Notice of approved grant categories and values for the Boiler Upgrade Scheme","url":"https://www.gov.uk/government/publications/boiler-upgrade-scheme-regulations-approved-standards-grant-categories-and-grant-levels/notice-of-approved-grant-categories-and-values-for-the-boiler-upgrade-scheme","n":1},{"title":"Boiler Upgrade Scheme 2026: Current Voucher Rules","url":"https://warmhomeuk.co.uk/grants/boiler-upgrade/","n":2},{"title":"UK Utility Compliance & Procurement","url":"https://britishenergycompliance.co.uk/gas-unit-rate/","n":3},{"title":"Electricity Cost per Unit UK 2026 – Q3 & Q4 Ofgem Rates","url":"https://electricitycostcalc.com/electricity-cost-per-unit-uk.html","n":4},{"title":"Do Heat Pumps Work in Winter? UK Cold Weather Guide 2026","url":"https://www.energysavinghub.co.uk/do-heat-pumps-work-in-winter/","n":5},{"title":"Do Heat Pumps Work in UK Winter? 2026 Cold Weather Perfor...","url":"https://www.heatpumpcompared.co.uk/blog/heat-pumps-uk-winter-2026-cold-weather-performance","n":6}]}
+
+id: 29feea53-c764-4bd6-91cf-63884e023650-54
+event: done
+data: {"status":"complete","model":"qwen3.5:35b-a3b","eval_count":3052,"tokens_per_second":46.30732114650676,"research":{"status":"complete","elapsed_ms":220234,"budget_ms":480000}}
+
