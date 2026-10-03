@@ -12660,7 +12660,7 @@
       "architecture": "C4, C6, C7, C11, C12, C13",
       "requirements": [],
       "traces": "AC35, AC29 (pass bar)",
-      "status": "IN_PROGRESS",
+      "status": "BLOCKED",
       "review_cycles": 0,
       "review_override": null,
       "baseline": "6a56912889985f168d355548965a977c0ecc7a7c on m19j-live-priced-reports",
@@ -12672,11 +12672,11 @@
         {
           "id": "M19j-AC1",
           "text": "Live on the Mac with `qwen3.5:35b-a3b` resident and com.harness.server restarted onto the M19i code: the 2026-10-02 heat-pump question is run 3 times and the question \"What does it cost to run an electric car compared with a petrol car in the UK in 2026? Cover charging and fuel costs per year for typical mileage.\" once, one at a time, through the server API; each run ends within the budget plus a small margin with status `complete` or `partial`, a report citing at least 3 distinct read pages, and no citation number that fails to resolve to a saved source; each report, stream and run result is saved under .harness/evidence/.",
-          "status": "FAIL",
+          "status": "PASS",
           "evidence": [
-            ".harness/evidence/M19j-T4-<run>-{stream.txt,fr41.log,result.json,run.log}",
-            ".harness/evidence/M19j-T4-verifier.log (r1 cited_read_pages 1; r2-r4 pass)",
-            ".harness/evidence/M19j-T6-diagnosis.md"
+            ".harness/evidence/M19j-T11-<r1-heat|r2-heat|r3-heat|r4-ev>-{stream.txt,fr41.log,result.json,run.log}",
+            ".harness/evidence/M19j-T11-verifier.log (all four exit 0; cited read pages 4/6/4/4; unresolved [])",
+            ".harness/evidence/M19j-T10-restart.log (server restarted onto HEAD 02c1322 incl. T7/T8)"
           ]
         },
         {
@@ -12684,8 +12684,9 @@
           "text": "At least 3 of the 4 reports give a GBP running-cost figure with a citation - either stated by a cited page or worked from cited usage and a cited unit price; the per-report judgement (figure, citations, which kind) is recorded in evidence.",
           "status": "FAIL",
           "evidence": [
-            ".harness/evidence/M19j-T5-judgement.md (2 of 4)",
-            ".harness/evidence/M19j-T5-<run>-report.md"
+            ".harness/evidence/M19j-T12-judgement.md (re-run: 2 of 4 - r2 YES borderline, r4 YES; r1, r3 NO)",
+            ".harness/evidence/M19j-T12-<run>-report.md",
+            ".harness/evidence/M19j-T5-judgement.md (first attempt: 2 of 4)"
           ]
         },
         {
@@ -12693,8 +12694,8 @@
           "text": "None of the 4 reports names a past period (e.g. \"early 2024\") as current prices unless a note it cites gives that period; the per-report check is recorded in evidence, and the owner's opinion of report quality is recorded (not a gate).",
           "status": "PENDING",
           "evidence": [
-            ".harness/evidence/M19j-T5-judgement.md (4 of 4 pass literal, 3 borderline)",
-            "owner opinion of the first four reports: not given (2026-10-03); to be asked again after the re-run"
+            ".harness/evidence/M19j-T12-judgement.md (re-run: 4 of 4 pass; r2, r4 borderline on unverifiable current-period labels)",
+            "owner opinion of report quality: asked again 2026-10-03 after the re-run, pending (not a gate)"
           ]
         }
       ],
@@ -12871,6 +12872,93 @@
             ".harness/evidence/M19j-T8-worker.log",
             ".harness/evidence/M19j-T8-verifier.log"
           ]
+        },
+        {
+          "id": "M19j-T9",
+          "title": "gfc2008 question added to server/scripts/ac29-questions.json",
+          "packet": ".harness/tasks/M19j-T9.md",
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "one JSON entry in a tested script data file"
+          },
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS (379 pass, tsc clean)",
+              "evidence": ".harness/evidence/M19j-T9-verifier.log",
+              "commit": "64a2d77"
+            }
+          ]
+        },
+        {
+          "id": "M19j-T10",
+          "title": "restart com.harness.server onto HEAD after T7/T8",
+          "packet": ".harness/tasks/M19j-T10.md",
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "existing restart command under standing permission"
+          },
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS (pid 29953 -> 39257 started 07:25:16+01:00 after server/src commit 07:23:31+01:00; health 401; model resident)",
+              "evidence": ".harness/evidence/M19j-T10-verifier.log",
+              "commit": "a79692c"
+            }
+          ]
+        },
+        {
+          "id": "M19j-T11",
+          "title": "five live re-runs (heat x3, ev, gfc2008), sequential",
+          "packet": ".harness/tasks/M19j-T11.md",
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "run an existing tested evidence script five times"
+          },
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS (five --check-only exit 0, windows non-overlapping)",
+              "evidence": ".harness/evidence/M19j-T11-verifier.log",
+              "commit": "01809e0"
+            }
+          ]
+        },
+        {
+          "id": "M19j-T12",
+          "title": "extract five reports and judge AC2/AC3 plus 2008 misplaced-price check",
+          "packet": ".harness/tasks/M19j-T12.md",
+          "routing": {
+            "tier": "Top",
+            "model": "opus",
+            "reason_code": "NO_TEST_ORACLE",
+            "detail": "judging report content against criteria; no command settles it"
+          },
+          "attempts": [
+            {
+              "attempt": 4,
+              "tier": "Top",
+              "model": "opus",
+              "result": "PASS (task); AC2 2 of 4",
+              "verifier": "orchestrator spot-check: r1 and r3 reports contain no GBP running-cost figure (r3 states 'a calculated running cost figure in pounds sterling cannot be derived'); extraction byte-equal per worker log",
+              "evidence": ".harness/evidence/M19j-T12-judgement.md"
+            }
+          ]
         }
       ],
       "reviews": [],
@@ -12882,6 +12970,13 @@
             ".harness/evidence/M19j-T4-verifier.log"
           ],
           "status": "FAIL (r1 exit 1, cited_read_pages 1; r2 r3 r4 exit 0)"
+        },
+        {
+          "command": "cd server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M19j-T11-<run>-stream.txt --log ../.harness/evidence/M19j-T11-<run>-fr41.log (r1-heat r2-heat r3-heat r4-ev r5-gfc2008)",
+          "artifacts": [
+            ".harness/evidence/M19j-T11-verifier.log"
+          ],
+          "status": "PASS (all five exit 0)"
         }
       ],
       "follow_ups": [
@@ -12924,10 +13019,27 @@
         }
       ],
       "remaining_work": [
-        "T9 (Cheap, BOUNDED_LOW_RISK, model on packet M19j-T3/T4): restart com.harness.server onto HEAD after T8 (standing permission), confirm qwen3.5:35b-a3b resident; then five live runs strictly one at a time through the server API with server/scripts/ac29-live-run.ts: heat x3, ev x1 (AC35), plus the extra non-gating question 'What caused the 2008 financial crisis?' (add to server/scripts/ac29-questions.json under a new id, e.g. gfc2008); save stream/fr41/result/run logs as .harness/evidence/M19j-T9-<run>-*; record the AC29 bar per AC35 run.",
-        "T10 (Top, NO_TEST_ORACLE, model on packet M19j-T5): extract the reports verbatim, judge AC2 (cited GBP running-cost figure, 3 of 4) and AC3 (no undated past period as current) per AC35 report, and for the 2008 run check for misplaced price/cost content (price/cost section, current-unit-prices sub-question, 'no current price was found'); record in .harness/evidence/M19j-T10-judgement.md.",
-        "Then ask the owner's opinion of report quality (not a gate), record it, update AC statuses, set REVIEW."
-      ]
+        "Human decision on M19j-AC2 (see escalation); owner opinion of report quality pending (not a gate)."
+      ],
+      "extra_checks": [
+        {
+          "check": "gfc2008 misplaced price/cost content (owner decision 2026-10-03, not a gate)",
+          "result": "none found: no price/cost heading, no price-related search query visible (plan text not logged), no 'no current price was found' statement; only historical crisis money amounts",
+          "evidence": ".harness/evidence/M19j-T12-judgement.md"
+        }
+      ],
+      "escalation": {
+        "problem": "After the agreed fixes (T7 write rule, T8 plan top-up) and a fresh re-run, M19j-AC2 still fails: 2 of 4 reports give a cited GBP running-cost figure (needs 3). M19j-AC1 now passes (4 of 4 meet AC29 bar; the plan top-up fixed the short-run problem). M19j-AC3 per-report check passes 4 of 4; owner opinion pending.",
+        "affected": "M19j / M19j-AC2 (AC35, FR46(d))",
+        "attempts": [
+          "M19j-T4/T5 first live attempt: AC2 2 of 4",
+          "M19j-T7 stronger write money rule; M19j-T8 plan top-up (owner option (a))",
+          "M19j-T10 restart onto fixed code; M19j-T11 five fresh runs, all pass AC29 bar",
+          "M19j-T12 judgement: AC2 2 of 4 again (r1, r3 NO; r2 YES borderline, r4 YES), AC3 4 of 4"
+        ],
+        "remaining": "The heat-pump reports that fail say why: the notes held no typical yearly usage figure in kWh (r1, r3) and no per-kWh unit prices (r3), so the model, told to cite its inputs, declines to work a sum. The money rule cannot fix missing inputs; the research step does not look for typical usage. FR46 excludes a server-side money-figure check.",
+        "recommended": "Option (a): for a cost question, the plan's prices sub-question also asks for typical yearly usage (kWh of gas/electricity, miles driven) so the notes carry both inputs of the sum; proven with the fake Ollama, then a fresh re-run of the four AC35 questions (about 1 hour). Alternatives: (b) accept 2 of 4 and lower AC35's bar to 2 of 4 via roast-requirements; (c) stop here and move to M20, leaving M19j BLOCKED."
+      }
     },
     "M20": {
       "id": "M20",

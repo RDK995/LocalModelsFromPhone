@@ -1,0 +1,16 @@
+M19j-T12 worker validation; commit 01809e03f4208659796ff0302a5b61d6ee8eb884; 2026-10-03T06:49:28Z
+r1-heat report text byte-identical to stream content (2365 bytes)
+r2-heat report text byte-identical to stream content (2787 bytes)
+r3-heat report text byte-identical to stream content (1825 bytes)
+r4-ev report text byte-identical to stream content (2487 bytes)
+r5-gfc2008 report text byte-identical to stream content (3112 bytes)
+judgement has: ## r1-heat
+judgement has: ## r2-heat
+judgement has: ## r3-heat
+judgement has: ## r4-ev
+judgement has: ## r5-gfc2008
+judgement has: ## Summary table
+judgement has: **AC2: 2 of 4**
+judgement has: **AC3: 4 of 4 pass.**
+judgement has: ## Owner's opinion of report quality: pending
+RESULT: PASS
