@@ -13209,7 +13209,7 @@
       ],
       "ordering_decision": "Human decision 2026-10-01: build deep research (FR34-FR40) now, ahead of M5a; M5a stays BLOCKED and parked, its record unchanged, and is picked up after M15-M21.",
       "plan": {
-        "status": "DRAFT",
+        "status": "AGREED",
         "artifact": ".harness/plans/M20.md"
       }
     },

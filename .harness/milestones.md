@@ -637,8 +637,7 @@ Pending.
 - [ ] **M20-AC3**: Ordinary web replies go through the same breakers and cache; all existing ordinary-web and switch-off tests pass unchanged, and the existing live proofs (server/scripts/web-chat-proof.sh, server/scripts/web-failure-proof.sh) still pass.
 
 ### Plan
-
-`.harness/plans/M20.md` — DRAFT
+`.harness/plans/M20.md` — AGREED
 
 ### Baseline
 
