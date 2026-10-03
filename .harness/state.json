@@ -13552,7 +13552,17 @@
             "reason_code": "BOUNDED_LOW_RISK",
             "detail": "existing scripts/procedures, settled by exit status and recorded values"
           },
-          "attempts": []
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M21-T6R-verifier.log",
+              "note": "kickstart server pid 4781->71661; start 17:20:10 after 1034b0c 17:19:02; readiness exit 0"
+            }
+          ]
         },
         {
           "id": "M21-T6",
@@ -13571,7 +13581,48 @@
             "reason_code": "BOUNDED_LOW_RISK",
             "detail": "existing scripts/procedures, settled by exit status and recorded values"
           },
-          "attempts": []
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M21-T6-q1-verifier.log",
+              "note": "q1: complete 211.303s, cited 6, unresolved [], gen d438e975",
+              "question": "q1"
+            },
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M21-T6-q2-verifier.log",
+              "note": "q2: complete 196.086s, cited 6, unresolved [], gen cb5db5c2; redirected page now matches source",
+              "question": "q2"
+            },
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M21-T6-q3-verifier.log",
+              "note": "q3: complete 201.347s, cited 6, unresolved [], gen a6c5a24e",
+              "question": "q3"
+            },
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M21-T6-heat-verifier.log",
+              "note": "heat: complete 215.151s, cited 6, unresolved [], gen 51ae9df5",
+              "question": "heat"
+            }
+          ]
         },
         {
           "id": "M21-T7",
@@ -13590,7 +13641,17 @@
             "reason_code": "BOUNDED_LOW_RISK",
             "detail": "existing scripts/procedures, settled by exit status and recorded values"
           },
-          "attempts": []
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M21-T7-verifier.log",
+              "note": "M21-T7-reports.md: 4 sections, full report text exact match, 6 sources each"
+            }
+          ]
         }
       ],
       "reviews": [],
