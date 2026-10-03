@@ -9,6 +9,7 @@ import { runHelper, type HelperOptions } from "../search/runHelper";
 import { Breakers, BROWSER } from "../search/breakers";
 import { getIcon, validateHost, type IconOptions } from "../icon/icon";
 import { defaultIconCacheDir } from "../icon/cache";
+import { TtlCache, searchKey, MAX_SEARCH_ENTRIES, MAX_PAGE_ENTRIES, type CachedResponse } from "../cache/resultCache";
 
 const STATUS_BY_CODE = {
   bad_url: 400,
@@ -36,7 +37,18 @@ export interface SearchOptions extends HelperOptions {
   now?: () => number;
 }
 
-async function handleSearch(req: Request, helperOptions: HelperOptions, breakers: Breakers | undefined, ddgsBackends: string[]): Promise<Response> {
+/** A response with the cache marker; a cached response replays its stored status and body text. */
+function withCache(status: number, body: string, state: "hit" | "miss"): Response {
+  return new Response(body, { status, headers: { "content-type": "application/json", "x-cache": state } });
+}
+
+async function handleSearch(
+  req: Request,
+  helperOptions: HelperOptions,
+  breakers: Breakers | undefined,
+  ddgsBackends: string[],
+  cache: TtlCache<CachedResponse>,
+): Promise<Response> {
   let body: { query?: unknown; max_results?: unknown } | null;
   try {
     body = (await req.json()) as typeof body;
@@ -56,6 +68,9 @@ async function handleSearch(req: Request, helperOptions: HelperOptions, breakers
   ) {
     return json(400, { error: "bad_request" });
   }
+  const key = searchKey(query, max);
+  const cached = cache.get(key);
+  if (cached) return withCache(cached.status, cached.body, "hit");
   let options = helperOptions;
   if (breakers) {
     const open = ddgsBackends.filter((b) => !breakers.isResting(b));
@@ -69,7 +84,9 @@ async function handleSearch(req: Request, helperOptions: HelperOptions, breakers
   breakers?.record(outcome.attempts);
   if (!outcome.ok && outcome.timeout) return json(504, { error: "timeout" });
   if (!outcome.ok) return json(503, { error: "search_unavailable", detail: outcome.detail });
-  return json(200, { results: outcome.results, backend: outcome.backend });
+  const text = JSON.stringify({ results: outcome.results, backend: outcome.backend });
+  if (outcome.results.length > 0) cache.set(key, { status: 200, body: text });
+  return withCache(200, text, "miss");
 }
 
 /** Icon options for the handler; `cacheDir` defaults to `defaultIconCacheDir()`. */
@@ -122,6 +139,9 @@ export function createHandler(
 ) {
   const { ddgsBackends, now, ...helper } = helperOptions;
   const breakers = ddgsBackends ? new Breakers(now) : undefined;
+  const searchCache = new TtlCache<CachedResponse>(MAX_SEARCH_ENTRIES, now);
+  const pageCache = new TtlCache<CachedResponse>(MAX_PAGE_ENTRIES, now); // by final URL
+  const finalUrls = new TtlCache<string>(MAX_PAGE_ENTRIES, now); // requested URL -> final URL
   return async (req: Request): Promise<Response> => {
     const path = new URL(req.url).pathname;
     if (path === "/v1/icon") {
@@ -134,7 +154,7 @@ export function createHandler(
     }
     if (path === "/v1/search") {
       if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
-      return handleSearch(req, helper, breakers, ddgsBackends ?? []);
+      return handleSearch(req, helper, breakers, ddgsBackends ?? [], searchCache);
     }
     if (path !== "/v1/read") return json(404, { error: "not_found" });
     if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
@@ -147,21 +167,30 @@ export function createHandler(
     }
     if (typeof url !== "string") return json(400, { error: "bad_url" });
 
+    const knownFinal = finalUrls.get(url);
+    const knownPage = knownFinal === undefined ? undefined : pageCache.get(knownFinal);
+    if (knownPage) return withCache(knownPage.status, knownPage.body, "hit");
+
     try {
       const page = await fetchPage(url, { ...fetchOptions, signal: req.signal });
+      finalUrls.set(url, page.finalUrl);
+      const sameFinal = pageCache.get(page.finalUrl);
+      if (sameFinal) return withCache(sameFinal.status, sameFinal.body, "hit");
       const extracted = await extractPage({
         body: page.body,
         contentType: page.contentType,
         finalUrl: page.finalUrl,
         bodyTruncated: page.bodyTruncated,
       });
-      return json(200, {
+      const text = JSON.stringify({
         url: page.url,
         final_url: page.finalUrl,
         title: extracted.title,
         markdown: extracted.markdown,
         truncated: extracted.truncated,
       });
+      pageCache.set(page.finalUrl, { status: 200, body: text });
+      return withCache(200, text, "miss");
     } catch (err) {
       if (err instanceof FetchPageError) {
         const body: { error: string; status?: number } = { error: err.code };

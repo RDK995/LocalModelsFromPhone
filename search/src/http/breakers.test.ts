@@ -28,6 +28,7 @@ appendFileSync(${JSON.stringify(log)}, JSON.stringify(process.argv.slice(2)) + "
 console.log(readFileSync(${JSON.stringify(replyFile)}, "utf8"));`,
   );
   let clock = 1_000_000;
+  let n = 0; // a distinct query per search, so the result cache never answers instead of the helper
   const s = startServer(0, {}, { command: ["bun", script], ddgsBackends, now: () => clock });
   servers.push(s);
   return {
@@ -41,7 +42,7 @@ console.log(readFileSync(${JSON.stringify(replyFile)}, "utf8"));`,
       fetch(`http://127.0.0.1:${s.port}/v1/search`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ query: "q" }),
+        body: JSON.stringify({ query: `q${n++}` }),
       }),
     last() {
       const c = this.calls();
