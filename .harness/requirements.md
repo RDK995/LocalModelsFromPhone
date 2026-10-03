@@ -59,6 +59,15 @@ silent streams. The owner chose the report's ranks 0–6 (all within FR34–FR40
 phone liveness fixes applied to every reply, built before M20. LearningCircuit
 `local-deep-research` was considered as a replacement and not adopted (see Decisions).
 
+**Dated, priced deep research reports (FR46, added 2026-10-03):** the owner's M19h phone run of the
+heat-pump question (`.harness/evidence/M19h-AC1-owner-report.md`, screenshot alongside) gave annual
+kWh for heat pump and boiler but no £ running cost, and ended "against current market rates for
+early 2024". Cause found in `server/src/generations/research.ts`: no deep research step is given
+today's date (ordinary web replies are, `server/src/web/tools.ts`), so the model fell back on its
+training-era date; and nothing makes the plan look up current unit prices, while the write step may
+use only the notes, so a £ figure appears only when a read page happens to state one (M19g's Mac run
+of the same question did, `.harness/evidence/M19g-T7-heat-stream.txt`).
+
 ## Functional Requirements
 
 - [FR1] **Model list.** The app lists every model installed in Ollama (`GET /api/tags`) by its
@@ -359,6 +368,22 @@ phone liveness fixes applied to every reply, built before M20. LearningCircuit
   resume) rather than to the whole reply; and a reply saved with error status and no answer text
   shows a plain line (e.g. "Lost connection to the Mac before the reply arrived") with its steps
   visible, never an empty bubble.
+- [FR46] **Deep research reports know today's date and turn usage into money.** (a) Every deep
+  research model step (brief, plan, queries, pages, notes, gap, write) is given today's date from the
+  Mac clock (weekday, date and ISO date, as in `server/src/web/tools.ts`), in the user message, not
+  the system message, so FR43's byte-stable prefix holds. (b) The write step is told never to call
+  a price or period "current", "today's" or name a period such as "early 2024" unless a cited note
+  gives that period; a quoted price carries the date or period its page gives (e.g. "the
+  October–December 2026 price cap [3]"), or no date claim if the page gives none. (c) When the
+  question asks about costs, prices, bills or running costs, the plan step is told it must include a
+  sub-question for current unit prices relevant to the question (e.g. electricity and gas per kWh in
+  the user's country); this is an instruction to the model, not a server-side classifier. (d) The
+  write step is told that where notes give a quantity (e.g. kWh a year) and a unit price, the report
+  states the money figure in the question's currency with the sum shown (e.g. "2,700 kWh × 26p ≈ £700
+  a year [2][4]"), citing the pages for both numbers; and that when the question asks about cost but
+  no note gives a price, the report says plainly that no current price was found rather than
+  silently omitting cost. FR37 citation rules are unchanged; the arithmetic is the model's and is
+  not checked by the server. Ordinary web replies are unchanged (FR40).
 
 ## Acceptance Criteria
 
@@ -507,6 +532,20 @@ All proven against the live Mac Studio and Ollama, not mocks.
 33. **AC33** — On the owner's phone: during a deep research run, airplane mode is turned on for about
     30 s twice; the reply still ends showing its steps and either the report or a visible status line
     (never an empty bubble), and the elapsed clock visibly advances every second throughout.
+34. **AC34** — Automated tests with a scripted fake Ollama prove FR46: every deep research model
+    request (brief, plan, queries, pages, notes, gap, write) carries today's date (from an injected
+    clock) in its user message and the system message is byte-identical across steps and days; the
+    plan request carries the current-prices instruction; the write request carries the no-undated-
+    "current" rule, the show-the-sum rule and the say-no-price-found rule. All existing tests pass.
+35. **AC35** — Live on the Mac with `qwen3.5:35b-a3b` resident and com.harness.server running this
+    code: the 2026-10-02 heat-pump question is run 3 times and one further cost question ("What does
+    it cost to run an electric car compared with a petrol car in the UK in 2026? Cover charging and
+    fuel costs per year for typical mileage.") once. Pass if (1) at least 3 of the 4 reports give a £
+    running-cost figure with a citation — either stated by a cited page or worked from cited usage
+    and a cited unit price; (2) none of the 4 names a past period (e.g. "early 2024") as current
+    prices unless a note it cites gives that period; and (3) each run meets AC29's bar (within budget
+    plus a small margin, `complete` or `partial`, ≥ 3 distinct cited read pages, every citation
+    resolves). Reports are saved as evidence; the owner's opinion of quality is recorded, not gated.
 
 ## Constraints
 
@@ -570,6 +609,10 @@ All proven against the live Mac Studio and Ollama, not mocks.
   MLX model tag (`qwen3.5:35b-a3b-nvfp4`, `format` ignored on MLX in Ollama 0.32); a global
   `OLLAMA_CONTEXT_LENGTH`; changing the page extractor; running models in parallel
   (`OLLAMA_NUM_PARALLEL` > 1). Replacing the loop with LearningCircuit `local-deep-research`.
+- For dated, priced reports (FR46): a server check that a cost question's report contains a money
+  figure, with an extra price search and rewrite when it does not (offered, declined 2026-10-03);
+  server verification of the model's arithmetic; any change to ordinary web replies' prompts; a
+  phone check (Mac runs only).
 
 ## Edge Cases
 
@@ -811,6 +854,17 @@ All proven against the live Mac Studio and Ollama, not mocks.
   off; output caps ~200/~800 tokens, routine call cap ~30 s, plan guard ~30 s, write guard ~60 s,
   excerpt ~2–3K tokens, keep-alive every 15 s (all server settings); a time-out with no notes stays
   `failed` with an honest sentence; the heat-pump question joins AC29's live set.
+- **Cost questions: look up prices and do the sum** (human, 2026-10-03): FR46(c)(d) — plan must
+  search for current unit prices, writer shows usage × price with citations, or says no price was
+  found. Chosen over adding a server re-try when no £ figure appears (more time, bigger build) and
+  over quoting only page-stated £ figures (would not have fixed the M19h run).
+- **Proof: heat pump ×3 plus one other cost question, 3 of 4** (human, 2026-10-03): AC35. Chosen over
+  heat pump ×3 only (2 of 3) and over adding an owner phone check.
+- **Built next, before M20** (human, 2026-10-03): so M21's final live run includes it.
+- **Standing permission to restart com.harness.server extended to FR46 work** (human, 2026-10-03).
+- Defaults chosen by Claude, shown to the owner and agreed (2026-10-03): today's date goes to every
+  deep research step, not just write; no undated "current"/period claims; deep research only,
+  ordinary web replies unchanged; the second live cost question is electric car vs petrol.
 
 ## Open Questions
 

@@ -574,6 +574,91 @@ Owner performs the run (about 5-6 minutes): (1) On the iPhone, with Tailscale co
 - The orchestrator could not read the harness planning reference (agents/references/planning.md, outside this session's allowed directories); the size/shape/complexity checks were applied from the orchestrator contract: 1 criterion, real entry point (the phone), one signal IMPLEMENTATION_PLUS_LIVE_PROOF (proof only) - not split.
 
 
+## M19i — A deep research report knows today's date, looks up current prices for a cost question, and shows the money sum
+
+Status: TODO
+
+### Outcome
+
+Through POST /v1/chat, every deep research model step (brief, plan, queries, pages, notes, gap, write) is given today's date from the Mac clock in its user message while the system message stays byte-identical across steps and days; the plan step is told a cost, price, bill or running-cost question must include a sub-question for current unit prices; the write step is told not to call a price or period current unless a cited note gives that period, to show quantity x unit price = money in the question's currency citing both pages, and to say plainly when no current price was found. Ordinary web replies are unchanged. Planned 2026-10-03 from FR46 / AC34 / AC35, prompted by the owner's M19h phone run (.harness/evidence/M19h-AC1-owner-report.md: kWh but no GBP figure, and 'early 2024' rates). Human decision 2026-10-03: built next, before M20. Split at planning into M19i (prompt changes proven with a scripted fake Ollama, AC34) and M19j (live Mac proof, AC35): FR46 with AC34 and AC35 as one milestone carries signals IMPLEMENTATION_PLUS_LIVE_PROOF (AC35 on the real model) and MULTIPLE_OUTCOMES (request content provable offline vs report content provable only live) - two signals, a required split. This part has no signal: one component's prompts (C6, research.ts) plus tests, about 2-3 production files.
+
+Owns: FR46. Traces to: AC34 (date in every step's user message from an injected clock, byte-identical system message, current-prices plan instruction, write rules), FR40 (ordinary web replies unchanged), FR43 (byte-stable prefix).
+
+### Architecture
+
+C4, C6, C7
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M19i-AC1**: Server tests through POST /v1/chat with a scripted fake Ollama and an injected clock: every deep research model request (brief, plan, queries, pages, notes, gap, write) carries today's date from that clock (weekday, date and ISO date, formatted as in server/src/web/tools.ts) in its user message, not its system message; the system message is byte-identical across all steps of a run and across two runs on different injected days.
+- [ ] **M19i-AC2**: Server tests through POST /v1/chat with a scripted fake Ollama: the plan request carries the instruction that when the question asks about costs, prices, bills or running costs the plan must include a sub-question for current unit prices relevant to the question (e.g. electricity and gas per kWh in the user's country); no server-side classifier decides whether the question is about cost.
+- [ ] **M19i-AC3**: Server tests through POST /v1/chat with a scripted fake Ollama: the write request carries (i) the rule never to call a price or period "current" or "today's", or name a period such as "early 2024", unless a cited note gives that period, with a quoted price carrying the date or period its page gives (or no date claim if the page gives none); (ii) the rule that where notes give a quantity and a unit price the report states the money figure in the question's currency with the sum shown and both pages cited; and (iii) the rule that when the question asks about cost but no note gives a price, the report says plainly that no current price was found. FR37 citation handling is unchanged.
+- [ ] **M19i-AC4**: Ordinary web and switch-off replies are unchanged: their model requests carry no FR46 text, and all existing server tests pass with `cd server && bun test && bun run typecheck` exiting 0.
+
+### Baseline
+
+### Evidence
+
+### Validation
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+- FR46 out of scope (requirements, 2026-10-03): no server check that a cost report contains a money figure, no extra price search or rewrite, no server verification of the model's arithmetic, no change to ordinary web replies' prompts.
+
+## M19j — Dated, priced deep research reports proven live on the Mac
+
+Status: TODO
+
+### Outcome
+
+With com.harness.server restarted onto the M19i code (standing human permission extended to FR46 work) and `qwen3.5:35b-a3b` resident, the 2026-10-02 heat-pump question is run three times and the electric-car-vs-petrol question once through the server API; at least three of the four reports give a cited GBP running-cost figure, none names a past period as current prices without a cited note giving it, and every run meets AC29's bar; reports are saved and the owner's opinion is recorded, not gated. Second part of the FR46 split (see M19i). Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; proof only, reusing server/scripts/ac29-live-run.ts) - not split.
+
+Owns: none owned. Traces to: AC35, AC29 (pass bar).
+
+### Architecture
+
+C4, C6, C7, C11, C12, C13
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M19j-AC1**: Live on the Mac with `qwen3.5:35b-a3b` resident and com.harness.server restarted onto the M19i code: the 2026-10-02 heat-pump question is run 3 times and the question "What does it cost to run an electric car compared with a petrol car in the UK in 2026? Cover charging and fuel costs per year for typical mileage." once, one at a time, through the server API; each run ends within the budget plus a small margin with status `complete` or `partial`, a report citing at least 3 distinct read pages, and no citation number that fails to resolve to a saved source; each report, stream and run result is saved under .harness/evidence/.
+- [ ] **M19j-AC2**: At least 3 of the 4 reports give a GBP running-cost figure with a citation - either stated by a cited page or worked from cited usage and a cited unit price; the per-report judgement (figure, citations, which kind) is recorded in evidence.
+- [ ] **M19j-AC3**: None of the 4 reports names a past period (e.g. "early 2024") as current prices unless a note it cites gives that period; the per-report check is recorded in evidence, and the owner's opinion of report quality is recorded (not a gate).
+
+### Baseline
+
+### Evidence
+
+### Validation
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+- FR46 out of scope (requirements, 2026-10-03): no phone check - Mac runs only.
+
 ## M20 — Search backends rest after being blocked, and repeated searches and page reads come from cache
 
 Status: TODO
