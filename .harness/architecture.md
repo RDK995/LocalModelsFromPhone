@@ -614,3 +614,10 @@ Milestone: M19e
 Material: no
 Change: `StepEventData.kind` (shared/api.ts, I-stream step events) gains `"model"`; a deep research model-call step is `{step_id, kind: "model", status, detail: <label>}` with labels "Choosing searches", "Choosing pages", "Taking notes: <domain>", "Checking for gaps". Search and read steps in deep research carry the run's own step_id so the pre-await started step and the later outcome share one id.
 Why: FR45 needs a started step before every model call, and the existing kinds name only search, read, plan and write. Additive wire value inside C6's existing step events; no component boundary, technology or ownership change. C2 rendering of it is M19f.
+
+### D-M20-1 — Per-engine helper attempts, `x-cache` header, and in-memory breakers and cache in C13
+
+Milestone: M20
+Material: no
+Change: The search helper's (C14) output gains an additive per-engine `attempts` list (each `{backend, outcome}` with outcome `ok` | `empty` | `rate_limited` | `captcha` | `error`) and accepts `--backends <list>` / `--no-browser`; it now asks the allowed ddgs engines one at a time in a fixed order (default `duckduckgo,bing,brave,mojeek`, set by `SEARCH_DDGS_BACKENDS` in search/src/index.ts) instead of ddgs's combined "auto" mode. The search service (C13) keeps per-engine circuit breakers (search/src/search/breakers.ts: rate-limited 1 h, CAPTCHA 24 h) and a 24 h result cache (search/src/cache/resultCache.ts: searches by normalised query + max_results, page reads by final URL), both in process memory, and its `/v1/search` and `/v1/read` responses gain an `x-cache: hit|miss` header. A search with every engine and the browser resting returns the existing 503 `search_unavailable` (FR20).
+Why: FR39/FR40 need to know which engine blocked a search, which ddgs's combined mode hides. Additive fields and header inside existing interfaces; breakers and cache were already placed in C13 by D-M15-1. No component boundary, technology or ownership change. Side effects recorded for the human: Wikipedia is no longer asked first for ordinary web replies, and memory-only state empties when com.harness.search restarts.
