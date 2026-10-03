@@ -580,6 +580,8 @@ Pending.
 
 - M21-T2 q2 LFP vs NMC (Cheap, BOUNDED_LOW_RISK) attempt 1 FAIL on the pass bar; verifier confirms (check-only exit 1): generation 3bf9e7a3-1888-4106-88e5-87209646543c, final_status complete, total_wall_s 173.522 (limit 540), distinct_pages_read 4, notes_kept 3, cited_read_pages 2 (cited_read_pages_ok false), unresolved_citations []. The report cites [1], [3], [4]; [4] was read and noted (stream line 169 read done `https://agaicpower.com/blogs/news/are-home-batteries-safe-lifepo4-vs-nmc-fire-risk-the-real-data-1`) but the final sources event lists it as `...-the-real-data` without `-1`, so the exact-URL match does not count it. Not re-run (plan: owner decides) — .harness/evidence/M21-T2-q2-result.json, .harness/evidence/M21-T2-q2-verifier.log.
 
+- M21-T2 q3 WebAssembly component model (Cheap, BOUNDED_LOW_RISK) attempt 1 PASS; verifier PASS: run log `exit=0`; generation 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8, final_status complete, total_wall_s 205.117 (limit 540), distinct_pages_read 6, notes_kept 10, cited_read_pages 3, unresolved_citations []; check-only exit 0, pass true — .harness/evidence/M21-T2-q3-result.json, .harness/evidence/M21-T2-q3-verifier.log.
+
 ### Validation
 
 ### Review
