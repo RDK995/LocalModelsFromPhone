@@ -1,0 +1,41 @@
+=== VERIFICATION FOR TASK M19j-T2 ===
+Date: 2026-10-03
+Verifier: Claude Haiku 4.5
+
+=== GIT STATUS ===
+Current commit: 4b3c1d0
+Files changed: server/scripts/ac29-live-run.ts, server/scripts/ac29-questions.json
+
+=== TEST 1: Inline bun check for ev entry ===
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun -e 'const q=require("./scripts/ac29-questions.json"); if(q.ev!=="What does it cost to run an electric car compared with a petrol car in the UK in 2026? Cover charging and fuel costs per year for typical mileage.")process.exit(1); console.log(Object.keys(q).join(","))'
+
+Output:
+q1,q2,q3,heat,ev
+
+Exit Status: 0
+
+=== TEST 2: bun test && bun run typecheck ===
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck
+
+Output Summary:
+ 373 pass
+ 0 fail
+ 2851 expect() calls
+Ran 373 tests across 26 files. [18.52s]
+$ tsc --noEmit
+
+Exit Status: 0
+
+=== FILE CHANGES ===
+Diff 1 - server/scripts/ac29-questions.json:
+- "heat": "How do heat pumps compare with gas boilers for heating a typical UK home in 2026? Cover running costs, installation costs, grants available and how well they work in cold weather."
++ "heat": "How do heat pumps compare with gas boilers for heating a typical UK home in 2026? Cover running costs, installation costs, grants available and how well they work in cold weather.",
++ "ev": "What does it cost to run an electric car compared with a petrol car in the UK in 2026? Cover charging and fuel costs per year for typical mileage."
+
+Diff 2 - server/scripts/ac29-live-run.ts (line 6):
+- *   bun run scripts/ac29-live-run.ts --id <q1|q2|q3|heat> [--out-dir ../.harness/evidence --prefix M19g-T3]
++ *   bun run scripts/ac29-live-run.ts --id <q1|q2|q3|heat|ev> [--out-dir ../.harness/evidence --prefix M19g-T3]
+
+No changes to test files detected.
+
+=== VERIFICATION COMPLETE ===

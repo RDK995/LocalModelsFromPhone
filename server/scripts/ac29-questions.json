@@ -2,5 +2,6 @@
   "q1": "What are the main differences between the Raft and Paxos consensus algorithms, and when would you choose one over the other?",
   "q2": "What are the trade-offs between LFP and NMC lithium battery chemistries for home battery storage, including cost, lifespan, safety and cold-weather performance?",
   "q3": "What is the WebAssembly component model, how does it differ from core WebAssembly modules, and how widely is it supported by runtimes and languages today?",
-  "heat": "How do heat pumps compare with gas boilers for heating a typical UK home in 2026? Cover running costs, installation costs, grants available and how well they work in cold weather."
+  "heat": "How do heat pumps compare with gas boilers for heating a typical UK home in 2026? Cover running costs, installation costs, grants available and how well they work in cold weather.",
+  "ev": "What does it cost to run an electric car compared with a petrol car in the UK in 2026? Cover charging and fuel costs per year for typical mileage."
 }
