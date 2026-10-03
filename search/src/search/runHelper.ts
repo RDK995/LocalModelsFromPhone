@@ -6,6 +6,7 @@
  */
 import { spawn, type ChildProcess } from "node:child_process";
 import { join } from "node:path";
+import { parseAttempts, type Attempt } from "./breakers";
 
 export interface SearchResult {
   title: string;
@@ -14,14 +15,18 @@ export interface SearchResult {
 }
 
 export type HelperOutcome =
-  | { ok: true; results: SearchResult[]; backend: string }
-  | { ok: false; detail: string; timeout?: true };
+  | { ok: true; results: SearchResult[]; backend: string; attempts?: Attempt[] }
+  | { ok: false; detail: string; timeout?: true; attempts?: Attempt[] };
 
 export interface HelperOptions {
   /** Command prefix; `--query <q> --max <n>` is appended. Defaults to the venv python + search.py. */
   command?: string[];
   /** Time limit for the whole helper run, in ms. Defaults to DEFAULT_TIMEOUT_MS. */
   timeoutMs?: number;
+  /** Ordered allowed ddgs engines for `--backends` (an empty list passes `--backends ""`). Omitted: flag not passed. */
+  backends?: string[];
+  /** Pass `--no-browser` (the browser is resting). */
+  noBrowser?: boolean;
 }
 
 export const DEFAULT_TIMEOUT_MS = 25_000;
@@ -36,6 +41,8 @@ export async function runHelper(
   options: HelperOptions = {},
 ): Promise<HelperOutcome> {
   const argv = [...(options.command ?? DEFAULT_COMMAND), "--query", query, "--max", String(max)];
+  if (options.backends !== undefined) argv.push("--backends", options.backends.join(","));
+  if (options.noBrowser) argv.push("--no-browser");
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   let proc: ChildProcess;
   try {
@@ -108,8 +115,9 @@ export async function runHelper(
       return { ok: false, detail: "helper produced invalid output" };
     }
     const obj = parsed as Record<string, unknown>;
+    const attempts = parseAttempts(obj.attempts);
     if ("error" in obj) {
-      return { ok: false, detail: typeof obj.detail === "string" ? obj.detail : String(obj.error) };
+      return { ok: false, detail: typeof obj.detail === "string" ? obj.detail : String(obj.error), attempts };
     }
     if (!Array.isArray(obj.results) || typeof obj.backend !== "string") {
       return { ok: false, detail: "helper produced invalid output" };
@@ -126,7 +134,7 @@ export async function runHelper(
       });
       if (results.length >= max) break;
     }
-    return { ok: true, results, backend: obj.backend };
+    return { ok: true, results, backend: obj.backend, attempts };
   } finally {
     clearTimeout(timer);
     signal.removeEventListener("abort", onAbort);

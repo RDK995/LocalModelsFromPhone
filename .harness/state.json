@@ -13167,7 +13167,17 @@
             "reason_code": "ORDINARY_IMPLEMENTATION",
             "detail": "new module + handler wiring, settled by HTTP tests with fake helper and injected clock; single-threaded state"
           },
-          "attempts": []
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M20-T2-verifier.log",
+              "note": "search bun test 168 pass + tsc clean; breakers.test.ts drives POST /v1/search with fake helper and injected clock"
+            }
+          ]
         },
         {
           "id": "M20-T3",

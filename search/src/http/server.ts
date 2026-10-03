@@ -6,6 +6,7 @@
 import { fetchPage, FetchPageError, type FetchPageOptions } from "../fetch/fetchPage";
 import { extractPage } from "../extract/extract";
 import { runHelper, type HelperOptions } from "../search/runHelper";
+import { Breakers, BROWSER } from "../search/breakers";
 import { getIcon, validateHost, type IconOptions } from "../icon/icon";
 import { defaultIconCacheDir } from "../icon/cache";
 
@@ -26,7 +27,16 @@ export type FetchOverrides = Omit<FetchPageOptions, "signal">;
 const MAX_QUERY_LENGTH = 500;
 const DEFAULT_MAX_RESULTS = 5;
 
-async function handleSearch(req: Request, helperOptions: HelperOptions): Promise<Response> {
+/**
+ * Helper options plus the search breakers' inputs. `ddgsBackends` (ordered allowed engines) switches the
+ * breakers on; without it the helper gets no `--backends` and nothing rests. `now` is the clock in ms.
+ */
+export interface SearchOptions extends HelperOptions {
+  ddgsBackends?: string[];
+  now?: () => number;
+}
+
+async function handleSearch(req: Request, helperOptions: HelperOptions, breakers: Breakers | undefined, ddgsBackends: string[]): Promise<Response> {
   let body: { query?: unknown; max_results?: unknown } | null;
   try {
     body = (await req.json()) as typeof body;
@@ -46,7 +56,17 @@ async function handleSearch(req: Request, helperOptions: HelperOptions): Promise
   ) {
     return json(400, { error: "bad_request" });
   }
-  const outcome = await runHelper(query, max, req.signal, helperOptions);
+  let options = helperOptions;
+  if (breakers) {
+    const open = ddgsBackends.filter((b) => !breakers.isResting(b));
+    const noBrowser = breakers.isResting(BROWSER);
+    if (open.length === 0 && noBrowser) {
+      return json(503, { error: "search_unavailable", detail: "all search backends are resting" });
+    }
+    options = { ...helperOptions, backends: open, noBrowser };
+  }
+  const outcome = await runHelper(query, max, req.signal, options);
+  breakers?.record(outcome.attempts);
   if (!outcome.ok && outcome.timeout) return json(504, { error: "timeout" });
   if (!outcome.ok) return json(503, { error: "search_unavailable", detail: outcome.detail });
   return json(200, { results: outcome.results, backend: outcome.backend });
@@ -97,9 +117,11 @@ async function handleIcon(
 
 export function createHandler(
   fetchOptions: FetchOverrides = {},
-  helperOptions: HelperOptions = {},
+  helperOptions: SearchOptions = {},
   iconOptions: IconHandlerOptions = {},
 ) {
+  const { ddgsBackends, now, ...helper } = helperOptions;
+  const breakers = ddgsBackends ? new Breakers(now) : undefined;
   return async (req: Request): Promise<Response> => {
     const path = new URL(req.url).pathname;
     if (path === "/v1/icon") {
@@ -112,7 +134,7 @@ export function createHandler(
     }
     if (path === "/v1/search") {
       if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
-      return handleSearch(req, helperOptions);
+      return handleSearch(req, helper, breakers, ddgsBackends ?? []);
     }
     if (path !== "/v1/read") return json(404, { error: "not_found" });
     if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
@@ -155,7 +177,7 @@ export function createHandler(
 export function startServer(
   port: number,
   fetchOptions: FetchOverrides = {},
-  helperOptions: HelperOptions = {},
+  helperOptions: SearchOptions = {},
   iconOptions: IconHandlerOptions = {},
 ) {
   return Bun.serve({

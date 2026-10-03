@@ -646,6 +646,7 @@ Pending.
 ### Evidence
 
 - M20-T1 helper per-engine attempts (`--backends`, `--no-browser`, `attempts`, classify_failure) — Mid (ORDINARY_IMPLEMENTATION), attempt 3 PASS; verifier PASS, `cd search/helper && .venv/bin/python -m unittest test_search -v` exit 0, 52 tests — .harness/evidence/M20-T1-verifier.log.
+- M20-T2 per-backend breakers in the search service (rate_limited 1 h, captcha 24 h, `--backends`/`--no-browser` from non-resting set, 503 search_unavailable when all rest; wired in src/index.ts via SEARCH_DDGS_BACKENDS, default duckduckgo,bing,brave,mojeek) — Mid (ORDINARY_IMPLEMENTATION), attempt 3 PASS; verifier PASS, `cd search && bun test && bun run typecheck` exit 0, 168 pass — search/src/http/breakers.test.ts; .harness/evidence/M20-T2-verifier.log.
 
 ### Validation
 
