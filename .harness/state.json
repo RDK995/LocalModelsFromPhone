@@ -13337,7 +13337,7 @@
       "architecture": "C1, C6, C11, C12, C13",
       "requirements": [],
       "traces": "AC29 (amended 2026-10-02: plus the heat-pump question), AC30",
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -13353,13 +13353,24 @@
           "id": "M21-AC1",
           "text": "Live on the Mac with `qwen3.5:35b-a3b` resident: 3 real research-style questions plus the 2026-10-02 heat-pump question each end within the budget plus a small margin with status `complete` or `partial`, a report citing at least 3 distinct read pages, and no citation number that fails to resolve to a saved source; the owner's opinion of report quality is recorded in the evidence (not a gate).",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            ".harness/evidence/M21-T6-q1-verifier.log",
+            ".harness/evidence/M21-T6-q2-verifier.log",
+            ".harness/evidence/M21-T6-q3-verifier.log",
+            ".harness/evidence/M21-T6-heat-verifier.log",
+            "owner opinion (verbatim, about the phone reply): \"Many sources but all source in response are the same\""
+          ]
         },
         {
           "id": "M21-AC2",
           "text": "The owner's phone screenshot of a finished deep research reply showing its steps, its status, logo citations and \"Sources (n)\" is saved under .harness/evidence/.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            ".harness/evidence/M21-AC2-phone-screenshot-1.png",
+            ".harness/evidence/M21-AC2-phone-screenshot-2.png",
+            ".harness/evidence/M21-T4-screenshot-check.md",
+            ".harness/evidence/M21-T4-verifier.log"
+          ]
         }
       ],
       "tasks": [
@@ -13504,7 +13515,17 @@
             "reason_code": "NOT_EASILY_VERIFIED",
             "detail": "image-content check has no command oracle; low risk, no structural concern; orchestrator views the image when judging"
           },
-          "attempts": []
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M21-T4-verifier.log",
+              "note": "both images byte-identical copies (PNG 1179x2556); clocks 19:44/20:28 BST after T6 end 17:45:11 BST; steps, status, logo citations, Sources (6) all VISIBLE; commit e084c1c; packet timing amended from M21-T2 to M21-T6 before dispatch"
+            }
+          ]
         },
         {
           "id": "M21-T5",
@@ -13656,7 +13677,9 @@
       ],
       "reviews": [],
       "findings": [],
-      "validation": [],
+      "validation": [
+        "cd server && for id in q1 q2 q3 heat; do bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M21-T6-$id-stream.txt --log ../.harness/evidence/validation/M21-review-$id-check.log || exit 1; done && cd .. && shasum -a 256 <both upload sources and both M21-AC2-phone-screenshot copies> && (cd server && bun test && bun run typecheck)"
+      ],
       "follow_ups": [
         "AC29 amended 2026-10-02 to add the 2026-10-02 heat-pump question: M21-AC1, title and outcome updated at planning on 2026-10-02 to the four-question set. M19g runs the same set before M20 for AC32; M21 re-runs it after M20 because M20 changes the search path. M21-AC2 is unaffected.",
         "Owner decision 2026-10-03, selected verbatim: \"Note both for later\" (\"Both are written down as known problems for a later round, and this milestone finishes as planned\"). Not fixed in M21; neither gates it. (i) Citation concentration: in the phone reply (.harness/evidence/M21-AC2-phone-screenshot-1.png) all three inline citations point to the same one source (\"Lebensraum: Nazi Geopolitics and Expansion Explained\") although Sources (6) lists six. (ii) Bot-check pages saved as sources: two of those six sources are titled \"Client Challenge\" (the scribd.com reads) - apparently a bot-check/challenge page saved as the source instead of the article."

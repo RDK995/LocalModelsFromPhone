@@ -544,7 +544,7 @@ Cycle 1: PASS (2026-10-03), tier Mid (sonnet) - highest substantive tier in the 
 
 ## M21 — Four real research questions answered on the Mac, and the owner's phone screenshot
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -610,7 +610,13 @@ Pending.
 
 - OWNER OPINION 2026-10-03 (M21-AC1 opinion part, not a gate), recorded verbatim: "Many sources but all source in response are the same". Given by the owner with their phone screenshot of the deep research reply to "What was the cause of World War Two from German perspective" (the M21-T4 reply), not about .harness/evidence/M21-T7-reports.md; asked what to record as their opinion for M21-AC1, the owner chose, verbatim, "Use my phone comment".
 
+- M21-T4 owner's phone screenshot (Mid, NOT_EASILY_VERIFIED) attempt 3 (Mid entry rung) PASS; verifier PASS: both owner images copied unchanged - `shasum -a 256` 9898539ec05d20dd9b17b9e12058f19f8a80f5caf584e0ccfa9fb50772eebf61 (source 789e0a36-image.png = .harness/evidence/M21-AC2-phone-screenshot-1.png) and 14bf64ee2d0697fc97647074ced8affae7e18b944a9fdeb98c4a97ca293233b0 (source 93437419-image.png = .harness/evidence/M21-AC2-phone-screenshot-2.png); `file`: PNG 1179 x 2556 each. Timing (packet amended to the M21-T6 re-runs, see plan Changes during implementation): phone clocks 19:44 and 20:28 BST, source mtimes 2026-10-03T19:45:13+0100 and 2026-10-03T20:28:33+0100, both after the re-runs ended 2026-10-03T16:45:11Z (17:45:11 BST). Items, all VISIBLE: steps (image 2, under "Hide web steps": Planning, Searching..., Reading: bbc.co.uk, scribd.com, en.wikipedia.org, encyclopedia.ushmm.org, scribd.com, politicalscienceview.com, Writing report); status (image 2, "Deep research: complete"); logo citations (image 1, three inline site logos; image 2, one); "Sources (6)" (image 1, expanded, six entries). Question: "What was the cause of World War Two from German perspective"; model qwen3.5:35b-a3b. Orchestrator viewed both images and agrees - .harness/evidence/M21-T4-screenshot-check.md, .harness/evidence/M21-T4-verifier.log. Commit e084c1c.
+- Criteria map: M21-AC1 <- M21-T6 q1/q2/q3/heat entries (bar) + OWNER OPINION entry (opinion, not a gate); M21-AC2 <- M21-T4 entry.
+- Housekeeping: milestones.md is ~710 lines but nothing is archivable - every settled milestone except M20 is already archived, M20 is the most recently settled (protected), M21 is active and M5a is BLOCKED.
+
 ### Validation
+
+`cd /Users/ryankenny/Projects/CodingHarnessv2/server && for id in q1 q2 q3 heat; do bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M21-T6-$id-stream.txt --log ../.harness/evidence/validation/M21-review-$id-check.log || exit 1; done && cd .. && shasum -a 256 /Users/ryankenny/.claude/uploads/db6a6102-6473-4871-aa04-e895eb948ec7/789e0a36-image.png .harness/evidence/M21-AC2-phone-screenshot-1.png /Users/ryankenny/.claude/uploads/db6a6102-6473-4871-aa04-e895eb948ec7/93437419-image.png .harness/evidence/M21-AC2-phone-screenshot-2.png && (cd server && bun test && bun run typecheck)` - reviewer runs once; offline (re-checks the saved M21-T6 streams against the AC29 bar, no live model call), expects exit 0 with pass true for all four, identical hashes per pair, and the server suite (380 pass at M21-T5) green for the M21-T5 fix. Reviewer views .harness/evidence/M21-AC2-phone-screenshot-1.png and -2.png for M21-AC2. Owner opinion for M21-AC1: OWNER OPINION entry in Evidence.
 
 ### Review
 
