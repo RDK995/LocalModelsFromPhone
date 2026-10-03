@@ -193,7 +193,7 @@ export const PLAN_PRICES_RULE =
 export const WRITE_DATE_RULE =
   "Never call a price or period \"current\" or \"today's\", and never name a period such as \"early 2024\", unless a cited note gives that period. When you quote a price, give the date or period its page gives (for example \"the October–December 2026 price cap [3]\"); if the page gives none, make no date claim.";
 export const WRITE_SUM_RULE =
-  "Where the notes give a quantity (for example kWh a year) and a unit price, state the money figure in the question's currency with the sum shown (for example \"2,700 kWh × 26p ≈ £700 a year [2][4]\"), citing the pages for both numbers.";
+  "When the question is about costs, prices, bills or running costs, the report must give at least one running-cost money figure in the question's currency for a stated period (for example a year) for each option the question compares: either a figure a cited page states, or one worked out from the notes as quantity × unit price with the sum shown (for example \"2,700 kWh × 26p ≈ £700 a year [2][4]\"), citing the pages for both numbers. Where the notes give a unit price but no quantity, use a typical quantity a note gives (for example typical annual mileage, or kWh a year for a typical home) and cite it. Never give a unit price alone where a running-cost figure can be worked out.";
 export const WRITE_NO_PRICE_RULE =
   "If the question asks about cost but no note gives a price, say plainly that no current price was found; do not silently leave cost out.";
 

@@ -235,4 +235,33 @@ describe("deep research pricing rules (M19i AC2, AC3, AC4)", () => {
       expect(message.content).not.toContain(WRITE_NO_PRICE_RULE);
     }
   });
+
+  it("M19j-T7: write request for cost questions contains strengthened WRITE_SUM_RULE with running-cost money figure requirement", async () => {
+    const day = new Date(2026, 10, 3, 12);
+    const requests = await runOn(day, "How much does it cost to run a heat pump in the UK?", true, true);
+
+    const writeRequests = requests.filter((r) => stepOf(r) === "write");
+    expect(writeRequests.length).toBeGreaterThanOrEqual(1);
+
+    const writeRequest = writeRequests[0];
+    const userMsg = writeRequest.messages.find((m: any) => m.role === "user").content as string;
+
+    // Should contain the new required fragments from strengthened WRITE_SUM_RULE
+    expect(userMsg).toContain("must give at least one running-cost money figure");
+    expect(userMsg).toContain("for each option the question compares");
+    expect(userMsg).toContain("use a typical quantity a note gives");
+    expect(userMsg).toContain("Never give a unit price alone");
+
+    // Should still contain existing rule fragments
+    expect(userMsg).toContain("sum shown");
+    expect(userMsg).toContain(WRITE_NO_PRICE_RULE);
+    expect(userMsg).toContain(WRITE_DATE_RULE);
+
+    // No non-write request should contain "running-cost money figure"
+    const nonWriteRequests = requests.filter((r) => stepOf(r) !== "write");
+    for (const request of nonWriteRequests) {
+      const msg = request.messages.find((m: any) => m.role === "user").content as string;
+      expect(msg).not.toContain("running-cost money figure");
+    }
+  });
 });

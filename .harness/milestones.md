@@ -521,7 +521,7 @@ Cycle 1: PASS - reviewer tier Mid (sonnet; highest task tier Mid: T2 sonnet, T1 
 
 ## M19j — Dated, priced deep research reports proven live on the Mac
 
-Status: BLOCKED
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -564,9 +564,12 @@ Pending.
   Commit 4884fd1. .harness/evidence/M19j-T4-<r1-heat|r2-heat|r3-heat|r4-ev>-{stream.txt,fr41.log,result.json,run.log}, M19j-T4-verifier.log.
 - T5 — report extraction + judgement   Top (opus), attempt 4, routed Top: NO_TEST_ORACLE; PASS (extraction byte-equal to streams); orchestrator spot-check confirmed no GBP running-cost figure in r1 or r3. AC2: 2 of 4 (r2 "£1.91 to run per hour [3]" gas boiler only, borderline; r4 "£8.80 per 100 miles [6]"); r1, r3 NO. AC3: 4 of 4 pass on the literal wording, 3 borderline (r4 labels 26.11p "October 2026" though r3 cites it as July-September). Cited note/page text is not saved by the server, so judgements rest on report text, source titles/urls and cross-run agreement. Commit 018d0ca. .harness/evidence/M19j-T5-<run>-report.md, M19j-T5-judgement.md.
 - T6 — r1 diagnosis                    Top (opus), attempt 4, routed Top: AMBIGUOUS; PASS; orchestrator spot-check: r1 fr41 has 1 queries call vs 3 in r2-r4; research.ts:974 `plan = p ? p.slice(0, Math.max(1, s.subQuestionCount)) : [brief];` (a maximum only). Cause (c) model behaviour: the thinking-off plan returned one sub-question (eval_count 47 vs 88-140), and pagesPerSubQuestion 2 caps reads at 2; no search or page failure; outside M20's scope. .harness/evidence/M19j-T6-diagnosis.md.
+- T7 — write rule: always a running-cost figure   Cheap (haiku), attempt 1 FAIL (packet error: exact text reused PLAN_PRICES_RULE's opening phrase, breaking the existing AC3 plan-only test; worker stopped correctly) -> Cheap attempt 2 PASS; verifier PASS: `bun test src/http/deepResearchPrices.test.ts && bun test && bun run typecheck` exit 0, 374 pass, tsc clean, additions-only test diff. .harness/evidence/M19j-T7-worker.log, M19j-T7-verifier.log.
+- T8 — plan top-up (server sets sub-question count)  Mid (sonnet), ORDINARY_IMPLEMENTATION - in progress.
+- First live attempt (T4-T6, before the fixes) below; the re-run after T7-T8 replaces it as the AC35 evidence.
 - M19j-AC1: NOT MET - r1 fails the >= 3 cited read pages bar; r2-r4 meet it.
 - M19j-AC2: NOT MET - 2 of 4 (needs 3).
-- M19j-AC3: per-report check PASS 4 of 4 (literal; borderline calls in M19j-T5-judgement.md); owner's opinion of report quality PENDING (asked 2026-10-03).
+- M19j-AC3: per-report check PASS 4 of 4 (literal; borderline calls in M19j-T5-judgement.md); owner's opinion of the first four reports: not given (2026-10-03); to be asked again after the re-run.
 
 ### Validation
 
@@ -576,7 +579,7 @@ Pending.
 
 Pending.
 
-Human Escalation (BLOCKED):
+Human Escalation (BLOCKED, resolved 2026-10-03 - see Human decisions below):
 
 Problem:
 The live proof did not meet AC35. M19j-AC1: run r1 (heat pump) read 2 pages and cited 1 (bar: 3), because the model's plan came back with one sub-question and the server accepts a short plan (research.ts:974 enforces the count as a maximum only; FR35 says the count "is set by the server, not the model"). M19j-AC2: only 2 of 4 reports give a cited GBP running-cost figure (bar: 3); r1 and r3 give unit prices or grants but no running-cost sum, although the M19i write rules ask for it. M19j-AC3 passes on its wording, with borderline calls; the owner's opinion is not yet recorded.
@@ -595,6 +598,10 @@ Meeting AC35 needs either a code change (server tops up or retries a plan shorte
 
 Recommended decision:
 Add a small fix milestone (M19k) before M20: (1) the server enforces the sub-question count as a minimum too - retry the plan once, then top up with the brief - as FR35 already says; (2) strengthen the write step's money rule with a worked example so a cost report always states a £ running-cost figure or says none was found; proven with the scripted fake Ollama. Then re-run M19j's four runs fresh. Record the owner's opinion of the four saved reports (.harness/evidence/M19j-T5-*-report.md) now.
+
+Human decisions:
+- 2026-10-03, owner, answer verbatim "Do a": option (a) - fix both first: the server insists on a full plan (tops up a short plan so the server, not the model, sets the sub-question count, per FR35) and the write step gets a clearer instruction to always do the running-cost sum (FR46(d)); then run the four AC35 questions again, fresh. Owner's opinion of the first four reports: not given. Status BLOCKED -> IN_PROGRESS. Shape: not split - M19j has work recorded (T1-T6), so per the pickup rule the fixes run as further M19j tasks on its branch; acceptance criteria unchanged.
+- 2026-10-03, owner, answer "Yes": add ONE non-price question, "What caused the 2008 financial crisis?", to the live re-run, one at a time through the server API after the fixes; save report, stream and run result under .harness/evidence/ and record a per-report check for misplaced price/cost content (a price/cost section, a current-unit-prices sub-question, or a "no current price was found" statement). Extra recorded check outside AC35: not an acceptance criterion, does not gate pass/fail.
 
 ### Review Cycles
 
