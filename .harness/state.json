@@ -13337,7 +13337,7 @@
       "architecture": "C1, C6, C11, C12, C13",
       "requirements": [],
       "traces": "AC29 (amended 2026-10-02: plus the heat-pump question), AC30",
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 0,
       "review_override": null,
       "baseline": {
@@ -13345,14 +13345,14 @@
         "branch": "m21-live-research-proof"
       },
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M21.md",
+        "result": "RECORDED - 2 of 2 files attributed; component C12; 4 claim mismatches: C1, C6, C11, C13 claimed but not in diff (M21 is a live proof; only the C12 read-step fix changed code)"
       },
       "criteria": [
         {
           "id": "M21-AC1",
           "text": "Live on the Mac with `qwen3.5:35b-a3b` resident: 3 real research-style questions plus the 2026-10-02 heat-pump question each end within the budget plus a small margin with status `complete` or `partial`, a report citing at least 3 distinct read pages, and no citation number that fails to resolve to a saved source; the owner's opinion of report quality is recorded in the evidence (not a gate).",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             ".harness/evidence/M21-T6-q1-verifier.log",
             ".harness/evidence/M21-T6-q2-verifier.log",
@@ -13364,7 +13364,7 @@
         {
           "id": "M21-AC2",
           "text": "The owner's phone screenshot of a finished deep research reply showing its steps, its status, logo citations and \"Sources (n)\" is saved under .harness/evidence/.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             ".harness/evidence/M21-AC2-phone-screenshot-1.png",
             ".harness/evidence/M21-AC2-phone-screenshot-2.png",
@@ -13675,8 +13675,42 @@
           ]
         }
       ],
-      "reviews": [],
-      "findings": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "CHANGES_REQUIRED",
+          "correction_scope": "RECORD_ONLY",
+          "tier": "Top",
+          "model": "opus",
+          "reason_code": "TOP_ROUTED_TASK_IN_DIFF",
+          "diff_range": "6d89bfe98a3e3738c194926b432f77787f808c7b..00611bc",
+          "artifact": ".harness/reviews/M21-cycle1.md",
+          "review_log": ".harness/evidence/M21-review.log",
+          "findings": "0 BLOCKER, 1 IMPORTANT, 1 OPTIONAL",
+          "per_criterion": {
+            "M21-AC1": "PASS",
+            "M21-AC2": "PASS"
+          },
+          "pre_correction": "00611bc096d47f34767100019c08eb0c04f9f036",
+          "record_only_correction": "5cfa704 (.harness/milestones.md and .harness/state.json validation --log path); check-state --record-only 00611bc HEAD OK; corrected four --check-only runs exit 0; no worker, orchestrator or re-review per the record-only rule"
+        }
+      ],
+      "findings": [
+        {
+          "id": "M21-R1-F1",
+          "severity": "IMPORTANT",
+          "summary": "recorded M21 validation command fails as written: --check-only reads --log as an input FR41 log and it pointed at a nonexistent file",
+          "status": "RESOLVED",
+          "correction": "record-only 5cfa704",
+          "resolved_by": "record-only correction; check-state --record-only passed; all cycle-1 per-criterion rows PASS"
+        },
+        {
+          "id": "M21-R1-F2",
+          "severity": "OPTIONAL",
+          "summary": "web chat's finished read step for a redirected page now shows the post-redirect URL (mobile/src/api/client.ts per-step URL merge); no mobile test pins it; already noted as an M21-T5 side effect",
+          "status": "OPEN"
+        }
+      ],
       "validation": [
         "cd server && for id in q1 q2 q3 heat; do bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M21-T6-$id-stream.txt --log ../.harness/evidence/M21-T6-$id-fr41.log || exit 1; done && cd .. && shasum -a 256 <both upload sources and both M21-AC2-phone-screenshot copies> && (cd server && bun test && bun run typecheck)"
       ],

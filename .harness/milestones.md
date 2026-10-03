@@ -544,7 +544,7 @@ Cycle 1: PASS (2026-10-03), tier Mid (sonnet) - highest substantive tier in the 
 
 ## M21 — Four real research questions answered on the Mac, and the owner's phone screenshot
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -558,12 +558,12 @@ C1, C6, C11, C12, C13
 
 ### As-Built
 
-Pending.
+`.harness/as-built/M21.md` — RECORDED - 2 of 2 files attributed; component C12; 4 claim mismatches: C1, C6, C11, C13 claimed but not in diff (M21 is a live proof; only the C12 read-step fix changed code)
 
 ### Acceptance Criteria
 
-- [ ] **M21-AC1**: Live on the Mac with `qwen3.5:35b-a3b` resident: 3 real research-style questions plus the 2026-10-02 heat-pump question each end within the budget plus a small margin with status `complete` or `partial`, a report citing at least 3 distinct read pages, and no citation number that fails to resolve to a saved source; the owner's opinion of report quality is recorded in the evidence (not a gate).
-- [ ] **M21-AC2**: The owner's phone screenshot of a finished deep research reply showing its steps, its status, logo citations and "Sources (n)" is saved under .harness/evidence/.
+- [x] **M21-AC1**: Live on the Mac with `qwen3.5:35b-a3b` resident: 3 real research-style questions plus the 2026-10-02 heat-pump question each end within the budget plus a small margin with status `complete` or `partial`, a report citing at least 3 distinct read pages, and no citation number that fails to resolve to a saved source; the owner's opinion of report quality is recorded in the evidence (not a gate).
+- [x] **M21-AC2**: The owner's phone screenshot of a finished deep research reply showing its steps, its status, logo citations and "Sources (n)" is saved under .harness/evidence/.
 
 ### Plan
 `.harness/plans/M21.md` — AGREED
@@ -620,7 +620,7 @@ Pending.
 
 ### Review
 
-Pending.
+Cycle 1: CHANGES REQUIRED, scope RECORD_ONLY (2026-10-03), tier Top (opus) - diff contains a Top-routed task (T5); whole milestone 6d89bfe..00611bc. Per-criterion: AC1 PASS, AC2 PASS. Findings: 0 BLOCKER, 1 IMPORTANT, 1 OPTIONAL; report .harness/reviews/M21-cycle1.md. Pre-correction: 00611bc. Resolved: M21-R1-F1 IMPORTANT (recorded validation `--log` pointed at a nonexistent file) by a record-only correction to `--log ../.harness/evidence/M21-T6-$id-fr41.log` in Validation and state.json; correction 5cfa704; `check-state.py --record-only 00611bc HEAD` exit 0 and the corrected four `--check-only` runs exit 0. M21-R1-F2 OPTIONAL, left open (web-chat read step now shows the post-redirect URL; no mobile test pins it) needs no change. Reviewer re-ran bun test (380 pass), typecheck clean, screenshot hashes match; log .harness/evidence/M21-review.log.
 
 ### Review Cycles
 
