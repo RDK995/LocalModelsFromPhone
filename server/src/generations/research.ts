@@ -188,6 +188,15 @@ export function logRunEnd(line: RunEndLog): void {
   console.log(JSON.stringify({ event: "deep_research_run_end", ...line }));
 }
 
+export const PLAN_PRICES_RULE =
+  "If the question asks about costs, prices, bills or running costs, one of the sub-questions must ask for the current unit prices relevant to the question (for example electricity and gas prices per kWh in the user's country).";
+export const WRITE_DATE_RULE =
+  "Never call a price or period \"current\" or \"today's\", and never name a period such as \"early 2024\", unless a cited note gives that period. When you quote a price, give the date or period its page gives (for example \"the October–December 2026 price cap [3]\"); if the page gives none, make no date claim.";
+export const WRITE_SUM_RULE =
+  "Where the notes give a quantity (for example kWh a year) and a unit price, state the money figure in the question's currency with the sum shown (for example \"2,700 kWh × 26p ≈ £700 a year [2][4]\"), citing the pages for both numbers.";
+export const WRITE_NO_PRICE_RULE =
+  "If the question asks about cost but no note gives a price, say plainly that no current price was found; do not silently leave cost out.";
+
 export const NO_REPORT_NOTE =
   "No report was produced — the research could not be written up. Try asking again.";
 
@@ -957,7 +966,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
       if (b) brief = b;
       const p = await modelStep(
         "plan",
-        `Split the brief into exactly ${s.subQuestionCount} distinct sub-questions to research on the web.`,
+        `Split the brief into exactly ${s.subQuestionCount} distinct sub-questions to research on the web. ` + PLAN_PRICES_RULE,
         context(`Question:\n${question}`),
         SCHEMAS.plan,
         VALIDATORS.plan
@@ -1080,7 +1089,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
           "Write the final report answering the brief, using only the notes. Cite as you write: every sentence that " +
             "uses a note must end with that note's page number in square brackets, for example " +
             `"... as the page states [${exampleN}]." Use only the [n] numbers shown in the notes; never cite anything else. ` +
-            "Do not include URLs.",
+            "Do not include URLs. " + WRITE_DATE_RULE + " " + WRITE_SUM_RULE + " " + WRITE_NO_PRICE_RULE,
           context("Write the report now."),
           SCHEMAS.write,
           VALIDATORS.write
