@@ -3,7 +3,7 @@
  * captures the raw SSE stream, reads the run's FR41 log lines, and records the pass bar and speed figures.
  *
  * Usage (from server/):
- *   bun run scripts/ac29-live-run.ts --id <q1|q2|q3|heat|ev> [--out-dir ../.harness/evidence --prefix M19g-T3]
+ *   bun run scripts/ac29-live-run.ts --id <q1|q2|q3|heat|ev|gfc2008> [--out-dir ../.harness/evidence --prefix M19g-T3]
  *   bun run scripts/ac29-live-run.ts --check-only <stream.txt> --log <fr41.log>
  * Exit: 0 pass, 1 a pass-bar check failed, 2 tool error.
  *
