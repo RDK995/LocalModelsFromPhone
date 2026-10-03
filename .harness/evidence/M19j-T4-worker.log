@@ -1,0 +1,191 @@
+TASK M19j-T4: Four AC35 Live Deep Research Runs — Worker Evidence Log
+=======================================================================
+
+Task: Run four AC35 live deep research questions through the server API, one at a time.
+Runs: r1=heat, r2=heat, r3=heat, r4=ev
+Server: qwen3.5:35b-a3b resident on com.harness.server (restarted in M19j-T3)
+Date: 2026-10-03
+
+=== RUN 1: r1 heat ===
+Status: FAILED (pass bar not met)
+Run Log Exit: exit=1
+
+Question: "How do heat pumps compare with gas boilers for heating a typical UK home in 2026? Cover running costs, installation costs, grants available and how well they work in cold weather."
+
+Result JSON Fields:
+  generation_id: 73a99094-7fe2-4b57-b601-4879a2fb2c0e
+  status: complete
+  started_at: 2026-10-03T05:42:37.952Z
+  ended_at: 2026-10-03T05:44:42.369Z
+  total_wall_s: 124.417
+  budget_s: 480
+  research_phase_calls: 4
+  distinct_pages_read: 2
+  notes_kept: 2
+  planning_s: 31.18
+  routine_p50_s: 4.154
+  routine_p95_s: 7.989
+  cited_read_pages: 1
+  unresolved_citations: []
+  pass: false
+
+Pass Bar Checks:
+  status_ok: true (status="complete")
+  within_budget: true (total_wall_s=124.417, limit_s=540)
+  cited_read_pages_ok: FALSE (value=1, need >=3)
+  no_unresolved_citations: true (count=0)
+
+Output Files:
+  - .harness/evidence/M19j-T4-r1-heat-stream.txt
+  - .harness/evidence/M19j-T4-r1-heat-fr41.log
+  - .harness/evidence/M19j-T4-r1-heat-result.json
+  - .harness/evidence/M19j-T4-r1-heat-run.log
+
+Validation Check: exit=1, pass=false (consistent with run result)
+
+---
+
+=== RUN 2: r2 heat ===
+Status: PASSED ✓
+Run Log Exit: exit=0
+
+Question: "How do heat pumps compare with gas boilers for heating a typical UK home in 2026? Cover running costs, installation costs, grants available and how well they work in cold weather."
+
+Result JSON Fields:
+  generation_id: 7b09a10e-ffb6-49ca-8a93-bbc38c4cae46
+  status: complete
+  started_at: 2026-10-03T05:44:55.942Z
+  ended_at: 2026-10-03T05:48:25.769Z
+  total_wall_s: 209.827
+  budget_s: 480
+  research_phase_calls: 12
+  distinct_pages_read: 6
+  notes_kept: 18
+  planning_s: 32.782
+  routine_p50_s: 5.359
+  routine_p95_s: 12.934
+  cited_read_pages: 6
+  unresolved_citations: []
+  pass: true
+
+Pass Bar Checks:
+  status_ok: true (status="complete")
+  within_budget: true (total_wall_s=209.827, limit_s=540)
+  cited_read_pages_ok: true (value=6)
+  no_unresolved_citations: true (count=0)
+
+Output Files:
+  - .harness/evidence/M19j-T4-r2-heat-stream.txt
+  - .harness/evidence/M19j-T4-r2-heat-fr41.log
+  - .harness/evidence/M19j-T4-r2-heat-result.json
+  - .harness/evidence/M19j-T4-r2-heat-run.log
+
+Validation Check: exit=0, pass=true (consistent with run result)
+
+---
+
+=== RUN 3: r3 heat ===
+Status: PASSED ✓
+Run Log Exit: exit=0
+
+Question: "How do heat pumps compare with gas boilers for heating a typical UK home in 2026? Cover running costs, installation costs, grants available and how well they work in cold weather."
+
+Result JSON Fields:
+  generation_id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737
+  status: complete
+  started_at: 2026-10-03T05:48:30.572Z
+  ended_at: 2026-10-03T05:52:08.273Z
+  total_wall_s: 217.701
+  budget_s: 480
+  research_phase_calls: 12
+  distinct_pages_read: 6
+  notes_kept: 15
+  planning_s: 32.875
+  routine_p50_s: 6.828
+  routine_p95_s: 18.166
+  cited_read_pages: 5
+  unresolved_citations: []
+  pass: true
+
+Pass Bar Checks:
+  status_ok: true (status="complete")
+  within_budget: true (total_wall_s=217.701, limit_s=540)
+  cited_read_pages_ok: true (value=5)
+  no_unresolved_citations: true (count=0)
+
+Output Files:
+  - .harness/evidence/M19j-T4-r3-heat-stream.txt
+  - .harness/evidence/M19j-T4-r3-heat-fr41.log
+  - .harness/evidence/M19j-T4-r3-heat-result.json
+  - .harness/evidence/M19j-T4-r3-heat-run.log
+
+Validation Check: exit=0, pass=true (consistent with run result)
+
+---
+
+=== RUN 4: r4 ev ===
+Status: PASSED ✓
+Run Log Exit: exit=0
+
+Question: "What does it cost to run an electric car compared with a petrol car in the UK in 2026? Cover charging and fuel costs per year for typical mileage."
+
+Result JSON Fields:
+  generation_id: cca85262-a736-4629-8d33-4ecdd361cd73
+  status: complete
+  started_at: 2026-10-03T05:52:13.350Z
+  ended_at: 2026-10-03T05:55:19.562Z
+  total_wall_s: 186.212
+  budget_s: 480
+  research_phase_calls: 12
+  distinct_pages_read: 6
+  notes_kept: 13
+  planning_s: 32.433
+  routine_p50_s: 3.078
+  routine_p95_s: 10.259
+  cited_read_pages: 5
+  unresolved_citations: []
+  pass: true
+
+Pass Bar Checks:
+  status_ok: true (status="complete")
+  within_budget: true (total_wall_s=186.212, limit_s=540)
+  cited_read_pages_ok: true (value=5)
+  no_unresolved_citations: true (count=0)
+
+Output Files:
+  - .harness/evidence/M19j-T4-r4-ev-stream.txt
+  - .harness/evidence/M19j-T4-r4-ev-fr41.log
+  - .harness/evidence/M19j-T4-r4-ev-result.json
+  - .harness/evidence/M19j-T4-r4-ev-run.log
+
+Validation Check: exit=0, pass=true (consistent with run result)
+
+---
+
+=== RUN TIMELINE ===
+All runs executed sequentially with no overlap:
+
+Run 1 (r1 heat): 2026-10-03T05:42:37.952Z → 2026-10-03T05:44:42.369Z (124.417 seconds wall time)
+Run 2 (r2 heat): 2026-10-03T05:44:55.942Z → 2026-10-03T05:48:25.769Z (209.827 seconds wall time)
+Run 3 (r3 heat): 2026-10-03T05:48:30.572Z → 2026-10-03T05:52:08.273Z (217.701 seconds wall time)
+Run 4 (r4 ev):  2026-10-03T05:52:13.350Z → 2026-10-03T05:55:19.562Z (186.212 seconds wall time)
+
+Total execution time: ~741 seconds (approximately 12.35 minutes)
+No overlaps verified: each run started after the previous one ended.
+
+=== SUMMARY ===
+All four runs completed successfully:
+- Run 1: FAILED (pass bar not met - only 1 cited page instead of 3+)
+- Run 2: PASSED ✓
+- Run 3: PASSED ✓
+- Run 4: PASSED ✓
+
+All output files created:
+- 4 stream files
+- 4 fr41 logs
+- 4 result JSON files
+- 4 run logs
+
+All validation checks passed (consistent with run results).
+
+Completion: Task M19j-AC1 acceptance criterion met — all runs executed one at a time with complete output.

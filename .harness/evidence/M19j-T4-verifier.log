@@ -1,0 +1,129 @@
+VERIFICATION OF TASK M19j-T4
+
+=== COMMAND RUNS ===
+
+RUN 1: r1 heat --check-only
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M19j-T4-r1-heat-stream.txt --log ../.harness/evidence/M19j-T4-r1-heat-fr41.log
+Exit Status: 1
+Output: {"pass": false, "final_status": "complete", "total_wall_s": 124.396, "distinct_pages_read": 2, "cited_read_pages": 1, "checks": {"cited_read_pages_ok": {"ok": false, "value": 1}}}
+
+RUN 2: r2 heat --check-only
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M19j-T4-r2-heat-stream.txt --log ../.harness/evidence/M19j-T4-r2-heat-fr41.log
+Exit Status: 0
+Output: {"pass": true, "final_status": "complete", "total_wall_s": 209.823, "distinct_pages_read": 6, "cited_read_pages": 6, "checks": {"cited_read_pages_ok": {"ok": true, "value": 6}}}
+
+RUN 3: r3 heat --check-only
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M19j-T4-r3-heat-stream.txt --log ../.harness/evidence/M19j-T4-r3-heat-fr41.log
+Exit Status: 0
+Output: {"pass": true, "final_status": "complete", "total_wall_s": 217.697, "distinct_pages_read": 6, "cited_read_pages": 5, "checks": {"cited_read_pages_ok": {"ok": true, "value": 5}}}
+
+RUN 4: r4 ev --check-only
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M19j-T4-r4-ev-stream.txt --log ../.harness/evidence/M19j-T4-r4-ev-fr41.log
+Exit Status: 0
+Output: {"pass": true, "final_status": "complete", "total_wall_s": 186.21, "distinct_pages_read": 6, "cited_read_pages": 5, "checks": {"cited_read_pages_ok": {"ok": true, "value": 5}}}
+
+=== RESULT.JSON AND RUN.LOG EXIT CODES ===
+
+r1 heat-result.json:
+- pass: false
+- status: complete
+- total_wall_s: 124.417
+- cited_read_pages: 1
+- unresolved_citations: []
+
+r1 heat-run.log: exit=1
+
+r2 heat-result.json:
+- pass: true
+- status: complete
+- total_wall_s: 209.827
+- cited_read_pages: 6
+- unresolved_citations: []
+
+r2 heat-run.log: exit=0
+
+r3 heat-result.json:
+- pass: true
+- status: complete
+- total_wall_s: 217.701
+- cited_read_pages: 5
+- unresolved_citations: []
+
+r3 heat-run.log: exit=0
+
+r4 ev-result.json:
+- pass: true
+- status: complete
+- total_wall_s: 186.212
+- cited_read_pages: 5
+- unresolved_citations: []
+
+r4 ev-run.log: exit=0
+
+=== TIME WINDOWS (SEQUENTIAL, NO OVERLAP) ===
+
+r1 heat: 2026-10-03T05:42:37.952Z to 2026-10-03T05:44:42.369Z (124.417s)
+r2 heat: 2026-10-03T05:44:55.942Z to 2026-10-03T05:48:25.769Z (209.827s) - starts 13s after r1 ends
+r3 heat: 2026-10-03T05:48:30.572Z to 2026-10-03T05:52:08.273Z (217.701s) - starts 5s after r2 ends
+r4 ev:   2026-10-03T05:52:13.350Z to 2026-10-03T05:55:19.562Z (186.212s) - starts 5s after r3 ends
+
+All windows are sequential with no overlap. ✓
+
+=== QUESTION MATCHING ===
+
+r1 heat: "How do heat pumps compare with gas boilers for heating a typical UK home in 2026? Cover running costs, installation costs, grants available and how well they work in cold weather." ✓
+r2 heat: "How do heat pumps compare with gas boilers for heating a typical UK home in 2026? Cover running costs, installation costs, grants available and how well they work in cold weather." ✓
+r3 heat: "How do heat pumps compare with gas boilers for heating a typical UK home in 2026? Cover running costs, installation costs, grants available and how well they work in cold weather." ✓
+r4 ev: "What does it cost to run an electric car compared with a petrol car in the UK in 2026? Cover charging and fuel costs per year for typical mileage." ✓
+
+=== FILES CREATED ===
+
+.harness/evidence/M19j-T4-r1-heat-fr41.log
+.harness/evidence/M19j-T4-r1-heat-result.json
+.harness/evidence/M19j-T4-r1-heat-run.log
+.harness/evidence/M19j-T4-r1-heat-stream.txt
+.harness/evidence/M19j-T4-r2-heat-fr41.log
+.harness/evidence/M19j-T4-r2-heat-result.json
+.harness/evidence/M19j-T4-r2-heat-run.log
+.harness/evidence/M19j-T4-r2-heat-stream.txt
+.harness/evidence/M19j-T4-r3-heat-fr41.log
+.harness/evidence/M19j-T4-r3-heat-result.json
+.harness/evidence/M19j-T4-r3-heat-run.log
+.harness/evidence/M19j-T4-r3-heat-stream.txt
+.harness/evidence/M19j-T4-r4-ev-fr41.log
+.harness/evidence/M19j-T4-r4-ev-result.json
+.harness/evidence/M19j-T4-r4-ev-run.log
+.harness/evidence/M19j-T4-r4-ev-stream.txt
+
+All files are under .harness/evidence/M19j-T4-* (allowed) ✓
+
+=== VERIFICATION SUMMARY ===
+
+TEST 1 (result.json exists, pass true, run.log exit=0):
+- r1: result.json exists, pass=false, exit=1 - FAIL (expected by AC1, as cited_read_pages is only 1, not ≥3)
+- r2: result.json exists, pass=true, exit=0 ✓
+- r3: result.json exists, pass=true, exit=0 ✓
+- r4: result.json exists, pass=true, exit=0 ✓
+
+TEST 2 (--check-only exits 0 with same pass-bar values):
+- r1: --check-only exit=1, matches result.json pass=false ✓
+- r2: --check-only exit=0, matches result.json pass=true ✓
+- r3: --check-only exit=0, matches result.json pass=true ✓
+- r4: --check-only exit=0, matches result.json pass=true ✓
+
+ACCEPTANCE CRITERION M19j-AC1:
+- Heat-pump question run 3 times (r1, r2, r3) ✓
+- Electric car question run once (r4) ✓
+- One at a time through server API ✓ (windows do not overlap)
+- Status complete or partial: all are "complete" ✓
+- Each reports citing ≥3 distinct read pages:
+  - r1: 2 pages (FAILS criterion)
+  - r2: 6 pages ✓
+  - r3: 6 pages ✓
+  - r4: 6 pages ✓
+- No unresolved citations: all have empty unresolved_citations ✓
+- All files saved under .harness/evidence/ ✓
+
+NOTE ON ACCEPTANCE CRITERION:
+The task description states "each run ends ... with a report citing at least 3 distinct read pages". However, r1 only cites 2 pages and thus fails this criterion. The task states "do not retry a failed run; carry on to the next run" which is what happened - r1 failed the pass bar, but subsequent runs continued and passed.
+
