@@ -1,0 +1,162 @@
+=== M21-T6 Run Evidence (Q1: Raft vs Paxos) ===
+Worker invocation: M21-T6, ID: q1, Tier: Cheap (haiku)
+Attempt: 1, Date: 2026-10-03
+
+=== Precondition Check ===
+$ pgrep -fl ac29-live-run
+(exit code 1 - no processes found, as required)
+
+=== Main Run Command ===
+$ cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --id q1 --out-dir ../.harness/evidence --prefix M21-T6 > ../.harness/evidence/M21-T6-q1-run.log 2>&1; echo "exit=$?" >> ../.harness/evidence/M21-T6-q1-run.log
+
+Run Duration: 2026-10-03T16:23:34.261Z to 2026-10-03T16:27:05.564Z (3m 31.303s wall time)
+Exit Status: exit=0 (PASS)
+
+=== Result JSON (Verbatim) ===
+{
+  "id": "q1",
+  "question": "What are the main differences between the Raft and Paxos consensus algorithms, and when would you choose one over the other?",
+  "generation_id": "d438e975-04a9-45e5-8c32-f9094d14fcc8",
+  "started_at": "2026-10-03T16:23:34.261Z",
+  "ended_at": "2026-10-03T16:27:05.564Z",
+  "fr41_selection": "server.log bytes written between just before the POST and after done (lines carry no run id)",
+  "saw_done": true,
+  "budget_s": 480,
+  "total_wall_s": 211.303,
+  "planning_s": 32.233,
+  "research_phase_calls": 12,
+  "routine_calls": 13,
+  "routine_p50_s": 3.684,
+  "routine_p95_s": 17.302,
+  "fr41_lines": 17,
+  "distinct_pages_read": 6,
+  "notes_kept": 14,
+  "final_status": "complete",
+  "cited_read_pages": 6,
+  "unresolved_citations": [],
+  "checks": {
+    "status_ok": {
+      "ok": true,
+      "value": "complete"
+    },
+    "within_budget": {
+      "ok": true,
+      "value": {
+        "total_wall_s": 211.303,
+        "limit_s": 540
+      }
+    },
+    "cited_read_pages_ok": {
+      "ok": true,
+      "value": 6
+    },
+    "no_unresolved_citations": {
+      "ok": true,
+      "value": []
+    }
+  },
+  "pass": true
+}
+
+=== Validation Check ===
+$ cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M21-T6-q1-stream.txt --log ../.harness/evidence/M21-T6-q1-fr41.log
+Exit Status: (command ran successfully, no error shown)
+
+Validation output:
+{
+  "stream_file": "../.harness/evidence/M21-T6-q1-stream.txt",
+  "note": "check-only: total_wall_s taken from done.research.elapsed_ms (0 when absent)",
+  "budget_s": 480,
+  "total_wall_s": 211.278,
+  "planning_s": 32.233,
+  "research_phase_calls": 12,
+  "routine_calls": 13,
+  "routine_p50_s": 3.684,
+  "routine_p95_s": 17.302,
+  "fr41_lines": 17,
+  "distinct_pages_read": 6,
+  "notes_kept": 14,
+  "final_status": "complete",
+  "cited_read_pages": 6,
+  "unresolved_citations": [],
+  "checks": {
+    "status_ok": {
+      "ok": true,
+      "value": "complete"
+    },
+    "within_budget": {
+      "ok": true,
+      "value": {
+        "total_wall_s": 211.278,
+        "limit_s": 540
+      }
+    },
+    "cited_read_pages_ok": {
+      "ok": true,
+      "value": 6
+    },
+    "no_unresolved_citations": {
+      "ok": true,
+      "value": []
+    }
+  },
+  "pass": true
+}
+
+=== Output Files ===
+Created files:
+- M21-T6-q1-run.log (1.1 KB)
+- M21-T6-q1-result.json (1.1 KB)
+- M21-T6-q1-stream.txt (16 KB)
+- M21-T6-q1-fr41.log (4.8 KB)
+
+=== Pass Bar Verification ===
+All checks PASSED:
+
+1. status_ok: PASS
+   - Final status: "complete" (required: complete or partial)
+
+2. within_budget: PASS
+   - Total wall time: 211.303s (limit: 540s = 480s budget + 60s margin)
+   - Margin remaining: 328.697s
+
+3. cited_read_pages_ok: PASS
+   - Cited read pages: 6 (required: >= 3)
+   - All 6 pages have corresponding "read" steps with "done" status
+
+4. no_unresolved_citations: PASS
+   - Unresolved citations: [] (empty)
+   - All citations [1] through [6] resolve to sources in the sources event
+
+=== Research Report Quality ===
+The report cites 6 distinct read pages:
+1. https://systeminternals.dev/paxos-vs-raft/
+2. https://www.techinterview.org/post/3233474129/system-design-distributed-consensus-raft-paxos-leader-election-log-replication-split-brain-quorum-linearizability/
+3. https://grindengineer.substack.com/p/leader-election-in-distributed-systems-raft-vs-paxos
+4. https://byteledger.vizleo.com/blog/raft-vs-paxos-2026
+5. https://penluma.com/blog/distributed-systems/07-multi-paxos-raft-vs-paxos-the-real-world/
+6. https://www.nanotechinsight.com/post/raft-consensus-simplicity-robustness-distributed-systems
+
+The report demonstrates:
+- Clear architectural differences (decomposition vs. fluid roles)
+- Implementation complexity comparison
+- Real-world adoption patterns (etcd/Kubernetes, Consul, CockroachDB, TiKV)
+- Practical selection guidance based on use case
+- Supports AC29 requirement: "a report citing at least 3 distinct read pages" ✓
+
+=== Acceptance Criterion M21-AC1 Status ===
+✓ Live on the Mac with qwen3.5:35b-a3b resident (confirmed by readiness check)
+✓ Question q1 (Raft vs Paxos) ended with status "complete"
+✓ Within budget (211.303s <= 540s)
+✓ Report cites 6 distinct read pages (requirement: >= 3)
+✓ No citation number fails to resolve to a saved source (all [1]-[6] mapped)
+✓ No pass bar check failures
+
+=== Conclusion ===
+M21-T6 Q1 run: PASS
+All acceptance criteria met.
+Server restarted onto M21-T5 fix successfully.
+Question executed cleanly without errors or timeouts.
+Model performance within expected parameters (p50: 3.684s, p95: 17.302s).
+
+Worker completed: 2026-10-03 (timestamp of run completion: 2026-10-03T16:27:05.564Z)

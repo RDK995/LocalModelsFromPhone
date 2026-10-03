@@ -595,6 +595,8 @@ Pending.
 
 - M21-T6R restart + readiness (Cheap, BOUNDED_LOW_RISK) attempt 1 PASS; verifier PASS: `launchctl kickstart -k gui/$(id -u)/com.harness.server` (pid 4781 -> 71661); server start 17:20:10+01:00 after last non-scripts server/ commit 1034b0c 2026-10-03T17:19:02+01:00; search pid 61417 start 15:54:11 after search/ commit cbd5566 15:53:08; health 401; `ollama ps` lists qwen3.5:35b-a3b; `pgrep -fl ac29-live-run` empty; `git status --porcelain -- server search mobile` empty; `bash ops/scripts/boot-readiness-check.sh` exit 0 "PASS: ALL CHECKS PASSED" — .harness/evidence/M21-T6-readiness.log, .harness/evidence/M21-T6R-verifier.log.
 
+- M21-T6 q1 Raft vs Paxos re-run (Cheap, BOUNDED_LOW_RISK) attempt 1 PASS; verifier PASS: run log `exit=0`; generation d438e975-04a9-45e5-8c32-f9094d14fcc8, final_status complete, total_wall_s 211.303 (limit 540), distinct_pages_read 6, notes_kept 14, cited_read_pages 6, unresolved_citations [], research_phase_calls 12; check-only exit 0, pass true — .harness/evidence/M21-T6-q1-result.json, .harness/evidence/M21-T6-q1-verifier.log.
+
 ### Validation
 
 ### Review
