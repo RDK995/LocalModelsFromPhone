@@ -566,7 +566,7 @@ Pending.
 - [ ] **M21-AC2**: The owner's phone screenshot of a finished deep research reply showing its steps, its status, logo citations and "Sources (n)" is saved under .harness/evidence/.
 
 ### Plan
-`.harness/plans/M21.md` — DRAFT
+`.harness/plans/M21.md` — AGREED
 
 ### Baseline
 
