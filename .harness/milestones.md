@@ -599,6 +599,8 @@ Pending.
 
 - M21-T6 q2 LFP vs NMC re-run (Cheap, BOUNDED_LOW_RISK) attempt 1 PASS; verifier PASS: run log `exit=0`; generation cb5db5c2-a80e-4b3f-ab32-1fdd95decca5, final_status complete, total_wall_s 196.086 (limit 540), distinct_pages_read 6, notes_kept 17, cited_read_pages 6, unresolved_citations [], research_phase_calls 12; check-only exit 0, pass true. Verifier checked every read step's done URL against the final sources event: all 6 match, including the agaicpower.com page that redirected from `...-real-data-1` to `...-real-data` (the M21-T2 failure) — the M21-T5 fix holds live. (Verifier's line "Owner Opinion Recorded: worker.log present" is wrong and disregarded: the owner's opinion is not yet recorded.) — .harness/evidence/M21-T6-q2-result.json, .harness/evidence/M21-T6-q2-verifier.log.
 
+- M21-T6 q3 WebAssembly component model re-run (Cheap, BOUNDED_LOW_RISK) attempt 1 PASS; verifier PASS: run log `exit=0`; generation a6c5a24e-5ebe-4f39-852d-19cb066ed006, final_status complete, total_wall_s 201.347 (limit 540), distinct_pages_read 6, notes_kept 22, cited_read_pages 6, unresolved_citations [], research_phase_calls 12; check-only exit 0, pass true; all 6 read done URLs found in the final sources event — .harness/evidence/M21-T6-q3-result.json, .harness/evidence/M21-T6-q3-verifier.log.
+
 ### Validation
 
 ### Review
