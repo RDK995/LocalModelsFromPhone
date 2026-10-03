@@ -12660,7 +12660,7 @@
       "architecture": "C4, C6, C7, C11, C12, C13",
       "requirements": [],
       "traces": "AC35, AC29 (pass bar)",
-      "status": "IN_PROGRESS",
+      "status": "BLOCKED",
       "review_cycles": 0,
       "review_override": null,
       "baseline": "6a56912889985f168d355548965a977c0ecc7a7c on m19j-live-priced-reports",
@@ -12672,28 +12672,182 @@
         {
           "id": "M19j-AC1",
           "text": "Live on the Mac with `qwen3.5:35b-a3b` resident and com.harness.server restarted onto the M19i code: the 2026-10-02 heat-pump question is run 3 times and the question \"What does it cost to run an electric car compared with a petrol car in the UK in 2026? Cover charging and fuel costs per year for typical mileage.\" once, one at a time, through the server API; each run ends within the budget plus a small margin with status `complete` or `partial`, a report citing at least 3 distinct read pages, and no citation number that fails to resolve to a saved source; each report, stream and run result is saved under .harness/evidence/.",
-          "status": "PENDING",
-          "evidence": []
+          "status": "FAIL",
+          "evidence": [
+            ".harness/evidence/M19j-T4-<run>-{stream.txt,fr41.log,result.json,run.log}",
+            ".harness/evidence/M19j-T4-verifier.log (r1 cited_read_pages 1; r2-r4 pass)",
+            ".harness/evidence/M19j-T6-diagnosis.md"
+          ]
         },
         {
           "id": "M19j-AC2",
           "text": "At least 3 of the 4 reports give a GBP running-cost figure with a citation - either stated by a cited page or worked from cited usage and a cited unit price; the per-report judgement (figure, citations, which kind) is recorded in evidence.",
-          "status": "PENDING",
-          "evidence": []
+          "status": "FAIL",
+          "evidence": [
+            ".harness/evidence/M19j-T5-judgement.md (2 of 4)",
+            ".harness/evidence/M19j-T5-<run>-report.md"
+          ]
         },
         {
           "id": "M19j-AC3",
           "text": "None of the 4 reports names a past period (e.g. \"early 2024\") as current prices unless a note it cites gives that period; the per-report check is recorded in evidence, and the owner's opinion of report quality is recorded (not a gate).",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            ".harness/evidence/M19j-T5-judgement.md (4 of 4 pass literal, 3 borderline)",
+            "owner opinion pending"
+          ]
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M19j-T1",
+          "title": "archive settled M19h (milestones.md 778 -> 720)",
+          "packet": ".harness/tasks/M19j-T1.md",
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "mechanical move verified by diff"
+          },
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "orchestrator diff vs HEAD section exit 0",
+              "evidence": ".harness/evidence/M19j-T1-worker.log",
+              "commit": "3aceb69"
+            }
+          ]
+        },
+        {
+          "id": "M19j-T2",
+          "title": "ev question added to server/scripts/ac29-questions.json",
+          "packet": ".harness/tasks/M19j-T2.md",
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "one JSON entry in a tested script data file"
+          },
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M19j-T2-verifier.log",
+              "commit": "bc73e80"
+            }
+          ]
+        },
+        {
+          "id": "M19j-T3",
+          "title": "restart com.harness.server onto M19i code",
+          "packet": ".harness/tasks/M19j-T3.md",
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "existing restart command under standing permission"
+          },
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M19j-T3-verifier.log",
+              "commit": "df41d9c",
+              "note": "kickstart run twice 11 s apart against the packet; nothing in flight, no harm"
+            }
+          ]
+        },
+        {
+          "id": "M19j-T4",
+          "title": "four live runs (heat x3, ev), sequential",
+          "packet": ".harness/tasks/M19j-T4.md",
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "run an existing tested evidence script four times"
+          },
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "EXECUTED - r1 fails AC29 bar",
+              "verifier": "FAIL (r1 cited_read_pages 1; r2-r4 pass; values reproduced)",
+              "evidence": ".harness/evidence/M19j-T4-verifier.log",
+              "commit": "4884fd1",
+              "note": "not retried: a rerun replaces a failing live sample - human decision"
+            }
+          ]
+        },
+        {
+          "id": "M19j-T5",
+          "title": "extract four reports and judge AC2/AC3",
+          "packet": ".harness/tasks/M19j-T5.md",
+          "routing": {
+            "tier": "Top",
+            "model": "opus",
+            "reason_code": "NO_TEST_ORACLE",
+            "detail": "judging report content against criteria; no command settles it"
+          },
+          "attempts": [
+            {
+              "attempt": 4,
+              "tier": "Top",
+              "model": "opus",
+              "result": "PASS",
+              "verifier": "orchestrator spot-check (no GBP running figure in r1, r3; extraction byte-equal)",
+              "evidence": ".harness/evidence/M19j-T5-judgement.md",
+              "commit": "018d0ca"
+            }
+          ]
+        },
+        {
+          "id": "M19j-T6",
+          "title": "diagnose r1 short run",
+          "packet": ".harness/tasks/M19j-T6.md",
+          "routing": {
+            "tier": "Top",
+            "model": "opus",
+            "reason_code": "AMBIGUOUS",
+            "detail": "unclear live failure"
+          },
+          "attempts": [
+            {
+              "attempt": 4,
+              "tier": "Top",
+              "model": "opus",
+              "result": "PASS",
+              "verifier": "orchestrator spot-check (1 vs 3 queries calls; research.ts:974)",
+              "evidence": ".harness/evidence/M19j-T6-diagnosis.md"
+            }
+          ]
+        }
+      ],
       "reviews": [],
       "findings": [],
-      "validation": [],
+      "validation": [
+        {
+          "command": "cd server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M19j-T4-<run>-stream.txt --log ../.harness/evidence/M19j-T4-<run>-fr41.log (r1-heat r2-heat r3-heat r4-ev)",
+          "artifacts": [
+            ".harness/evidence/M19j-T4-verifier.log"
+          ],
+          "status": "FAIL (r1 exit 1, cited_read_pages 1; r2 r3 r4 exit 0)"
+        }
+      ],
       "follow_ups": [
-        "FR46 out of scope (requirements, 2026-10-03): no phone check - Mac runs only."
+        "FR46 out of scope (requirements, 2026-10-03): no phone check - Mac runs only.",
+        "The server logs neither the plan's sub-question text nor per-search result counts, and saves no note text (M19j-T5, M19j-T6).",
+        "check-state.py reports two pre-existing errors on M1's legacy plan object; unrelated to M19j, left untouched."
       ],
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
@@ -12704,7 +12858,19 @@
         "Question texts: heat pump (recovered verbatim 2026-10-02, see M19g planning_notes): 'How do heat pumps compare with gas boilers for heating a typical UK home in 2026? Cover running costs, installation costs, grants available and how well they work in cold weather.'; EV vs petrol (AC35 verbatim): 'What does it cost to run an electric car compared with a petrol car in the UK in 2026? Cover charging and fuel costs per year for typical mileage.'. Runs strictly one at a time (M19g-T4 lesson: overlapping POSTs get 409 generation_in_flight).",
         "AC35 is carried as M19j-AC1..AC3 (AC29 bar on 4 runs with saved reports; 3 of 4 cited GBP figures; no undated past period as current, owner opinion recorded).",
         "Pickup check 2026-10-03 (implementation phase): 3 criteria (run), M19j-AC1 through the real server API, one signal IMPLEMENTATION_PLUS_LIVE_PROOF with seam check passed (proof only; only data change is adding the ev question to server/scripts/ac29-questions.json) - not split."
-      ]
+      ],
+      "blocked": {
+        "problem": "Live proof did not meet AC35: M19j-AC1 r1 read 2 pages, cited 1 (short one-sub-question plan accepted by research.ts:974, FR35 count enforced only as a maximum); M19j-AC2 only 2 of 4 reports give a cited GBP running-cost figure; M19j-AC3 passes literally, owner opinion not yet recorded.",
+        "affected": "M19j / M19j-AC1, M19j-AC2 (AC35, FR46, AC29 bar; FR35)",
+        "attempts": [
+          "M19j-T3 restart onto M19i code",
+          "M19j-T4 four sequential live runs: r2-r4 pass, r1 fails",
+          "M19j-T5 judgement: AC2 2 of 4, AC3 4 of 4 (3 borderline)",
+          "M19j-T6 diagnosis: short plan, model behaviour, not M20 scope, ~10-25% recurrence"
+        ],
+        "remaining": "Code change (plan minimum sub-questions; stronger write money rule) then four fresh runs, or a human decision to accept or rerun; FR46 excludes a server money-figure check.",
+        "recommended": "Add fix milestone M19k before M20: enforce sub-question count as a minimum (retry once, then top up with the brief) and strengthen the write money rule with a worked example, proven with the scripted fake Ollama; then rerun M19j fresh. Record the owner opinion of the saved reports now."
+      }
     },
     "M20": {
       "id": "M20",
