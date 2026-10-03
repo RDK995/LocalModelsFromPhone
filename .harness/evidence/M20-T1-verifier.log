@@ -1,0 +1,67 @@
+=== VERIFICATION RUN M20-T1 ===
+Date: 2026-10-03
+Commit: 9bb3e3c
+
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/search/helper && .venv/bin/python -m unittest test_search -v
+
+Exit Status: 0
+
+Output:
+test_browser_captcha_exception_classified (test_search.BackendsTests.test_browser_captcha_exception_classified) ... ok
+test_browser_scrape_challenge_page_raises (test_search.BackendsTests.test_browser_scrape_challenge_page_raises) ... ok
+test_empty_backends_goes_straight_to_browser (test_search.BackendsTests.test_empty_backends_goes_straight_to_browser) ... ok
+test_failures_are_attributed_per_engine_then_browser (test_search.BackendsTests.test_failures_are_attributed_per_engine_then_browser) ... ok
+test_force_hooks (test_search.BackendsTests.test_force_hooks) ... ok
+test_later_engine_succeeds_after_rate_limit (test_search.BackendsTests.test_later_engine_succeeds_after_rate_limit) ... ok
+test_no_browser_skips_browser_and_all_failing_is_error (test_search.BackendsTests.test_no_browser_skips_browser_and_all_failing_is_error) ... ok
+test_nothing_tried_is_error_with_empty_attempts (test_search.BackendsTests.test_nothing_tried_is_error_with_empty_attempts) ... ok
+test_region_and_max_passed_per_engine (test_search.BackendsTests.test_region_and_max_passed_per_engine) ... ok
+test_stops_at_first_engine_with_results (test_search.BackendsTests.test_stops_at_first_engine_with_results) ... ok
+test_captcha_texts (test_search.ClassifyTests.test_captcha_texts) ... ok
+test_challenge_text (test_search.ClassifyTests.test_challenge_text) ... ok
+test_other_is_error (test_search.ClassifyTests.test_other_is_error) ... ok
+test_rate_limit_texts (test_search.ClassifyTests.test_rate_limit_texts) ... ok
+test_ratelimit_exception_class (test_search.ClassifyTests.test_ratelimit_exception_class) ... ok
+test_backends_empty_and_no_browser_reports_attempts (test_search.CliTests.test_backends_empty_and_no_browser_reports_attempts) ... ok
+test_backends_forced_ratelimit (test_search.CliTests.test_backends_forced_ratelimit) ... ok
+test_bad_max (test_search.CliTests.test_bad_max) ... ok
+test_blank_query (test_search.CliTests.test_blank_query) ... ok
+test_missing_query (test_search.CliTests.test_missing_query) ... ok
+test_browser_closed_when_scrape_raises (test_search.FallbackTests.test_browser_closed_when_scrape_raises) ... ok
+test_browser_empty_is_search_failed (test_search.FallbackTests.test_browser_empty_is_search_failed) ... ok
+test_browser_raises_reports_both (test_search.FallbackTests.test_browser_raises_reports_both) ... ok
+test_ddgs_empty_uses_browser (test_search.FallbackTests.test_ddgs_empty_uses_browser) ... ok
+test_ddgs_ok_skips_browser (test_search.FallbackTests.test_ddgs_ok_skips_browser) ... ok
+test_ddgs_raises_uses_browser (test_search.FallbackTests.test_ddgs_raises_uses_browser) ... ok
+test_decode_bing_keeps_microsoft_hosts (test_search.FallbackTests.test_decode_bing_keeps_microsoft_hosts) ... ok
+test_decode_bing_redirect (test_search.FallbackTests.test_decode_bing_redirect) ... ok
+test_env_fail_and_empty_route_to_browser (test_search.FallbackTests.test_env_fail_and_empty_route_to_browser) ... ok
+test_force_browser_fail_both_fail (test_search.FallbackTests.test_force_browser_fail_both_fail) ... ok
+test_force_browser_hang (test_search.FallbackTests.test_force_browser_hang) ... ok
+test_scrape_bing_url_dropped (test_search.FallbackTests.test_scrape_bing_url_dropped) ... ok
+test_scrape_duplicates_dropped (test_search.FallbackTests.test_scrape_duplicates_dropped) ... ok
+test_scrape_empty_title_row_dropped (test_search.FallbackTests.test_scrape_empty_title_row_dropped) ... ok
+test_scrape_relevance_guard_one_goto (test_search.FallbackTests.test_scrape_relevance_guard_one_goto) ... ok
+test_scrape_relevance_guard_two_gotos (test_search.FallbackTests.test_scrape_relevance_guard_two_gotos) ... ok
+test_scrape_results_capped_at_max_results (test_search.FallbackTests.test_scrape_results_capped_at_max_results) ... ok
+test_pick_title_all_empty_returns_empty (test_search.PickTitleTests.test_pick_title_all_empty_returns_empty) ... ok
+test_pick_title_all_whitespace_returns_empty (test_search.PickTitleTests.test_pick_title_all_whitespace_returns_empty) ... ok
+test_pick_title_collapses_whitespace_in_text_content (test_search.PickTitleTests.test_pick_title_collapses_whitespace_in_text_content) ... ok
+test_pick_title_falls_back_to_aria_label (test_search.PickTitleTests.test_pick_title_falls_back_to_aria_label) ... ok
+test_pick_title_falls_back_to_text_content (test_search.PickTitleTests.test_pick_title_falls_back_to_text_content) ... ok
+test_pick_title_falls_back_to_title_attr (test_search.PickTitleTests.test_pick_title_falls_back_to_title_attr) ... ok
+test_pick_title_strips_aria_label (test_search.PickTitleTests.test_pick_title_strips_aria_label) ... ok
+test_pick_title_strips_inner_text (test_search.PickTitleTests.test_pick_title_strips_inner_text) ... ok
+test_pick_title_strips_title_attr (test_search.PickTitleTests.test_pick_title_strips_title_attr) ... ok
+test_pick_title_uses_inner_text_when_present (test_search.PickTitleTests.test_pick_title_uses_inner_text_when_present) ... ok
+test_exception_gives_search_failed (test_search.RunTests.test_exception_gives_search_failed) ... ok
+test_max_clamped (test_search.RunTests.test_max_clamped) ... ok
+test_normalises_hits_and_skips_missing_url (test_search.RunTests.test_normalises_hits_and_skips_missing_url) ... ok
+test_uses_uk_region_and_max (test_search.RunTests.test_uses_uk_region_and_max) ... ok
+test_zero_results (test_search.RunTests.test_zero_results) ... ok
+
+----------------------------------------------------------------------
+Ran 52 tests in 0.207s
+
+OK

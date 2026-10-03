@@ -9,7 +9,19 @@ Test-only hooks:
   It never affects the browser step.
 - env SEARCH_HELPER_FORCE_BROWSER = "fail" makes the browser step behave as if it raised, without
   launching a browser. "hang" sleeps for a long time after launching, simulating a slow search holding
-  a live browser. Any other value or unset means normal behaviour.
+  a live browser. "captcha" makes it behave as if Bing served a challenge page (outcome "captcha"),
+  without launching a browser. Any other value or unset means normal behaviour.
+- env SEARCH_HELPER_FORCE_DDGS = "ratelimit" / "captcha" makes every ddgs engine attempt behave as if it
+  was rate limited / shown a CAPTCHA (outcome "rate_limited" / "captcha"), without the network.
+
+Optional arguments (I17 extension, FR39):
+- --backends a,b,c  ordered allowed ddgs engines; each is tried on its own (one engine per ddgs call, so a
+  failure is attributable) until one returns a usable result. Empty string means no ddgs call at all.
+  Absent means one ordinary ddgs call.
+- --no-browser  skip the browser step (the caller is resting it).
+
+Output always carries "attempts": [{"backend": <engine | "ddgs" | "browser">, "outcome": <outcome>}, ...]
+in the order tried, with outcome one of ok | empty | rate_limited | captcha | error.
 """
 import argparse
 import base64
@@ -35,10 +47,38 @@ class _Parser(argparse.ArgumentParser):
         raise ValueError(message)
 
 
-def _default_factory():
+ENGINE_TIMEOUT_S = 4
+
+RATE_LIMIT_MARKERS = ("429", "too many requests", "ratelimit", "rate limit")
+CAPTCHA_MARKERS = ("captcha", "bot check", "unusual traffic", "are you a robot", "anomaly")
+
+
+def _default_factory(timeout=None):
     from ddgs import DDGS
 
-    return DDGS()
+    return DDGS(timeout=timeout) if timeout else DDGS()
+
+
+def classify_failure(exc):
+    """Map an exception to 'rate_limited', 'captcha' or 'error'."""
+    text = f"{type(exc).__name__} {exc}".lower()
+    if "RatelimitException" in [c.__name__ for c in type(exc).__mro__]:
+        return "rate_limited"
+    if any(m in text for m in RATE_LIMIT_MARKERS):
+        return "rate_limited"
+    if any(m in text for m in CAPTCHA_MARKERS):
+        return "captcha"
+    return "error"
+
+
+def is_challenge_text(text):
+    """True when page title/body text looks like a CAPTCHA / bot-check page."""
+    lowered = (text or "").lower()
+    return any(m in lowered for m in CAPTCHA_MARKERS)
+
+
+class ChallengeError(Exception):
+    """The browser was shown a challenge page instead of results."""
 
 
 def pick_title(inner_text, text_content, aria_label, title_attr):
@@ -81,6 +121,18 @@ def decode_bing_href(href):
         return real
     except Exception:  # noqa: BLE001 - undecodable result is simply dropped
         return None
+
+
+def _raise_if_challenge(page):
+    try:
+        seen = page.evaluate(
+            """() => (document.title || '') + ' ' + (document.body ? document.body.innerText : '')
+                + (document.querySelector('#b_captcha, iframe[src*="captcha"], .captcha') ? ' captcha' : '')"""
+        )
+    except Exception:  # noqa: BLE001 - detection is best effort
+        return
+    if isinstance(seen, str) and is_challenge_text(seen):
+        raise ChallengeError("captcha: Bing served a challenge page")
 
 
 def browser_search(query, max_results, sync_playwright=None):
@@ -127,6 +179,8 @@ def browser_search(query, max_results, sync_playwright=None):
                         };
                     })"""
                 )
+                if not rows:
+                    _raise_if_challenge(page)
                 results, seen = [], set()
                 for row in rows or []:
                     real = decode_bing_href(row.get("href"))
@@ -154,61 +208,110 @@ def browser_search(query, max_results, sync_playwright=None):
             browser.close()
 
 
-def _ddgs_step(query, max_results, ddgs_factory):
-    """Return (results, why_not). why_not is None when there is at least one usable result."""
+def _normalise(hits):
+    results = []
+    for hit in hits or []:
+        url = (hit.get("href") or "").strip()
+        if not url:
+            continue
+        results.append({"title": hit.get("title") or "", "url": url, "snippet": hit.get("body") or ""})
+    return results
+
+
+def _ddgs_attempt(query, max_results, ddgs_factory, engine=None):
+    """One ddgs call. Returns (results, outcome, why); why is None when outcome is 'ok'."""
     forced = os.environ.get("SEARCH_HELPER_FORCE_DDGS")
     if forced == "fail":
-        return [], "forced failure"
+        return [], "error", "forced failure"
     if forced == "empty":
-        return [], "no results"
+        return [], "empty", "no results"
+    if forced == "ratelimit":
+        return [], "rate_limited", "forced rate limit"
+    if forced == "captcha":
+        return [], "captcha", "forced captcha"
     try:
-        client = (ddgs_factory or _default_factory)()
-        hits = client.text(query, region=REGION, safesearch="moderate", max_results=max_results)
-        results = []
-        for hit in hits or []:
-            url = (hit.get("href") or "").strip()
-            if not url:
-                continue
-            results.append({"title": hit.get("title") or "", "url": url, "snippet": hit.get("body") or ""})
-        return results, (None if results else "no results")
+        if engine is None:
+            client = (ddgs_factory or _default_factory)()
+            hits = client.text(query, region=REGION, safesearch="moderate", max_results=max_results)
+        else:
+            client = (ddgs_factory or _default_factory)(timeout=ENGINE_TIMEOUT_S)
+            hits = client.text(
+                query, region=REGION, safesearch="moderate", max_results=max_results, backend=engine
+            )
+        results = _normalise(hits)
+        if results:
+            return results, "ok", None
+        return [], "empty", "no results"
     except Exception as e:  # noqa: BLE001 - contract: report, never raise
-        return [], f"{type(e).__name__}: {e}"
+        return [], classify_failure(e), f"{type(e).__name__}: {e}"
 
 
-def run(query, max_results, ddgs_factory=None, browser_search=None):
-    """browser_search=None disables the browser fallback (ddgs-only); main() passes the real one."""
+def _browser_attempt(query, max_results, browser_search):
+    """Returns (results, outcome, why)."""
+    forced = os.environ.get("SEARCH_HELPER_FORCE_BROWSER")
+    if forced == "fail":
+        return [], "error", "forced failure"
+    if forced == "captcha":
+        return [], "captcha", "forced captcha"
+    try:
+        found = browser_search(query, max_results)
+    except Exception as e:  # noqa: BLE001 - contract: report, never raise
+        return [], classify_failure(e), f"{type(e).__name__}: {e}"
+    if found:
+        return found, "ok", None
+    return [], "empty", "no results"
+
+
+def run(query, max_results, ddgs_factory=None, browser_search=None, backends=None, use_browser=True):
+    """browser_search=None disables the browser fallback (ddgs-only); main() passes the real one.
+
+    backends=None: one ordinary ddgs call. A list: each engine tried alone, in order (empty list: no ddgs
+    call). use_browser=False skips the browser step (it is resting) and records no browser attempt."""
     max_results = max(MIN_MAX, min(MAX_MAX, max_results))
-    results, why = _ddgs_step(query, max_results, ddgs_factory)
-    if why is None:
-        return {"results": results, "backend": "ddgs"}
-    if browser_search is None:
-        if why == "no results":
-            return {"results": [], "backend": "ddgs"}
-        return {"error": "search_failed", "detail": why}
-    # Test-only hook: simulate browser step failure
-    if os.environ.get("SEARCH_HELPER_FORCE_BROWSER") == "fail":
-        bwhy = "forced failure"
-    else:
-        try:
-            found = browser_search(query, max_results)
-            bwhy = None if found else "no results"
-        except Exception as e:  # noqa: BLE001 - contract: report, never raise
-            found, bwhy = [], f"{type(e).__name__}: {e}"
+    attempts, whys = [], []
+    names = ["ddgs"] if backends is None else list(backends)
+    for name in names:
+        results, outcome, why = _ddgs_attempt(
+            query, max_results, ddgs_factory, None if backends is None else name
+        )
+        attempts.append({"backend": name, "outcome": outcome})
+        if why is None:
+            return {"results": results, "backend": name, "attempts": attempts}
+        whys.append(why if backends is None else f"{name}: {why}")
+    ddgs_detail = "; ".join(whys) if whys else "no ddgs backend allowed"
+    all_empty = bool(attempts) and all(a["outcome"] == "empty" for a in attempts)
+    if browser_search is None or not use_browser:
+        if all_empty:
+            return {"results": [], "backend": attempts[-1]["backend"], "attempts": attempts}
+        return {"error": "search_failed", "detail": ddgs_detail, "attempts": attempts}
+    found, outcome, bwhy = _browser_attempt(query, max_results, browser_search)
+    attempts.append({"backend": "browser", "outcome": outcome})
     if bwhy is None:
-        return {"results": found[:max_results], "backend": "browser"}
-    return {"error": "search_failed", "detail": f"ddgs: {why}; browser: {bwhy}"}
+        return {"results": found[:max_results], "backend": "browser", "attempts": attempts}
+    return {
+        "error": "search_failed",
+        "detail": f"ddgs: {ddgs_detail}; browser: {bwhy}",
+        "attempts": attempts,
+    }
 
 
 def main(argv=None):
     parser = _Parser(prog="search.py")
     parser.add_argument("--query", required=True)
     parser.add_argument("--max", type=int, default=5)
+    parser.add_argument("--backends", default=None)
+    parser.add_argument("--no-browser", action="store_true")
     try:
         args = parser.parse_args(argv)
         query = args.query.strip()
         if not query:
             raise ValueError("--query must not be empty")
-        out = run(query, args.max, browser_search=browser_search)
+        backends = None
+        if args.backends is not None:
+            backends = [b.strip() for b in args.backends.split(",") if b.strip()]
+        out = run(
+            query, args.max, browser_search=browser_search, backends=backends, use_browser=not args.no_browser
+        )
     except ValueError as e:
         out = {"error": "bad_request", "detail": str(e)}
     sys.stdout.write(json.dumps(out) + "\n")

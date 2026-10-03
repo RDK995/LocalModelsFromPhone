@@ -13094,7 +13094,7 @@
         "FR40"
       ],
       "traces": "AC28 (rate-limit 1 h, CAPTCHA 24 h, cache, ordinary replies unchanged)",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
       "baseline": "7adc092e938134a3455fabdf19f1f02043f381d2 on m20-search-breakers-cache",
@@ -13138,7 +13138,17 @@
             "reason_code": "ORDINARY_IMPLEMENTATION",
             "detail": "one Python file + tests; changes I17 output contract that T2 depends on; rate-limit/CAPTCHA classification needs judgement"
           },
-          "attempts": []
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M20-T1-verifier.log",
+              "note": "52 helper tests OK; 6 existing equality tests gained the required additive 'attempts' key (verifier: not weakened)"
+            }
+          ]
         },
         {
           "id": "M20-T2",

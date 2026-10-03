@@ -614,7 +614,7 @@ Human decisions:
 
 ## M20 — Search backends rest after being blocked, and repeated searches and page reads come from cache
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -644,6 +644,8 @@ Pending.
 7adc092e938134a3455fabdf19f1f02043f381d2 on m20-search-breakers-cache
 
 ### Evidence
+
+- M20-T1 helper per-engine attempts (`--backends`, `--no-browser`, `attempts`, classify_failure) — Mid (ORDINARY_IMPLEMENTATION), attempt 3 PASS; verifier PASS, `cd search/helper && .venv/bin/python -m unittest test_search -v` exit 0, 52 tests — .harness/evidence/M20-T1-verifier.log.
 
 ### Validation
 
