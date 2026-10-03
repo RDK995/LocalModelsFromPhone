@@ -513,10 +513,11 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
     task: string,
     userContent: string,
     schema: Schema,
-    validate: (v: unknown) => T | null
+    validate: (v: unknown) => T | null,
+    singleAttemptThinkingOff = false
   ): Promise<T | null> {
     // FR42: plan and write think; every other step is thinking-off, capped and non-thinking-sampled.
-    const thinks = name === "plan" || name === "write";
+    const thinks = (name === "plan" || name === "write") && !singleAttemptThinkingOff;
     const request: OllamaChatRequest = {
       model,
       messages: [
@@ -534,6 +535,13 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
       think: thinks,
       keep_alive: -1,
     };
+    if (singleAttemptThinkingOff) {
+      // M19j-T8: the plan top-up. Same shape as the guard reissue below (thinking off, no cap, only the
+      // phase deadline), one attempt; a failed or malformed reply is simply ignored by the caller.
+      request.options = { num_ctx: s.numCtx };
+      const only = await sendAttempt(name, request, 1, null, validate);
+      return only.ok ? only.value : null;
+    }
     // FR42: thinking-off steps get a hard cap; plan and write a thinking guard (until answer content starts).
     const limit = thinks
       ? { ms: name === "plan" ? s.planGuardMs : s.writeGuardMs, kind: "guard" as const }
@@ -971,7 +979,34 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
         SCHEMAS.plan,
         VALIDATORS.plan
       );
-      plan = p ? p.slice(0, Math.max(1, s.subQuestionCount)) : [brief];
+      if (p) {
+        // FR35: the server, not the model, sets the count. De-duplicate, ask once for the missing ones, top up.
+        const count = Math.max(1, s.subQuestionCount);
+        const key = (q: string) => q.trim().toLowerCase().replace(/\s+/g, " ");
+        const kept: string[] = [];
+        const addDistinct = (items: string[]) => {
+          for (const q of items) {
+            if (kept.length >= count) break;
+            if (!kept.some((k) => key(k) === key(q))) kept.push(q);
+          }
+        };
+        addDistinct(p);
+        if (kept.length < count) {
+          const more = await modelStep(
+            "plan",
+            `The plan so far has these sub-questions: ${kept.map((q, i) => `${i + 1}. ${q}`).join(" ")} ` +
+              `Give exactly ${count - kept.length} further distinct sub-questions to research on the web, different from those. ` +
+              PLAN_PRICES_RULE,
+            context(`Question:\n${question}`),
+            SCHEMAS.plan,
+            VALIDATORS.plan,
+            true
+          );
+          if (more) addDistinct(more);
+        }
+        addDistinct([brief, question]);
+        plan = kept;
+      } else plan = [brief];
       planOpen = false;
       yield step({ step_id: "plan", kind: "plan", status: "done" });
 

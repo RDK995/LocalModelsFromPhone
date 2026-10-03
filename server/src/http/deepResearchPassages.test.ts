@@ -55,6 +55,8 @@ interface SetupOptions {
   pageText: (url: string) => string;
   /** Notes reply for the page block of a notes request. */
   notes?: (block: { n: number; body: string }) => Array<{ quote: string; claim: string }>;
+  /** Plan reply; defaults to the single SUB_QUESTION. When set, only the first sub-question chooses pages to read. */
+  subQuestions?: string[];
 }
 
 function setup(opts: SetupOptions) {
@@ -73,9 +75,9 @@ function setup(opts: SetupOptions) {
       const keys = Object.keys(request.format?.properties ?? {});
       let reply: unknown;
       if (keys.includes("brief")) reply = { brief: "About zebras" };
-      else if (keys.includes("sub_questions")) reply = { sub_questions: [SUB_QUESTION] };
+      else if (keys.includes("sub_questions")) reply = { sub_questions: opts.subQuestions ?? [SUB_QUESTION] };
       else if (keys.includes("queries")) reply = { queries: ["alpha", "beta", "gamma"] };
-      else if (keys.includes("pages")) reply = { pages: [1, 2, 3, 4] };
+      else if (keys.includes("pages")) reply = { pages: opts.subQuestions && !String(request.messages[1].content).includes("(1 of ") ? [] : [1, 2, 3, 4] };
       else if (keys.includes("notes")) {
         const block = noteBlock(request);
         reply = { notes: block && opts.notes ? opts.notes(block) : [] };
@@ -255,6 +257,7 @@ describe("deep research note excerpt (M19c FR43)", () => {
     const s = setup({
       pageText: (url) => pages[url]!,
       research: { pagesPerSubQuestion: 4 },
+      subQuestions: [SUB_QUESTION, "zebra herd feeding grounds", "zebra predators and threats"],
       notes: () => [{ quote: INTRO, claim: "claim intro" }],
     });
     try {

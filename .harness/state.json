@@ -12862,7 +12862,15 @@
             "detail": "small control-flow change in the plan step with one extra bounded model call; fully specified; fake-Ollama provable"
           },
           "artifact": ".harness/tasks/M19j-T8.md",
-          "status": "IN_PROGRESS"
+          "status": "PASS",
+          "attempts": [
+            "Mid run 1: implementation correct (focused 5 pass) but 4 existing tests scripted short plans; packet barred editing them - worker stopped correctly. Packet error, no rung spent (precedent M19i-T2).",
+            "Mid run 2 (packet revision: fixture-only edits to deepResearchModelCalls.test.ts and deepResearchPassages.test.ts) PASS; verifier PASS 379 pass, tsc clean; only changed assertions: labels '(1 of 2): sq one'->'(1 of 3)', '(2 of 2): sq two'->'(2 of 3)'"
+          ],
+          "evidence": [
+            ".harness/evidence/M19j-T8-worker.log",
+            ".harness/evidence/M19j-T8-verifier.log"
+          ]
         }
       ],
       "reviews": [],
@@ -12914,6 +12922,11 @@
           "when": "2026-10-03",
           "decision": "Answer 'Yes': add ONE non-price deep research question, 'What caused the 2008 financial crisis?', to the live re-run, run one at a time through the server API after the code fixes; save report, stream and run result under .harness/evidence/ and record a per-report check for misplaced price/cost content (price/cost section, current-unit-prices sub-question, or 'no current price was found'). An extra recorded check outside AC35: NOT an acceptance criterion, does not gate pass/fail."
         }
+      ],
+      "remaining_work": [
+        "T9 (Cheap, BOUNDED_LOW_RISK, model on packet M19j-T3/T4): restart com.harness.server onto HEAD after T8 (standing permission), confirm qwen3.5:35b-a3b resident; then five live runs strictly one at a time through the server API with server/scripts/ac29-live-run.ts: heat x3, ev x1 (AC35), plus the extra non-gating question 'What caused the 2008 financial crisis?' (add to server/scripts/ac29-questions.json under a new id, e.g. gfc2008); save stream/fr41/result/run logs as .harness/evidence/M19j-T9-<run>-*; record the AC29 bar per AC35 run.",
+        "T10 (Top, NO_TEST_ORACLE, model on packet M19j-T5): extract the reports verbatim, judge AC2 (cited GBP running-cost figure, 3 of 4) and AC3 (no undated past period as current) per AC35 report, and for the 2008 run check for misplaced price/cost content (price/cost section, current-unit-prices sub-question, 'no current price was found'); record in .harness/evidence/M19j-T10-judgement.md.",
+        "Then ask the owner's opinion of report quality (not a gate), record it, update AC statuses, set REVIEW."
       ]
     },
     "M20": {

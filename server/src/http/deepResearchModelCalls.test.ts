@@ -46,7 +46,7 @@ const REPORT = "Cats sleep a lot [1] and purr [2]. Also see [99] and https://typ
 function replyFor(format: any, userText: string): unknown {
   const keys = Object.keys(format?.properties ?? {});
   if (keys.includes("brief")) return { brief: "About cats" };
-  if (keys.includes("sub_questions")) return { sub_questions: ["sq one", "sq two"] };
+  if (keys.includes("sub_questions")) return { sub_questions: ["sq one", "sq two", "sqthree"] };
   if (keys.includes("queries")) return { queries: ["alpha", "beta", "gamma"] };
   if (keys.includes("pages")) return { pages: [1, 2] };
   if (keys.includes("notes")) {
@@ -522,8 +522,8 @@ describe("deep research call time limits (M19b FR42)", () => {
         expect.objectContaining({ think: false, attempt: 2, outcome: "ok" }),
       ]);
       const queryTexts = s.requests.filter((r) => stepOf(r) === "queries").map((r) => r.messages[1].content as string);
-      expect(queryTexts.some((t) => t.includes("Current sub-question (1 of 2): sq one"))).toBe(true);
-      expect(queryTexts.some((t) => t.includes("Current sub-question (2 of 2): sq two"))).toBe(true);
+      expect(queryTexts.some((t) => t.includes("Current sub-question (1 of 3): sq one"))).toBe(true);
+      expect(queryTexts.some((t) => t.includes("Current sub-question (2 of 3): sq two"))).toBe(true);
       expect(done.research.status).toBe("complete");
     } finally {
       s.server.stop(true);
