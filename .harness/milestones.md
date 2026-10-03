@@ -521,7 +521,7 @@ Cycle 1: PASS - reviewer tier Mid (sonnet; highest task tier Mid: T2 sonnet, T1 
 
 ## M19j — Dated, priced deep research reports proven live on the Mac
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -535,7 +535,7 @@ C4, C6, C7, C11, C12, C13
 
 ### As-Built
 
-Pending.
+.harness/as-built/M19j.md - RECORDED - 5 of 7 files attributed; components C4, C6, C7, C12; 2 claim mismatches: C11 (Ollama) and C13 (Search service) claimed but not observed - external components unchanged.
 
 ### Acceptance Criteria
 
@@ -597,7 +597,7 @@ Pending.
 
 ### Review
 
-Pending.
+Cycle 1: PASS (2026-10-03), tier Top (opus) - diff contains Top-routed tasks (T5, T6, T12); whole milestone 6a56912..447a7b0. Per-criterion: AC1 PASS, AC2 PASS on the owner-amended 2-of-4 bar (original 3-of-4 not met), AC3 PASS. Findings: 0 BLOCKER, 0 IMPORTANT, 2 OPTIONAL (recorded under Follow-ups). Reviewer re-ran bun test (379 pass), typecheck (clean) and --check-only on all five T11 runs (exit 0); log .harness/evidence/M19j-review.log.
 
 Human Escalation (BLOCKED, 2026-10-03, after the re-run; resolved 2026-10-03 - owner chose (b), see Human decisions below):
 
@@ -655,6 +655,9 @@ Human decisions:
 - check-state.py (harness updated 2026-10-03 06:33) reports two pre-existing errors on M1's legacy plan object (`milestones.M1.plan.status is invalid: None`, `milestones.M1.plan names no artifact`); unrelated to M19j, left untouched.
 - AC35 / FR46 in .harness/requirements.md still state the original bar (at least 3 of 4 reports with a cited GBP running-cost figure); the owner accepted 2 of 4 for M19j on 2026-10-03 ("Accept and move on"). Update AC35 / FR46 via roast-requirements to reflect that acceptance.
 - Unaddressed root cause of M19j-AC2's shortfall: research finds per-unit prices but not typical yearly usage (kWh of gas and electricity, miles driven), so the model cannot work a cited running-cost sum (M19j-T12-judgement.md). Candidate fix (escalation option (a)): a cost question's prices sub-question also asks for typical yearly usage, proven with the scripted fake Ollama, then a fresh re-run.
+- Review M19j cycle 1 OPTIONAL: the M19j Outcome text still says 'at least three of the four reports'; fold into the AC35/FR46 roast-requirements update.
+- Review M19j cycle 1 OPTIONAL: the M19j-T8 plan top-up request runs thinking off with no per-call time cap, output cap or routine sampling settings (only the plan phase deadline bounds it), unlike FR42; either pass s.routineCapMs / s.routineNumPredict or record the exception in FR42.
+
 
 ## M20 — Search backends rest after being blocked, and repeated searches and page reads come from cache
 
