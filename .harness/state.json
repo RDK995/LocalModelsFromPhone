@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M19i",
+  "current_milestone": "M19j",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -12660,10 +12660,10 @@
       "architecture": "C4, C6, C7, C11, C12, C13",
       "requirements": [],
       "traces": "AC35, AC29 (pass bar)",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
-      "baseline": null,
+      "baseline": "6a56912889985f168d355548965a977c0ecc7a7c on m19j-live-priced-reports",
       "as_built": {
         "artifact": null,
         "result": "PENDING"
@@ -12702,7 +12702,8 @@
       "planning_notes": [
         "Shape/size check 2026-10-03: 3 criteria, all through a real entry point (server POST /v1/chat on the live Mac); one signal IMPLEMENTATION_PLUS_LIVE_PROOF, seam check: proof only, server/scripts/ac29-live-run.ts already captures the AC29 pass bar (it may need the EV question added) - not split.",
         "Question texts: heat pump (recovered verbatim 2026-10-02, see M19g planning_notes): 'How do heat pumps compare with gas boilers for heating a typical UK home in 2026? Cover running costs, installation costs, grants available and how well they work in cold weather.'; EV vs petrol (AC35 verbatim): 'What does it cost to run an electric car compared with a petrol car in the UK in 2026? Cover charging and fuel costs per year for typical mileage.'. Runs strictly one at a time (M19g-T4 lesson: overlapping POSTs get 409 generation_in_flight).",
-        "AC35 is carried as M19j-AC1..AC3 (AC29 bar on 4 runs with saved reports; 3 of 4 cited GBP figures; no undated past period as current, owner opinion recorded)."
+        "AC35 is carried as M19j-AC1..AC3 (AC29 bar on 4 runs with saved reports; 3 of 4 cited GBP figures; no undated past period as current, owner opinion recorded).",
+        "Pickup check 2026-10-03 (implementation phase): 3 criteria (run), M19j-AC1 through the real server API, one signal IMPLEMENTATION_PLUS_LIVE_PROOF with seam check passed (proof only; only data change is adding the ev question to server/scripts/ac29-questions.json) - not split."
       ]
     },
     "M20": {

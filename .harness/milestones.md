@@ -579,7 +579,7 @@ Cycle 1: PASS - reviewer tier Mid (sonnet; highest task tier Mid: T2 sonnet, T1 
 
 ## M19j — Dated, priced deep research reports proven live on the Mac
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -602,6 +602,8 @@ Pending.
 - [ ] **M19j-AC3**: None of the 4 reports names a past period (e.g. "early 2024") as current prices unless a note it cites gives that period; the per-report check is recorded in evidence, and the owner's opinion of report quality is recorded (not a gate).
 
 ### Baseline
+
+6a56912889985f168d355548965a977c0ecc7a7c on m19j-live-priced-reports
 
 ### Evidence
 
