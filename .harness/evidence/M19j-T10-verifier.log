@@ -1,0 +1,62 @@
+=== M19j-T10 Verification ===
+Date: 2026-10-03
+Verifier: Claude Haiku 4.5
+Repository: /Users/ryankenny/Projects/CodingHarnessv2
+Branch: m19j-live-priced-reports
+Current commit: 02c13225ef4c7f0e04fba9bcf226b092f2380a66
+
+--- Test Verification ---
+
+TEST 1: pgrep -fl ac29-live-run
+Command: pgrep -fl ac29-live-run
+Exit Status: 1
+Output: (no process found)
+Result: PASS - No ac29-live-run process running
+
+TEST 2: Health endpoint check
+Command: curl --max-time 10 -s -o /dev/null -w '%{http_code}' http://127.0.0.1:7789/health
+Exit Status: 0
+Output: 401
+Result: PASS - Health endpoint returns 401 (expected: 401 or 200)
+
+TEST 3: launchctl list for com.harness.server
+Command: launchctl list | grep com.harness.server
+Output: 39257	-15	com.harness.server
+Current PID: 39257
+Result: PASS - PID 39257 is different from old PID 29953
+
+TEST 4: New process start time
+Command: ps -o pid,lstart -p 39257
+Output:
+  PID STARTED
+39257 Sat  3 Oct 07:25:16 2026
+New start time: 2026-10-03T07:25:16+01:00
+Result: PASS - Start time is after last server/src commit
+
+TEST 5: Git log for server/src commit time
+Command: git log -1 --format='%cI' -- server/src
+Output: 2026-10-03T07:23:31+01:00
+Result: PASS - New start time (07:25:16) is after commit time (07:23:31)
+
+--- Files Changed Analysis ---
+Files outside .harness/: server/scripts/ac29-live-run.ts, server/scripts/ac29-questions.json
+Assessment: Both files are from concurrent task M19j-T9 (not this task's responsibility)
+
+Files created by this task: .harness/evidence/M19j-T10-restart.log (untracked)
+Assessment: PASS - Only allowed file created
+
+--- Test Criteria Exercise ---
+Criterion 1: launchctl list shows pid different from before, with start time after commit
+Exercise: TEST 3 and TEST 4 confirm new PID 39257 (vs old 29953) with start time 2026-10-03T07:25:16+01:00 after commit 2026-10-03T07:23:31+01:00
+
+Criterion 2: Health endpoint returns 401 or 200
+Exercise: TEST 2 confirms curl returns 401
+
+Criterion 3: pgrep -fl ac29-live-run prints nothing
+Exercise: TEST 1 confirms no process found (exit status 1, no output)
+
+--- Overall Result ---
+All tests PASS
+All acceptance criteria exercised
+No unauthorized files changed
+Verification complete: SUCCESS
