@@ -12836,7 +12836,7 @@
           "id": "M19j-T7",
           "scope": "WRITE_SUM_RULE strengthened: a cost question's report must give a running-cost money figure per compared option (FR46(d), human decision option (a))",
           "routing": {
-            "tier": "cheap",
+            "tier": "Cheap",
             "model": "haiku",
             "reason_code": "BOUNDED_LOW_RISK",
             "detail": "exact replacement text for one prompt constant plus string-presence route test"
@@ -12856,7 +12856,7 @@
           "id": "M19j-T8",
           "scope": "Plan top-up: short plan gets one thinking-off extra plan request, then brief, then question, so the server sets the sub-question count (FR35, human decision option (a))",
           "routing": {
-            "tier": "mid",
+            "tier": "Mid",
             "model": "sonnet",
             "reason_code": "ORDINARY_IMPLEMENTATION",
             "detail": "small control-flow change in the plan step with one extra bounded model call; fully specified; fake-Ollama provable"
