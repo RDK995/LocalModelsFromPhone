@@ -13658,7 +13658,8 @@
       "findings": [],
       "validation": [],
       "follow_ups": [
-        "AC29 amended 2026-10-02 to add the 2026-10-02 heat-pump question: M21-AC1, title and outcome updated at planning on 2026-10-02 to the four-question set. M19g runs the same set before M20 for AC32; M21 re-runs it after M20 because M20 changes the search path. M21-AC2 is unaffected."
+        "AC29 amended 2026-10-02 to add the 2026-10-02 heat-pump question: M21-AC1, title and outcome updated at planning on 2026-10-02 to the four-question set. M19g runs the same set before M20 for AC32; M21 re-runs it after M20 because M20 changes the search path. M21-AC2 is unaffected.",
+        "Owner decision 2026-10-03, selected verbatim: \"Note both for later\" (\"Both are written down as known problems for a later round, and this milestone finishes as planned\"). Not fixed in M21; neither gates it. (i) Citation concentration: in the phone reply (.harness/evidence/M21-AC2-phone-screenshot-1.png) all three inline citations point to the same one source (\"Lebensraum: Nazi Geopolitics and Expansion Explained\") although Sources (6) lists six. (ii) Bot-check pages saved as sources: two of those six sources are titled \"Client Challenge\" (the scribd.com reads) - apparently a bot-check/challenge page saved as the source instead of the article."
       ],
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
@@ -13675,6 +13676,20 @@
           "selected_verbatim": "Fix the cause first",
           "option_text": "Stop and look into why the address changes. Probably a small fix, then all four questions are re-run (about 15\u201320 minutes plus the fix).",
           "action": "M21-T5 diagnose+fix, restart server, M21-T6 re-run all four, M21-T7 regenerate reading file; then owner opinion + M21-T4"
+        },
+        {
+          "date": "2026-10-03",
+          "topic": "owner opinion of report quality for M21-AC1",
+          "selected_verbatim": "Use my phone comment",
+          "option_text": "Record the owner's phone comment verbatim as their opinion, noting it was made about the phone reply",
+          "action": "recorded verbatim: \"Many sources but all source in response are the same\""
+        },
+        {
+          "date": "2026-10-03",
+          "topic": "phone reply quality issues: single-source citations; 'Client Challenge' sources",
+          "selected_verbatim": "Note both for later",
+          "option_text": "Both are written down as known problems for a later round, and this milestone finishes as planned",
+          "action": "recorded under M21 follow_ups; not fixed in M21"
         }
       ]
     },

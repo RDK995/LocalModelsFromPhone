@@ -608,6 +608,8 @@ Pending.
 
 - HANDOFF (orchestrator 3, CONTINUE, waiting on the owner; supersedes handoff 2): T6R, T6 (all four) and T7 accepted. The phone is free to use again — no live run is in flight. Remaining: (1) the owner's opinion of .harness/evidence/M21-T7-reports.md, recorded here word for word (M21-AC1 opinion part, not a gate); (2) the owner's phone screenshot path(s) of a finished deep research reply for M21-T4 (Mid, sonnet; its packet reads M21-T2 timing — amend to require the screenshot after the M21-T6 runs, which end 2026-10-03T16:45:11Z, before dispatch). After those: record opinion, run M21-T4 + verifier, view the image, record ### Validation, set REVIEW. Housekeeping due: milestones.md is past 400 lines; archive settled milestones per the template before or at the REVIEW return.
 
+- OWNER OPINION 2026-10-03 (M21-AC1 opinion part, not a gate), recorded verbatim: "Many sources but all source in response are the same". Given by the owner with their phone screenshot of the deep research reply to "What was the cause of World War Two from German perspective" (the M21-T4 reply), not about .harness/evidence/M21-T7-reports.md; asked what to record as their opinion for M21-AC1, the owner chose, verbatim, "Use my phone comment".
+
 ### Validation
 
 ### Review
@@ -621,6 +623,7 @@ Pending.
 ### Follow-ups
 
 - AC29 amended 2026-10-02 to add the 2026-10-02 heat-pump question: M21-AC1, title and outcome updated at planning on 2026-10-02 to the four-question set. M19g runs the same set before M20 for AC32; M21 re-runs it after M20 because M20 changes the search path. M21-AC2 is unaffected.
+- Owner decision 2026-10-03, selected verbatim: "Note both for later" ("Both are written down as known problems for a later round, and this milestone finishes as planned"). Not fixed in M21; neither gates it. (i) Citation concentration: in the phone reply (.harness/evidence/M21-AC2-phone-screenshot-1.png) all three inline citations point to the same one source ("Lebensraum: Nazi Geopolitics and Expansion Explained") although Sources (6) lists six. (ii) Bot-check pages saved as sources: two of those six sources are titled "Client Challenge" (the scribd.com reads) - apparently a bot-check/challenge page saved as the source instead of the article.
 
 ## M5a — Always-on server and bundle host
 
