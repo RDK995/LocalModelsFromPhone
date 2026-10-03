@@ -584,6 +584,9 @@ Pending.
 
 - M21-T2 heat 2026-10-02 heat-pump question (Cheap, BOUNDED_LOW_RISK) attempt 1 PASS; verifier PASS: run log `exit=0`; generation 29feea53-c764-4bd6-91cf-63884e023650, final_status complete, total_wall_s 220.239 (limit 540), distinct_pages_read 6, notes_kept 13, cited_read_pages 5, unresolved_citations []; check-only exit 0, pass true — .harness/evidence/M21-T2-heat-result.json, .harness/evidence/M21-T2-heat-verifier.log.
 
+- M21-T3 owner reading file (Cheap, BOUNDED_LOW_RISK) attempt 1 PASS; verifier PASS: .harness/evidence/M21-T3-reports.md holds the four questions verbatim, each result.json metrics line, the report text reassembled from the stream (exact match: q1 2015, q2 1102, q3 1399, heat 3137 chars) and the full source lists (5, 4, 6, 6), no opinion added — .harness/evidence/M21-T3-verifier.log (worker notes .harness/evidence/M21-T3-worker.log). Owner's opinion: NOT YET RECORDED.
+- HANDOFF (orchestrator 1, CONTINUE, waiting on the owner): (1) q2 failed the bar (see q2 entry): owner to choose re-run q2 once / accept as substantively met with the URL note / stop and look into why; (2) owner's opinion of the four reports in M21-T3-reports.md, to be recorded word for word here; (3) owner's phone screenshot path(s) for M21-T4 (Mid, sonnet), which has not been dispatched. After those: record opinion, run M21-T4 + verifier, view the image, record ### Validation, set REVIEW.
+
 ### Validation
 
 ### Review

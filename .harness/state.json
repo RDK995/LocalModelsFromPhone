@@ -13475,7 +13475,17 @@
             "reason_code": "BOUNDED_LOW_RISK",
             "detail": "verbatim copy from saved streams; settled by verbatim-match and source-count checks"
           },
-          "attempts": []
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M21-T3-verifier.log",
+              "note": "reading file built; exact match of report text (q1 2015, q2 1102, q3 1399, heat 3137 chars) and sources (5,4,6,6). Owner opinion not yet recorded."
+            }
+          ]
         },
         {
           "id": "M21-T4",
