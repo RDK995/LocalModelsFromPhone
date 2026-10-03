@@ -13094,7 +13094,7 @@
         "FR40"
       ],
       "traces": "AC28 (rate-limit 1 h, CAPTCHA 24 h, cache, ordinary replies unchanged)",
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": "7adc092e938134a3455fabdf19f1f02043f381d2 on m20-search-breakers-cache",
@@ -13107,19 +13107,31 @@
           "id": "M20-AC1",
           "text": "Search service tests through its HTTP search API with faked backends and a controlled clock: a backend returning rate-limit / too-many-requests is skipped for 1 hour and one returning a CAPTCHA or bot-check for 24 hours, searches go to the remaining backends then the headless browser meanwhile, and with every backend resting or failing the search is \"unavailable\" as in FR20.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "search/src/http/breakers.test.ts",
+            ".harness/evidence/M20-T1-verifier.log",
+            ".harness/evidence/M20-T2-verifier.log"
+          ]
         },
         {
           "id": "M20-AC2",
           "text": "Search service tests: a repeated search (after query normalisation) and a repeated page read (by final URL) within 24 hours are served from the Mac-side cache without contacting a backend or the page; after 24 hours they are fetched again.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "search/src/http/cache.test.ts",
+            ".harness/evidence/M20-T3-verifier.log",
+            ".harness/evidence/M20-T4-cache-live.log"
+          ]
         },
         {
           "id": "M20-AC3",
           "text": "Ordinary web replies go through the same breakers and cache; all existing ordinary-web and switch-off tests pass unchanged, and the existing live proofs (server/scripts/web-chat-proof.sh, server/scripts/web-failure-proof.sh) still pass.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            ".harness/evidence/M20-T4-verifier.log",
+            ".harness/evidence/M20-T4-verify-web-chat-proof.log",
+            ".harness/evidence/M20-T4-verify-web-failure-proof.log"
+          ]
         }
       ],
       "tasks": [
@@ -13239,13 +13251,55 @@
               "model": "haiku",
               "result": "INTERRUPTED",
               "note": "worker hit 40-turn limit while web-chat-proof.sh was still running in its background. Persisted (uncommitted, unverified): .harness/evidence/M20-T4-{server-tests(379 pass),search-tests(175 pass),helper-tests(52 OK),restart(pid 61417, health 200),cache-live(2nd x-cache: hit)}.log; M20-T4-web-chat-proof.log partial; web-failure-proof not yet run. Not a ladder rung."
+            },
+            {
+              "attempt": "1-continuation",
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M20-T4-verifier.log",
+              "note": "continuations re-ran the proofs; two concurrent continuation returns contradicted each other and were discarded (the worker's M20-T4-web-chat-proof.log was void and is removed); acceptance rests on the verifier's own one-at-a-time re-run: server bun test 379 pass + typecheck 0, search bun test+typecheck 175 pass, helper unittest 52 OK, git diff 7adc092 HEAD -- server/ empty, health 200, web-chat-proof.sh exit 0, web-failure-proof.sh exit 0; live repeat search x-cache miss then hit (.harness/evidence/M20-T4-cache-live.log). Tests Weakened NO. Proof-script side effects on older M9-T5-*/M13-T3 evidence restored with git checkout."
             }
           ]
         }
       ],
       "reviews": [],
       "findings": [],
-      "validation": [],
+      "validation": [
+        {
+          "command": "cd search && bun test && bun run typecheck",
+          "artifacts": [
+            ".harness/evidence/M20-T4-verifier.log",
+            ".harness/evidence/M20-T3-verifier.log"
+          ],
+          "status": "PASS (verifier: 175 pass, tsc clean)"
+        },
+        {
+          "command": "cd search/helper && .venv/bin/python -m unittest test_search",
+          "artifacts": [
+            ".harness/evidence/M20-T4-verifier.log",
+            ".harness/evidence/M20-T1-verifier.log"
+          ],
+          "status": "PASS (verifier: 52 OK)"
+        },
+        {
+          "command": "cd server && bun test && bun run typecheck; git diff --stat 7adc092 HEAD -- server/",
+          "artifacts": [
+            ".harness/evidence/M20-T4-verifier.log"
+          ],
+          "status": "PASS (verifier: 379 pass, tsc clean; server/ unchanged since baseline)"
+        },
+        {
+          "command": "bash server/scripts/web-chat-proof.sh && bash server/scripts/web-failure-proof.sh (live, com.harness.search restarted onto M20 code)",
+          "artifacts": [
+            ".harness/evidence/M20-T4-verify-web-chat-proof.log",
+            ".harness/evidence/M20-T4-verify-web-failure-proof.log",
+            ".harness/evidence/M20-T4-cache-live.log"
+          ],
+          "status": "PASS (verifier: both exit 0; live repeat search x-cache miss then hit)"
+        }
+      ],
       "follow_ups": [
         "FR40 amended 2026-10-02: ordinary and switch-off replies also get FR45's stream keep-alive, per-outage resume allowance and error line; those are built and proven in M19e and M19f (AC31). M20-AC3's 'existing ordinary-web and switch-off tests pass unchanged' is judged against the suite as it stands after M19f. M20's criteria are otherwise unaffected."
       ],
