@@ -27,6 +27,9 @@ const json = (status: number, body: unknown) =>
     headers: { "Content-Type": "application/json" },
   });
 
+/** 40+ plain words, so a fixture page counts as readable (FR47). */
+const FILLER = Array.from({ length: 45 }, (_, i) => `word${i}`).join(" ");
+
 const call = (name: string, args: Record<string, unknown>) => ({
   function: { name, arguments: args },
 });
@@ -82,7 +85,7 @@ describe("createWebTools", () => {
 
   it("read_page labels the page with the number from numberPage", async () => {
     const f = fakeSearch(() =>
-      json(200, { url: "u", final_url: "https://p.example/b", title: "Page T", markdown: "body" }),
+      json(200, { url: "u", final_url: "https://p.example/b", title: "Page T", markdown: `body ${FILLER}` }),
     );
     try {
       const w = createWebTools({ baseUrl: f.baseUrl });
@@ -246,7 +249,7 @@ describe("createWebTools", () => {
         url: "https://p.example/a",
         final_url: "https://p.example/b",
         title: "Page T",
-        markdown: "# Hello body",
+        markdown: `# Hello body ${FILLER}`,
         truncated: true,
       }),
     );
@@ -274,7 +277,7 @@ describe("createWebTools", () => {
 
   it("read_page 200 not truncated has no truncated note", async () => {
     const f = fakeSearch(() =>
-      json(200, { url: "u", final_url: "https://p.example/b", title: "T", markdown: "body", truncated: false }),
+      json(200, { url: "u", final_url: "https://p.example/b", title: "T", markdown: `body ${FILLER}`, truncated: false }),
     );
     try {
       const w = createWebTools({ baseUrl: f.baseUrl });
@@ -409,7 +412,7 @@ describe("createWebTools structured search()/read() (deep research helper)", () 
 
   it("read() returns the numbered page text and the same events as read_page", async () => {
     const f = fakeSearch(() =>
-      json(200, { final_url: "https://final.example/p", title: "T", markdown: "Body text", truncated: true }),
+      json(200, { final_url: "https://final.example/p", title: "T", markdown: `Body text ${FILLER}`, truncated: true }),
     );
     try {
       const out = await createWebTools({ baseUrl: f.baseUrl }).read(
@@ -417,7 +420,7 @@ describe("createWebTools structured search()/read() (deep research helper)", () 
         new AbortController().signal,
         () => 3,
       );
-      expect(out.page).toEqual({ n: 3, title: "T", url: "https://final.example/p", text: "Body text", truncated: true });
+      expect(out.page).toEqual({ n: 3, title: "T", url: "https://final.example/p", text: `Body text ${FILLER}`, truncated: true });
       expect(steps(out.events).map((s) => [s.data.kind, s.data.status, s.data.url])).toEqual([
         ["read", "started", "https://start.example/p"],
         ["read", "done", "https://final.example/p"],
@@ -436,7 +439,7 @@ describe("createWebTools structured search()/read() (deep research helper)", () 
     // requested URL while the source took the final URL, so the cited source matched no read step.
     const requested = "https://agaicpower.com/blogs/news/are-home-batteries-safe-lifepo4-vs-nmc-fire-risk-the-real-data-1";
     const final = "https://agaicpower.com/blogs/news/are-home-batteries-safe-lifepo4-vs-nmc-fire-risk-the-real-data";
-    const f = fakeSearch(() => json(200, { url: requested, final_url: final, title: "T", markdown: "Body", truncated: false }));
+    const f = fakeSearch(() => json(200, { url: requested, final_url: final, title: "T", markdown: `Body ${FILLER}`, truncated: false }));
     try {
       const out = await createWebTools({ baseUrl: f.baseUrl }).read(requested, new AbortController().signal, () => 4);
       const done = steps(out.events).filter((s) => s.data.kind === "read" && s.data.status === "done");
@@ -444,6 +447,49 @@ describe("createWebTools structured search()/read() (deep research helper)", () 
       expect(done.map((s) => s.data.url)).toEqual([final]);
       expect(sources.map((e) => e.data.url)).toEqual([final]);
       expect(out.page?.url).toBe(final);
+    } finally {
+      f.server.stop(true);
+    }
+  });
+
+  it("FR47: read() of a bot-check page returns unreadable, no page, no source and does not number", async () => {
+    const f = fakeSearch(() =>
+      json(200, { final_url: "https://final.example/c", title: "Client Challenge", markdown: "Please wait.", truncated: false }),
+    );
+    try {
+      let numbered = 0;
+      const out = await createWebTools({ baseUrl: f.baseUrl }).read("https://start.example/c", new AbortController().signal, () => ++numbered);
+      expect(out.page).toBeNull();
+      expect(numbered).toBe(0);
+      expect(out.unreadable).toMatchObject({ url: "https://final.example/c", reason: "blocked" });
+      expect(typeof out.unreadable?.detail).toBe("string");
+      expect(out.events.some((e) => e.type === "source")).toBe(false);
+      const last = steps(out.events).slice(-1)[0]!;
+      expect(last.data).toMatchObject({ kind: "read", status: "failed", detail: "bot_check" });
+    } finally {
+      f.server.stop(true);
+    }
+  });
+
+  it("FR47: read() of a near-empty page returns unreadable with reason empty", async () => {
+    const f = fakeSearch(() => json(200, { final_url: "https://final.example/e", title: "T", markdown: "Just a few words.", truncated: false }));
+    try {
+      const out = await createWebTools({ baseUrl: f.baseUrl }).read("https://final.example/e", new AbortController().signal, () => 1);
+      expect(out.page).toBeNull();
+      expect(out.unreadable).toMatchObject({ url: "https://final.example/e", reason: "empty" });
+      expect(steps(out.events).slice(-1)[0]!.data).toMatchObject({ status: "failed", detail: "no_content" });
+    } finally {
+      f.server.stop(true);
+    }
+  });
+
+  it("FR47: read_page on an unreadable page tells the model plainly why", async () => {
+    const f = fakeSearch(() => json(200, { final_url: "https://final.example/c", title: "Client Challenge", markdown: "x" }));
+    try {
+      const out = await createWebTools({ baseUrl: f.baseUrl }).execute(call("read_page", { url: "https://final.example/c" }), new AbortController().signal, () => 9);
+      expect(out.toolResult).toBe(
+        "The page at https://final.example/c could not be read: it showed a bot check instead of its content. It has no page number and must not be cited. You may read another result or search again.",
+      );
     } finally {
       f.server.stop(true);
     }

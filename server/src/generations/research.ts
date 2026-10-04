@@ -35,7 +35,7 @@
  */
 
 import type { OllamaChatRequest, OllamaChatResponse } from "../ollama/client";
-import { todayLine, type ReadPage, type SearchResult, type StepEvent, type WebEvent } from "../web/tools";
+import { todayLine, type ReadPage, type SearchResult, type StepEvent, type UnreadablePage, type WebEvent } from "../web/tools";
 import { createPageNumberer, pageUrlKey } from "../web/pageNumbers";
 import type { ContentEvent, DoneEvent, SourcesEvent, StepEventData } from "@shared/api";
 import type { GenerationEvent, OllamaChatClient } from "./manager";
@@ -48,8 +48,9 @@ export interface ResearchWebTools {
     url: string,
     signal: AbortSignal,
     numberPage: (finalUrl: string) => number
-  ): Promise<{ page: ReadPage | null; events: WebEvent[] }>;
+  ): Promise<{ page: ReadPage | null; events: WebEvent[]; unreadable?: UnreadablePage }>;
 }
+
 
 export interface ResearchSettings extends PassageSettings {
   /** Sub-questions the plan is cut to (extra dropped, fewer tolerated). */
@@ -139,7 +140,8 @@ export interface ResearchRunOptions {
 
 /** FR43: one page read but not noted (no model call). */
 export interface PageSkipLog {
-  n: number;
+  /** Omitted for an unreadable (unnumbered) page, FR47. */
+  n?: number;
   url: string;
   reason: "empty" | "blocked";
   detail: string;
@@ -705,7 +707,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
     done: boolean;
   }
   type ReadOutcome =
-    | { ok: true; page: ReadPage | null; events: WebEvent[] }
+    | { ok: true; page: ReadPage | null; events: WebEvent[]; unreadable?: UnreadablePage }
     | { ok: false; error: unknown };
   /** A read started ahead of its note step; `result` never rejects (no unhandled rejection). */
   interface Prefetch {
@@ -746,7 +748,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
 
   /** Starts a read now under the phase signal (FR36) without waiting for it. */
   function startRead(url: string, stepId: string): Prefetch {
-    let pending: Promise<{ page: ReadPage | null; events: WebEvent[] }>;
+    let pending: Promise<{ page: ReadPage | null; events: WebEvent[]; unreadable?: UnreadablePage }>;
     try {
       pending = webTools.read(url, phaseSignal(), numberPage);
     } catch (error) {
@@ -758,7 +760,8 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
       outcome: null,
       absorbed: false,
       result: pending.then(
-        ({ page, events }) => (entry.outcome = { ok: true, page, events }),
+        ({ page, events, unreadable }) =>
+          (entry.outcome = unreadable ? { ok: true, page, events, unreadable } : { ok: true, page, events }),
         (error: unknown) => (entry.outcome = { ok: false, error })
       ),
     };
@@ -913,8 +916,12 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
       const outcome = await untilPhaseEnd(entry.result);
       entry.absorbed = true;
       if (!outcome.ok) throw outcome.error;
-      const { page, events } = outcome;
+      const { page, events, unreadable } = outcome;
       yield* absorb(events, { kind: "read", step_id: entry.stepId });
+      if (unreadable) {
+        logPage({ url: unreadable.url, reason: unreadable.reason, detail: unreadable.detail });
+        continue;
+      }
       if (!page || page.n === undefined || readNumbers.has(page.n)) continue;
       const n = page.n;
       readNumbers.add(n);

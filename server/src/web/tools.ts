@@ -5,6 +5,8 @@
  * Types are defined locally (structurally compatible with Ollama's tool format).
  */
 
+import { classifyPage } from "@shared/readability";
+
 export type WebTool = {
   type: "function";
   function: { name: string; description: string; parameters: Record<string, unknown> };
@@ -31,6 +33,9 @@ export type WebEvent = StepEvent | SourceEvent;
 
 /** One web_search result, as parsed by the server (structured helper for deep research). */
 export type SearchResult = { title: string; url: string; snippet: string };
+
+/** FR47: a page that was read but showed a bot check or almost no text. */
+export type UnreadablePage = { url: string; reason: "blocked" | "empty"; detail: string };
 
 /** A page read successfully: its number (when numbered), final URL and main text. */
 export type ReadPage = { n?: number; title: string; url: string; text: string; truncated: boolean };
@@ -185,13 +190,27 @@ export function createWebTools(opts: WebToolsOptions = {}) {
       const b = o.body ?? {};
       const finalUrl: string = typeof b.final_url === "string" ? b.final_url : url;
       const title: string = typeof b.title === "string" ? b.title : "";
+      const text: string = typeof b.markdown === "string" ? b.markdown : "";
+      const verdict = classifyPage({ title, text });
+      if (!verdict.readable) {
+        // FR47: an unreadable page is not numbered, is not a source, and its read step failed.
+        const why = verdict.reason === "blocked" ? "bot_check" : "no_content";
+        events.push({ type: "step", data: { step_id, kind: "read", status: "failed", url: finalUrl, detail: why } });
+        const shown =
+          verdict.reason === "blocked" ? "it showed a bot check instead of its content" : "it had almost no text";
+        return {
+          toolResult: `The page at ${finalUrl} could not be read: ${shown}. It has no page number and must not be cited. You may read another result or search again.`,
+          events,
+          page: null as ReadPage | null,
+          unreadable: { url: finalUrl, reason: verdict.reason, detail: verdict.detail } as UnreadablePage,
+        };
+      }
       // The done step names the page actually read (FR31: the final URL after redirects), the same URL
       // as its source, so a citation of this page resolves to a read step.
       events.push({ type: "step", data: { step_id, kind: "read", status: "done", url: finalUrl } });
       const n = numberPage?.(finalUrl);
       events.push({ type: "source", data: n === undefined ? { title, url: finalUrl } : { title, url: finalUrl, n } });
       const label = n === undefined ? "" : `Page [${n}] - cite this page as [${n}]\n`;
-      const text = typeof b.markdown === "string" ? b.markdown : "";
       let toolResult = `${label}Title: ${title}\nURL: ${finalUrl}\n\n${text}`;
       if (b.truncated === true) {
         toolResult += "\n\n[Note: the page content was truncated; only the first part is shown.]";
@@ -248,9 +267,9 @@ export function createWebTools(opts: WebToolsOptions = {}) {
       url: string,
       signal: AbortSignal,
       numberPage?: (finalUrl: string) => number,
-    ): Promise<{ page: ReadPage | null; events: WebEvent[] }> {
-      const { page, events } = await readPage(url, signal, numberPage);
-      return { page, events };
+    ): Promise<{ page: ReadPage | null; events: WebEvent[]; unreadable?: UnreadablePage }> {
+      const { page, events, unreadable } = await readPage(url, signal, numberPage);
+      return unreadable ? { page, events, unreadable } : { page, events };
     },
 
     tools(): WebTool[] {

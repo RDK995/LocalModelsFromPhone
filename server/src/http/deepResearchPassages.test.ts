@@ -5,6 +5,7 @@ import { GenerationManager, type GenerationWebTools } from "../generations/manag
 import { SYSTEM_INSTRUCTIONS, type ResearchSettings, type ResearchWebTools } from "../generations/research";
 import { estimateTokens } from "../generations/passages";
 import type { WebEvent } from "../web/tools";
+import { classifyPage } from "@shared/readability";
 
 const TOKEN = "test-token";
 const headers = () => ({ "Content-Type": "application/json", Authorization: `Bearer ${TOKEN}` });
@@ -103,9 +104,18 @@ function setup(opts: SetupOptions) {
       return { results, events };
     },
     async read(url, _signal, numberPage) {
-      const n = numberPage(url);
       const step_id = `r${++id}`;
       const title = "Zebra Atlas";
+      // FR47: like the real reader, an unreadable page is not numbered and is not a source.
+      const verdict = classifyPage({ title, text: opts.pageText(url) });
+      if (!verdict.readable) {
+        const failed: WebEvent[] = [
+          { type: "step", data: { step_id, kind: "read", status: "started", url } },
+          { type: "step", data: { step_id, kind: "read", status: "failed", url, detail: verdict.reason === "blocked" ? "bot_check" : "no_content" } },
+        ];
+        return { page: null, events: failed, unreadable: { url, reason: verdict.reason, detail: verdict.detail } };
+      }
+      const n = numberPage(url);
       const events: WebEvent[] = [
         { type: "step", data: { step_id, kind: "read", status: "started", url } },
         { type: "step", data: { step_id, kind: "read", status: "done", url } },
@@ -245,7 +255,7 @@ describe("deep research note excerpt (M19c FR43)", () => {
     }
   });
 
-  it("AC3: empty, blocked and irrelevant pages get no note call and one skip log line; numbering is unchanged", async () => {
+  it("AC3: empty, blocked and irrelevant pages get no note call and one skip log line; empty and blocked pages are unnumbered and not sources (FR47)", async () => {
     const pages: Record<string, string> = {
       "https://alpha.example/1": "Zebra migration routes only a few words.",
       "https://alpha.example/2":
@@ -267,11 +277,11 @@ describe("deep research note excerpt (M19c FR43)", () => {
         .filter((l) => l.includes('"event":"deep_research_page_skipped"'))
         .map((l) => JSON.parse(l));
       const noted = s.requests.filter(isNotes).map((r) => noteBlock(r)!.n);
-      expect(noted).toEqual([3]); // only the long, relevant page (the third read) is noted
+      expect(noted).toEqual([1]); // only the long, relevant page (the first numbered page) is noted
       expect(lines.map((l) => [l.n, l.reason])).toEqual([
-        [1, "empty"],
-        [2, "blocked"],
-        [4, "empty"],
+        [undefined, "empty"], // FR47: unreadable pages have no number
+        [undefined, "blocked"],
+        [2, "empty"], // FR43 no-match page keeps its number
       ]);
       expect(lines.map((l) => l.url)).toEqual([
         "https://alpha.example/1",
@@ -281,10 +291,8 @@ describe("deep research note excerpt (M19c FR43)", () => {
       for (const l of lines) expect(typeof l.detail).toBe("string");
       const sources = JSON.parse(events.find((e) => e.event === "sources")!.data).items as Array<{ url: string; n: number }>;
       expect(sources.map((x) => [x.n, x.url])).toEqual([
-        [1, "https://alpha.example/1"],
-        [2, "https://alpha.example/2"],
-        [3, "https://alpha.example/3"],
-        [4, "https://beta.example/1"],
+        [1, "https://alpha.example/3"],
+        [2, "https://beta.example/1"],
       ]);
     } finally {
       logSpy.mockRestore();

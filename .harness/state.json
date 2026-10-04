@@ -13881,7 +13881,18 @@
             "reason_code": "ORDINARY_IMPLEMENTATION",
             "detail": "ordinary change in one read function plus careful fixture lengthening across existing tests"
           },
-          "attempts": []
+          "attempts": [
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M22-T3-verifier.log",
+              "note": "focused 42 pass; server bun test 401 pass; typecheck exit 0; files within allowed list (research.ts change limited to PageSkipLog.n optional, unreadable type plumbing through read/Prefetch/ReadOutcome, unreadable branch in noteNext - orchestrator read the diff); tools.test.ts one assertion follows lengthened fixture; deepResearchPassages AC3 test updated to FR47 rule per packet, shared fake read now classifies like the real reader; tests not weakened"
+            }
+          ],
+          "status": "ACCEPTED"
         },
         {
           "id": "M22-T4",

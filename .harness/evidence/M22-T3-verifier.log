@@ -1,0 +1,24 @@
+VERIFICATION LOG FOR M22-T3 — The server's page reader drops unreadable pages
+
+COMMAND RUN:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/http/webUnreadable.test.ts src/web/tools.test.ts src/http/deepResearchPassages.test.ts && bun test && bun run typecheck
+
+========== SUBSET TEST RUN (webUnreadable.test.ts, tools.test.ts, deepResearchPassages.test.ts) ==========
+ 42 pass
+ 0 fail
+ 252 expect() calls
+Ran 42 tests across 3 files. [223.00ms]
+
+========== FULL TEST RUN (bun test all files) ==========
+ 401 pass
+ 0 fail
+ 3349 expect() calls
+Ran 401 tests across 29 files. [18.51s]
+
+========== TYPE CHECK (bun run typecheck) ==========
+$ tsc --noEmit
+[no errors]
+
+EXIT STATUS: 0
+
+All tests passed successfully.
