@@ -17,7 +17,7 @@ let pageHandler: http.RequestListener;
 
 const HTML = `<html><head><title>Cached Page</title></head><body><article><h1>Cached Page</h1>
 <p>This is a reasonably long paragraph of article text that should be extracted as the main content of the page.</p>
-<p>Another paragraph follows here with more words so the content scoring keeps this article intact.</p></article></body></html>`;
+<p>Another paragraph follows here with more words so the content scoring keeps this article intact and provides additional context and detail to ensure the full page meets quality standards for caching.</p></article></body></html>`;
 
 const okPage: http.RequestListener = (req, res) => {
   if (req.url?.startsWith("/redir")) {

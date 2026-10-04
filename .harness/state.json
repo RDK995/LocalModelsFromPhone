@@ -13849,7 +13849,18 @@
             "reason_code": "BOUNDED_LOW_RISK",
             "detail": "one condition in /v1/read, settled by fetch-count HTTP tests"
           },
-          "attempts": []
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M22-T2-verifier.log",
+              "note": "worker also lengthened search/src/http/cache.test.ts fixture (outside original allowed list); orchestrator amended packet to allow fixture-only lengthening (recorded in plan), verifier confirmed no assertion changed; unreadableCache 3 pass, search bun test 178 pass, typecheck exit 0; removing the readable condition fails the new tests"
+            }
+          ],
+          "status": "ACCEPTED"
         },
         {
           "id": "M22-T3",

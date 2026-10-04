@@ -1,0 +1,37 @@
+Task: M22-T2 — The search service never keeps an unreadable page in its 24-hour page memory
+
+=== VALIDATION COMMAND ===
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/search && bun test src/http/unreadableCache.test.ts && bun test && bun run typecheck
+
+Exit Status: 0
+
+=== UNREADABLE CACHE TEST RESULTS ===
+bun test v1.4.0 (1381054db)
+
+ 3 pass
+ 0 fail
+ 18 expect() calls
+Ran 3 tests across 1 file. [146.00ms]
+
+=== FULL TEST SUITE RESULTS ===
+ 178 pass
+ 0 fail
+ 525 expect() calls
+Ran 178 tests across 12 files. [3.98s]
+
+=== TYPECHECK RESULTS ===
+$ tsc --noEmit
+[no errors]
+
+=== VERIFICATION OF CONDITION NECESSITY ===
+Modified server.ts to remove the readability check (pageCache.set always executes):
+- Test 1 fails: "does not cache a Client Challenge page..." expects x-cache: miss but gets hit
+- Test 2 fails: "does not cache a 10-word page..." expects x-cache: miss but gets hit
+- Test 3 passes: "caches a readable 200-word article..." still caches readable pages
+
+This confirms the readability condition is necessary and working correctly.
+
+=== VERIFICATION COMPLETE ===
+All tests pass with original code.
+Tests fail when readability condition is removed.
+All files allowed to change match the specification.

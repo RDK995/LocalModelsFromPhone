@@ -10,6 +10,7 @@ import { Breakers, BROWSER } from "../search/breakers";
 import { getIcon, validateHost, type IconOptions } from "../icon/icon";
 import { defaultIconCacheDir } from "../icon/cache";
 import { TtlCache, searchKey, MAX_SEARCH_ENTRIES, MAX_PAGE_ENTRIES, type CachedResponse } from "../cache/resultCache";
+import { classifyPage } from "@shared/readability";
 
 const STATUS_BY_CODE = {
   bad_url: 400,
@@ -189,7 +190,10 @@ export function createHandler(
         markdown: extracted.markdown,
         truncated: extracted.truncated,
       });
-      pageCache.set(page.finalUrl, { status: 200, body: text });
+      const readability = classifyPage({ title: extracted.title ?? "", text: extracted.markdown ?? "" });
+      if (readability.readable) {
+        pageCache.set(page.finalUrl, { status: 200, body: text });
+      }
       return withCache(200, text, "miss");
     } catch (err) {
       if (err instanceof FetchPageError) {
