@@ -590,7 +590,7 @@ Cycle 1: CHANGES REQUIRED, scope RECORD_ONLY (2026-10-03), tier Top (opus) - dif
 
 ## M22 — Bot-check and near-empty pages are never listed as sources, and deep research reads another page in their place
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -623,7 +623,17 @@ a7e97a76e8b0e44c54e78b3289e1ae3965f4aa26 on m22-unreadable-pages (untracked, not
 
 ### Evidence
 
+- M22-T1 shared readability check (Cheap, BOUNDED_LOW_RISK) attempt 1 PASS; verifier PASS: shared/readability.ts (`classifyPage`, `isBotChallenge`, `BOT_CHALLENGE_MARKERS` incl. "client challenge", `UNREADABLE_MIN_WORDS = 40`), passages.ts re-exports it; readability+passages 40 pass, `cd server && bun test` 395 pass, typecheck exit 0; commit 5e38195; Deviation D-M22-1 (non-material) recorded in .harness/architecture.md and committed with 46ead91 — .harness/evidence/M22-T1-verifier.log.
+
+- M22-T2 search page cache skips unreadable pages (Cheap, BOUNDED_LOW_RISK) attempt 1 PASS; verifier PASS: `cd search && bun test src/http/unreadableCache.test.ts && bun test && bun run typecheck` exit 0 (3 pass; 178 pass); /v1/read caches only when `classifyPage(...).readable`; tests: Client Challenge page and 10-word page each fetched twice with x-cache miss both times, 200-word page fetched once with second read x-cache hit (M22-AC4); verifier confirmed the new tests fail with the condition removed. Worker also lengthened the fixture page in search/src/http/cache.test.ts (was under 40 words); orchestrator amended the packet to allow fixture-only lengthening (plan, Changes during implementation), verifier confirmed no assertion changed. Commit 46ead91 — .harness/evidence/M22-T2-verifier.log.
+
+- M22-T3 read_page drops unreadable pages (Mid, ORDINARY_IMPLEMENTATION) attempt 3 PASS; verifier PASS: `cd server && bun test src/http/webUnreadable.test.ts src/web/tools.test.ts src/http/deepResearchPassages.test.ts && bun test && bun run typecheck` exit 0 (42 pass; 401 pass). webUnreadable.test.ts through POST /v1/chat, web on, deep research off: bot-check page -> plain bot-check statement to the model, step failed/bot_check, not a saved source; a later readable page is [1] and the only source (live and replay); near-empty page -> no-content statement, failed/no_content; FR33 quiet round unchanged (M22-AC3). deepResearchPassages AC3 test updated to the FR47 rule per packet (blocked/empty pages unnumbered; no-match page keeps [2] and stays in sources — M22-AC5). tools.test.ts fixtures lengthened (one assertion follows the lengthened text). Commit 31c6731 — .harness/evidence/M22-T3-verifier.log.
+
+- M22-T4 replacement reads in deep research (Top, DIFFICULT_CONCURRENCY) attempt 4 PASS; verifier PASS: `cd server && bun test src/http/deepResearchUnreadable.test.ts src/http/deepResearchPassages.test.ts && bun test && bun run typecheck && cd ../search && bun test` exit 0 (10 pass x6 runs, no flakiness; server 407 pass; search 178 pass). research.ts `replaceUnreadable`: checkDeadline first, next unread `sq.candidates` entry, `startRead` (phase signal, `started` drain, Stop), started read step; `sq.reads` not incremented, no search or page-choice call. deepResearchUnreadable.test.ts through POST /v1/chat with real createWebTools against a fake search service: scribd "Client Challenge" + 10-word page replaced by results 3 and 4, one search, failed read steps, skip log blocked/empty without n, sources 1..2 in first-read order, every [n] resolves (M22-AC1); unreadable replacement replaced in turn; results run out -> fewer pages, no extra search; no replacement after the deadline (fails with checkDeadline removed); all pages unreadable -> failed + plain sentence; same host bot-check vs real page (M22-AC2). deepResearchPassages AC3 test gained page text and two unnumbered skip entries for the replacement URLs; noted, no-match and sources expectations unchanged. Commit 61ae0f7 — .harness/evidence/M22-T4-verifier.log, .harness/evidence/M22-T4-worker.log.
+
 ### Validation
+
+`cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck && cd ../search && bun test` (reviewer runs once; covers M22-AC1..AC5; focused files: server/src/http/deepResearchUnreadable.test.ts, server/src/http/webUnreadable.test.ts, server/src/http/deepResearchPassages.test.ts, server/src/web/tools.test.ts, search/src/http/unreadableCache.test.ts, shared readability tests). Last verifier run (M22-T4) exit 0: server 407 pass, typecheck clean, search 178 pass — .harness/evidence/M22-T4-verifier.log.
 
 ### Review
 
@@ -637,6 +647,7 @@ Pending.
 
 - FR47 out of scope (requirements 2026-10-04): no search is run solely to find a replacement page; a site is not remembered as blocked (each page judged on its own); FR43 'no-match' pages stay numbered and listed; no phone change.
 - Readable pages with no relevant passage are logged with reason "empty" rather than FR43's "no-match" edge-case wording (pre-existing; noticed while planning M22).
+- State file is over 400 lines (805 at M22 implementation) but nothing more can be archived: every settled milestone except the most recently settled (M21) is already archived; the rest are active, TODO or BLOCKED.
 - Placed ahead of M5a (2026-10-04, extension for FR47-FR48): M5a is BLOCKED and parked waiting on the owner's Mac reboot check, and /harness:plan and /harness:implement stop at the first BLOCKED milestone, so new work is built before it, as the human decided for M14, M15 and M19b-M21. M5a stays BLOCKED and parked, its record unchanged, and is picked up after M24.
 
 ## M23 — Deep research keeps notes whose quotes differ from the page only trivially, and logs every note it drops

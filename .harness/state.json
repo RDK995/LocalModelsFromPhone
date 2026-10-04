@@ -13761,7 +13761,7 @@
         "FR47"
       ],
       "traces": "AC36 (FR47 part: deep research drop and replace, contiguous numbers, every [n] resolves; ordinary web reply could-not-be-read statement; not served from the page cache), FR43 (markers and 40-word minimum reused; no-match pages unchanged), FR44/FR36 (replacement reads within prefetch and deadline), FR33 (unchanged)",
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": "a7e97a76e8b0e44c54e78b3289e1ae3965f4aa26 on m22-unreadable-pages",
@@ -13929,10 +13929,13 @@
       ],
       "reviews": [],
       "findings": [],
-      "validation": [],
+      "validation": [
+        "cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck && cd ../search && bun test"
+      ],
       "follow_ups": [
         "FR47 out of scope (requirements 2026-10-04): no search is run solely to find a replacement page; a site is not remembered as blocked (each page judged on its own); FR43 'no-match' pages stay numbered and listed; no phone change.",
-        "Readable pages with no relevant passage are logged with reason \"empty\" rather than FR43's \"no-match\" edge-case wording (pre-existing; noticed while planning M22)."
+        "Readable pages with no relevant passage are logged with reason \"empty\" rather than FR43's \"no-match\" edge-case wording (pre-existing; noticed while planning M22).",
+        "State file is over 400 lines (805 at M22 implementation) but nothing more can be archived: every settled milestone except the most recently settled (M21) is already archived; the rest are active, TODO or BLOCKED."
       ],
       "complexity_signals": [
         "CONCURRENCY_LIFECYCLE"
