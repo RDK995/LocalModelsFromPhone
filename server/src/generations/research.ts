@@ -908,6 +908,21 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
   }
 
   /**
+   * FR47(a): an unreadable page does not use up its page slot. The next unread URL from the
+   * sub-question's existing search results starts reading in its place (no search, no page choice),
+   * queued behind the reads already prefetched. Throws like choosePages once the research phase is over.
+   */
+  async function* replaceUnreadable(sq: SubState): AsyncGenerator<ResearchEvent, void> {
+    checkDeadline(); // no read starts once the research phase is over
+    const next = sq.candidates.find((c) => !readKeys.has(pageUrlKey(c.url)));
+    if (!next) return; // results ran out: this sub-question has fewer pages
+    readKeys.add(pageUrlKey(next.url)); // reserved now, so no other sub-question chooses it
+    const step_id = crypto.randomUUID();
+    sq.prefetched.push(startRead(next.url, step_id));
+    yield step({ step_id, kind: "read", status: "started", url: next.url });
+  }
+
+  /**
    * The sub-question's next note decision: the first prefetched read that gives a page not already
    * read in this run gets its note step (a notes call, or the FR43 skip). False when none is left.
    */
@@ -920,6 +935,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
       yield* absorb(events, { kind: "read", step_id: entry.stepId });
       if (unreadable) {
         logPage({ url: unreadable.url, reason: unreadable.reason, detail: unreadable.detail });
+        yield* replaceUnreadable(sq);
         continue;
       }
       if (!page || page.n === undefined || readNumbers.has(page.n)) continue;

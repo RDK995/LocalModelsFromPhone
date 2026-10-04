@@ -262,6 +262,11 @@ describe("deep research note excerpt (M19c FR43)", () => {
         "Checking your browser before accessing the site. Cloudflare. " + "Please wait while we verify your connection to the website now. ".repeat(3),
       "https://alpha.example/3": longPage(),
       "https://beta.example/1": "Pottery glazing firing kiln clay wheel ceramics studio shaping drying. ".repeat(30),
+      // FR47(a): the two unreadable pages are replaced by the next unread results; these are unreadable
+      // too, and then the results have run out.
+      "https://beta.example/2": "Zebra migration routes only a few words.",
+      "https://beta.example/3":
+        "Checking your browser before accessing the site. Cloudflare. " + "Please wait while we verify your connection to the website now. ".repeat(3),
     };
     const logSpy = spyOn(console, "log");
     const s = setup({
@@ -282,11 +287,15 @@ describe("deep research note excerpt (M19c FR43)", () => {
         [undefined, "empty"], // FR47: unreadable pages have no number
         [undefined, "blocked"],
         [2, "empty"], // FR43 no-match page keeps its number
+        [undefined, "empty"], // FR47(a) replacements, unreadable in turn
+        [undefined, "blocked"],
       ]);
       expect(lines.map((l) => l.url)).toEqual([
         "https://alpha.example/1",
         "https://alpha.example/2",
         "https://beta.example/1",
+        "https://beta.example/2",
+        "https://beta.example/3",
       ]);
       for (const l of lines) expect(typeof l.detail).toBe("string");
       const sources = JSON.parse(events.find((e) => e.event === "sources")!.data).items as Array<{ url: string; n: number }>;

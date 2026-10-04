@@ -13913,7 +13913,18 @@
             "reason_code": "DIFFICULT_CONCURRENCY",
             "detail": "replacement reads inside FR44 parallel prefetch, FR36 deadline and Stop"
           },
-          "attempts": []
+          "attempts": [
+            {
+              "attempt": 4,
+              "tier": "Top",
+              "model": "opus",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M22-T4-verifier.log",
+              "note": "focused 10 pass (x6 runs, no flakiness); server bun test 407 pass; typecheck exit 0; search 178 pass; research.ts +16 lines (replaceUnreadable: checkDeadline, next unread sq.candidates entry, startRead, started step); deadline test fails with checkDeadline removed; deepResearchPassages AC3 test gains page text and two unnumbered skip entries for the replacement URLs (consequence of FR47 slot rule), no assertion loosened; verifier found no path for a replacement read to escape the phase signal, drain or Stop. Verifier hit its turn limit once and was resumed to deliver its report."
+            }
+          ],
+          "status": "ACCEPTED"
         }
       ],
       "reviews": [],
