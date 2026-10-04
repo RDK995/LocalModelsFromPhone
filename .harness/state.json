@@ -13801,20 +13801,106 @@
           "evidence": []
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M22-T1",
+          "title": "one shared readability check in shared/readability.ts (markers incl. client challenge, 40-word minimum); passages.ts uses it",
+          "scope": [
+            "M22-AC1",
+            "M22-AC3",
+            "M22-AC4"
+          ],
+          "packet": ".harness/tasks/M22-T1.md",
+          "artifact": ".harness/tasks/M22-T1.md",
+          "after": [],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "small pure function, mostly moved code, unit-tested"
+          },
+          "attempts": []
+        },
+        {
+          "id": "M22-T2",
+          "title": "search service does not cache unreadable page reads",
+          "scope": [
+            "M22-AC4"
+          ],
+          "packet": ".harness/tasks/M22-T2.md",
+          "artifact": ".harness/tasks/M22-T2.md",
+          "after": [
+            "M22-T1"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "one condition in /v1/read, settled by fetch-count HTTP tests"
+          },
+          "attempts": []
+        },
+        {
+          "id": "M22-T3",
+          "title": "C12 readPage drops unreadable pages: no number/source, failed step, plain tool result; research logs them without n",
+          "scope": [
+            "M22-AC1",
+            "M22-AC3",
+            "M22-AC5"
+          ],
+          "packet": ".harness/tasks/M22-T3.md",
+          "artifact": ".harness/tasks/M22-T3.md",
+          "after": [
+            "M22-T1"
+          ],
+          "routing": {
+            "tier": "Mid",
+            "model": "sonnet",
+            "reason_code": "ORDINARY_IMPLEMENTATION",
+            "detail": "ordinary change in one read function plus careful fixture lengthening across existing tests"
+          },
+          "attempts": []
+        },
+        {
+          "id": "M22-T4",
+          "title": "deep research reads the next unread candidate in place of an unreadable page within the deadline",
+          "scope": [
+            "M22-AC1",
+            "M22-AC2",
+            "M22-AC5"
+          ],
+          "packet": ".harness/tasks/M22-T4.md",
+          "artifact": ".harness/tasks/M22-T4.md",
+          "after": [
+            "M22-T3"
+          ],
+          "routing": {
+            "tier": "Top",
+            "model": "opus",
+            "reason_code": "DIFFICULT_CONCURRENCY",
+            "detail": "replacement reads inside FR44 parallel prefetch, FR36 deadline and Stop"
+          },
+          "attempts": []
+        }
+      ],
       "reviews": [],
       "findings": [],
       "validation": [],
       "follow_ups": [
-        "FR47 out of scope (requirements 2026-10-04): no search is run solely to find a replacement page; a site is not remembered as blocked (each page judged on its own); FR43 'no-match' pages stay numbered and listed; no phone change."
+        "FR47 out of scope (requirements 2026-10-04): no search is run solely to find a replacement page; a site is not remembered as blocked (each page judged on its own); FR43 'no-match' pages stay numbered and listed; no phone change.",
+        "Readable pages with no relevant passage are logged with reason \"empty\" rather than FR43's \"no-match\" edge-case wording (pre-existing; noticed while planning M22)."
       ],
       "complexity_signals": [
         "CONCURRENCY_LIFECYCLE"
       ],
       "ordering_decision": "Placed ahead of M5a (2026-10-04, extension for FR47-FR48): M5a is BLOCKED and parked waiting on the owner's Mac reboot check, and /harness:plan and /harness:implement stop at the first BLOCKED milestone, so new work is built before it, as the human decided for M14, M15 and M19b-M21. M5a stays BLOCKED and parked, its record unchanged, and is picked up after M24.",
-      "plan": null,
+      "plan": {
+        "status": "AGREED",
+        "artifact": ".harness/plans/M22.md"
+      },
       "planning_notes": [
-        "Shape/size check 2026-10-04 (generation): 5 criteria, all through a real entry point (POST /v1/chat; the search service page-read HTTP API for the cache rule); one signal CONCURRENCY_LIFECYCLE; subsystems C6 (server/src/generations/research.ts, passages.ts holds FR43's markers), C12 (server/src/web/tools.ts read_page), C13 (search/src/cache/resultCache.ts page cache). Open for the planning phase: where the one shared check lives, given the page cache is in the search service and FR43's markers are in the server."
+        "Shape/size check 2026-10-04 (generation): 5 criteria, all through a real entry point (POST /v1/chat; the search service page-read HTTP API for the cache rule); one signal CONCURRENCY_LIFECYCLE; subsystems C6 (server/src/generations/research.ts, passages.ts holds FR43's markers), C12 (server/src/web/tools.ts read_page), C13 (search/src/cache/resultCache.ts page cache). Open for the planning phase: where the one shared check lives, given the page cache is in the search service and FR43's markers are in the server.",
+        "Planning 2026-10-04: the one shared check lives in shared/readability.ts (classifyPage), imported by the server (C12 tools.ts readPage before numbering; passages.ts) and the search service (C13 /v1/read, cache only readable pages). Rejected: search-service-only flag (server silently regresses against an old search service; M24-AC3 needs a callable check). Non-material deviation to record during implementation (logic in shared/). Replacement = next unread sq.candidates entry in search order, no model call, sq.reads not incremented."
       ]
     },
     "M23": {
@@ -13860,7 +13946,67 @@
           "evidence": []
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M23-T1",
+          "title": "Pure FR48 quote matcher (normaliseForQuote, quoteOnPage) with unit tests",
+          "scope": [
+            "M23-AC1",
+            "M23-AC2"
+          ],
+          "packet": ".harness/tasks/M23-T1.md",
+          "artifact": ".harness/tasks/M23-T1.md",
+          "after": [],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "small isolated pure function with stated input/output, unit-tested from listed examples"
+          },
+          "attempts": []
+        },
+        {
+          "id": "M23-T2",
+          "title": "keepNotes uses quoteOnPage; POST /v1/chat tests for kept/dropped quotes and FR37 citations",
+          "scope": [
+            "M23-AC1",
+            "M23-AC2",
+            "M23-AC4"
+          ],
+          "packet": ".harness/tasks/M23-T2.md",
+          "artifact": ".harness/tasks/M23-T2.md",
+          "after": [
+            "M23-T1"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "one-place swap to a tested function plus end-to-end tests from stated assertions"
+          },
+          "attempts": []
+        },
+        {
+          "id": "M23-T3",
+          "title": "deep_research_note_dropped log line (run, n, reason, quote[:120]), runId from manager, run-end notes_dropped",
+          "scope": [
+            "M23-AC3",
+            "M23-AC4"
+          ],
+          "packet": ".harness/tasks/M23-T3.md",
+          "artifact": ".harness/tasks/M23-T3.md",
+          "after": [
+            "M23-T2"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "new log line following logPageSkip pattern, one threaded field, one counter; settled by console.log-capture tests"
+          },
+          "attempts": []
+        }
+      ],
       "reviews": [],
       "findings": [],
       "validation": [],
@@ -13869,9 +14015,13 @@
       ],
       "complexity_signals": [],
       "ordering_decision": "Placed ahead of M5a (2026-10-04, extension for FR47-FR48): M5a is BLOCKED and parked waiting on the owner's Mac reboot check, and /harness:plan and /harness:implement stop at the first BLOCKED milestone, so new work is built before it, as the human decided for M14, M15 and M19b-M21. M5a stays BLOCKED and parked, its record unchanged, and is picked up after M24.",
-      "plan": null,
+      "plan": {
+        "status": "AGREED",
+        "artifact": ".harness/plans/M23.md"
+      },
       "planning_notes": [
-        "Shape/size check 2026-10-04 (generation): 4 criteria, all through POST /v1/chat; no signal; current check is server/src/generations/research.ts:932 (`pageTextNorm.includes(normaliseWhitespace(item.quote))`), run-end line near research.ts:1167."
+        "Shape/size check 2026-10-04 (generation): 4 criteria, all through POST /v1/chat; no signal; current check is server/src/generations/research.ts:932 (`pageTextNorm.includes(normaliseWhitespace(item.quote))`), run-end line near research.ts:1167.",
+        "Planning 2026-10-04: 4 criteria, no signal, 3 Cheap tasks; planned against M22 DRAFT (M22-T3 optional PageSkipLog.n and read() `unreadable`; M22-T4 replacement reads) - packets locate code by name. AC3's 'invalid page number' reason is unreachable (server assigns n; note schema is quote+claim only); not added, raised in plan risks. milestones.md at ~800 lines: archiving checked, nothing further eligible (all older DONE milestones already stubs; M21 most recently settled, M5a BLOCKED)."
       ]
     },
     "M24": {
@@ -13909,7 +14059,85 @@
           "evidence": []
         }
       ],
-      "tasks": [],
+      "tasks": [
+        {
+          "id": "M24-T1",
+          "title": "ac29-live-run.ts: ww2 question, notes_dropped/drop_reasons from FR41 log, saved-source re-read via search /v1/read + classifyPage, --sources-text check-only",
+          "scope": [
+            "M24-AC2",
+            "M24-AC3"
+          ],
+          "packet": ".harness/tasks/M24-T1.md",
+          "artifact": ".harness/tasks/M24-T1.md",
+          "after": [],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "additions to a unit-tested client-side evidence script with stated outputs; settled by unit tests and M21 check-only re-runs"
+          },
+          "attempts": []
+        },
+        {
+          "id": "M24-T2",
+          "title": "After the owner's recorded yes: kickstart com.harness.search then com.harness.server; read-only readiness (start times after server/search/shared commits, M23 commit in HEAD, model resident)",
+          "scope": [
+            "M24-AC1"
+          ],
+          "packet": ".harness/tasks/M24-T2.md",
+          "artifact": ".harness/tasks/M24-T2.md",
+          "after": [
+            "M24-T1"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "two launchd kickstarts plus the existing readiness procedure (precedents M20-T4, M21-T6R); settled by pid/start-time evidence and the readiness script exit"
+          },
+          "attempts": []
+        },
+        {
+          "id": "M24-T3",
+          "title": "Run one question live (ww2, q1, q2, q3, heat; one fresh worker each, sequential, foreground, prefix M24-T3)",
+          "scope": [
+            "M24-AC2",
+            "M24-AC3"
+          ],
+          "packet": ".harness/tasks/M24-T3.md",
+          "artifact": ".harness/tasks/M24-T3.md",
+          "after": [
+            "M24-T2"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "run an existing tested script once; settled by its exit status, result JSON and --check-only"
+          },
+          "attempts": []
+        },
+        {
+          "id": "M24-T4",
+          "title": "Owner reading file .harness/evidence/M24-T4-summary.md: per-run metrics, dropped notes, sources with FR47 result, reports",
+          "scope": [
+            "M24-AC2",
+            "M24-AC3"
+          ],
+          "packet": ".harness/tasks/M24-T4.md",
+          "artifact": ".harness/tasks/M24-T4.md",
+          "after": [
+            "M24-T3"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "assemble a file from existing evidence with a stated layout; settled by exact re-derivation"
+          },
+          "attempts": []
+        }
+      ],
       "reviews": [],
       "findings": [],
       "validation": [],
@@ -13918,9 +14146,13 @@
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
       ],
       "ordering_decision": "Placed ahead of M5a (2026-10-04, extension for FR47-FR48): M5a is BLOCKED and parked waiting on the owner's Mac reboot check, and /harness:plan and /harness:implement stop at the first BLOCKED milestone, so new work is built before it, as the human decided for M14, M15 and M19b-M21. M5a stays BLOCKED and parked, its record unchanged, and is picked up after M24.",
-      "plan": null,
+      "plan": {
+        "status": "AGREED",
+        "artifact": ".harness/plans/M24.md"
+      },
       "planning_notes": [
-        "Shape/size check 2026-10-04 (generation): 3 criteria, real entry point the server API on the live Mac; one signal IMPLEMENTATION_PLUS_LIVE_PROOF. Restarting com.harness.server is not covered by a standing permission for FR47-FR48 work (requirements Decisions 2026-10-04): the owner must be asked before any restart."
+        "Shape/size check 2026-10-04 (generation): 3 criteria, real entry point the server API on the live Mac; one signal IMPLEMENTATION_PLUS_LIVE_PROOF. Restarting com.harness.server is not covered by a standing permission for FR47-FR48 work (requirements Decisions 2026-10-04): the owner must be asked before any restart.",
+        "Planning 2026-10-04: 3 criteria, one signal IMPLEMENTATION_PLUS_LIVE_PROOF (seam check: the script change only measures these runs; not split); 4 Cheap tasks; planned against M22/M23 DRAFT plans (classifyPage in shared/readability.ts; deep_research_note_dropped {run,n,reason,quote}; run-end notes_dropped). Recon: the server stores no page text after a run (sources event is title/url/n only), so AC3's 'stored text' is the search service's FR39 page cache via POST 127.0.0.1:7790/v1/read (x-cache hit|miss) - raised in plan risks. Both com.harness.search and com.harness.server must restart (both import shared/); owner asked for both before either. milestones.md ~800 lines: nothing further archivable (M21 most recently settled, M5a BLOCKED, M22-M24 TODO)."
       ]
     },
     "M5a": {
