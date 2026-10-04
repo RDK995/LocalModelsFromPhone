@@ -13761,44 +13761,54 @@
         "FR47"
       ],
       "traces": "AC36 (FR47 part: deep research drop and replace, contiguous numbers, every [n] resolves; ordinary web reply could-not-be-read statement; not served from the page cache), FR43 (markers and 40-word minimum reused; no-match pages unchanged), FR44/FR36 (replacement reads within prefetch and deadline), FR33 (unchanged)",
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 0,
       "review_override": null,
       "baseline": "a7e97a76e8b0e44c54e78b3289e1ae3965f4aa26 on m22-unreadable-pages",
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M22.md",
+        "result": "RECORDED - 13 of 13 files attributed; components C4, C6, C12, C13, NEW-shared-readability; 5 edges; 1 claim mismatch: shared readability module (recorded as Deviation D-M22-1) not in claimed components"
       },
       "criteria": [
         {
           "id": "M22-AC1",
           "text": "Server tests through POST /v1/chat with a faked search service and a scripted fake Ollama: in deep research, a bot-check page (\"Client Challenge\" text) and a near-empty page (under FR43's 40 words) each get no number, are absent from the saved sources and the final sources event, make no note call, are logged \"blocked\"/\"empty\" as today, and their read steps end as failed (e.g. \"Reading: scribd.com \u2014 couldn't be read\"); the next unread URL from the same sub-question's existing search results is read in each one's place with no additional search request; remaining page numbers are contiguous from 1 in first-read order and every [n] in the report resolves to a saved source.",
-          "status": "PENDING",
-          "evidence": []
+          "status": "PASS",
+          "evidence": [
+            ".harness/evidence/M22-review.log (cycle 1 reviewer PASS)"
+          ]
         },
         {
           "id": "M22-AC2",
           "text": "Server tests through POST /v1/chat (faked search service, scripted fake Ollama): a replacement page that is itself unreadable is skipped in turn and the next unread URL tried; a sub-question whose results run out ends with fewer pages and no extra search; replacements stop at the FR36 deadline; a run where every opened page is unreadable ends with FR36's `failed` status and plain sentence; a site serving a bot check on one page and real content on another has the real page read, numbered and listed.",
-          "status": "PENDING",
-          "evidence": []
+          "status": "PASS",
+          "evidence": [
+            ".harness/evidence/M22-review.log (cycle 1 reviewer PASS)"
+          ]
         },
         {
           "id": "M22-AC3",
           "text": "Server tests through POST /v1/chat with web on and deep research off: `read_page` on a bot-check page returns to the model a short plain statement that the page could not be read and why (bot check or no content) instead of page text, its step ends as failed, and the page is neither numbered nor in the reply's saved sources or \"Sources (n)\" list; the model may then search or read again, and FR33's quiet-round handling is unchanged.",
-          "status": "PENDING",
-          "evidence": []
+          "status": "PASS",
+          "evidence": [
+            ".harness/evidence/M22-review.log (cycle 1 reviewer PASS)"
+          ]
         },
         {
           "id": "M22-AC4",
           "text": "Tests through the search service's page-read API (or POST /v1/chat end to end): a page classed unreadable is not stored in FR39's 24-hour page cache, and a repeat read of the same URL fetches it again rather than serving it from the cache; readable pages are still cached as before.",
-          "status": "PENDING",
-          "evidence": []
+          "status": "PASS",
+          "evidence": [
+            ".harness/evidence/M22-review.log (cycle 1 reviewer PASS)"
+          ]
         },
         {
           "id": "M22-AC5",
           "text": "FR43 \"no-match\" pages (readable, no relevant passage) keep their number and stay in Sources; all existing tests pass: `cd server && bun test && bun run typecheck` and `cd search && bun test` exit 0.",
-          "status": "PENDING",
-          "evidence": []
+          "status": "PASS",
+          "evidence": [
+            ".harness/evidence/M22-review.log (cycle 1 reviewer PASS)"
+          ]
         }
       ],
       "tasks": [
@@ -13927,7 +13937,26 @@
           "status": "ACCEPTED"
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "PASS",
+          "tier": "Top",
+          "model": "opus",
+          "reason_code": "TOP_ROUTED_TASK_IN_DIFF",
+          "diff_range": "a7e97a76e8b0e44c54e78b3289e1ae3965f4aa26..48fd628",
+          "artifact": null,
+          "review_log": ".harness/evidence/M22-review.log",
+          "findings": "0 BLOCKER, 0 IMPORTANT, 2 OPTIONAL",
+          "per_criterion": {
+            "M22-AC1": "PASS",
+            "M22-AC2": "PASS",
+            "M22-AC3": "PASS",
+            "M22-AC4": "PASS",
+            "M22-AC5": "PASS"
+          }
+        }
+      ],
       "findings": [],
       "validation": [
         "cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck && cd ../search && bun test"
@@ -13935,7 +13964,10 @@
       "follow_ups": [
         "FR47 out of scope (requirements 2026-10-04): no search is run solely to find a replacement page; a site is not remembered as blocked (each page judged on its own); FR43 'no-match' pages stay numbered and listed; no phone change.",
         "Readable pages with no relevant passage are logged with reason \"empty\" rather than FR43's \"no-match\" edge-case wording (pre-existing; noticed while planning M22).",
-        "State file is over 400 lines (805 at M22 implementation) but nothing more can be archived: every settled milestone except the most recently settled (M21) is already archived; the rest are active, TODO or BLOCKED."
+        "State file is over 400 lines (805 at M22 implementation) but nothing more can be archived: every settled milestone except the most recently settled (M21) is already archived; the rest are active, TODO or BLOCKED.",
+        "Review OPTIONAL: search/src/http/unreadableCache.test.ts has unused imports/helpers (readFileSync, appendFileSync, existsSync, DAY, advance) - remove.",
+        "Review OPTIONAL: stray double blank lines in server/src/generations/passages.ts (where markers/isBotChallenge were removed) and server/src/generations/research.ts (after ResearchWebTools interface).",
+        "Review observation (not a finding): shared/readability.ts unit tests live in server/src/web/readability.test.ts rather than beside the shared module."
       ],
       "complexity_signals": [
         "CONCURRENCY_LIFECYCLE"

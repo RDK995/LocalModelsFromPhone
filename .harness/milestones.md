@@ -590,7 +590,7 @@ Cycle 1: CHANGES REQUIRED, scope RECORD_ONLY (2026-10-03), tier Top (opus) - dif
 
 ## M22 — Bot-check and near-empty pages are never listed as sources, and deep research reads another page in their place
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -604,15 +604,15 @@ C4, C6, C12, C13
 
 ### As-Built
 
-Pending.
+`.harness/as-built/M22.md` — RECORDED - 13 of 13 files attributed; components C4, C6, C12, C13, NEW-shared-readability; 5 edges; 1 claim mismatch: shared readability module (recorded as Deviation D-M22-1) not in claimed components
 
 ### Acceptance Criteria
 
-- [ ] **M22-AC1**: Server tests through POST /v1/chat with a faked search service and a scripted fake Ollama: in deep research, a bot-check page ("Client Challenge" text) and a near-empty page (under FR43's 40 words) each get no number, are absent from the saved sources and the final sources event, make no note call, are logged "blocked"/"empty" as today, and their read steps end as failed (e.g. "Reading: scribd.com — couldn't be read"); the next unread URL from the same sub-question's existing search results is read in each one's place with no additional search request; remaining page numbers are contiguous from 1 in first-read order and every [n] in the report resolves to a saved source.
-- [ ] **M22-AC2**: Server tests through POST /v1/chat (faked search service, scripted fake Ollama): a replacement page that is itself unreadable is skipped in turn and the next unread URL tried; a sub-question whose results run out ends with fewer pages and no extra search; replacements stop at the FR36 deadline; a run where every opened page is unreadable ends with FR36's `failed` status and plain sentence; a site serving a bot check on one page and real content on another has the real page read, numbered and listed.
-- [ ] **M22-AC3**: Server tests through POST /v1/chat with web on and deep research off: `read_page` on a bot-check page returns to the model a short plain statement that the page could not be read and why (bot check or no content) instead of page text, its step ends as failed, and the page is neither numbered nor in the reply's saved sources or "Sources (n)" list; the model may then search or read again, and FR33's quiet-round handling is unchanged.
-- [ ] **M22-AC4**: Tests through the search service's page-read API (or POST /v1/chat end to end): a page classed unreadable is not stored in FR39's 24-hour page cache, and a repeat read of the same URL fetches it again rather than serving it from the cache; readable pages are still cached as before.
-- [ ] **M22-AC5**: FR43 "no-match" pages (readable, no relevant passage) keep their number and stay in Sources; all existing tests pass: `cd server && bun test && bun run typecheck` and `cd search && bun test` exit 0.
+- [x] **M22-AC1**: Server tests through POST /v1/chat with a faked search service and a scripted fake Ollama: in deep research, a bot-check page ("Client Challenge" text) and a near-empty page (under FR43's 40 words) each get no number, are absent from the saved sources and the final sources event, make no note call, are logged "blocked"/"empty" as today, and their read steps end as failed (e.g. "Reading: scribd.com — couldn't be read"); the next unread URL from the same sub-question's existing search results is read in each one's place with no additional search request; remaining page numbers are contiguous from 1 in first-read order and every [n] in the report resolves to a saved source.
+- [x] **M22-AC2**: Server tests through POST /v1/chat (faked search service, scripted fake Ollama): a replacement page that is itself unreadable is skipped in turn and the next unread URL tried; a sub-question whose results run out ends with fewer pages and no extra search; replacements stop at the FR36 deadline; a run where every opened page is unreadable ends with FR36's `failed` status and plain sentence; a site serving a bot check on one page and real content on another has the real page read, numbered and listed.
+- [x] **M22-AC3**: Server tests through POST /v1/chat with web on and deep research off: `read_page` on a bot-check page returns to the model a short plain statement that the page could not be read and why (bot check or no content) instead of page text, its step ends as failed, and the page is neither numbered nor in the reply's saved sources or "Sources (n)" list; the model may then search or read again, and FR33's quiet-round handling is unchanged.
+- [x] **M22-AC4**: Tests through the search service's page-read API (or POST /v1/chat end to end): a page classed unreadable is not stored in FR39's 24-hour page cache, and a repeat read of the same URL fetches it again rather than serving it from the cache; readable pages are still cached as before.
+- [x] **M22-AC5**: FR43 "no-match" pages (readable, no relevant passage) keep their number and stay in Sources; all existing tests pass: `cd server && bun test && bun run typecheck` and `cd search && bun test` exit 0.
 
 ### Plan
 `.harness/plans/M22.md` — AGREED
@@ -637,7 +637,7 @@ a7e97a76e8b0e44c54e78b3289e1ae3965f4aa26 on m22-unreadable-pages (untracked, not
 
 ### Review
 
-Pending.
+Cycle 1: PASS (tier Top, model opus, reason TOP_ROUTED_TASK_IN_DIFF; diff a7e97a7..48fd628; full milestone scope). Per-criterion: M22-AC1..AC5 all PASS. Findings: 0 BLOCKER, 0 IMPORTANT, 2 OPTIONAL (recorded under Follow-ups). Reviewer re-ran validation at 48fd628: server 407 pass, typecheck exit 0, search 178 pass — .harness/evidence/M22-review.log. No report written (PASS).
 
 ### Review Cycles
 
@@ -649,6 +649,9 @@ Pending.
 - Readable pages with no relevant passage are logged with reason "empty" rather than FR43's "no-match" edge-case wording (pre-existing; noticed while planning M22).
 - State file is over 400 lines (805 at M22 implementation) but nothing more can be archived: every settled milestone except the most recently settled (M21) is already archived; the rest are active, TODO or BLOCKED.
 - Placed ahead of M5a (2026-10-04, extension for FR47-FR48): M5a is BLOCKED and parked waiting on the owner's Mac reboot check, and /harness:plan and /harness:implement stop at the first BLOCKED milestone, so new work is built before it, as the human decided for M14, M15 and M19b-M21. M5a stays BLOCKED and parked, its record unchanged, and is picked up after M24.
+- Review OPTIONAL: search/src/http/unreadableCache.test.ts has unused imports/helpers (readFileSync, appendFileSync, existsSync, DAY, advance) - remove.
+- Review OPTIONAL: stray double blank lines in server/src/generations/passages.ts (where markers/isBotChallenge were removed) and server/src/generations/research.ts (after ResearchWebTools interface).
+- Review observation (not a finding): shared/readability.ts unit tests live in server/src/web/readability.test.ts rather than beside the shared module.
 
 ## M23 — Deep research keeps notes whose quotes differ from the page only trivially, and logs every note it drops
 
