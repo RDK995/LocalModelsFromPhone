@@ -13761,10 +13761,10 @@
         "FR47"
       ],
       "traces": "AC36 (FR47 part: deep research drop and replace, contiguous numbers, every [n] resolves; ordinary web reply could-not-be-read statement; not served from the page cache), FR43 (markers and 40-word minimum reused; no-match pages unchanged), FR44/FR36 (replacement reads within prefetch and deadline), FR33 (unchanged)",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
-      "baseline": null,
+      "baseline": "a7e97a76e8b0e44c54e78b3289e1ae3965f4aa26 on m22-unreadable-pages",
       "as_built": {
         "artifact": null,
         "result": "PENDING"
@@ -13819,7 +13819,18 @@
             "reason_code": "BOUNDED_LOW_RISK",
             "detail": "small pure function, mostly moved code, unit-tested"
           },
-          "attempts": []
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M22-T1-verifier.log",
+              "note": "readability+passages 40 pass; server bun test 395 pass; typecheck exit 0; files within allowed list; tests not weakened"
+            }
+          ],
+          "status": "ACCEPTED"
         },
         {
           "id": "M22-T2",

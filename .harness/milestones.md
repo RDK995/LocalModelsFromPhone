@@ -590,7 +590,7 @@ Cycle 1: CHANGES REQUIRED, scope RECORD_ONLY (2026-10-03), tier Top (opus) - dif
 
 ## M22 — Bot-check and near-empty pages are never listed as sources, and deep research reads another page in their place
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -618,6 +618,8 @@ Pending.
 `.harness/plans/M22.md` — AGREED
 
 ### Baseline
+
+a7e97a76e8b0e44c54e78b3289e1ae3965f4aa26 on m22-unreadable-pages (untracked, not owned by M22 and never committed: "reports/Fast local deep research redesign.md", "research_notes/Fast local deep research redesign/")
 
 ### Evidence
 

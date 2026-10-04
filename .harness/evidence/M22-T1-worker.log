@@ -1,0 +1,41 @@
+## Test Results for M22-T1
+
+### Focused Tests (as specified in task)
+
+#### 1. Readability tests (new)
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/web/readability.test.ts
+Exit Status: 0
+Result: 15 pass, 0 fail
+
+#### 2. Passages tests (existing)
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/generations/passages.test.ts
+Exit Status: 0
+Result: 25 pass, 0 fail
+
+#### 3. Both together
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/web/readability.test.ts src/generations/passages.test.ts
+Exit Status: 0
+Result: 40 pass, 0 fail
+
+### Full Test Suite
+
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test
+Exit Status: 0
+Result: 395 pass, 0 fail (3322 expect() calls)
+
+### Type Check
+
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run typecheck
+Exit Status: 0
+Result: No type errors
+
+## Summary
+
+All tests pass. The implementation:
+- Created shared/readability.ts with the required pure functions
+- Added "client challenge" to BOT_CHALLENGE_MARKERS
+- Implemented wordCount, isBotChallenge, and classifyPage functions
+- Updated passages.ts to import and use the new module
+- Re-exported BOT_CHALLENGE_MARKERS and isBotChallenge for backward compatibility
+- All 395 existing tests still pass
+- New readability tests verify the required functionality

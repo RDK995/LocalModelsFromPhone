@@ -3,6 +3,9 @@
  * No I/O, no model calls, no external dependencies.
  */
 
+import { classifyPage as classifyPageCore } from "@shared/readability";
+export { BOT_CHALLENGE_MARKERS, isBotChallenge } from "@shared/readability";
+
 export interface PassageSettings {
   passageMinWords: number; // default 150
   passageMaxWords: number; // default 400
@@ -19,20 +22,6 @@ export const DEFAULT_PASSAGE_SETTINGS: PassageSettings = {
   noteMinRelevance: 0,
 };
 
-export const BOT_CHALLENGE_MARKERS = [
-  "captcha",
-  "verify you are human",
-  "are you a robot",
-  "are you human",
-  "checking your browser",
-  "checking if the site connection is secure",
-  "enable javascript and cookies to continue",
-  "attention required! | cloudflare",
-  "unusual traffic from your computer",
-  "access denied",
-  "cf-ray",
-  "ddos protection by",
-] as const;
 
 /** Estimate tokens as ceil(characters / 4) */
 export function estimateTokens(s: string): number {
@@ -289,25 +278,6 @@ export function rankPassages(
   return scores;
 }
 
-/** Check if text contains bot challenge markers */
-export function isBotChallenge(text: string): boolean {
-  const normalized = text.toLowerCase().replace(/\s+/g, " ").trim();
-  const wordCount = normalized.split(/\s+/).length;
-
-  // Only consider it a bot challenge if page is short (< 400 words)
-  if (wordCount >= 400) {
-    return false;
-  }
-
-  // Check for any marker
-  for (const marker of BOT_CHALLENGE_MARKERS) {
-    if (normalized.includes(marker)) {
-      return true;
-    }
-  }
-
-  return false;
-}
 
 export type NoteExcerpt =
   | { skip: "empty" | "blocked"; reason: string }
@@ -321,21 +291,12 @@ export function buildNoteExcerpt(
 ): NoteExcerpt {
   const finalSettings = { ...DEFAULT_PASSAGE_SETTINGS, ...settings };
 
-  // 1. Check for bot challenge
-  const fullText = page.title + "\n" + page.text;
-  if (isBotChallenge(fullText)) {
+  // 1-2. Check readability (bot challenge and word count)
+  const classification = classifyPageCore(page, finalSettings.noteMinWords);
+  if (!classification.readable) {
     return {
-      skip: "blocked",
-      reason: "Page appears to be a bot challenge or access verification",
-    };
-  }
-
-  // 2. Check word count
-  const textWords = page.text.split(/\s+/).length;
-  if (textWords < finalSettings.noteMinWords) {
-    return {
-      skip: "empty",
-      reason: `Page has only ${textWords} words (minimum ${finalSettings.noteMinWords})`,
+      skip: classification.reason,
+      reason: classification.detail,
     };
   }
 
