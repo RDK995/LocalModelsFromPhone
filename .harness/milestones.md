@@ -631,6 +631,143 @@ Cycle 1: CHANGES REQUIRED, scope RECORD_ONLY (2026-10-03), tier Top (opus) - dif
 - AC29 amended 2026-10-02 to add the 2026-10-02 heat-pump question: M21-AC1, title and outcome updated at planning on 2026-10-02 to the four-question set. M19g runs the same set before M20 for AC32; M21 re-runs it after M20 because M20 changes the search path. M21-AC2 is unaffected.
 - Owner decision 2026-10-03, selected verbatim: "Note both for later" ("Both are written down as known problems for a later round, and this milestone finishes as planned"). Not fixed in M21; neither gates it. (i) Citation concentration: in the phone reply (.harness/evidence/M21-AC2-phone-screenshot-1.png) all three inline citations point to the same one source ("Lebensraum: Nazi Geopolitics and Expansion Explained") although Sources (6) lists six. (ii) Bot-check pages saved as sources: two of those six sources are titled "Client Challenge" (the scribd.com reads) - apparently a bot-check/challenge page saved as the source instead of the article.
 
+## M22 — Bot-check and near-empty pages are never listed as sources, and deep research reads another page in their place
+
+Status: TODO
+
+### Outcome
+
+Through POST /v1/chat, one shared check classes a fetched page as unreadable when its text shows bot-challenge markers (e.g. scribd.com's "Client Challenge" screen, CAPTCHA, "verify you are human") or has fewer than FR43's 40 words. In deep research such a page gets no number, is not saved or listed as a source, makes no note call, its read step ends failed ("Reading: scribd.com — couldn't be read"), and the next unread URL from the same sub-question's existing search results is read in its place while the deadline allows, with no extra search; in an ordinary web reply `read_page` tells the model plainly the page could not be read and why, and the page is neither numbered nor listed; an unreadable page is never stored in or served from FR39's page cache. Remaining pages stay numbered 1..n in first-read order and FR43 no-match pages are unchanged. Planned 2026-10-04 from FR47 / AC36 (FR47 part), prompted by the owner's M21 phone run (two scribd.com "Client Challenge" pages among Sources (6), .harness/evidence/M21-AC2-phone-screenshot-1.png). FR47-FR48 with AC36-AC37 split at generation into M22 (FR47), M23 (FR48) and M24 (live proof, AC37): as one milestone it carries IMPLEMENTATION_PLUS_LIVE_PROOF, MULTIPLE_OUTCOMES (unreadable pages vs kept notes, independently demonstrable) and CONCURRENCY_LIFECYCLE (replacement reads inside FR44's prefetch and FR36's deadline). This part keeps one signal, CONCURRENCY_LIFECYCLE (seam check: the deep research and ordinary-reply halves share the one check and its cache rule, so splitting them leaves the shared check unowned or duplicated); subsystems C6, C12, C13 (three, not over three) - not split further.
+
+Owns: FR47. Traces to: AC36 (FR47 part: deep research drop and replace, contiguous numbers, every [n] resolves; ordinary web reply could-not-be-read statement; not served from the page cache), FR43 (markers and 40-word minimum reused; no-match pages unchanged), FR44/FR36 (replacement reads within prefetch and deadline), FR33 (unchanged).
+
+### Architecture
+
+C4, C6, C12, C13
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M22-AC1**: Server tests through POST /v1/chat with a faked search service and a scripted fake Ollama: in deep research, a bot-check page ("Client Challenge" text) and a near-empty page (under FR43's 40 words) each get no number, are absent from the saved sources and the final sources event, make no note call, are logged "blocked"/"empty" as today, and their read steps end as failed (e.g. "Reading: scribd.com — couldn't be read"); the next unread URL from the same sub-question's existing search results is read in each one's place with no additional search request; remaining page numbers are contiguous from 1 in first-read order and every [n] in the report resolves to a saved source.
+- [ ] **M22-AC2**: Server tests through POST /v1/chat (faked search service, scripted fake Ollama): a replacement page that is itself unreadable is skipped in turn and the next unread URL tried; a sub-question whose results run out ends with fewer pages and no extra search; replacements stop at the FR36 deadline; a run where every opened page is unreadable ends with FR36's `failed` status and plain sentence; a site serving a bot check on one page and real content on another has the real page read, numbered and listed.
+- [ ] **M22-AC3**: Server tests through POST /v1/chat with web on and deep research off: `read_page` on a bot-check page returns to the model a short plain statement that the page could not be read and why (bot check or no content) instead of page text, its step ends as failed, and the page is neither numbered nor in the reply's saved sources or "Sources (n)" list; the model may then search or read again, and FR33's quiet-round handling is unchanged.
+- [ ] **M22-AC4**: Tests through the search service's page-read API (or POST /v1/chat end to end): a page classed unreadable is not stored in FR39's 24-hour page cache, and a repeat read of the same URL fetches it again rather than serving it from the cache; readable pages are still cached as before.
+- [ ] **M22-AC5**: FR43 "no-match" pages (readable, no relevant passage) keep their number and stay in Sources; all existing tests pass: `cd server && bun test && bun run typecheck` and `cd search && bun test` exit 0.
+
+### Plan
+
+### Baseline
+
+### Evidence
+
+### Validation
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+- FR47 out of scope (requirements 2026-10-04): no search is run solely to find a replacement page; a site is not remembered as blocked (each page judged on its own); FR43 'no-match' pages stay numbered and listed; no phone change.
+- Placed ahead of M5a (2026-10-04, extension for FR47-FR48): M5a is BLOCKED and parked waiting on the owner's Mac reboot check, and /harness:plan and /harness:implement stop at the first BLOCKED milestone, so new work is built before it, as the human decided for M14, M15 and M19b-M21. M5a stays BLOCKED and parked, its record unchanged, and is picked up after M24.
+
+## M23 — Deep research keeps notes whose quotes differ from the page only trivially, and logs every note it drops
+
+Status: TODO
+
+### Outcome
+
+Through POST /v1/chat, FR37's quote check compares a note's quote with the page's full stored text after normalising both sides (Unicode compatibility form, curly and straight quotes alike, all dashes alike, whitespace collapsed, case ignored, markdown link, image and emphasis syntax stripped to the visible text), and a quote with an ellipsis matches when each piece appears in order; a quote whose words are not on the page is still dropped. Every dropped note is written to the FR41 log with run, page number, reason and the first ~120 characters of the quote, and the run-end line gains `notes_dropped`. Deep research only; ordinary web replies take no notes. Planned 2026-10-04 from FR48 / AC36 (FR48 part), prompted by the owner's M21 phone run (server log: note calls on four readable pages, `notes_kept:1`, so the report cited one page three times). Second part of the FR47-FR48 split (see M22). No operational-complexity signal: one subsystem (C6, server/src/generations/research.ts quote check and FR41 log line), about 1-2 production files.
+
+Owns: FR48. Traces to: AC36 (FR48 part: normalised quote match, ellipsis pieces in order, rejection of words not on the page, every drop logged with reason, run-end notes_dropped), FR37 (citation rule otherwise unchanged), FR41 (log line).
+
+### Architecture
+
+C4, C6
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M23-AC1**: Server tests through POST /v1/chat with a faked search service and a scripted fake Ollama: a note is kept when its quote differs from the page's stored text only by curly vs straight quotes or apostrophes, dash variants, whitespace, letter case, Unicode compatibility forms, or markdown link, image or emphasis syntax (e.g. `[Treaty of Versailles](https://…)` on the page matches "Treaty of Versailles"); a quote containing "…" or "..." is kept when each piece, normalised, appears on the page in order.
+- [ ] **M23-AC2**: Server tests through POST /v1/chat: a note is still dropped when its quote's words are not on the page, and when its ellipsis pieces appear on the page only out of order; kept notes' citations behave as FR37 already requires.
+- [ ] **M23-AC3**: Server tests through POST /v1/chat: each dropped note writes one FR41 log entry carrying the run, the page number, the reason (missing quote, quote not found, invalid page number) and the first ~120 characters of the quote; the run-end log line carries `notes_dropped` equal to the number of dropped notes alongside `notes_kept`.
+- [ ] **M23-AC4**: Ordinary web and switch-off replies are unchanged, and all existing tests pass: `cd server && bun test && bun run typecheck` exit 0.
+
+### Plan
+
+### Baseline
+
+### Evidence
+
+### Validation
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+- FR48 out of scope (requirements 2026-10-04): the quote check is not removed or replaced by fuzzy matching beyond the listed normalisations; applies to deep research only.
+- Placed ahead of M5a (2026-10-04, extension for FR47-FR48): M5a is BLOCKED and parked waiting on the owner's Mac reboot check, and /harness:plan and /harness:implement stop at the first BLOCKED milestone, so new work is built before it, as the human decided for M14, M15 and M19b-M21. M5a stays BLOCKED and parked, its record unchanged, and is picked up after M24.
+
+## M24 — Real sources and kept notes proven live on the Mac with the owner's World War Two question
+
+Status: TODO
+
+### Outcome
+
+After the owner agrees to com.harness.server being restarted onto the M22-M23 code (asked first: no standing permission covers this work) and with `qwen3.5:35b-a3b` resident, the owner's question "What was the cause of World War Two from German perspective" and the four AC29 questions (including the heat-pump question) are each run once through the server API; every run meets AC29's bar and no run's saved sources include a page the FR47 check classes as unreadable; per run, notes kept, notes dropped and drop reasons are recorded. A run that misses the bar is recorded and brought to the owner, not re-run until it passes. No phone change or phone screenshot. Third part of the FR47-FR48 split (see M22). Operational-complexity signal: IMPLEMENTATION_PLUS_LIVE_PROOF (one signal; proof only, reusing server/scripts/ac29-live-run.ts) - not split.
+
+Owns: none owned. Traces to: AC37, AC29 (pass bar).
+
+### Architecture
+
+C4, C6, C7, C11, C12, C13
+
+### As-Built
+
+Pending.
+
+### Acceptance Criteria
+
+- [ ] **M24-AC1**: Before any restart, the owner is asked and agrees to com.harness.server being restarted onto the M22-M23 code (their answer recorded verbatim in Evidence); a read-only readiness check then shows the server and search service running committed code at or after M23's last commit and `qwen3.5:35b-a3b` resident.
+- [ ] **M24-AC2**: Live on the Mac through the server API: "What was the cause of World War Two from German perspective" and the four AC29 questions (Raft vs Paxos, LFP vs NMC, WebAssembly components, the 2026-10-02 heat-pump question) are each run once, one at a time; every run ends within the budget plus a small margin with status `complete` or `partial`, at least 3 distinct cited read pages and no citation number that fails to resolve to a saved source (`server/scripts/ac29-live-run.ts --check-only` exit 0 per run).
+- [ ] **M24-AC3**: For each of the five runs, no saved source is a page the FR47 check classes as unreadable (checked by applying that check to each saved source's stored text), and the run's notes kept, notes dropped and drop reasons from its FR41 log are recorded in evidence. A run that misses any bar is recorded and brought to the owner, not re-run until it passes.
+
+### Plan
+
+### Baseline
+
+### Evidence
+
+### Validation
+
+### Review
+
+Pending.
+
+### Review Cycles
+
+0
+
+### Follow-ups
+
+- Placed ahead of M5a (2026-10-04, extension for FR47-FR48): M5a is BLOCKED and parked waiting on the owner's Mac reboot check, and /harness:plan and /harness:implement stop at the first BLOCKED milestone, so new work is built before it, as the human decided for M14, M15 and M19b-M21. M5a stays BLOCKED and parked, its record unchanged, and is picked up after M24.
+
 ## M5a — Always-on server and bundle host
 
 Status: BLOCKED

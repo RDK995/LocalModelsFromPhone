@@ -68,6 +68,17 @@ training-era date; and nothing makes the plan look up current unit prices, while
 use only the notes, so a £ figure appears only when a read page happens to state one (M19g's Mac run
 of the same question did, `.harness/evidence/M19g-T7-heat-stream.txt`).
 
+**Real sources only, and notes kept (FR47–FR48, added 2026-10-04):** the owner's M21 phone run
+("What was the cause of World War Two from German perspective",
+`.harness/evidence/M21-AC2-phone-screenshot-1.png` and `-2.png`) listed six sources, two of them
+scribd.com pages titled "Client Challenge" (bot-check screens, skipped as "empty" at 35 words but
+still numbered and listed, as FR43's edge case then required), and its report cited only one page
+three times. The server log (`~/Library/Logs/phone-models/server.log`, the run ending
+`notes_kept:1, pages_read:6`) shows note calls on all four readable pages each returned output, yet
+one note survived: the FR37 quote check dropped the rest. Dropped notes were not logged, so the
+exact reason is unconfirmed; exact substring matching against stored markdown (which keeps link
+syntax) is the likely cause.
+
 ## Functional Requirements
 
 - [FR1] **Model list.** The app lists every model installed in Ollama (`GET /api/tags`) by its
@@ -319,7 +330,8 @@ of the same question did, `.harness/evidence/M19g-T7-heat-stream.txt`).
   "unavailable" as in FR20.
 - [FR40] **No change to ordinary replies.** Ordinary web replies (FR19, FR30, FR31, FR33) and
   replies with the switch off behave as before, apart from FR39's resting and caching and FR45's
-  stream keep-alive, per-outage resume allowance and error line (amended 2026-10-02).
+  stream keep-alive, per-outage resume allowance and error line (amended 2026-10-02), and FR47's
+  handling of bot-check and near-empty pages (amended 2026-10-04).
 - [FR41] **Every deep research model call is measured, and the model is not reloaded at the start.**
   The server writes one structured log line per deep-research model call with: step name, the `think`
   value sent, attempt number, wall time, and Ollama's `load_duration`, `prompt_eval_count`,
@@ -385,6 +397,31 @@ of the same question did, `.harness/evidence/M19g-T7-heat-stream.txt`).
   silently omitting cost. FR37 citation rules are unchanged; the arithmetic is the model's and is
   not checked by the server. Ordinary web replies are unchanged (FR40).
 
+- [FR47] **Bot-check and near-empty pages are never sources.** One shared check, used by deep
+  research and ordinary web replies alike, classes a fetched page as unreadable when its extracted
+  text shows bot-challenge markers (e.g. a "Client Challenge", CAPTCHA or "verify you are human"
+  screen) or has almost no text (FR43's minimum, currently 40 words). An unreadable page gets no
+  FR31/FR37 number, is not in the reply's saved sources or "Sources (n)" list, and numbering of the
+  remaining pages stays contiguous from 1 in first-read order. Its read step ends as failed (FR22),
+  e.g. "Reading: scribd.com — couldn't be read". (a) Deep research: the page makes no note call
+  (FR43), is logged as today ("blocked"/"empty"), and does not use up a page slot of its
+  sub-question: the next-best unread URL from that sub-question's existing search results is read
+  instead, as long as the deadline allows (FR36, FR44); no search is run solely to find a
+  replacement. (b) Ordinary web replies: `read_page` returns to the model a short plain statement
+  that the page could not be read (and why: bot check or no content) instead of the page text, so the
+  model may choose another result; FR33 is unchanged. (c) A page classed unreadable is not stored in
+  or served from FR39's 24-hour page cache. Pages that were readable but had no relevant passage
+  (FR43 "no-match") are unchanged: still numbered and listed.
+- [FR48] **Notes are not dropped over trivial differences, and every drop is logged.** FR37's quote
+  check compares the note's quote with the page's full stored text after normalising both sides:
+  Unicode compatibility form; curly and straight quotes and apostrophes treated alike; all dash
+  variants treated alike; whitespace collapsed; case ignored; markdown link, image and emphasis
+  syntax removed so only the visible text remains (e.g. `[Treaty of Versailles](https://…)` matches
+  "Treaty of Versailles"). A quote containing an ellipsis ("…" or "...") matches when each piece,
+  normalised, appears on the page in order. Anything else — words not on the page — is still dropped.
+  Every dropped note is logged in the FR41 log with the run, page number, reason (e.g. missing
+  quote, quote not found, invalid page number) and the first ~120 characters of the quote, and the
+  run-end line gains `notes_dropped`. Applies to deep research only (ordinary replies take no notes).
 ## Acceptance Criteria
 
 All proven against the live Mac Studio and Ollama, not mocks.
@@ -547,6 +584,25 @@ All proven against the live Mac Studio and Ollama, not mocks.
     plus a small margin, `complete` or `partial`, ≥ 3 distinct cited read pages, every citation
     resolves). Reports are saved as evidence; the owner's opinion of quality is recorded, not gated.
 
+36. **AC36** — Automated tests (faked search service and scripted fake Ollama) prove FR47 and FR48:
+    in deep research, a bot-check page and a near-empty page get no number, are absent from saved
+    sources, make no note call, end their read step as failed, and the next unread URL from the same
+    sub-question's results is read in their place without an extra search; remaining numbers are
+    contiguous and every report `[n]` resolves; in an ordinary web reply, `read_page` on a bot-check
+    page returns the could-not-be-read statement to the model, the step ends failed and the page is
+    neither numbered nor listed; an unreadable page is not served from the page cache on a repeat
+    read; the quote check accepts each FR48 difference (curly/straight quotes, dash variants,
+    whitespace, case, markdown link/emphasis syntax, ellipsis pieces in order) and rejects a quote
+    whose words are not on the page; each dropped note is logged with its reason and the run-end line
+    carries `notes_dropped`. All existing tests pass.
+37. **AC37** — Live on the Mac with `qwen3.5:35b-a3b` resident and com.harness.server running this
+    code: the owner's question "What was the cause of World War Two from German perspective" plus the
+    four AC29 questions (including the heat-pump question) are each run once. Pass if every run meets
+    AC29's bar (within budget plus a small margin, `complete` or `partial`, ≥ 3 distinct cited read
+    pages, no citation number that fails to resolve) and no run's saved sources include a page the
+    FR47 check classes as unreadable. Per run, notes kept, notes dropped and the drop reasons are
+    recorded in evidence. A run that misses the bar is recorded and brought to the owner, not re-run
+    until it passes.
 ## Constraints
 
 - Runs in **Expo Go** only: current Expo SDK, no custom native modules, no development build.
@@ -675,15 +731,28 @@ All proven against the live Mac Studio and Ollama, not mocks.
   `message.thinking`, logged, and treated as that step's result only if its content validates (FR42).
 - A plan or write call thinks past its guard: cancelled and re-issued once with thinking off; if
   that also fails, FR35/FR36 skip and write-up rules apply (FR42).
-- A page whose passages all score zero, a near-empty page, or a bot-challenge page: no note call,
-  logged as "empty"/"blocked"; FR37's numbering and Sources rules for pages read are unchanged by
-  the skip — the page simply yields no notes.
+- A page whose passages all score zero: no note call, logged as "no-match"; it keeps its FR37
+  number and stays in Sources — the page simply yields no notes. A near-empty or bot-challenge page:
+  no note call, logged as "empty"/"blocked", and per FR47 (amended 2026-10-04) it gets no number, is
+  not in Sources, and the next unread URL is read in its place as time allows.
 - Stop or the deadline while several prefetched reads are in flight: all are cancelled by the one
   signal (FR36, FR44).
 - The connection drops several times in one long reply: each outage gets its own 300 s allowance;
   a single outage longer than that ends the reply on the phone with the error line and steps, while
   the Mac keeps running it (FR38, FR45); reopening later shows the saved reply.
 
+- A replacement page is itself a bot-check or near-empty page: also unreadable under FR47; the next
+  unread URL is tried as long as the deadline allows; a sub-question whose results run out simply
+  ends with fewer pages (FR47).
+- Every page a run opens is unreadable: no notes; FR36's `failed` status and plain sentence apply
+  (FR47).
+- The same site serves a bot check on one page and real content on another: each page is judged on
+  its own; the site is not remembered as blocked (FR47).
+- An ordinary web reply whose only opened page is unreadable: the model is told it could not be read
+  and may search or read again; if it answers from search results alone, FR22's search-result
+  sources apply (FR47).
+- A note quotes the page with "…" joining two sentences from different paragraphs: kept if both
+  pieces appear in order (FR48).
 ## Decisions / Clarifications
 
 - **Replace, not coexist** (human): the Expo app replaces the `phoneToLocalModel` PWA.
@@ -866,6 +935,20 @@ All proven against the live Mac Studio and Ollama, not mocks.
   deep research step, not just write; no undated "current"/period claims; deep research only,
   ordinary web replies unchanged; the second live cost question is electric car vs petrol.
 
+- **Unreadable pages are dropped and replaced** (human, 2026-10-04): FR47 — bot-check and near-empty
+  pages get no number and are not listed; deep research reads another result in their place as time
+  allows. Chosen over dropping without replacement (fewer real sources) and over listing them
+  labelled "couldn't read".
+- **Same rule for ordinary web replies** (human, 2026-10-04): FR47(b). Chosen over deep research only.
+- **Log every dropped note and loosen the quote match** (human, 2026-10-04): FR48. Chosen over
+  logging first and deciding later (a second round of decisions) and over removing the quote check
+  (reports could cite things a page never said).
+- Defaults chosen by Claude, shown to the owner and agreed (2026-10-04): the unreadable test reuses
+  FR43's markers and 40-word minimum; no extra search just to find a replacement; unreadable pages
+  are not cached; FR43 "no-match" pages stay listed; proof is the owner's WWII question plus the four
+  AC29 questions on the Mac, each meeting AC29's bar with no unreadable page in Sources; no phone
+  change or phone screenshot. Restarting com.harness.server for AC37 is not yet covered by a standing
+  permission: ask the owner before restarting.
 ## Open Questions
 
 None
