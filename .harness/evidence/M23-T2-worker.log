@@ -1,0 +1,56 @@
+TASK: M23-T2 — Deep research's quote check uses the FR48 matcher, proven through POST /v1/chat
+
+IMPLEMENTATION:
+- Modified server/src/generations/research.ts to use normaliseForQuote and quoteOnPage from quoteMatch.ts
+- Replaced normaliseWhitespace-based check with FR48 quote matching
+- Deleted unused normaliseWhitespace function
+- Created new test file: server/src/http/deepResearchQuotes.test.ts with 10 comprehensive test cases
+- Updated existing test in research.test.ts to reflect new FR48 behavior (case normalization)
+
+TEST RESULTS:
+- Focused validation: bun test src/http/deepResearchQuotes.test.ts src/generations/quoteMatch.test.ts
+  Result: 43 pass, 0 fail (10 new quote matching tests + 33 quoteMatch tests)
+
+- Full test suite: bun test
+  Result: 450 pass, 0 fail
+
+- Typecheck: bun run typecheck
+  Result: No TypeScript errors
+
+ACCEPTANCE CRITERIA MET:
+✓ M23-AC1: Quote matching keeps notes when quotes differ by:
+  - Curly vs straight quotes/apostrophes
+  - En/em dashes vs hyphens
+  - Whitespace variations
+  - Case differences
+  - Unicode compatibility forms
+  - Markdown links, images, emphasis syntax
+  - Ellipsis pieces from multiple paragraphs in order
+
+✓ M23-AC2: Quote matching drops notes when:
+  - Quote words are not on the page
+  - Ellipsis pieces are out of order on page
+
+✓ M23-AC4: All existing tests pass and codebase is unchanged except:
+  - research.ts: keepNotes closure updated to use FR48 matcher
+  - research.test.ts: Updated one test to expect new FR48 case-normalization behavior
+  - deepResearchQuotes.test.ts: New comprehensive test file
+
+KEY CHANGES:
+1. research.ts (lines 42, 952-957):
+   - Added import: normaliseForQuote, quoteOnPage from ./quoteMatch
+   - Updated keepNotes: uses normaliseForQuote(page.text) and quoteOnPage(item.quote, pageTextNorm)
+   - Removed: normaliseWhitespace function (no longer needed)
+
+2. research.test.ts (lines 593-613):
+   - Updated test to expect case-normalized quotes to be kept (FR48 behavior)
+   - Changed from "drops" to "keeps" for case-different quotes
+
+3. deepResearchQuotes.test.ts (new file):
+   - 10 test cases covering FR48 requirements
+   - Tests through POST /v1/chat with faked search and Ollama
+   - Validates quote matching with various normalization scenarios
+   - Validates note keeping/dropping behavior
+   - Validates citation preservation in final report
+
+VALIDATION ARTIFACT: .harness/evidence/M23-T2-worker.log

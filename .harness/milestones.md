@@ -611,6 +611,17 @@ Pending.
 
 ### Evidence
 
+Progress (orchestrator handoff, 2026-10-05):
+
+```
+M23-T1 — FR48 quote matcher            Cheap, attempt 1, PASS (commit 160530a; .harness/evidence/M23-T1-verifier.log: 33 pass, typecheck 0)
+M23-T2 — keepNotes uses matcher         Cheap attempt 1 FAIL (orchestrator: e2e curly test had no curly chars; no e2e Unicode-compat test)
+                                        Cheap attempt 2 INTERRUPTED twice (40-turn limit, no report)
+                                        → next: Mid attempt 3 (sonnet). Uncommitted in tree: research.ts swap + research.test.ts
+                                          letter-case conversion (both judged correct); deepResearchQuotes.test.ts partly rewritten, not loading
+M23-T3 — drop log + notes_dropped       not started
+```
+
 ### Validation
 
 ### Review

@@ -14074,7 +14074,27 @@
             "reason_code": "BOUNDED_LOW_RISK",
             "detail": "one-place swap to a tested function plus end-to-end tests from stated assertions"
           },
-          "attempts": []
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M23-T2-verifier.log",
+              "orchestrator": "FAIL",
+              "note": "research.ts keepNotes swap correct (normaliseForQuote/quoteOnPage, normaliseWhitespace removed); research.test.ts letter-case test converted to FR48 (packet amended to allow, see plan Changes during implementation). Rejected by orchestrator: deepResearchQuotes.test.ts 'curly vs straight' test had no curly characters, and no POST /v1/chat test for Unicode compatibility forms (ligature / NBSP) - AC1 not exercised end to end. Verifier missed both."
+            },
+            {
+              "attempt": 2,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "INTERRUPTED",
+              "note": "worker stopped at its 40-turn limit with no report; a fresh Cheap continuation from disk also stopped at 40 turns with no report. research.ts and research.test.ts untouched by attempt 2 (still attempt 1's accepted-quality change). server/src/http/deepResearchQuotes.test.ts left partly rewritten and currently failing to load (bun test: 0 pass, 1 fail, 1 error)."
+            }
+          ],
+          "status": "IN_PROGRESS",
+          "next": "Attempt 3 at Mid (sonnet): Cheap rungs spent (attempt 1 FAIL, attempt 2 interrupted twice). Keep research.ts and research.test.ts as they are in the working tree; repair server/src/http/deepResearchQuotes.test.ts so it loads and exercises every FR48 difference end to end: real curly characters on the page with a straight-quote quote; en/em dash page vs '-' quote; whitespace; case; U+FB01 ligature and U+00A0 NBSP; markdown link (Treaty of Versailles), image, emphasis; '\u2026' and '...' ellipsis in order; dropped: words not on page, ellipsis reversed; FR37 citations. Each kept case must fail under the old whitespace-only includes() check. Then verify and commit T2, then run T3."
         },
         {
           "id": "M23-T3",
@@ -14101,7 +14121,8 @@
       "findings": [],
       "validation": [],
       "follow_ups": [
-        "FR48 out of scope (requirements 2026-10-04): the quote check is not removed or replaced by fuzzy matching beyond the listed normalisations; applies to deep research only."
+        "FR48 out of scope (requirements 2026-10-04): the quote check is not removed or replaced by fuzzy matching beyond the listed normalisations; applies to deep research only.",
+        "milestones.md 819 -> 743 lines at M23 pickup after archiving settled M21 to .harness/archive/M21.md; still above 400 but M22 (most recently settled), M23/M24 (open) and M5a (BLOCKED) are protected."
       ],
       "complexity_signals": [],
       "ordering_decision": "Placed ahead of M5a (2026-10-04, extension for FR47-FR48): M5a is BLOCKED and parked waiting on the owner's Mac reboot check, and /harness:plan and /harness:implement stop at the first BLOCKED milestone, so new work is built before it, as the human decided for M14, M15 and M19b-M21. M5a stays BLOCKED and parked, its record unchanged, and is picked up after M24.",
