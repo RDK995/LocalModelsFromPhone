@@ -577,6 +577,8 @@ M23-T3  — drop log + notes_dropped        Cheap attempt 1 FAIL (orchestrator: 
 
 ### Validation
 
+- Milestone validation for the reviewer (run once; read-only, no live run, no requests to :7789/:7790, no restarts): for ID in ww2 q1 q2 q3 heat: `cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M24-T3-$ID-stream.txt --log ../.harness/evidence/M24-T3-$ID-fr41.log --sources-text ../.harness/evidence/M24-T3-$ID-sources-text.json` — expect exit 0 and ac37_pass true each; plus `cd server && bun test` and `bun run typecheck` (M24-T1 script change). Owner reading file: .harness/evidence/M24-T4-summary.md. Restart evidence: .harness/evidence/M24-T2-readiness.log.
+
 `cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck` (reviewer runs once; covers M23-AC1..AC4; focused files: server/src/http/deepResearchQuotes.test.ts, server/src/generations/quoteMatch.test.ts, server/src/http/deepResearchModelCalls.test.ts, server/src/generations/research.test.ts). Last verifier run (M23-T3) exit 0: 467 pass, typecheck clean — .harness/evidence/M23-T3-verifier.log.
 
 ### Review
@@ -596,7 +598,7 @@ Cycle 1: PASS (tier Mid, model sonnet, reason MID_ROUTED_TASK_IN_DIFF; diff 7a37
 
 ## M24 — Real sources and kept notes proven live on the Mac with the owner's World War Two question
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -635,7 +637,7 @@ Pending.
 - M24-T3 q2 (M24-AC2, M24-AC3) — Cheap, attempt 1, PASS; verifier PASS (--check-only exit 0 reproduces values). generation df6d81e6-f6be-4278-8a3e-29d17472016f, 2026-10-05T09:21:55Z-09:25:14Z, final_status complete, total_wall_s 199.561 / limit 540, distinct_pages_read 6, cited_read_pages 3, unresolved_citations [], notes_kept 12, notes_dropped 13, drop_reasons {"quote_not_found": 13}, sources_check 6 checked / 0 unreadable / 0 unchecked, pass true, ac37_pass true — .harness/evidence/M24-T3-q2-result.json, -run.log, -check.log, -verifier.log.
 - M24-T3 q3 (M24-AC2, M24-AC3) — Cheap, attempt 1, PASS; verifier PASS (--check-only exit 0 reproduces values). generation 1dfd519e-5fcc-46fe-82c1-ed65648827eb, 2026-10-05T09:27:13Z-09:30:50Z, final_status complete, total_wall_s 217.097 / limit 540, distinct_pages_read 6, cited_read_pages 5, unresolved_citations [], notes_kept 17, notes_dropped 13, drop_reasons {"quote_not_found": 13}, sources_check 6 checked / 0 unreadable / 0 unchecked, pass true, ac37_pass true — .harness/evidence/M24-T3-q3-result.json, -run.log, -worker.log, -verifier.log.
 - M24-T3 heat (M24-AC2, M24-AC3) — Cheap, attempt 1, PASS; verifier PASS (--check-only exit 0 reproduces values; check-only total_wall_s 211.644 vs run 211.649, stream-derived). generation 482abfb6-015c-41f5-aeb5-08fbfcf9a843, 2026-10-05T09:33:34Z-09:37:06Z, final_status complete, total_wall_s 211.649 / limit 540, distinct_pages_read 5, cited_read_pages 4, unresolved_citations [], notes_kept 18, notes_dropped 5, drop_reasons {"quote_not_found": 5}, sources_check 5 checked / 0 unreadable / 0 unchecked, pass true, ac37_pass true — .harness/evidence/M24-T3-heat-result.json, -run.log, -worker.log, -verifier.log.
-- Handoff (orchestrator continuation 1, turn budget): remaining M24-T3 heat (one fresh Cheap worker, packet .harness/tasks/M24-T3.md, <ID>=heat, then verifier), M24-T4 summary, milestone validation, REVIEW. Services not to be restarted again.
+- M24-T4 owner reading file (M24-AC2, M24-AC3) — Cheap: attempt 1 INTERRUPTED (worker turn limit, no report; partial file discarded, spends no rung); fresh Cheap worker PASS. Verifier (interrupted at its turn limit, asked to report what it had established): five --check-only exit 0 with table values matching; report text equals stream content for all five runs; source counts, final line and files within allowed confirmed; Tests Weakened NO; verifier Result FAIL on one point only — dropped-note quotes shown with an extra outer pair of quote marks. Orchestrator judgement: not a discrepancy. The fr41 quote values themselves begin and end with a literal " (e.g. ww2 n=4 JSON "quote":"\"Lebensraum was a leading motivation of Nazi Germany to initiate World War II\""), and the summary prints each value verbatim inside its own uniform delimiter pair; accepted. Final line: "All five runs met every bar." — .harness/evidence/M24-T4-summary.md, M24-T4-worker.log, M24-T4-verifier.log.
 
 ### Validation
 

@@ -14240,7 +14240,7 @@
       "architecture": "C4, C6, C7, C11, C12, C13",
       "requirements": [],
       "traces": "AC37, AC29 (pass bar)",
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": "1bc598b1e2754d13e1e6e42b06cbbfa24f9e7ba8 on m24-live-wwii-proof",
@@ -14404,12 +14404,37 @@
             "reason_code": "BOUNDED_LOW_RISK",
             "detail": "assemble a file from existing evidence with a stated layout; settled by exact re-derivation"
           },
-          "attempts": []
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "INTERRUPTED",
+              "evidence": "worker reached its 40-turn limit with no report; partial summary discarded; no rung spent"
+            },
+            {
+              "attempt": 1,
+              "continuation": "fresh",
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "evidence": "M24-T4 owner reading file (M24-AC2, M24-AC3) — Cheap: attempt 1 INTERRUPTED (worker turn limit, no report; partial file discarded, spends no rung); fresh Cheap worker PASS. Verifier (interrupted at its turn limit, asked to report what it had established): five --check-only exit 0 with table values matching; report text equals stream content for all five runs; source counts, final line and files within allowed confirmed; Tests Weakened NO; verifier Result FAIL on one point only — dropped-note quotes shown with an extra outer pair of quote marks. Orchestrator judgement: not a discrepancy. The fr41 quote values themselves begin and end with a literal \" (e.g. ww2 n=4 JSON \"quote\":\"\\\"Lebensraum was a leading motivation of Nazi Germany to initiate World War II\\\"\"), and the summary prints each value verbatim inside its own uniform delimiter pair; accepted. Final line: \"All five runs met every bar.\" — .harness/evidence/M24-T4-summary.md, M24-T4-worker.log, M24-T4-verifier.log."
+            }
+          ]
         }
       ],
       "reviews": [],
       "findings": [],
-      "validation": [],
+      "validation": [
+        {
+          "command": "Milestone validation for the reviewer (run once; read-only, no live run, no requests to :7789/:7790, no restarts): for ID in ww2 q1 q2 q3 heat: `cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M24-T3-$ID-stream.txt --log ../.harness/evidence/M24-T3-$ID-fr41.log --sources-text ../.harness/evidence/M24-T3-$ID-sources-text.json` — expect exit 0 and ac37_pass true each; plus `cd server && bun test` and `bun run typecheck` (M24-T1 script change). Owner reading file: .harness/evidence/M24-T4-summary.md. Restart evidence: .harness/evidence/M24-T2-readiness.log.",
+          "result": "recorded for reviewer; per-run --check-only exit 0 already reproduced by task verifiers",
+          "artifacts": [
+            ".harness/evidence/M24-T4-summary.md",
+            ".harness/evidence/M24-T4-verifier.log"
+          ]
+        }
+      ],
       "follow_ups": [],
       "complexity_signals": [
         "IMPLEMENTATION_PLUS_LIVE_PROOF"
@@ -14423,7 +14448,8 @@
         "Shape/size check 2026-10-04 (generation): 3 criteria, real entry point the server API on the live Mac; one signal IMPLEMENTATION_PLUS_LIVE_PROOF. Restarting com.harness.server is not covered by a standing permission for FR47-FR48 work (requirements Decisions 2026-10-04): the owner must be asked before any restart.",
         "Planning 2026-10-04: 3 criteria, one signal IMPLEMENTATION_PLUS_LIVE_PROOF (seam check: the script change only measures these runs; not split); 4 Cheap tasks; planned against M22/M23 DRAFT plans (classifyPage in shared/readability.ts; deep_research_note_dropped {run,n,reason,quote}; run-end notes_dropped). Recon: the server stores no page text after a run (sources event is title/url/n only), so AC3's 'stored text' is the search service's FR39 page cache via POST 127.0.0.1:7790/v1/read (x-cache hit|miss) - raised in plan risks. Both com.harness.search and com.harness.server must restart (both import shared/); owner asked for both before either. milestones.md ~800 lines: nothing further archivable (M21 most recently settled, M5a BLOCKED, M22-M24 TODO).",
         "Pickup 2026-10-05: size/shape re-check passes (3 criteria; real entry point POST /v1/chat on the live Mac; one signal IMPLEMENTATION_PLUS_LIVE_PROOF, seam check as planned) - run, not split. milestones.md 768 lines: archived M22 (DONE) to .harness/archive/M22.md (768 -> 713 lines; 64-line section moved unchanged, 11-line stub left); M23 most recently settled, M5a BLOCKED, M24 active - nothing else archivable. Untracked reports/ and research_notes/ at baseline are the owner's, not committed.",
-        "Handoff 2026-10-05 (turn budget): accepted M24-T1 (c984e0e) and M24-T2 (restart done; do NOT restart again - the owner's permission was for one restart and it is spent). Remaining: M24-T3 five live runs, one fresh worker each, sequential, foreground, in order ww2, q1, q2, q3, heat (each verified before the next; a run that misses any bar is recorded, not re-run, and the milestone goes BLOCKED for owner decision after the set); then M24-T4 summary; then record milestone validation and set REVIEW."
+        "Handoff 2026-10-05 (turn budget): accepted M24-T1 (c984e0e) and M24-T2 (restart done; do NOT restart again - the owner's permission was for one restart and it is spent). Remaining: M24-T3 five live runs, one fresh worker each, sequential, foreground, in order ww2, q1, q2, q3, heat (each verified before the next; a run that misses any bar is recorded, not re-run, and the milestone goes BLOCKED for owner decision after the set); then M24-T4 summary; then record milestone validation and set REVIEW.",
+        "Continuation 2 2026-10-05: M24-T3 heat accepted (e358ec1); all five runs ac37_pass true; M24-T4 accepted; status REVIEW. Archiving deferred (milestones.md over 400 lines; M23 most recently settled, M5a BLOCKED, M24 active)."
       ]
     },
     "M5a": {
