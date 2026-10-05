@@ -1,0 +1,248 @@
+: connected
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-0
+event: step
+data: {"step_id":"plan","kind":"plan","status":"started","elapsed_ms":0,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-1
+event: step
+data: {"step_id":"plan","kind":"plan","status":"done","elapsed_ms":12026,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-2
+event: step
+data: {"step_id":"706314cb-43c1-4609-8549-550f8e39b236","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":12026,"budget_ms":480000}
+
+: keep-alive
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-3
+event: step
+data: {"step_id":"706314cb-43c1-4609-8549-550f8e39b236","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":15281,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-4
+event: step
+data: {"step_id":"66a770c1-1daf-47c0-9027-91533395612b","kind":"search","status":"started","query":"LFP vs NMC home battery cost per kWh 2026","elapsed_ms":15281,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-5
+event: step
+data: {"step_id":"66a770c1-1daf-47c0-9027-91533395612b","kind":"search","status":"done","query":"LFP vs NMC home battery cost per kWh 2026","elapsed_ms":16763,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-6
+event: step
+data: {"step_id":"7f6a5b1e-9c73-47e0-bb65-a179f5fadc36","kind":"search","status":"started","query":"average price of residential lithium battery systems October 2026","elapsed_ms":16763,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-7
+event: step
+data: {"step_id":"7f6a5b1e-9c73-47e0-bb65-a179f5fadc36","kind":"search","status":"done","query":"average price of residential lithium battery systems October 2026","elapsed_ms":19271,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-8
+event: step
+data: {"step_id":"31c9cead-3cf0-46d3-8fd7-f569b94c9b63","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":19272,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-9
+event: step
+data: {"step_id":"31c9cead-3cf0-46d3-8fd7-f569b94c9b63","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":22268,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-10
+event: step
+data: {"step_id":"a69842b9-f81c-406f-9712-55fadfbc7e4f","kind":"read","status":"started","url":"https://jouleio.com/blog/home-battery-cost-per-kwh/","elapsed_ms":22268,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-11
+event: step
+data: {"step_id":"50a318e0-50f5-43be-84c8-2e038cb2255e","kind":"read","status":"started","url":"https://designtransitionstudio.com/home-battery-cost-price-residential-storage/","elapsed_ms":22269,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-12
+event: step
+data: {"step_id":"a69842b9-f81c-406f-9712-55fadfbc7e4f","kind":"read","status":"done","url":"https://jouleio.com/blog/home-battery-cost-per-kwh/","elapsed_ms":22632,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-13
+event: step
+data: {"step_id":"73504976-8aed-46ae-86e4-cc9a7b93e9ab","kind":"model","status":"started","detail":"Taking notes: jouleio.com","elapsed_ms":22758,"budget_ms":480000}
+
+: keep-alive
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-14
+event: step
+data: {"step_id":"73504976-8aed-46ae-86e4-cc9a7b93e9ab","kind":"model","status":"done","detail":"Taking notes: jouleio.com","elapsed_ms":35891,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-15
+event: step
+data: {"step_id":"d8b1d172-7d85-4763-b3a9-76bab48b5d82","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":35894,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-16
+event: step
+data: {"step_id":"d8b1d172-7d85-4763-b3a9-76bab48b5d82","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":39310,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-17
+event: step
+data: {"step_id":"fefa31a6-0e6d-48cc-b28a-db4be1351cb7","kind":"search","status":"started","query":"LFP vs NMC cycle life residential battery storage 2026","elapsed_ms":39310,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-18
+event: step
+data: {"step_id":"fefa31a6-0e6d-48cc-b28a-db4be1351cb7","kind":"search","status":"done","query":"LFP vs NMC cycle life residential battery storage 2026","elapsed_ms":41923,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-19
+event: step
+data: {"step_id":"b99fc4a2-80a7-4876-8aa8-c6ffdcd91d60","kind":"search","status":"started","query":"NMC lithium battery degradation rate home storage applications","elapsed_ms":41924,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-20
+event: step
+data: {"step_id":"b99fc4a2-80a7-4876-8aa8-c6ffdcd91d60","kind":"search","status":"done","query":"NMC lithium battery degradation rate home storage applications","elapsed_ms":43928,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-21
+event: step
+data: {"step_id":"5fc39297-6aed-42c2-97ca-455648c05578","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":43928,"budget_ms":480000}
+
+: keep-alive
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-22
+event: step
+data: {"step_id":"5fc39297-6aed-42c2-97ca-455648c05578","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":46598,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-23
+event: step
+data: {"step_id":"abee31f6-47d0-4050-822c-4f1aca0f2445","kind":"read","status":"started","url":"https://savolture.com/blog/lfp-vs-nmc-home-batteries-comparison-2026/","elapsed_ms":46598,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-24
+event: step
+data: {"step_id":"02d73725-a9e1-409a-81a0-9c039acc22a2","kind":"read","status":"started","url":"https://www.jmenergytech.com/lfp-vs-nmc-for-home-battery-backup-which-lasts-longer.html","elapsed_ms":46599,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-25
+event: step
+data: {"step_id":"abee31f6-47d0-4050-822c-4f1aca0f2445","kind":"read","status":"done","url":"https://savolture.com/fr/blog/lfp-vs-nmc-home-batteries-comparison-2026/","elapsed_ms":49103,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-26
+event: step
+data: {"step_id":"c87e00f5-292a-4935-8dbc-99a73d244f47","kind":"model","status":"started","detail":"Taking notes: savolture.com","elapsed_ms":49187,"budget_ms":480000}
+
+: keep-alive
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-27
+event: step
+data: {"step_id":"c87e00f5-292a-4935-8dbc-99a73d244f47","kind":"model","status":"done","detail":"Taking notes: savolture.com","elapsed_ms":62777,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-28
+event: step
+data: {"step_id":"cfeab936-d27b-4bfc-907e-3e9efce94c99","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":62780,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-29
+event: step
+data: {"step_id":"cfeab936-d27b-4bfc-907e-3e9efce94c99","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":66911,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-30
+event: step
+data: {"step_id":"6b4ec17f-e1a0-411f-8b02-3f8ab16da4ef","kind":"search","status":"started","query":"LFP vs NMC battery safety thermal runaway home storage 2026","elapsed_ms":66911,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-31
+event: step
+data: {"step_id":"6b4ec17f-e1a0-411f-8b02-3f8ab16da4ef","kind":"search","status":"done","query":"LFP vs NMC battery safety thermal runaway home storage 2026","elapsed_ms":71221,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-32
+event: step
+data: {"step_id":"8a63c046-fd44-48a6-984a-1501e7607811","kind":"search","status":"started","query":"NMC battery cold weather performance degradation below freezing","elapsed_ms":71222,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-33
+event: step
+data: {"step_id":"8a63c046-fd44-48a6-984a-1501e7607811","kind":"search","status":"done","query":"NMC battery cold weather performance degradation below freezing","elapsed_ms":73097,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-34
+event: step
+data: {"step_id":"06a22215-86f6-495d-b7ef-89e60f03dff6","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":73097,"budget_ms":480000}
+
+: keep-alive
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-35
+event: step
+data: {"step_id":"06a22215-86f6-495d-b7ef-89e60f03dff6","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":75869,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-36
+event: step
+data: {"step_id":"e8e7e014-0e8e-4fd2-955b-428378504516","kind":"read","status":"started","url":"https://eureka.patsnap.com/report-how-to-improve-nmc-battery-discharge-performance-in-cold-conditions","elapsed_ms":75870,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-37
+event: step
+data: {"step_id":"70e7c392-dbce-4ff5-a6cd-dd3c0eb67b78","kind":"read","status":"started","url":"https://www.large-battery.com/blog/low-temperature-performance-nmc-vs-lithium-batteries/","elapsed_ms":75870,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-38
+event: step
+data: {"step_id":"e8e7e014-0e8e-4fd2-955b-428378504516","kind":"read","status":"done","url":"https://eureka.patsnap.com/report-how-to-improve-nmc-battery-discharge-performance-in-cold-conditions","elapsed_ms":76607,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-39
+event: step
+data: {"step_id":"50769ea7-ff4c-400a-af51-829a386ac16a","kind":"model","status":"started","detail":"Taking notes: eureka.patsnap.com","elapsed_ms":76707,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-40
+event: step
+data: {"step_id":"50769ea7-ff4c-400a-af51-829a386ac16a","kind":"model","status":"done","detail":"Taking notes: eureka.patsnap.com","elapsed_ms":87953,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-41
+event: step
+data: {"step_id":"50a318e0-50f5-43be-84c8-2e038cb2255e","kind":"read","status":"done","url":"https://designtransitionstudio.com/home-battery-cost-price-residential-storage/","elapsed_ms":87957,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-42
+event: step
+data: {"step_id":"357834a7-5291-4626-b89a-94c2809e9322","kind":"model","status":"started","detail":"Taking notes: designtransitionstudio.com","elapsed_ms":87979,"budget_ms":480000}
+
+: keep-alive
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-43
+event: step
+data: {"step_id":"357834a7-5291-4626-b89a-94c2809e9322","kind":"model","status":"done","detail":"Taking notes: designtransitionstudio.com","elapsed_ms":96051,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-44
+event: step
+data: {"step_id":"02d73725-a9e1-409a-81a0-9c039acc22a2","kind":"read","status":"done","url":"https://www.jmenergytech.com/lfp-vs-nmc-for-home-battery-backup-which-lasts-longer.html","elapsed_ms":96052,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-45
+event: step
+data: {"step_id":"1f109925-3bef-4a76-9067-db345cd702eb","kind":"model","status":"started","detail":"Taking notes: jmenergytech.com","elapsed_ms":96055,"budget_ms":480000}
+
+: keep-alive
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-46
+event: step
+data: {"step_id":"1f109925-3bef-4a76-9067-db345cd702eb","kind":"model","status":"done","detail":"Taking notes: jmenergytech.com","elapsed_ms":106392,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-47
+event: step
+data: {"step_id":"70e7c392-dbce-4ff5-a6cd-dd3c0eb67b78","kind":"read","status":"done","url":"https://www.large-battery.com/blog/low-temperature-performance-nmc-vs-lithium-batteries/","elapsed_ms":106392,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-48
+event: step
+data: {"step_id":"129819e4-b2cd-41bf-af8b-9c5b4868020a","kind":"model","status":"started","detail":"Taking notes: large-battery.com","elapsed_ms":106470,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-49
+event: step
+data: {"step_id":"129819e4-b2cd-41bf-af8b-9c5b4868020a","kind":"model","status":"done","detail":"Taking notes: large-battery.com","elapsed_ms":118108,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-50
+event: step
+data: {"step_id":"write","kind":"write","status":"started","elapsed_ms":118110,"budget_ms":480000}
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-51
+event: step
+data: {"step_id":"write","kind":"write","status":"done","elapsed_ms":199555,"budget_ms":480000}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-52
+event: content
+data: {"text":"# Comparative Analysis: LFP vs. NMC Lithium Battery Chemistries for Home Storage (2026)\n\n## Executive Summary\nIn the context of home energy storage in 2026, a direct comparative market analysis between LFP and NMC is constrained by the fact that NMC chemistry has been fully replaced by LFP in major residential systems. While historical data indicates NMC offered a cost advantage, it is no longer available for purchase as a new standard installation. Consequently, all current residential battery comparisons are effectively comparisons of different LFP configurations against each other, with LFP demonstrating superior cycle life and thermal stability over its historical counterpart, NMC.\n\n## 1. Market Costs and Unit Prices (2026)\nAs of 2026, the market for new major home battery systems no longer includes NMC chemistry; all major residential batteries utilize LFP technology [1]. Therefore, a direct price comparison between new NMC and LHP units is not possible as NMC units are effectively non-existent in this sector [1]. The prevailing market cost range for installed residential battery storage is between $700 and $1,300 per kWh [1]. A specific benchmark, the Tesla Powerwall 3, is priced at approximately $1,018 per kWh installed, which places it roughly 10% below the marketplace average [1]. Premium modular configurations from manufacturers like Enphase can command higher prices, ranging up to $1,900 per kWh for small-scale setups [1].\n\nRegarding lifetime running costs, LFP systems are economically superior due to their extended cycle life. The lifetime cost for LFP is calculated at approximately $0.13 per kilowatt-hour (kWh) [4]. In contrast, the historical lifetime cost for NMC was significantly higher at approximately $0.29 per kWh [4]. This represents a direct cost difference of $0.16 per kWh in favor of LFP over the battery's lifespan.\n\n## 2. Cycle Lifespan and Degradation Rates\nThe cycle life disparity between the two chemistries is the primary driver for the performance and cost differences observed in residential applications. LFP batteries offer a significantly longer operational lifespan, capable of enduring between 6,000 and 8,500 cycles [4]. Conversely, NMC batteries are rated for only 3,000 to 4,000 cycles [4]. This difference is critical because the total lifetime energy delivery is determined by the product of usable capacity and cycle life [4].\n\nDegradation rates vary significantly based on environmental conditions. LFP systems demonstrate high resilience, maintaining reliable capacity at ambient temperatures up to 55°C without suffering permanent damage [4]. In comparison, NMC batteries degrade rapidly when ambient temperatures exceed 35°C, leading to warranty exclusions in hot climates [4]. The fundamental reason for this disparity lies in the electrochemical kinetics; LFP maintains thermal stability where NMC does not, ensuring that the latter suffers significant capacity loss and potential structural damage under heat stress [4].\n\n## 3. Safety Profiles and Cold-Weather Performance\nThe safety and reliability profiles of LFP and NMC differ markedly, particularly regarding thermal management and cold-weather operation.\n\n**Thermal Stability:** LFP is preferred for residential storage largely due to its superior cycle life and thermal stability compared to NMC [4]. LFP batteries can withstand temperature excursions up to 55°C without permanent harm, whereas NMC suffers significant degradation above 35°C [4].\n\n**Cold-Weather Performance:** NMC batteries exhibit severe performance limitations in cold conditions due to the slowing of electrochemical kinetics. The lithium-ion diffusion coefficient in NMC electrolytes decreases by approximately an order of magnitude for every 15°C reduction in temperature [5]. Furthermore, standard carbonate-based electrolytes used in NMC systems become highly viscous at sub-zero temperatures, reducing ionic conductivity by an order of magnitude between room temperature and -20°C [5]. This viscosity creates a bottleneck for ion transport that leads to specific degradation mechanisms such as lithium plating and structural damage when the battery is operated without mitigation [5].\n\nIn contrast, LFP chemistry is noted for its resistance to these cold-weather failure modes, contributing to sustainability by extending the battery lifespan through reduced degradation risks in varying climates [5]. While specific quantitative cycle data for LFP in sub-zero temperatures is not explicitly separated from the general degradation data in the provided notes, the text emphasizes that enhanced cold-weather performance (associated with LFP in this context) allows for efficient operation with less degradation compared to the failure-prone NMC technology [5]."}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-53
+event: sources
+data: {"items":[{"title":"Home Battery Cost per kWh: 2026 Price Comparison for Solar Storage","url":"https://jouleio.com/blog/home-battery-cost-per-kwh/","n":1},{"title":"Home Battery Cost: Price Guide for Residential Storage 2026 – Design Transition Studio","url":"https://designtransitionstudio.com/home-battery-cost-price-residential-storage/","n":2},{"title":"LFP vs. NMC for Home Battery Backup: Which Lasts Longer? (2026)","url":"https://www.jmenergytech.com/lfp-vs-nmc-for-home-battery-backup-which-lasts-longer.html","n":3},{"title":"Batteries domestiques LFP vs NMC : une comparaison complète pour 2026","url":"https://savolture.com/fr/blog/lfp-vs-nmc-home-batteries-comparison-2026/","n":4},{"title":"How to Improve NMC Battery Discharge Performance in Cold Conditions","url":"https://eureka.patsnap.com/report-how-to-improve-nmc-battery-discharge-performance-in-cold-conditions","n":5},{"title":"Why NMC Batteries Shine in Cold Weather Conditions","url":"https://www.large-battery.com/blog/low-temperature-performance-nmc-vs-lithium-batteries/","n":6}]}
+
+id: df6d81e6-f6be-4278-8a3e-29d17472016f-54
+event: done
+data: {"status":"complete","model":"qwen3.5:35b-a3b","eval_count":3604,"tokens_per_second":46.01669456056368,"research":{"status":"complete","elapsed_ms":199556,"budget_ms":480000}}
+
