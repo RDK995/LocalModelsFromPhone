@@ -14287,7 +14287,15 @@
             "reason_code": "BOUNDED_LOW_RISK",
             "detail": "additions to a unit-tested client-side evidence script with stated outputs; settled by unit tests and M21 check-only re-runs"
           },
-          "attempts": []
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "evidence": "M24-T1 ac29-live-run.ts gains ww2 question, selectNoteDroppedLines, notes_dropped/drop_reasons/note_drop_lines, checkSavedSources (classifyPage), live source re-read to <base>-sources-text.json, sources_check/ac37_pass, --check-only --sources-text — Cheap, attempt 1, PASS; verifier PASS (packet Tests exit 0: ac29 24 pass, full suite 477 pass, typecheck clean, M21-T6 q1/q2/q3/heat --check-only exit 0; files within allowed; tests weakened NO) — .harness/evidence/M24-T1-verifier.log."
+            }
+          ]
         },
         {
           "id": "M24-T2",

@@ -628,6 +628,7 @@ Pending.
 ### Evidence
 
 - M24-AC1 Owner permission, asked and answered 2026-10-05 in this session, before any restart. Question asked: "The last two fixes (skipping bot-check pages as sources, and keeping notes whose quotes differ only in small ways like curly quotes) are built, but the always-on server on your Mac is still running the old code. To test them for real, I need to restart the server and the search service so they pick up the new code. While they restart (a minute or so), the phone app won't be able to reach the Mac, and any reply in progress would be cut off. After that, I'll run your World War Two question plus the four usual test questions, one at a time — roughly 4 minutes each, about 20 minutes total. OK to restart?" Owner's answer: "Yes, restart now" Authorises restarting com.harness.server and com.harness.search once for M24; covers nothing else.
+- M24-T1 ac29-live-run.ts gains ww2 question, selectNoteDroppedLines, notes_dropped/drop_reasons/note_drop_lines, checkSavedSources (classifyPage), live source re-read to <base>-sources-text.json, sources_check/ac37_pass, --check-only --sources-text — Cheap, attempt 1, PASS; verifier PASS (packet Tests exit 0: ac29 24 pass, full suite 477 pass, typecheck clean, M21-T6 q1/q2/q3/heat --check-only exit 0; files within allowed; tests weakened NO) — .harness/evidence/M24-T1-verifier.log.
 
 ### Validation
 

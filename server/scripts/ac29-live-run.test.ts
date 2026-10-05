@@ -8,6 +8,8 @@ import {
   buildResult,
   selectFr41Lines,
   selectRunEndLine,
+  selectNoteDroppedLines,
+  checkSavedSources,
   type SseEvent,
 } from "./ac29-live-run";
 
@@ -129,5 +131,130 @@ describe("notes_kept from the deep_research_run_end line (M19g)", () => {
     const r = buildResult(events({}), [line("brief", false, 1000)], 10, {}, null);
     expect(r.notes_kept).toBeNull();
     expect(typeof r.notes_kept_reason).toBe("string");
+  });
+});
+
+describe("selectNoteDroppedLines (M24)", () => {
+  const dropLine1 = JSON.stringify({ event: "deep_research_note_dropped", run: "gen1", n: 1, reason: "missing_quote", quote: "test quote" });
+  const dropLine2 = JSON.stringify({ event: "deep_research_note_dropped", run: "gen1", n: 2, reason: "quote_not_found", quote: "another" });
+  const dropLine3 = JSON.stringify({ event: "deep_research_note_dropped", run: "gen2", n: 1, reason: "missing_claim", quote: "claim" });
+
+  test("picks only drop lines, verbatim", () => {
+    const log = [line("brief", false, 1000), "noise", dropLine1, dropLine2, "more noise"].join("\n");
+    const selected = selectNoteDroppedLines(log);
+    expect(selected.length).toBe(2);
+    expect(selected[0]).toBe(dropLine1);
+    expect(selected[1]).toBe(dropLine2);
+  });
+
+  test("filters by runId when provided", () => {
+    const log = [dropLine1, dropLine2, dropLine3].join("\n");
+    const selected = selectNoteDroppedLines(log, "gen1");
+    expect(selected.length).toBe(2);
+    expect(selected[0]).toBe(dropLine1);
+    expect(selected[1]).toBe(dropLine2);
+  });
+
+  test("ignores a non-JSON line containing the event name", () => {
+    const log = ["some text with deep_research_note_dropped in it", dropLine1].join("\n");
+    const selected = selectNoteDroppedLines(log);
+    expect(selected.length).toBe(1);
+    expect(selected[0]).toBe(dropLine1);
+  });
+});
+
+describe("buildResult with notes dropped (M24)", () => {
+  const dropLine1 = JSON.stringify({ event: "deep_research_note_dropped", run: "gen1", n: 1, reason: "quote_not_found", quote: "test" });
+  const dropLine2 = JSON.stringify({ event: "deep_research_note_dropped", run: "gen1", n: 2, reason: "missing_quote", quote: "quote" });
+  const runEnd = JSON.stringify({ event: "deep_research_run_end", notes_kept: 5, notes_dropped: 2, pages_read: 9, status: "complete", elapsed_ms: 1234 });
+
+  test("includes notes_dropped, drop_reasons, and note_drop_lines from drop lines", () => {
+    const r = buildResult(events({}), [line("brief", false, 1000)], 10, {}, runEnd, [dropLine1, dropLine2]);
+    expect(r.notes_dropped).toBe(2);
+    expect(r.drop_reasons).toEqual({ quote_not_found: 1, missing_quote: 1 });
+    expect(r.note_drop_lines).toBe(2);
+  });
+
+  test("sets notes_dropped to null with reason when run-end line lacks the field", () => {
+    const runEndNoDropped = JSON.stringify({ event: "deep_research_run_end", notes_kept: 5, pages_read: 9 });
+    const r = buildResult(events({}), [line("brief", false, 1000)], 10, {}, runEndNoDropped, [dropLine1]);
+    expect(r.notes_dropped).toBeNull();
+    expect(typeof r.notes_dropped_reason).toBe("string");
+  });
+});
+
+describe("checkSavedSources (M24)", () => {
+  test("classifies a Client Challenge page as unreadable blocked", () => {
+    const sources = [{ n: 1, url: "https://example.com/blocked" }];
+    const texts = [{
+      n: 1,
+      url: "https://example.com/blocked",
+      title: "Page",
+      markdown: "Client Challenge - checking if the site connection is secure",
+      x_cache: "hit",
+    }];
+    const result = checkSavedSources(sources, texts);
+    expect(result.unreadable_sources.length).toBe(1);
+    expect(result.unreadable_sources[0]!.reason).toBe("blocked");
+    expect(result.ok).toBe(false);
+  });
+
+  test("classifies a 10-word page as unreadable empty", () => {
+    const sources = [{ n: 1, url: "https://example.com/short" }];
+    const texts = [{
+      n: 1,
+      url: "https://example.com/short",
+      title: "Short",
+      markdown: "one two three four five six seven eight nine ten",
+      x_cache: "hit",
+    }];
+    const result = checkSavedSources(sources, texts);
+    expect(result.unreadable_sources.length).toBe(1);
+    expect(result.unreadable_sources[0]!.reason).toBe("empty");
+    expect(result.ok).toBe(false);
+  });
+
+  test("classifies a 60-word article as readable", () => {
+    const sources = [{ n: 1, url: "https://example.com/article" }];
+    const words = Array(60).fill("word").join(" ");
+    const texts = [{
+      n: 1,
+      url: "https://example.com/article",
+      title: "Article",
+      markdown: words,
+      x_cache: "hit",
+    }];
+    const result = checkSavedSources(sources, texts);
+    expect(result.unreadable_sources.length).toBe(0);
+    expect(result.ok).toBe(true);
+  });
+
+  test("marks a source with no matching text entry as unchecked", () => {
+    const sources = [{ n: 1, url: "https://example.com/a" }, { n: 2, url: "https://example.com/b" }];
+    const texts = [{
+      n: 1,
+      url: "https://example.com/a",
+      title: "A",
+      markdown: "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word",
+      x_cache: "hit",
+    }];
+    const result = checkSavedSources(sources, texts);
+    expect(result.unchecked_sources.length).toBe(1);
+    expect(result.unchecked_sources[0]!.n).toBe(2);
+    expect(result.ok).toBe(false);
+  });
+
+  test("ok only when all readable and no unchecked", () => {
+    const sources = [{ n: 1, url: "https://example.com/1" }];
+    const words = Array(60).fill("word").join(" ");
+    const texts = [{
+      n: 1,
+      url: "https://example.com/1",
+      title: "Good",
+      markdown: words,
+      x_cache: "hit",
+    }];
+    const result = checkSavedSources(sources, texts);
+    expect(result.ok).toBe(true);
   });
 });
