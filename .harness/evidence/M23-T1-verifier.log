@@ -1,0 +1,96 @@
+VERIFICATION LOG FOR M23-T1
+===========================
+
+Task: Create pure functions for quote matching (normaliseForQuote and quoteOnPage)
+
+Command Executed:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/generations/quoteMatch.test.ts && bun run typecheck
+
+Exit Status: 0
+
+Output:
+bun test v1.4.0 (1381054db)
+
+ 33 pass
+ 0 fail
+ 39 expect() calls
+Ran 33 tests across 1 file. [5.00ms]
+$ tsc --noEmit
+
+Files Changed:
+- server/src/generations/quoteMatch.ts (new, allowed)
+- server/src/generations/quoteMatch.test.ts (new, allowed)
+
+No other files changed (verified with git diff --name-only and git status --porcelain).
+
+Tests Verified to Be Present:
+
+From task packet lines 54-71, all required test cases verified as present:
+
+normaliseForQuote tests:
+- Unicode NFKC normalization (ligatures, non-breaking spaces)
+- Ellipsis conversion (… to ...)
+- Markdown image parsing (![alt](target) → alt)
+- Markdown link parsing ([text](target) → text)
+- Bold emphasis removal (**text**)
+- Italic emphasis removal (_text_)
+- Strikethrough removal (~~text~~)
+- Snake case preservation (max_tokens)
+- Curly quote normalization (', ', ‚, ‛, ′, `, ´ → ')
+- Curly double quote normalization (", ", „, ‟, ″, «, » → ")
+- Dash normalization (U+2010-U+FF0D → -)
+- Lowercase conversion
+- Whitespace collapse and trim
+- Combined markdown ([![alt](img)](href) → alt)
+
+quoteOnPage tests:
+1. curly vs straight quotes: page `the treaty's "war guilt" clause` -> true ✓
+2. dash variants (1919–1939 → 1919-1939): true ✓
+3. dash variants (a — b → a - b): true ✓
+4. whitespace: page with newlines and multiple spaces -> true ✓
+5. case insensitive: The Treaty -> the treaty -> true ✓
+6. Unicode compatibility (ligatures): ﬁ → fi -> true ✓
+7. non-breaking spaces: 28 June 1919 -> true ✓
+8. markdown link removal: [Treaty](url) -> true ✓
+9. markdown image removal: ![Map](img) -> true ✓
+10. emphasis markers: **bold** _italic_ -> true ✓
+11. snake_case preservation: max_tokens -> true ✓
+12. ellipsis in order with …: pieces found in sequence -> true ✓
+13. ellipsis in order with ...: pieces found in sequence -> true ✓
+14. ellipsis out of order: pieces reversed -> false ✓
+15. words not on page: 1919 vs 1920 -> false ✓
+16. empty quote: "" -> false ✓
+17. only ellipsis: "..." -> false ✓
+18. only ellipsis variant: "…" -> false ✓
+19. multiple ellipses only: "... ... ..." -> false ✓
+
+Total: 33 tests pass, 0 fail, 39 expect() calls
+TypeCheck: Pass (no errors)
+
+Acceptance Criteria Exercised:
+
+M23-AC1: "Server tests through POST /v1/chat with a faked search service and a scripted fake Ollama: a note is kept when its quote differs from the page's stored text only by curly vs straight quotes or apostrophes, dash variants, whitespace, letter case, Unicode compatibility forms, or markdown link, image or emphasis syntax; a quote containing "…" or "..." is kept when each piece, normalised, appears on the page in order."
+
+Unit-level demonstration:
+- Curly quotes test (line 79-84)
+- Dash variants tests (line 86-98)
+- Whitespace test (line 100-105)
+- Case test (line 107-112)
+- Unicode compatibility tests (line 114-126)
+- Markdown link test (line 128-133)
+- Markdown image test (line 135-140)
+- Emphasis test (line 142-147)
+- Ellipsis in order tests (line 156-168)
+
+M23-AC2: "Server tests through POST /v1/chat: a note is still dropped when its quote's words are not on the page, and when its ellipsis pieces appear on the page only out of order; kept notes' citations behave as FR37 already requires."
+
+Unit-level demonstration:
+- Words not on page test (line 177-182)
+- Ellipsis out of order test (line 170-175)
+
+Task Note: This task is unit-level only; POST /v1/chat tests are M23-T2's responsibility.
+
+Tests Not Weakened:
+No existing tests were modified or weakened. All tests are new assertions.
+
+Verification Date: 2026-10-05

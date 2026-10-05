@@ -14042,7 +14042,18 @@
             "reason_code": "BOUNDED_LOW_RISK",
             "detail": "small isolated pure function with stated input/output, unit-tested from listed examples"
           },
-          "attempts": []
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M23-T1-verifier.log",
+              "note": "quoteMatch.test.ts 33 pass; typecheck exit 0; files within allowed list; tests not weakened"
+            }
+          ],
+          "status": "ACCEPTED"
         },
         {
           "id": "M23-T2",
