@@ -135,6 +135,10 @@ export interface ResearchRunOptions {
   log?: (line: ModelCallLog) => void;
   /** FR43: receives one line per page skipped without a note call; defaults to `logPageSkip`. */
   logPage?: (line: PageSkipLog) => void;
+  /** FR48: the generation id of this run, passed into drop log lines. */
+  runId?: string;
+  /** FR48: receives one line per note dropped; defaults to `logNoteDrop`. */
+  logNoteDrop?: (line: NoteDropLog) => void;
   /** FR46(a): the clock for the date line in every user message; defaults to the real time. */
   now?: () => Date;
 }
@@ -151,6 +155,19 @@ export interface PageSkipLog {
 /** Default page-skip logger: one JSON line on stdout. */
 export function logPageSkip(line: PageSkipLog): void {
   console.log(JSON.stringify({ event: "deep_research_page_skipped", ...line }));
+}
+
+/** FR48: one note the model gave that was not kept. */
+export interface NoteDropLog {
+  run: string | null;       // the generation id of this run, or null when none was given
+  n: number;                // the page number the note call was for
+  reason: "missing_quote" | "missing_claim" | "quote_not_found";
+  quote: string;            // first 120 characters of the quote, whitespace collapsed; "" when missing
+}
+
+/** Default logger: one JSON line on stdout. */
+export function logNoteDrop(line: NoteDropLog): void {
+  console.log(JSON.stringify({ event: "deep_research_note_dropped", ...line }));
 }
 
 export type ModelStepName = "brief" | "plan" | "queries" | "pages" | "notes" | "gap" | "write";
@@ -181,6 +198,7 @@ export function logModelCall(line: ModelCallLog): void {
 /** M19g: one line per run that reaches its `done` event, written just before it. */
 export interface RunEndLog {
   notes_kept: number;
+  notes_dropped: number;
   pages_read: number;
   status: "complete" | "partial" | "failed";
   elapsed_ms: number;
@@ -414,10 +432,13 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
   const { model, question, client, webTools, signal, stopSignal } = opts;
   const log = opts.log ?? logModelCall;
   const logPage = opts.logPage ?? logPageSkip;
+  const runId = opts.runId ?? null;
+  const logDroppedNote = opts.logNoteDrop ?? logNoteDrop;
   const now = opts.now ?? (() => new Date());
   const startTime = Date.now();
   let evalCount = 0;
   let evalDurationNs = 0;
+  let notesDropped = 0;
 
   const numberPage = createPageNumberer();
   const sources: SourcesEvent["items"] = [];
@@ -947,8 +968,41 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
       const keepNotes = (items: unknown[]) => {
         const pageTextNorm = normaliseForQuote(page.text);
         for (const item of items) {
-          if (!isObj(item) || !nonEmpty(item.quote) || !nonEmpty(item.claim)) continue;
-          if (!quoteOnPage(item.quote, pageTextNorm)) continue; // FR48: quote matching with normalisation
+          // Check if item is not an object or quote is missing/empty/not a string
+          if (!isObj(item) || !nonEmpty(item.quote)) {
+            const quote = isObj(item) && typeof item.quote === "string" ? item.quote : "";
+            logDroppedNote({
+              run: runId,
+              n,
+              reason: "missing_quote",
+              quote: quote.replace(/\s+/g, " ").trim().slice(0, 120),
+            });
+            notesDropped++;
+            continue;
+          }
+          // Check if claim is missing/empty
+          if (!nonEmpty(item.claim)) {
+            logDroppedNote({
+              run: runId,
+              n,
+              reason: "missing_claim",
+              quote: (item.quote as string).replace(/\s+/g, " ").trim().slice(0, 120),
+            });
+            notesDropped++;
+            continue;
+          }
+          // Check if quote is not on the page
+          if (!quoteOnPage(item.quote, pageTextNorm)) { // FR48: quote matching with normalisation
+            logDroppedNote({
+              run: runId,
+              n,
+              reason: "quote_not_found",
+              quote: (item.quote as string).replace(/\s+/g, " ").trim().slice(0, 120),
+            });
+            notesDropped++;
+            continue;
+          }
+          // Keep the note
           notes.push({ n, quote: item.quote.replace(/\s+/g, " ").trim(), claim: item.claim.trim() });
         }
       };
@@ -1184,6 +1238,7 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
     };
     logRunEnd({
       notes_kept: notes.length,
+      notes_dropped: notesDropped,
       pages_read: readNumbers.size,
       status: done.research!.status,
       elapsed_ms: done.research!.elapsed_ms,

@@ -182,6 +182,7 @@ export class GenerationManager {
         stopSignal: record.stopController?.signal,
         settings: this.researchSettings,
         log: this.log,
+        runId: genId,
         now: this.now,
       });
       for await (const event of events) {

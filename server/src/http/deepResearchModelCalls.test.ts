@@ -215,9 +215,10 @@ describe("deep research model-call logging and load num_ctx (M19b FR41)", () => 
     const ends = lines.filter((l) => l.includes("deep_research_run_end")).map((l) => JSON.parse(l));
     expect(ends.length).toBe(1);
     const done = JSON.parse(parseSSE(text).filter((e) => e.event === "done").pop()!.data);
-    expect(Object.keys(ends[0]).sort()).toEqual(["elapsed_ms", "event", "notes_kept", "pages_read", "status"]);
+    expect(Object.keys(ends[0]).sort()).toEqual(["elapsed_ms", "event", "notes_dropped", "notes_kept", "pages_read", "status"]);
     expect(ends[0].event).toBe("deep_research_run_end");
     expect(ends[0].status).toBe(done.research.status);
+    expect(ends[0].notes_dropped).toBe(0);
     expect(typeof ends[0].elapsed_ms).toBe("number");
     // Each fixture page carries exactly one valid note.
     const distinctReads = new Set(s.reads).size;

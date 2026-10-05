@@ -1,4 +1,4 @@
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect, spyOn } from "bun:test";
 import { createServer, setValidToken, type OllamaStateClient } from "./server";
 import type { OllamaChatResponse } from "../ollama/client";
 import { GenerationManager, type GenerationWebTools } from "../generations/manager";
@@ -24,7 +24,7 @@ function chunk(content: string, done: boolean): OllamaChatResponse {
   } as OllamaChatResponse;
 }
 
-function parseSSE(text: string): Array<{ event: string; data: string }> {
+function parseSSE(text: string): Array<{ id: string; event: string; data: string }> {
   return text
     .split("\n\n")
     .map((b) => b.split("\n").filter((l) => !l.startsWith(":")).join("\n"))
@@ -32,6 +32,7 @@ function parseSSE(text: string): Array<{ event: string; data: string }> {
     .map((b) => {
       const lines = b.split("\n");
       return {
+        id: lines.find((l) => l.startsWith("id: "))?.slice(4) ?? "",
         event: lines.find((l) => l.startsWith("event: "))?.slice(7) ?? "",
         data: lines.find((l) => l.startsWith("data: "))?.slice(6) ?? "",
       };
@@ -280,6 +281,114 @@ describe("deep research quote matching (M23 FR48)", () => {
       expect(cited.length).toBeGreaterThan(0);
       for (const n of cited) expect(sources.some((x) => x.n === n)).toBe(true);
     } finally {
+      s.server.stop(true);
+    }
+  });
+});
+
+describe("deep research note dropping (M23 FR48)", () => {
+  it("(a) one run with one kept note and four dropped notes logs exactly four deep_research_note_dropped lines with correct run, n, reason, and quote", async () => {
+    const spy = spyOn(console, "log").mockImplementation(() => {});
+    const s = setup({
+      pageText: () => page("The herd’s leader picks the crossing at dawn."),
+      research: { pagesPerSubQuestion: 1 },
+      subQuestions: [SUB_QUESTION],
+      notes: () => [
+        { quote: "The herd’s leader picks the crossing at dawn.", claim: "claim kept" },
+        { quote: "Quokkas hum   loudly\nat dawn on remote islands.", claim: "claim dropped" },
+        { quote: "a".repeat(200), claim: "claim dropped" },
+        { quote: "", claim: "claim dropped" },
+        { quote: "herds follow the rivers", claim: "" },
+      ],
+    });
+    try {
+      const events = await s.run();
+      const logLines = spy.mock.calls.map((c) => String(c[0]));
+      const drops = logLines.filter((l) => l.includes("deep_research_note_dropped")).map((l) => JSON.parse(l));
+
+      expect(drops.length).toBe(4);
+
+      // Extract generation id from SSE events
+      const sseId = events.find((e) => e.id)?.id ?? "";
+      const genId = sseId.substring(0, sseId.lastIndexOf("-"));
+
+      // All drops have the same run id matching the generation id
+      for (const drop of drops) {
+        expect(drop.run).toBe(genId);
+        expect(drop.n).toBe(1);
+        expect(["missing_quote", "missing_claim", "quote_not_found"]).toContain(drop.reason);
+        expect(drop.quote.length).toBeLessThanOrEqual(120);
+      }
+
+      // Assert exact quote values for each drop
+      // quote_not_found with whitespace-collapsed quote
+      expect(drops.find((d) => d.reason === "quote_not_found" && d.quote === "Quokkas hum loudly at dawn on remote islands.")).toBeDefined();
+
+      // quote_not_found with 200-char quote cut to exactly 120
+      expect(drops.find((d) => d.reason === "quote_not_found" && d.quote === "a".repeat(120))).toBeDefined();
+
+      // missing_quote with empty quote
+      expect(drops.find((d) => d.reason === "missing_quote" && d.quote === "")).toBeDefined();
+
+      // missing_claim with quote
+      expect(drops.find((d) => d.reason === "missing_claim" && d.quote === "herds follow the rivers")).toBeDefined();
+    } finally {
+      spy.mockRestore();
+      s.server.stop(true);
+    }
+  });
+
+  it("(b) the run-end line has notes_dropped: 4 and notes_kept: 1", async () => {
+    const spy = spyOn(console, "log").mockImplementation(() => {});
+    const s = setup({
+      pageText: () => page("The herd’s leader picks the crossing at dawn."),
+      research: { pagesPerSubQuestion: 1 },
+      subQuestions: [SUB_QUESTION],
+      notes: () => [
+        { quote: "The herd’s leader picks the crossing at dawn.", claim: "claim kept" },
+        { quote: "Quokkas hum loudly at dawn on remote islands.", claim: "claim dropped" },
+        { quote: "a".repeat(200), claim: "claim dropped" },
+        { quote: "", claim: "claim dropped" },
+        { quote: "herds follow the rivers", claim: "" },
+      ],
+    });
+    try {
+      await s.run();
+      const logLines = spy.mock.calls.map((c) => String(c[0]));
+      const ends = logLines.filter((l) => l.includes("deep_research_run_end")).map((l) => JSON.parse(l));
+
+      expect(ends.length).toBe(1);
+      expect(ends[0].notes_dropped).toBe(4);
+      expect(ends[0].notes_kept).toBe(1);
+    } finally {
+      spy.mockRestore();
+      s.server.stop(true);
+    }
+  });
+
+  it("(c) a run where every note is kept has no deep_research_note_dropped line and notes_dropped: 0", async () => {
+    const spy = spyOn(console, "log").mockImplementation(() => {});
+    const s = setup({
+      pageText: () => page("The herd’s leader picks the crossing at dawn."),
+      research: { pagesPerSubQuestion: 1 },
+      subQuestions: [SUB_QUESTION],
+      notes: () => [
+        { quote: "The herd’s leader picks the crossing at dawn.", claim: "claim kept 1" },
+        { quote: "herds follow the rivers", claim: "claim kept 2" },
+      ],
+    });
+    try {
+      await s.run();
+      const logLines = spy.mock.calls.map((c) => String(c[0]));
+      const drops = logLines.filter((l) => l.includes("deep_research_note_dropped"));
+      const ends = logLines.filter((l) => l.includes("deep_research_run_end")).map((l) => JSON.parse(l));
+
+      expect(drops.length).toBe(0);
+      expect(ends.length).toBe(1);
+      expect(ends[0].notes_dropped).toBe(0);
+      expect(ends[0].notes_kept).toBe(2);
+    } finally {
+      spy.mockRestore();
       s.server.stop(true);
     }
   });
