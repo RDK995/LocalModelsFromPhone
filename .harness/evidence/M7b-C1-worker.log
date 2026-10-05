@@ -1,0 +1,32 @@
+test_bad_max (test_search.CliTests.test_bad_max) ... ok
+test_blank_query (test_search.CliTests.test_blank_query) ... ok
+test_missing_query (test_search.CliTests.test_missing_query) ... ok
+test_browser_closed_when_scrape_raises (test_search.FallbackTests.test_browser_closed_when_scrape_raises) ... ok
+test_browser_empty_is_search_failed (test_search.FallbackTests.test_browser_empty_is_search_failed) ... ok
+test_browser_raises_reports_both (test_search.FallbackTests.test_browser_raises_reports_both) ... ok
+test_ddgs_empty_uses_browser (test_search.FallbackTests.test_ddgs_empty_uses_browser) ... ok
+test_ddgs_ok_skips_browser (test_search.FallbackTests.test_ddgs_ok_skips_browser) ... ok
+test_ddgs_raises_uses_browser (test_search.FallbackTests.test_ddgs_raises_uses_browser) ... ok
+test_decode_bing_keeps_microsoft_hosts (test_search.FallbackTests.test_decode_bing_keeps_microsoft_hosts) ... ok
+test_decode_bing_redirect (test_search.FallbackTests.test_decode_bing_redirect) ... ok
+test_env_fail_and_empty_route_to_browser (test_search.FallbackTests.test_env_fail_and_empty_route_to_browser) ... ok
+test_pick_title_all_empty_returns_empty (test_search.PickTitleTests.test_pick_title_all_empty_returns_empty) ... ok
+test_pick_title_all_whitespace_returns_empty (test_search.PickTitleTests.test_pick_title_all_whitespace_returns_empty) ... ok
+test_pick_title_collapses_whitespace_in_text_content (test_search.PickTitleTests.test_pick_title_collapses_whitespace_in_text_content) ... ok
+test_pick_title_falls_back_to_aria_label (test_search.PickTitleTests.test_pick_title_falls_back_to_aria_label) ... ok
+test_pick_title_falls_back_to_text_content (test_search.PickTitleTests.test_pick_title_falls_back_to_text_content) ... ok
+test_pick_title_falls_back_to_title_attr (test_search.PickTitleTests.test_pick_title_falls_back_to_title_attr) ... ok
+test_pick_title_strips_aria_label (test_search.PickTitleTests.test_pick_title_strips_aria_label) ... ok
+test_pick_title_strips_inner_text (test_search.PickTitleTests.test_pick_title_strips_inner_text) ... ok
+test_pick_title_strips_title_attr (test_search.PickTitleTests.test_pick_title_strips_title_attr) ... ok
+test_pick_title_uses_inner_text_when_present (test_search.PickTitleTests.test_pick_title_uses_inner_text_when_present) ... ok
+test_exception_gives_search_failed (test_search.RunTests.test_exception_gives_search_failed) ... ok
+test_max_clamped (test_search.RunTests.test_max_clamped) ... ok
+test_normalises_hits_and_skips_missing_url (test_search.RunTests.test_normalises_hits_and_skips_missing_url) ... ok
+test_uses_uk_region_and_max (test_search.RunTests.test_uses_uk_region_and_max) ... ok
+test_zero_results (test_search.RunTests.test_zero_results) ... ok
+
+----------------------------------------------------------------------
+Ran 27 tests in 0.123s
+
+OK

@@ -1,0 +1,49 @@
+diff --git a/server/src/web/tools.test.ts b/server/src/web/tools.test.ts
+index 0483188..96f8a90 100644
+--- a/server/src/web/tools.test.ts
++++ b/server/src/web/tools.test.ts
+@@ -71,6 +71,17 @@ describe("createWebTools", () => {
+     expect(note).toContain("copied exactly");
+     expect(note).toContain("tables");
+     expect(note).toContain("narrow");
++    expect(note).toContain("at least two web_search calls");
++    expect(note).toContain("read_page on results from at least three different websites");
++    expect(note).toContain("never a link found inside page text");
++    expect(note).toContain("every subdomain");
++    expect(note).toContain("at least three different sources");
++    expect(note).toContain("one link per source");
++    expect(note).toContain("letter for letter");
++    expect(note).toContain("call read_page on it first");
++    expect(note).toContain("always write the answer");
++    expect(note).toContain("never 【】");
++    expect(note).toContain("no spaces");
+   });
+ 
+   it("web_search 200: events, sources, result text and request body", async () => {
+diff --git a/server/src/web/tools.ts b/server/src/web/tools.ts
+index 11227aa..c5abba6 100644
+--- a/server/src/web/tools.ts
++++ b/server/src/web/tools.ts
+@@ -223,12 +223,16 @@ export function createWebTools(opts: WebToolsOptions = {}) {
+       return (
+         `Today's date is ${WEEKDAYS[now.getDay()]}, ${MONTHS[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()} (${iso}). ` +
+         `You may use the web_search and read_page tools to get current information. ` +
+-        `For a broad or open-ended question (for example "today's news trends"), search with more than one query, using different angles and wording. ` +
+-        `Do not put the exact date into search queries. ` +
+-        `Read pages from at least three different websites before you answer. ` +
+-        `Cite the pages you relied on. Write every citation as a markdown link [text](url), including source cells inside tables, ` +
+-        `where the url is the page's full URL copied exactly from the web_search or read_page results, never shortened, truncated or invented. ` +
+-        `Only link pages that those tools returned. ` +
++        `For a broad or open-ended question (for example "today's news trends"), follow these steps before you answer: ` +
++        `1) Make at least two web_search calls (more than one query), each with different angles and wording. Do not put the exact date into search queries. ` +
++        `2) Call read_page on results from at least three different websites (three different hosts), one page per call; prefer article pages over home pages. ` +
++        `3) Then always write the answer text. You have at most 10 tool calls in total, so two searches plus three to five page reads fits. ` +
++        `Cite at least three different sources, one link per source, rather than linking the same page again and again. ` +
++        `Write every citation as a markdown link [short title](url), including source cells inside tables; never 【】 or bare [1] style citations. ` +
++        `The url is copied exactly, letter for letter, from a URL line of a web_search result or the "URL:" line of a read_page result: ` +
++        `keep every subdomain and every word of the path (even small words like "in" or "of"), with no spaces added, never shortened, reworded, truncated or invented. ` +
++        `Only link pages that those tools returned, never a link found inside page text; ` +
++        `if you want to cite a page you only saw linked inside page text, call read_page on it first and link its "URL:" line. ` +
+         `A narrow factual question need not search more than it needs.`
+       );
+     },

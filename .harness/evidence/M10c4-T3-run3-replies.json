@@ -1,0 +1,200 @@
+{
+  "model": "nemotron3:33b",
+  "records": [
+    {
+      "prompt": "What are today's news trends",
+      "done": "complete",
+      "sources": [
+        {
+          "title": "Google News - Headlines",
+          "url": "https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFZxYUdjU0FtVnVHZ0pWVXlnQVAB"
+        },
+        {
+          "title": "Search News - Bing",
+          "url": "https://www.bing.com/news/"
+        },
+        {
+          "title": "TodayInPulse | News, Trends & What the Internet Is Talking About",
+          "url": "https://todayinpulse.com/"
+        },
+        {
+          "title": "Trending News | What's New Around the World | AP News",
+          "url": "https://apnews.com/hub/trending-news"
+        },
+        {
+          "title": "Breaking News, Latest News and Videos | CNN",
+          "url": "https://www.cnn.com/"
+        },
+        {
+          "title": "World News - Breaking international news and headlines | Sky News",
+          "url": "https://news.sky.com/world"
+        },
+        {
+          "title": "World | Latest News & Updates | BBC News",
+          "url": "https://www.bbc.com/news/world"
+        },
+        {
+          "title": "World | Latest News & Updates | BBC News",
+          "url": "https://www.bbc.co.uk/news/world"
+        },
+        {
+          "title": "Global Timeline: World Events Today, Live | The World Now",
+          "url": "https://www.the-world-now.com/global-timeline"
+        },
+        {
+          "title": "World news - breaking news, video, headlines and opinion | CNN",
+          "url": "https://www.cnn.com/world"
+        }
+      ],
+      "reply": "Today’s news trends are dominated by several high‑profile stories:\n\n* A serious security incident unfolded on a Flydubai flight that was forced to land in Saudi Arabia after the pilot was stabbed, with passengers taking heroic action to subdue the attacker – Sky News reported on the event and the subsequent investigation【Sky News world coverage】(https://news.sky.com/world).  \n* Violence in the Tigray region of Ethiopia has escalated, with a medic telling the BBC that the fighting has killed dozens of civilians and displaced tourists in historic sites such as Lalibela【BBC world news overview】(https://www.bbc.com/news/world).  \n* Russia launched its largest attack on Ukraine’s energy infrastructure since spring, striking 11 regions overnight and targeting residential buildings and railways, according to CNN’s world reporting【CNN world news summary】(https://www.cnn.com/world).  \n\nOther notable items include a manslaughter conviction related to the 2021 Channel migrant boat disaster, ongoing legal proceedings in the United States over the scheduled execution of Christa Pike, and the final withdrawal of UK and US forces from Iraq, marking the end of the anti‑Islamic State mission【BBC world news details】(https://www.bbc.com/news/world).",
+      "distinctHosts": [
+        "news.google.com",
+        "bing.com",
+        "todayinpulse.com",
+        "apnews.com",
+        "cnn.com",
+        "news.sky.com",
+        "bbc.com",
+        "bbc.co.uk",
+        "the-world-now.com"
+      ],
+      "linksTotal": 0,
+      "matchedDistinct": 0,
+      "unmatchedCount": 0,
+      "unmatchedUrls": [],
+      "diversityPass": true,
+      "linkPass": false
+    },
+    {
+      "prompt": "What are the latest developments in artificial intelligence?",
+      "done": "complete",
+      "sources": [
+        {
+          "title": "Google 2025 recap: Research breakthroughs of the year",
+          "url": "https://blog.google/innovation-and-ai/products/2025-research-breakthroughs/"
+        },
+        {
+          "title": "Latest AI Research (Dec 2025): GPT-5, Agents & Trends",
+          "url": "https://intuitionlabs.ai/articles/latest-ai-research-trends-2025"
+        },
+        {
+          "title": "AI Breakthroughs 2025: The Advances That Actually Mattered",
+          "url": "https://aidiscoverydigest.com/ai-tools/latest-ai-breakthroughs-2025-revolutionary-advances-reshaping-technology/"
+        },
+        {
+          "title": "The top artificial intelligence stories from 2025 | World Economic Forum",
+          "url": "https://www.weforum.org/stories/artificial-intelligence/the-top-ai-stories-from-2025/"
+        },
+        {
+          "title": "10 AI Breakthroughs Shaping the Future in 2025 and Beyond",
+          "url": "https://trenderai.com/10-ai-breakthroughs-shaping-the-future-in-2025-and-beyond/"
+        },
+        {
+          "title": "AI trends 2025: Adoption barriers and updated predictions",
+          "url": "https://www.deloitte.com/us/en/what-we-do/capabilities/applied-artificial-intelligence/blogs/pulse-check-series-latest-ai-developments/ai-adoption-challenges-ai-trends.html"
+        },
+        {
+          "title": "Future of AI in 2025 [Top Trends and Predictions] - GeeksforGeeks",
+          "url": "https://www.geeksforgeeks.org/blogs/future-of-ai/"
+        },
+        {
+          "title": "AI 2025 Predictions: 9 Key Trends Shaping the Future of AI",
+          "url": "https://sambanova.ai/blog/9-predictions-for-ai-in-2025"
+        },
+        {
+          "title": "Midyear update: 2025 AI predictions - PwC",
+          "url": "https://www.pwc.com/us/en/tech-effect/ai-analytics/ai-predictions-update.html"
+        },
+        {
+          "title": "10 AI Predictions For 2025 - Forbes6 AI trends you’ll see more of in 2025 - news.microsoft.com5 Predictions for AI in 2025 - TIME",
+          "url": "https://www.forbes.com/sites/robtoews/2024/12/22/10-ai-predictions-for-2025/"
+        }
+      ],
+      "reply": "2025 has been a watershed year for artificial intelligence, marked by several breakthroughs:\n\n- **Next‑generation foundation models**: Google DeepMind released Gemini 3 and Gemini 3 Flash in late 2025. Gemini 3 set new records on reasoning benchmarks such as Humanity’s Last Exam, GPQA Diamond and MathArena Apex, while Gemini 3 Flash delivers Pro‑level reasoning at lower latency and cost. The open‑source Gemma family also expanded with Gemma 3 (March 2025) and Gemma 3 270M (August 2025), adding multimodal capabilities and larger context windows. [Google AI Blog 2025](https://blog.google/innovation-and-ai/products/2025-research-breakthroughs/)\n\n- **Scientific and mathematical progress**: AlphaFold celebrated its fifth anniversary, now used by more than 3 million researchers in 190+ countries. Tools such as AlphaEvolve, AlphaGenome and Gemini’s Deep Think have achieved gold‑medal performance at the International Mathematical Olympiad and the ICPC, demonstrating AI’s growing role in research. [Google AI Blog 2025](https://blog.google/innovation-and-ai/products/2025-research-breakthroughs/)\n\n- **Enterprise AI adoption challenges**: According to Deloitte’s 2025 AI trends analysis, organizations face barriers across three strands. Agentic AI struggles with unclear use cases, legacy system integration, governance and talent shortages. Physical AI is constrained by high capital costs, safety and security concerns, and the need to retrofit legacy machinery. Sovereign AI requires data residency, model localization and continuous regulatory monitoring to keep data and compute within defined borders. [Deloitte AI Trends 2025](https://www.deloitte.com/us/en/what-we-do/capabilities/applied-artificial-intelligence/blogs/pulse-check-series-latest-ai-developments/ai-adoption-challenges-ai-2025.html)\n\n- **Business impact and forecasts**: PwC’s mid‑year update shows AI agents can increase productivity by up to 50 % and are expected to double workforce capacity, with 73 % of executives believing agentic AI will give a decisive competitive edge. AI is also becoming central to sustainability strategies, enabling energy‑efficient design, and is accelerating product development cycles—software and consumer goods firms report near‑real‑time iteration, while pharma and automotive see incremental gains. Responsible AI is identified as a key driver of ROI. [PwC AI Predictions 2025](https://www.pwc.com/us/en/tech-effect/ai-analytics/ai-predictions-update.html)\n\n- **Other notable 2025 advances**: Google’s WeatherNext 2 model now delivers forecasts up to eight times faster with finer resolution, supporting billions of people in flood‑risk monitoring. FireSat provides early wildfire detection, and the Ironwood TPU, built for inference workloads, leverages AlphaChip‑derived architecture to improve energy efficiency. AI‑first features such as Search AI Mode, Gemini‑enhanced Google Translate, and NotebookLM’s Deep Research illustrate the broadening integration of AI into everyday products. [Google AI Blog 2025](https://blog.google/innovation-and-ai/products/2025-research-breakthroughs/)",
+      "distinctHosts": [
+        "blog.google",
+        "intuitionlabs.ai",
+        "aidiscoverydigest.com",
+        "weforum.org",
+        "trenderai.com",
+        "deloitte.com",
+        "geeksforgeeks.org",
+        "sambanova.ai",
+        "pwc.com",
+        "forbes.com"
+      ],
+      "linksTotal": 5,
+      "matchedDistinct": 2,
+      "unmatchedCount": 1,
+      "unmatchedUrls": [
+        "https://www.deloitte.com/us/en/what-we-do/capabilities/applied-artificial-intelligence/blogs/pulse-check-series-latest-ai-developments/ai-adoption-challenges-ai-2025.html"
+      ],
+      "diversityPass": true,
+      "linkPass": false
+    },
+    {
+      "prompt": "What is happening in the world economy right now?",
+      "done": "complete",
+      "sources": [
+        {
+          "title": "Global Economic Outlook: September 2026 | S&P Global",
+          "url": "https://www.spglobal.com/market-intelligence/en/news-insights/research/2026/09/global-economic-outlook-september-2026"
+        },
+        {
+          "title": "OECD Economic Outlook, Interim Report September 2026",
+          "url": "https://www.oecd.org/en/publications/oecd-economic-outlook-interim-report-september-2026_f751d02b-en/full-report.html"
+        },
+        {
+          "title": "Chief Economists' Outlook: September 2026 - The World Economic Forum",
+          "url": "https://www.weforum.org/publications/chief-economists-outlook-september-2026/"
+        },
+        {
+          "title": "World Economic Situation and Prospects 2026 September Update",
+          "url": "https://desapublications.un.org/publications/world-economic-situation-and-prospects-2026-september-update"
+        },
+        {
+          "title": "Global Economic Outlook - September 2026 - Fitch Ratings",
+          "url": "https://www.fitchratings.com/research/sovereigns/global-economic-outlook-september-2026-22-09-2026"
+        },
+        {
+          "title": "A Resilient World Economy: Outlook for the Second Half of 2026",
+          "url": "https://www.nomuraconnects.com/focused-thinking-posts/a-resilient-world-economy-outlook-for-the-second-half-of-2026/"
+        },
+        {
+          "title": "Global Economic Outlook - The World Economic Forum",
+          "url": "https://www.weforum.org/meetings/world-economic-forum-annual-meeting-2026/sessions/global-economic-outlook-af4fed3639/"
+        },
+        {
+          "title": "Economic and fiscal outlook – March 2026",
+          "url": "https://obr.uk/efo/economic-and-fiscal-outlook-march-2026/"
+        },
+        {
+          "title": "Global Investment Outlook 2026 | Franklin Templeton",
+          "url": "https://www.franklintempleton.co.uk/insights/collections/global-investment-outlook-2026"
+        },
+        {
+          "title": "Economic Outlook: A Challenging Inheritance - NIESR",
+          "url": "https://niesr.ac.uk/reports/economic-outlook-summer-2026"
+        }
+      ],
+      "reply": "The world economy is currently navigating a mix of resilient growth and heightened macro‑economic pressures.  \n\n- **Energy‑price shock:** Crude oil has surged back above US $100 per barrel, and European gas prices are up more than 30 % since late July, pushing inflation expectations higher and prompting central banks to maintain or increase tightening [1].  \n- **Monetary‑policy tightening:** Major central banks – the ECB, the U.S. Federal Reserve and the Bank of Japan – are either raising rates or preparing to do so, while 10‑year sovereign yields have climbed to around 5 %, about 100 bps above pre‑conflict levels [1][5].  \n- **Growth outlook:** Global growth is implied to be about 3 % annualized, with India leading at a revised 6.5 % forecast and the broader world economy holding up despite the energy shock [1][5]. Fitch Ratings has lifted its 2026 global‑GDP forecast to 2.6 % [5].  \n- **Risks:** Geopolitical tensions – especially the Middle‑East conflict – and the possibility of asset‑price corrections remain key downside risks, potentially amplifying energy‑price effects, tightening financial conditions and prompting further monetary‑policy moves [1][4][3].\n\nIn sum, the global economy is growing modestly but is under stress from rising energy costs, tighter financing conditions, and elevated geopolitical risk, all of which keep inflation pressures alive while the underlying growth trajectory remains resilient [1][5][3].",
+      "distinctHosts": [
+        "spglobal.com",
+        "oecd.org",
+        "weforum.org",
+        "desapublications.un.org",
+        "fitchratings.com",
+        "nomuraconnects.com",
+        "obr.uk",
+        "franklintempleton.co.uk",
+        "niesr.ac.uk"
+      ],
+      "linksTotal": 0,
+      "matchedDistinct": 0,
+      "unmatchedCount": 0,
+      "unmatchedUrls": [],
+      "diversityPass": true,
+      "linkPass": false
+    }
+  ]
+}

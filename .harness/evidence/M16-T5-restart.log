@@ -1,0 +1,9 @@
+M16-T5 precondition: server restart onto current code (human-authorised 2026-10-02, see M16 Human decision)
+Latest server commit: 8bdee34b01561086bb82713a066656d5a4001e12 2026-10-02T00:32:17+01:00
+Old process: pid 42026, started 2026-10-01 09:56:39 (stale)
+Command: launchctl kickstart -k gui/$(id -u)/com.harness.server  -> exit 0 (2026-10-02 07:09 BST)
+Readiness: GET http://127.0.0.1:7789/v1/health (unauthenticated) -> http 401 (server listening)
+New process: pid 30541, started Fri 2 Oct 07:09:09 2026, /opt/homebrew/bin/bun src/index.ts, cwd /Users/ryankenny/Projects/CodingHarnessv2/server
+Branch checked out: m16-real-model-live-proof
+Process start (2026-10-02 07:09:09 BST) is after latest server commit (2026-10-02 00:32:17 BST): PASS
+ollama ps: qwen3.5:35b-a3b 3460ffeede54 22 GB 100% GPU ctx 32768 Forever (resident; no load needed)

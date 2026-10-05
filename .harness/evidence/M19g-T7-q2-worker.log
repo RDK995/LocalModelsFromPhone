@@ -1,0 +1,127 @@
+=== TASK M19g-T7 q2 RUN ===
+
+Precondition check (pgrep -fl ac29-live-run): PASS (no process found)
+
+Run command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --id q2 --out-dir ../.harness/evidence --prefix M19g-T7 > ../.harness/evidence/M19g-T7-q2-run.log 2>&1; echo "exit=$?" >> ../.harness/evidence/M19g-T7-q2-run.log
+
+Exit status: exit=0
+
+Result JSON from run log:
+{
+  "id": "q2",
+  "question": "What are the trade-offs between LFP and NMC lithium battery chemistries for home battery storage, including cost, lifespan, safety and cold-weather performance?",
+  "generation_id": "66430539-37c0-439e-81f8-2ceab9f452bd",
+  "started_at": "2026-10-02T21:01:10.711Z",
+  "ended_at": "2026-10-02T21:04:35.886Z",
+  "fr41_selection": "server.log bytes written between just before the POST and after done (lines carry no run id)",
+  "saw_done": true,
+  "budget_s": 480,
+  "total_wall_s": 205.175,
+  "planning_s": 32.625,
+  "research_phase_calls": 11,
+  "routine_calls": 12,
+  "routine_p50_s": 3.279,
+  "routine_p95_s": 15.865,
+  "fr41_lines": 16,
+  "distinct_pages_read": 5,
+  "notes_kept": 13,
+  "final_status": "complete",
+  "cited_read_pages": 5,
+  "unresolved_citations": [],
+  "checks": {
+    "status_ok": {
+      "ok": true,
+      "value": "complete"
+    },
+    "within_budget": {
+      "ok": true,
+      "value": {
+        "total_wall_s": 205.175,
+        "limit_s": 540
+      }
+    },
+    "cited_read_pages_ok": {
+      "ok": true,
+      "value": 5
+    },
+    "no_unresolved_citations": {
+      "ok": true,
+      "value": []
+    }
+  },
+  "pass": true
+}
+
+Pass-bar checks (from result JSON):
+  - status_ok: true (value: "complete")
+  - within_budget: true (total_wall_s: 205.175, limit_s: 540)
+  - cited_read_pages_ok: true (value: 5)
+  - no_unresolved_citations: true (value: [])
+  - pass: true
+
+Metrics:
+  - generation_id: 66430539-37c0-439e-81f8-2ceab9f452bd
+  - status: complete
+  - total_wall_s: 205.175
+  - budget_s: 480
+  - research_phase_calls: 11
+  - distinct_pages_read: 5
+  - notes_kept: 13
+  - planning_s: 32.625
+  - routine p50_s: 3.279
+  - routine p95_s: 15.865
+  - cited_read_pages: 5
+  - unresolved_citations: []
+
+Validation test 1: Result JSON exists and pass=true, run log ends with exit=0
+  Result: PASS
+
+Validation test 2: check-only reproduces pass-bar values (exit 0)
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M19g-T7-q2-stream.txt --log ../.harness/evidence/M19g-T7-q2-fr41.log
+
+Check-only output:
+{
+  "stream_file": "../.harness/evidence/M19g-T7-q2-stream.txt",
+  "note": "check-only: total_wall_s taken from done.research.elapsed_ms (0 when absent)",
+  "budget_s": 480,
+  "total_wall_s": 205.168,
+  "planning_s": 32.625,
+  "research_phase_calls": 11,
+  "routine_calls": 12,
+  "routine_p50_s": 3.279,
+  "routine_p95_s": 15.865,
+  "fr41_lines": 16,
+  "distinct_pages_read": 5,
+  "notes_kept": 13,
+  "final_status": "complete",
+  "cited_read_pages": 5,
+  "unresolved_citations": [],
+  "checks": {
+    "status_ok": {
+      "ok": true,
+      "value": "complete"
+    },
+    "within_budget": {
+      "ok": true,
+      "value": {
+        "total_wall_s": 205.168,
+        "limit_s": 540
+      }
+    },
+    "cited_read_pages_ok": {
+      "ok": true,
+      "value": 5
+    },
+    "no_unresolved_citations": {
+      "ok": true,
+      "value": []
+    }
+  },
+  "pass": true
+}
+
+  Result: PASS (exit 0)
+
+=== ALL TESTS PASS ===

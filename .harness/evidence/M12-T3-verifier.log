@@ -1,0 +1,78 @@
+VERIFIER LOG FOR M12-T3
+=====================
+
+Current commit: 707112e (M12: open milestone - baseline d8db7d5, archive M10e detail)
+
+Command run: cd /Users/ryankenny/Projects/CodingHarnessv2 && bash server/scripts/web-stop-proof.sh
+
+Exit Status: 0
+
+Output (per-check evidence):
+
+Attempt 1 of 5:
+- Helper alive before cancel: pids [41556] ; helper + process-group members [41556] ; generation 8261f43b-2df4-4cf0-bfb8-9ddd0b3cc2a8
+- Cancel response: {"status":"cancelled"}
+
+Check 1 (process termination):
+PASS: check 1: helper and its process group are gone 59 ms after cancel (pids before [41556 ], still alive after [none], helper processes now [none])
+
+Check 2 (stream termination):
+Terminal event: done {"status":"cancelled","model":"nemotron3:33b","eval_count":0,"tokens_per_second":0} 
+Last event: done
+Events after cancel: 1 done (no content/sources found)
+PASS: check 2: stream ended with done status=cancelled and no content/sources events arrived after the cancel
+
+Check 3 (system availability):
+GET /v1/state -> 200
+New chat admission -> HTTP 200 (generation e657bba2-fb69-4ef2-9b52-16cd558ed459)
+PASS: check 3: state endpoint healthy and a new chat was admitted (no generation left running)
+
+Final result:
+All M12 stop checks passed
+Proof PASSED, Mac restored to its original state
+
+Post-test process verification:
+pgrep -f "helper/search.py --query" returned: No search helper processes found
+
+Files Changed (excluding .harness/):
+- server/scripts/web-stop-proof.sh (new file, allowed)
+
+Tests Weakened: NO (no production test files were modified)
+
+Acceptance Criteria Evidence:
+
+1. Script exists at server/scripts/web-stop-proof.sh, follows existing patterns
+   - EVIDENCE: server/scripts/web-stop-proof.sh created with auth/token handling (line 44-45), restart LaunchAgents (lines 101-102), wait for readiness (lines 104-108), record and restore resident model (lines 114-119 and 49-84), output tee'd to .harness/evidence/M12-T3-proof.log (line 28)
+
+2. Helper detection using exact argv pattern
+   - EVIDENCE: Line 24 defines HELPER_PATTERN='helper/search.py --query' matching the expected pattern
+   - pgrep call at line 122: helper_pids() { pgrep -f "$HELPER_PATTERN" 2>/dev/null | sort -n | tr '\n' ' '; }
+   - Process group snapshot at lines 124-129: group_pids function captures helper + process-group members
+
+3. INCONCLUSIVE handling with bounded retries
+   - EVIDENCE: MAX_ATTEMPTS=5 (line 23), loop at lines 140-169, INCONCLUSIVE marked at line 163, retried 5 times max, dies at line 242 if no conclusive run
+   - Never passes without seeing live helper: line 242 enforces CONCLUSIVE=1 check
+
+4. Per-check evidence output
+   - EVIDENCE: Line 182 prints helper pids before cancel, line 185 prints cancel response, lines 195-199 print check 1 results with pids and timing, lines 209-214 print check 2 with terminal event and sources check, lines 232-237 print check 3 with state and admission status
+
+5. Run to passing exit 0 with output tail
+   - EVIDENCE: Test ran successfully with exit status 0, all three checks passed in attempt 1, output shows "All M12 stop checks passed" and "Proof PASSED, Mac restored to its original state"
+
+6. No production code changes
+   - EVIDENCE: Only server/scripts/web-stop-proof.sh added; no changes to production code, configuration, or LaunchAgent plists verified by git diff check
+
+FR23 (Stop cancels any in-flight search or page read):
+- EVIDENCE: Test demonstrates via check 1 that helper process (41556) is killed within 59 ms after POST /v1/generations/{id}/cancel
+
+AC17 (Stop during a search ends it on the Mac):
+- EVIDENCE: Test demonstrates via:
+  - Check 1: Process killed on Mac (helper pid 41556 gone)
+  - Check 2: Reply stream ends with cancelled status
+  - Check 3: System ready for new chat
+
+M12-AC1 (Stop during in-flight search ends it on the Mac):
+- EVIDENCE: Test demonstrates all requirements:
+  - Helper process killed (check 1, 59 ms)
+  - Reply stream terminates (check 2, done status=cancelled)
+  - System ready for new chat (check 3, state healthy, new chat admitted)

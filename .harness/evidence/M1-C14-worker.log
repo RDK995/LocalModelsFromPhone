@@ -1,0 +1,16 @@
+=== git rev-parse HEAD ===
+c9e3560b9c38e138d1d4bbd6d2a91a43f791204a
+=== bun run typecheck ===
+$ tsc --noEmit
+TYPECHECK_EXIT=0
+=== bun test src/api src/ui src/chat src/app-routing ===
+bun test v1.4.0 (1381054db)
+
+ 38 pass
+ 0 fail
+ 101 expect() calls
+Ran 38 tests across 9 files. [37.00ms]
+TEST_EXIT=0
+=== bun run lint ===
+$ eslint src --max-warnings 0
+LINT_EXIT=0

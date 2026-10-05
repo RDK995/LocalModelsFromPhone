@@ -1,0 +1,33 @@
+=== M9-T3 Full Test Command ===
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck && cd ../mobile && npx tsc --noEmit
+
+=== Running Tests ===
+bun test v1.4.0 (1381054db)
+
+ 138 pass
+ 0 fail
+ 584 expect() calls
+Ran 138 tests across 5 files. [2.11s]
+$ tsc --noEmit
+
+=== M9-T3 Exit Status: 0 ===
+
+=== M9-T3b Full Test Command ===
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && npx tsc --noEmit && bun test src/ui/modelList.test.ts src/ui/modelActions.test.ts; then cd ../server && bun test && bun run typecheck
+
+=== Running M9-T3b Tests ===
+bun test v1.4.0 (1381054db)
+
+ 23 pass
+ 0 fail
+ 51 expect() calls
+Ran 23 tests across 2 files. [6.00ms]
+bun test v1.4.0 (1381054db)
+
+ 138 pass
+ 0 fail
+ 583 expect() calls
+Ran 138 tests across 5 files. [2.10s]
+$ tsc --noEmit
+
+=== M9-T3b Exit Status: 0 ===

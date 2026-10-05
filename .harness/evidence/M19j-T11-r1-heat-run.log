@@ -1,0 +1,45 @@
+{
+  "id": "heat",
+  "question": "How do heat pumps compare with gas boilers for heating a typical UK home in 2026? Cover running costs, installation costs, grants available and how well they work in cold weather.",
+  "generation_id": "c70f4c60-c885-4b83-b0a9-ae3a7997f47b",
+  "started_at": "2026-10-03T06:27:57.636Z",
+  "ended_at": "2026-10-03T06:31:15.810Z",
+  "fr41_selection": "server.log bytes written between just before the POST and after done (lines carry no run id)",
+  "saw_done": true,
+  "budget_s": 480,
+  "total_wall_s": 198.174,
+  "planning_s": 33.008,
+  "research_phase_calls": 12,
+  "routine_calls": 13,
+  "routine_p50_s": 6.492,
+  "routine_p95_s": 11.743,
+  "fr41_lines": 17,
+  "distinct_pages_read": 6,
+  "notes_kept": 16,
+  "final_status": "complete",
+  "cited_read_pages": 4,
+  "unresolved_citations": [],
+  "checks": {
+    "status_ok": {
+      "ok": true,
+      "value": "complete"
+    },
+    "within_budget": {
+      "ok": true,
+      "value": {
+        "total_wall_s": 198.174,
+        "limit_s": 540
+      }
+    },
+    "cited_read_pages_ok": {
+      "ok": true,
+      "value": 4
+    },
+    "no_unresolved_citations": {
+      "ok": true,
+      "value": []
+    }
+  },
+  "pass": true
+}
+exit=0

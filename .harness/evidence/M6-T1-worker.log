@@ -1,0 +1,14 @@
+commit: 662d1901ad22979562feda4dc08ac68a6fdda028 (uncommitted working tree changes in search/)
+date: 2026-09-29T20:44:45Z
+cmd: cd search && bun install && bun test && bun run typecheck
+bun install v1.4.0 (1381054db)
+
+Checked 4 installs across 5 packages (no changes) [3.00ms]
+bun test v1.4.0 (1381054db)
+
+ 102 pass
+ 0 fail
+ 180 expect() calls
+Ran 102 tests across 2 files. [1280.00ms]
+$ tsc --noEmit
+exit: 0

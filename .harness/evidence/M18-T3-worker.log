@@ -1,0 +1,27 @@
+bun test v1.4.0 (1381054db)
+
+ 488 pass
+ 0 fail
+ 12191 expect() calls
+Ran 488 tests across 32 files. [228.00ms]
+$ tsc --noEmit
+
+Oops! Something went wrong! :(
+
+ESLint: 8.57.1
+
+No files matching the pattern "src/api/client.test.ts
+src/api/client.ts
+src/app/chat.tsx
+src/chat/conversationSession.test.ts
+src/chat/conversationSession.ts
+src/store/conversationStore.test.ts
+src/store/conversationStore.ts
+src/ui/chatItems.test.ts
+src/ui/chatItems.ts
+src/ui/deepResearch.test.ts
+src/ui/deepResearch.ts
+src/ui/streamReducer.test.ts
+src/ui/streamReducer.ts" were found.
+Please check for typing mistakes in the pattern.
+

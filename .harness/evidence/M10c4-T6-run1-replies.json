@@ -1,0 +1,186 @@
+{
+  "model": "nemotron3:33b",
+  "records": [
+    {
+      "prompt": "What are today's news trends",
+      "done": "complete",
+      "sources": [
+        {
+          "title": "Google Trends",
+          "url": "https://trends.google.com/trends/",
+          "n": 1
+        },
+        {
+          "title": "Trending Now - Google Trends",
+          "url": "https://trends.google.com/trending"
+        },
+        {
+          "title": "BBC Trending - BBC News",
+          "url": "https://www.bbc.co.uk/news/topics/cme72mv58q4t",
+          "n": 2
+        },
+        {
+          "title": "Google News - Headlines",
+          "url": "https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFZxYUdjU0FtVnVHZ0pWVXlnQVAB"
+        },
+        {
+          "title": "BBC News - Breaking news, video and the latest top stories from the U.S ...",
+          "url": "https://www.bbc.com/news?headlines"
+        }
+      ],
+      "reply": "Today’s news trends show a mix of sports excitement, data‑driven storytelling, and a wide range of geopolitical and technological issues.\n\n**Sports and major events** – Interest is surging around the upcoming **FIFA World Cup 2026**, with Google Trends highlighting search spikes for the tournament and related “Summer of Soccer” content [1]. Fans are also following **bird‑watching** trends across America, as a recent Webby‑award‑winning visual explores Google Trends data alongside birding [1].\n\n**Data‑focused storytelling** – Google Trends is being used to illustrate broader societal patterns: the “Searching for Birds” project visualizes bird‑related searches nationwide, while “The Shape of Dreams” explores daily search habits, and the OECD’s weekly GDP tracker relies on search data to estimate economic activity [1].\n\n**Geopolitical and security headlines** – BBC Trending reports several urgent stories: a Ukrainian teenager recruited via Telegram to sabotage his own country, and a BBC investigation into a Russian‑funded fake‑news network aiming to disrupt European elections [2]. Other notable items include a North Korean “secret IT worker” whose wages fund the regime, and the spread of 3D‑printed gun instructions online [2].\n\n**Technology and AI concerns** – Articles highlight the rise of AI‑generated Holocaust imagery profit‑driven by spam networks, the use of TikTok to influence elections (including a case where TikTokers triggered an election scandal), and the emergence of “aidbots” that assist displaced people in Lebanon [2].\n\n**Human‑interest and social topics** – Additional trending stories cover a TikTok university‑fee battle, a Nigerian “witch‑hunter” crackdown, anti‑vaccination narratives, fake Chinese police scams, and a smear campaign against a celebrity‑endorsed nature reserve [2].\n\nOverall, the current news landscape blends heightened sports enthusiasm, the growing influence of data visualizations, and a series of urgent geopolitical, technological, and social issues shaping public discourse.",
+      "distinctHosts": [
+        "trends.google.com",
+        "bbc.co.uk",
+        "news.google.com",
+        "bbc.com"
+      ],
+      "savedWithN": 2,
+      "resolvedDistinct": 2,
+      "resolvedMarks": 7,
+      "linkCount": 0,
+      "unresolvedCount": 0,
+      "unresolved": [],
+      "diversityPass": true,
+      "linkPass": false
+    },
+    {
+      "prompt": "What are the latest developments in artificial intelligence?",
+      "done": "complete",
+      "sources": [
+        {
+          "title": "AI News | Latest News | Insights Powering AI-Driven Business ...",
+          "url": "https://www.artificialintelligence-news.com/",
+          "n": 1
+        },
+        {
+          "title": "Student Generative Artificial Intelligence Survey 2026 - HEPI",
+          "url": "https://www.hepi.ac.uk/reports/student-generative-ai-survey-2026/"
+        },
+        {
+          "title": "39+ Mind-Blowing AI Statistics You Need to Read in 2026",
+          "url": "https://webdesignandseocompany.co.uk/blog/ai-statistics"
+        },
+        {
+          "title": "Key Artificial Intelligence Trends Shaping Technology in 2026 ...",
+          "url": "https://oxfordcentre.uk/resources/artificial-intelligence/key-artificial-intelligence-trends-shaping-technology-in-2026/",
+          "n": 4
+        },
+        {
+          "title": "AI & App Development Trends 2026 | Salesforce UK",
+          "url": "https://www.salesforce.com/uk/platform/state-of-it-ai-app-development/summary/"
+        },
+        {
+          "title": "Humanoid Simulation with Marble | Community Showcase | World Labs",
+          "url": "https://www.worldlabs.ai/labs/showcase/humanoid-simulation",
+          "n": 2
+        },
+        {
+          "title": "Scaling Robotic Simulation with Marble | World Labs",
+          "url": "https://www.worldlabs.ai/case-studies/1-robotics"
+        },
+        {
+          "title": "AMD Buys World Labs: Fei-Fei Li Will Now Shape Chips Running Physical AI",
+          "url": "https://www.techtimes.com/articles/328249/20260930/amd-buys-world-labs-fei-fei-li-will-now-shape-chips-running-physical-ai.htm"
+        },
+        {
+          "title": "Marble - World Labs",
+          "url": "https://marble.worldlabs.ai/?via=ailibricom"
+        },
+        {
+          "title": "Marble - World Labs",
+          "url": "https://marble.worldlabs.ai/?tab=sci-fi"
+        },
+        {
+          "title": "What AMD's World Labs deal means for enterprise world models",
+          "url": "https://www.artificialintelligence-news.com/news/amd-world-labs-world-models-enterprise/",
+          "n": 3
+        },
+        {
+          "title": "How did engineers make humanoid robots a reality - IMechE",
+          "url": "https://www.imeche.org/news/news-article/how-did-engineers-make-humanoid-robots-a-reality-and-what-happens-next"
+        },
+        {
+          "title": "Human-robot interaction laboratory - Cardiff University",
+          "url": "https://www.cardiff.ac.uk/artificial-intelligence-robotics-and-human-machine-systems/facilities/human-machine-interaction-laboratory"
+        },
+        {
+          "title": "Shadow Robot | Dexterous Robotic Hands & Teleoperated ...",
+          "url": "https://shadowrobot.com/"
+        },
+        {
+          "title": "Robot hands with human capabilities - ARIA",
+          "url": "https://aria.org.uk/insights/2026/robot-hands-with-human-capabilities"
+        }
+      ],
+      "reply": "The most notable recent AI development is AMD’s $8.2 billion acquisition of World Labs, the creator of the Marble platform. The all‑stock deal, expected to close by the end of 2026, brings the world‑modeling tool that can turn street‑view imagery into editable 3D environments under a major chipmaker. Marble lets users generate realistic digital twins from a single 360° photo, which can be fed into simulation platforms such as Nvidia Isaac Sim for robot testing. This shifts robotics validation from expensive, time‑consuming real‑world testing to fast, reproducible simulated runs, cutting environment‑creation time from weeks to minutes【3】.  \n\nThe acquisition also accelerates physical‑AI work, including a demonstration of a Unitree G1 humanoid robot running a walking policy in a Marble‑generated urban environment. The simulation uses Marble for 3D world generation, MuJoCo for server‑side physics, and streams the robot state via WebSockets to a browser rendered with Three.js【2】.  \n\nBeyond hardware, AI continues to broaden its reach. Generative AI models in 2026 are reshaping content creation, software development, product design and personalized marketing, while automation and intelligent process automation enable end‑to‑end workflows with minimal human oversight. Edge AI is delivering real‑time intelligence to autonomous vehicles, smart cities and industrial IoT, and responsible AI—with emphasis on bias mitigation, explainability and regulatory compliance—has become a prerequisite for sustainable deployment. These trends are driven by exploding data availability, greater computing power and mature machine‑learning frameworks【4】.  \n\nTogether, the AMD‑World Labs deal, advanced robotics simulation, and widespread generative AI adoption signal a decisive shift from experimental prototypes to enterprise‑grade, mission‑critical AI systems.",
+      "distinctHosts": [
+        "artificialintelligence-news.com",
+        "hepi.ac.uk",
+        "webdesignandseocompany.co.uk",
+        "oxfordcentre.uk",
+        "salesforce.com",
+        "worldlabs.ai",
+        "techtimes.com",
+        "marble.worldlabs.ai",
+        "imeche.org",
+        "cardiff.ac.uk",
+        "shadowrobot.com",
+        "aria.org.uk"
+      ],
+      "savedWithN": 4,
+      "resolvedDistinct": 3,
+      "resolvedMarks": 3,
+      "linkCount": 0,
+      "unresolvedCount": 0,
+      "unresolved": [],
+      "diversityPass": true,
+      "linkPass": true
+    },
+    {
+      "prompt": "What is happening in the world economy right now?",
+      "done": "complete",
+      "sources": [
+        {
+          "title": "Global Economic Outlook: September 2026 | S&P Global",
+          "url": "https://www.spglobal.com/market-intelligence/en/news-insights/research/2026/09/global-economic-outlook-september-2026",
+          "n": 1
+        },
+        {
+          "title": "OECD Economic Outlook, Interim Report September 2026",
+          "url": "https://www.oecd.org/en/publications/oecd-economic-outlook-interim-report-september-2026_f751d02b-en/full-report.html"
+        },
+        {
+          "title": "Global Economic Outlook - September 2026 - Fitch Ratings",
+          "url": "https://www.fitchratings.com/research/sovereigns/global-economic-outlook-september-2026-22-09-2026",
+          "n": 2
+        },
+        {
+          "title": "Chief Economists' Outlook: September 2026 | World Economic Forum",
+          "url": "https://www.weforum.org/publications/chief-economists-outlook-september-2026/"
+        },
+        {
+          "title": "World Economic Situation and Prospects 2026 September Update",
+          "url": "https://desapublications.un.org/publications/world-economic-situation-and-prospects-2026-september-update",
+          "n": 3
+        }
+      ],
+      "reply": "The world economy is currently being squeezed by a renewed energy‑price shock—Brent crude is back above $100 per barrel and European gas prices have risen more than 30 % since late July—which is feeding higher inflation and prompting major central banks to tighten policy further【1】.  At the same time, the global composite PMI remains upbeat, indicating around 3 % annualised growth, the strongest pace since mid‑2024【1】.  \n\nThe United Nations’ September 2026 update projects global growth of 2.6 % in 2026 and 2.9 % in 2027, slightly below earlier forecasts and reflecting the impact of the energy shock and heightened geopolitical risk【3】.  Fitch Ratings has lifted its 2026 world‑GDP growth outlook to 2.6 % (up 0.2 pp), noting that growth is holding up despite the shock, but higher real interest rates and rising sovereign yields are tightening financial conditions【2】.  \n\nTogether, these developments suggest a fragile outlook: elevated energy prices and inflationary pressures, continued monetary tightening by the ECB, the Fed and the BoJ, and elevated debt levels pose downside risks, especially if Middle‑East tensions escalate further.",
+      "distinctHosts": [
+        "spglobal.com",
+        "oecd.org",
+        "fitchratings.com",
+        "weforum.org",
+        "desapublications.un.org"
+      ],
+      "savedWithN": 3,
+      "resolvedDistinct": 3,
+      "resolvedMarks": 4,
+      "linkCount": 0,
+      "unresolvedCount": 0,
+      "unresolved": [],
+      "diversityPass": true,
+      "linkPass": true
+    }
+  ]
+}

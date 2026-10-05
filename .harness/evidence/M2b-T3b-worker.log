@@ -1,0 +1,280 @@
+# M2b-T3b worker evidence
+commit: 75d0dc050f6c6b1af01c355b3de45eefcf7bd3ae (branch m2b-swap-load-unload; new files uncommitted)
+
+################ ATTEMPT 4 (Top/opus) ################
+
+Chosen method: FROM <smallest /api/tags model> + ADAPTER <hand-built LoRA GGUF with mismatched blk.0.attn_q lora_a/lora_b shapes>.
+Failure class: runner load failure (invalid adapter) -- NOT out-of-memory.
+Raw Ollama error (HTTP 500): {"error":"llama-server process has terminated: exit status 1"}
+Why not OOM: num_ctx is clamped to the model's 131072 context; num_batch/num_gpu oversizing loads anyway (134 GB CPU/GPU split, or 86 GB '100% GPU' on 64 GB). Truncated/header-corrupt GGUFs are rejected by 'ollama create' (bounds check / llama-quantize validation), never reaching load.
+
+=== M2b-T3b attempt 4 Step 1 ===
+Fri 25 Sep 2026 20:52:16 BST
+--- try: a1 num_ctx 2097152 ---
+FROM nemotron3:33b
+PARAMETER num_ctx 2097152
+success [K[?25h[?2026l
+unloading residents (as server does)...
+ps before load: {"models":[]}
+loading probe with keep_alive -1...
+response: {"model":"m2b-failed-load-probe","created_at":"2026-09-25T19:52:33.843699Z","response":"","done":true,"done_reason":"load"}
+elapsed: 16s
+ps after load: {"models":[{"name":"m2b-failed-load-probe:latest","model":"m2b-failed-load-probe:latest","size":27838853937,"digest":"21f1b4320832a20f73a975bb27be5cea09a7ccdf0e57159a448bb9518d50d961","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-05T19:39:50.698536807Z","size_vram":27838853937,"context_length":131072}]}
+NAME                            ID              SIZE     PROCESSOR    CONTEXT    UNTIL   
+m2b-failed-load-probe:latest    21f1b4320832    27 GB    100% GPU     131072     Forever    
+[?2026h[?25l[1G⠙ [K[?25h[?2026l[?25l[?2026h[?25l[1G[K[?25h[?2026l[2K[1G[?25hdeleted 'm2b-failed-load-probe'
+ps after restore: {"models":[{"name":"devstral:24b","model":"devstral:24b","size":35816011202,"digest":"9bd74193e93935e9d8564d88607b220a9d
+--- try: a2 num_ctx 8388608 ---
+FROM nemotron3:33b
+PARAMETER num_ctx 8388608
+success [K[?25h[?2026l
+unloading residents (as server does)...
+ps before load: {"models":[]}
+loading probe with keep_alive -1...
+response: {"model":"m2b-failed-load-probe","created_at":"2026-09-25T19:52:53.901546Z","response":"","done":true,"done_reason":"load"}
+elapsed: 8s
+ps after load: {"models":[{"name":"m2b-failed-load-probe:latest","model":"m2b-failed-load-probe:latest","size":27838853937,"digest":"5199eed7708df920810f9e7ca0e3009dfb76410008370fbbdf20c171f75a7a1b","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-05T19:40:10.756436807Z","size_vram":27838853937,"context_length":131072}]}
+NAME                            ID              SIZE     PROCESSOR    CONTEXT    UNTIL   
+m2b-failed-load-probe:latest    5199eed7708d    27 GB    100% GPU     131072     Forever    
+[?2026h[?25l[1G⠙ [K[?25h[?2026l[?25l[?2026h[?25l[1G[K[?25h[?2026l[2K[1G[?25hdeleted 'm2b-failed-load-probe'
+ps after restore: {"models":[{"name":"devstral:24b","model":"devstral:24b","size":35816011202,"digest":"9bd74193e93935e9d8564d88607b220a9d
+--- try: b1 num_ctx 8388608 + num_batch 1048576 ---
+FROM nemotron3:33b
+PARAMETER num_ctx 8388608
+PARAMETER num_batch 1048576
+success [K[?25h[?2026l
+unloading residents (as server does)...
+ps before load: {"models":[]}
+loading probe with keep_alive -1...
+response: {"model":"m2b-failed-load-probe","created_at":"2026-09-25T19:53:49.057176Z","response":"","done":true,"done_reason":"load"}
+elapsed: 51s
+ps after load: {"models":[{"name":"m2b-failed-load-probe:latest","model":"m2b-failed-load-probe:latest","size":134185927908,"digest":"bb8d1fe2ed6f8ce17a73d06cf24cbcbd585b79066f19bb0f6a6000b2843559cc","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-05T19:41:05.914740807Z","size_vram":48745467082,"context_length":131072}]}
+NAME                            ID              SIZE      PROCESSOR          CONTEXT    UNTIL   
+m2b-failed-load-probe:latest    bb8d1fe2ed6f    134 GB    64%/36% CPU/GPU    131072     Forever    
+[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?2026h[?25l[1G⠸ [K[?25h[?2026l[?2026h[?25l[1G⠼ [K[?25h[?2026l[?25l[?2026h[?25l[1G[K[?25h[?2026l[2K[1G[?25hdeleted 'm2b-failed-load-probe'
+ps after restore: {"models":[{"name":"devstral:24b","model":"devstral:24b","size":36189503487,"digest":"9bd74193e93935e9d8564d88607b220a9d
+--- try: b2 num_ctx 8388608 + num_batch 1048576 + num_gpu 999 ---
+FROM nemotron3:33b
+PARAMETER num_ctx 8388608
+PARAMETER num_batch 1048576
+PARAMETER num_gpu 999
+success [K[?25h[?2026l
+unloading residents (as server does)...
+ps before load: {"models":[]}
+loading probe with keep_alive -1...
+response: {"model":"m2b-failed-load-probe","created_at":"2026-09-25T19:54:35.09123Z","response":"","done":true,"done_reason":"load"}
+elapsed: 31s
+ps after load: {"models":[{"name":"m2b-failed-load-probe:latest","model":"m2b-failed-load-probe:latest","size":86777402488,"digest":"5b4e11cae07af64ddb3b3c8b6ccc5d389f26971c90ab94a923fcf5516f0f578e","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-05T19:41:51.946189807Z","size_vram":86777402488,"context_length":131072}]}
+NAME                            ID              SIZE     PROCESSOR    CONTEXT    UNTIL   
+m2b-failed-load-probe:latest    5b4e11cae07a    86 GB    100% GPU     131072     Forever    
+[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?25l[?2026h[?25l[1G[K[?25h[?2026l[2K[1G[?25hdeleted 'm2b-failed-load-probe'
+ps after restore: {"models":[{"name":"devstral:24b","model":"devstral:24b","size":36189503487,"digest":"9bd74193e93935e9d8564d88607b220a9d
+--- try: c1 truncated GGUF: first 64 MiB of devstral:24b weights blob ---
+FROM /private/tmp/m2b-probe/probe.gguf
+Error: tensor "token_embd.weight" offset+size (385370848) exceeds file size (67108864)
+unloading residents (as server does)...
+ps before load: {"models":[]}
+loading probe with keep_alive -1...
+response: {"error":"model 'm2b-failed-load-probe' not found"}
+elapsed: 0s
+ps after load: {"models":[]}
+NAME    ID    SIZE    PROCESSOR    CONTEXT    UNTIL 
+[?25l[?2026h[?25l[1G[K[?25h[?2026l[2K[1G[?25hError: model 'm2b-failed-load-probe' not found
+ps after restore: {"models":[{"name":"devstral:24b","model":"devstral:24b","size":36189503487,"digest":"9bd74193e93935e9d8564d88607b220a9d
+
+c2 method: APFS clone of devstral:24b weights blob with general.architecture value patched 'llama'->'xxxxx' at byte 64 (same length, offsets intact)
+--- try: c2 GGUF with unknown architecture ---
+FROM /private/tmp/m2b-probe/probe.gguf
+Error: failed to validate GGUF with llama-quantize without compatibility patches: llama-quantize failed: exit status 1
+unloading residents (as server does)...
+ps before load: {"models":[]}
+loading probe with keep_alive -1...
+response: {"error":"model 'm2b-failed-load-probe' not found"}
+elapsed: 0s
+ps after load: {"models":[]}
+NAME    ID    SIZE    PROCESSOR    CONTEXT    UNTIL 
+[?25l[?2026h[?25l[1G[K[?25h[?2026l[2K[1G[?25hError: model 'm2b-failed-load-probe' not found
+ps after restore: {"models":[{"name":"devstral:24b","model":"devstral:24b","size":36189503487,"digest":"9bd74193e93935e9d8564d88607b220a9d
+
+c3 method: devstral:24b + ADAPTER = hand-built 2-tensor LoRA GGUF whose blk.0.attn_q lora_a/lora_b shapes (7x3, 3x7) do not match the base model
+--- try: c3 mismatched LoRA adapter ---
+FROM devstral:24b
+ADAPTER /private/tmp/m2b-probe/adapter.gguf
+success [K[?25h[?2026l
+unloading residents (as server does)...
+ps before load: {"models":[]}
+loading probe with keep_alive -1...
+response: {"error":"llama-server process has terminated: exit status 1"}
+elapsed: 2s
+ps after load: {"models":[]}
+NAME    ID    SIZE    PROCESSOR    CONTEXT    UNTIL 
+[?2026h[?25l[1G⠙ [K[?25h[?2026l[?25l[?2026h[?25l[1G[K[?25h[?2026l[2K[1G[?25hdeleted 'm2b-failed-load-probe'
+ps after restore: {"models":[{"name":"devstral:24b","model":"devstral:24b","size":36189503487,"digest":"9bd74193e93935e9d8564d88607b220a9d
+
+Note: c1 and c2 each left one unreferenced blob (the 64 MiB truncated file sha256-8da06df6..., and the 14.3 GB patched clone sha256-0c20cce3...); both verified unreferenced by any manifest and deleted; blob list afterwards identical to before Step 1. c3 left none.
+
+================ Step 2: bash scripts/model-failed-load-proof.sh ================
+=== Model Failed-Load Live Proof (M2-AC5) ===
+date: Fri 25 Sep 2026 19:58:09 UTC
+
+Restarting LaunchAgents...
+Waiting for server to be ready...
+Server is up and enforcing auth
+
+--- Recording original Ollama state ---
+Before: {"models":[{"name":"devstral:24b","model":"devstral:24b","size":36189503487,"digest":"9bd74193e93935e9d8564d88607b220a9d341c4a36b748cffcbd9ad4f47a9ca9","details":{"parent_model":"","format":"gguf","family":"llama","families":["llama"],"parameter_size":"23.6B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-05T19:43:58.327107807Z","size_vram":36189503487,"context_length":131072}]}
+Originally resident: devstral:24b
+
+--- Creating probe m2b-failed-load-probe ---
+Base model (smallest in /api/tags): devstral:24b (architecture llama)
+Modelfile:
+FROM devstral:24b
+ADAPTER /private/tmp/m2b-failed-load-probe.8r9c6z/adapter.gguf
+Probe created
+
+--- Running proof (mobile/scripts/model-failed-load-proof.ts) ---
+PASS: probe listed in /v1/state models as m2b-failed-load-probe:latest
+Resident before load (server view): devstral:24b
+Load finished after 2032 ms (3 polls)
+Final operation: {"kind":"idle","model":"m2b-failed-load-probe:latest","error":"Load failed: llama-server process has terminated: exit status 1"}
+Final resident: null
+PASS: operation.kind is "idle"
+PASS: operation.error is non-empty: Load failed: llama-server process has terminated: exit status 1
+PASS: operation.model is m2b-failed-load-probe:latest
+PASS: state.resident is null
+Ollama /api/ps after failed load: {"models":[]}
+PASS: Ollama /api/ps is empty
+PASS: view residentLabel is "Nothing loaded"
+PASS: view busyLabel is null
+Ollama direct load: HTTP 500 {"error":"llama-server process has terminated: exit status 1"}
+PASS: Ollama itself rejects the load: llama-server process has terminated: exit status 1
+App view failureMessage: Load failed: llama-server process has terminated: exit status 1
+PASS: view failureMessage is non-empty
+PASS: view failureMessage contains Ollama's reason
+PASS: Ollama /api/ps still empty after the direct attempt
+
+All failed-load assertions passed
+
+--- Cleanup: removing probe and restoring original Ollama state ---
+[?25l[?2026h[?25l[1G[K[?25h[?2026l[2K[1G[?25hdeleted 'm2b-failed-load-probe'
+Restoring devstral:24b (keep_alive -1)...
+After cleanup: {"models":[{"name":"devstral:24b","model":"devstral:24b","size":36189503487,"digest":"9bd74193e93935e9d8564d88607b220a9d341c4a36b748cffcbd9ad4f47a9ca9","details":{"parent_model":"","format":"gguf","family":"llama","families":["llama"],"parameter_size":"23.6B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-05T19:45:36.051240807Z","size_vram":36189503487,"context_length":131072}]}
+[0;32m=== Proof PASSED, Mac restored to its original state ===[0m
+exit 0
+
+================ RED check ================
+RED check: proof .ts pointed at a model that loads fine (the currently resident devstral:24b) must fail
+PASS: probe listed in /v1/state models as devstral:24b
+Resident before load (server view): devstral:24b
+Load finished after 1018 ms (2 polls)
+Final operation: {"kind":"idle"}
+Final resident: {"name":"devstral:24b","loaded_by_server":true}
+PASS: operation.kind is "idle"
+FAIL: operation.error is empty (load did not fail)
+FAIL: operation.model is undefined, expected devstral:24b
+FAIL: state.resident is {"name":"devstral:24b","loaded_by_server":true}, expected null
+Ollama /api/ps after failed load: {"models":[{"name":"devstral:24b","model":"devstral:24b","size":36189503487,"digest":"9bd74193e93935e9d8564d88607b220a9d341c4a36b748cffcbd9ad4f47a9ca9","details":{"parent_model":"","format":"gguf","family":"llama","families":["llama"],"parameter_size":"23.6B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-05T19:45:45.513301807Z","size_vram":36189503487,"context_length":131072}]}
+FAIL: Ollama /api/ps lists devstral:24b
+FAIL: view residentLabel is "Loaded: devstral:24b", expected "Nothing loaded"
+PASS: view busyLabel is null
+Ollama direct load: HTTP 200 {"model":"devstral:24b","created_at":"2026-09-25T19:58:29.667991Z","response":"","done":true,"done_reason":"load"}
+FAIL: Ollama loaded the probe directly (no error) -- the failure is not genuine
+App view failureMessage: 
+FAIL: view failureMessage is empty
+FAIL: view failureMessage does not contain Ollama's reason ""
+FAIL: Ollama /api/ps lists devstral:24b after the direct attempt
+
+9 assertion(s) failed
+exit 1 (expected non-zero)
+
+Server restarted afterwards (launchctl kickstart -k com.harness.server) so its in-memory loaded_by_server flag for devstral:24b set by the red check is cleared; /v1/state -> 401.
+
+================ typecheck / lint ================
+--- bun run typecheck ---
+$ tsc --noEmit
+exit 0
+--- bun run lint ---
+$ eslint src --max-warnings 0
+exit 0
+--- tsc --noEmit -p (scratch tsconfig extending mobile/tsconfig.json, including the new script) ---
+exit 0
+
+================ Final Mac state ================
+/api/ps: [{"name":"devstral:24b","expires_at":"2319-01-05T19:45:46.522992807Z"}]
+/api/tags: nemotron3:33b qwen3.8:27b devstral:24b qwen3-coder:30b qwen3.6:27b 
+probe installed: 0
+blobs vs before Step 1: identical
+scratch GGUFs under /private/tmp: 0
+
+################ ATTEMPT 3 (previous log, kept) ################
+=== M2b-T3b Step 1: find a genuine load failure ===
+date: Fri 25 Sep 2026 19:50:11 UTC
+resident before: {"models":[{"name":"devstral:24b","model":"devstral:24b","size":35816011202,"digest":"9bd74193e93935e9d8564d88607b220a9d341c4a36b748cffcbd9ad4f47a9ca9","details":{"parent_model":"","format":"gguf","family":"llama","families":["llama"],"parameter_size":"23.6B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-05T19:35:51.210008807Z","size_vram":35816011202,"context_length":131072}]}
+
+--- trying N=2097152 ---
+FROM nemotron3:33b
+PARAMETER num_ctx 2097152
+creating probe...
+[?2026h[?25l[1Ggathering model components [K
+using existing layer sha256:02025860dddec7ec009768f05966d941e0a89b470e805e136018149d1dabcf26 [K
+using existing layer sha256:aab95a9bd775d0c5e89a596251101ad8bd5964fdd09d3c0805c81f91ee976fea [K
+creating new layer sha256:841945ddf61eab16e8f841d9459f421eea0ae4fd541b810c198e0041b00296cb [K
+writing manifest [K
+success [K[?25h[?2026l
+loading probe...
+response: {"model":"m2b-failed-load-probe","created_at":"2026-09-25T19:50:11.754855Z","response":"","done":true,"done_reason":"unload"}
+removing probe...
+[?2026h[?25l[1G⠙ [K[?25h[?2026l[?25l[?2026h[?25l[1G[K[?25h[?2026l[2K[1G[?25hdeleted 'm2b-failed-load-probe'
+restoring devstral:24b resident with keep_alive -1...
+ps after restore: {"models":[{"name":"devstral:24b","model":"devstral:24b","size":35816011202,"digest":"9bd74193e93935e9d8564d88607b220a9d341c4a36b748cffcbd9ad4f47a9ca9","details":{"parent_model":"","format":"gguf","family":"llama","families":["llama"],"parameter_size":"23.6B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-05T19:37:29.128003807Z","size_vram":35816011202,"context_length":131072}]}
+
+--- trying N=8388608 ---
+FROM nemotron3:33b
+PARAMETER num_ctx 8388608
+creating probe...
+[?2026h[?25l[1Ggathering model components [K
+using existing layer sha256:02025860dddec7ec009768f05966d941e0a89b470e805e136018149d1dabcf26 [K
+using existing layer sha256:aab95a9bd775d0c5e89a596251101ad8bd5964fdd09d3c0805c81f91ee976fea [K
+creating new layer sha256:02a44b14fde0d89836df59c404e0d69c18caf3382c18b7ee55d7ef64da2cd606 [K
+writing manifest [K
+success [K[?25h[?2026l
+loading probe...
+response: {"model":"m2b-failed-load-probe","created_at":"2026-09-25T19:50:12.434079Z","response":"","done":true,"done_reason":"unload"}
+removing probe...
+[?2026h[?25l[1G⠙ [K[?25h[?2026l[?25l[?2026h[?25l[1G[K[?25h[?2026l[2K[1G[?25hdeleted 'm2b-failed-load-probe'
+restoring devstral:24b resident with keep_alive -1...
+ps after restore: {"models":[{"name":"devstral:24b","model":"devstral:24b","size":35816011202,"digest":"9bd74193e93935e9d8564d88607b220a9d341c4a36b748cffcbd9ad4f47a9ca9","details":{"parent_model":"","format":"gguf","family":"llama","families":["llama"],"parameter_size":"23.6B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-05T19:37:29.780422807Z","size_vram":35816011202,"context_length":131072}]}
+
+--- trying N=33554432 ---
+FROM nemotron3:33b
+PARAMETER num_ctx 33554432
+creating probe...
+[?2026h[?25l[1Ggathering model components [K
+using existing layer sha256:02025860dddec7ec009768f05966d941e0a89b470e805e136018149d1dabcf26 [K
+using existing layer sha256:aab95a9bd775d0c5e89a596251101ad8bd5964fdd09d3c0805c81f91ee976fea [K
+creating new layer sha256:eca45880fa9d6ac2ac3efeb04555730a304024dbbbcbabcaeb1910dcd10eee59 [K
+writing manifest [K
+success [K[?25h[?2026l
+loading probe...
+response: {"model":"m2b-failed-load-probe","created_at":"2026-09-25T19:50:13.096533Z","response":"","done":true,"done_reason":"unload"}
+removing probe...
+[?2026h[?25l[1G⠙ [K[?25h[?2026l[?2026h[?25l[1G⠹ [K[?25h[?2026l[?25l[?2026h[?25l[1G[K[?25h[?2026l[2K[1G[?25hdeleted 'm2b-failed-load-probe'
+restoring devstral:24b resident with keep_alive -1...
+ps after restore: {"models":[{"name":"devstral:24b","model":"devstral:24b","size":35816011202,"digest":"9bd74193e93935e9d8564d88607b220a9d341c4a36b748cffcbd9ad4f47a9ca9","details":{"parent_model":"","format":"gguf","family":"llama","families":["llama"],"parameter_size":"23.6B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-05T19:37:30.486288807Z","size_vram":35816011202,"context_length":131072}]}
+
+
+=== Conclusion ===
+None of the three num_ctx values (2097152, 8388608, 33554432) produced an
+{"error": ...} response from /api/generate on m2b-failed-load-probe (FROM
+nemotron3:33b). All three returned {"done":true,"done_reason":"unload",...}
+with an empty response and no error field, i.e. Ollama appears to silently
+clamp/accept the oversized num_ctx rather than fail to allocate it, at least
+for a generate call with an empty prompt and keep_alive:0.
+Per Step 1's STOP rule, the search is bounded to these three tries; the Mac
+was restored after each try (probe removed, devstral:24b reloaded with
+keep_alive:-1) and is confirmed restored at the end (see /api/tags and
+/api/ps captured above/below).
+
+Post-run verification:
+tags: ['nemotron3:33b', 'qwen3.8:27b', 'devstral:24b', 'qwen3-coder:30b', 'qwen3.6:27b']  (no m2b-failed-load-probe)
+ps: devstral:24b resident, expires_at far future (keep_alive -1 equivalent)

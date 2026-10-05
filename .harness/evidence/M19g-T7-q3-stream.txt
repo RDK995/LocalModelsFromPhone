@@ -1,0 +1,248 @@
+: connected
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-0
+event: step
+data: {"step_id":"plan","kind":"plan","status":"started","elapsed_ms":0,"budget_ms":480000}
+
+: keep-alive
+
+: keep-alive
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-1
+event: step
+data: {"step_id":"plan","kind":"plan","status":"done","elapsed_ms":34369,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-2
+event: step
+data: {"step_id":"c48cbfc8-3f3c-4717-8c1d-f0a44ad42577","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":34370,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-3
+event: step
+data: {"step_id":"c48cbfc8-3f3c-4717-8c1d-f0a44ad42577","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":36686,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-4
+event: step
+data: {"step_id":"88fdff57-4f6b-4568-a681-ae309c199458","kind":"search","status":"started","query":"WebAssembly Component Model vs Core WebAssembly architecture differences","elapsed_ms":36687,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-5
+event: step
+data: {"step_id":"88fdff57-4f6b-4568-a681-ae309c199458","kind":"search","status":"done","query":"WebAssembly Component Model vs Core WebAssembly architecture differences","elapsed_ms":38629,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-6
+event: step
+data: {"step_id":"880dec7a-d34a-4b4f-950c-7834eabe4eef","kind":"search","status":"started","query":"Wasmtime WASI Components technical specifications","elapsed_ms":38631,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-7
+event: step
+data: {"step_id":"880dec7a-d34a-4b4f-950c-7834eabe4eef","kind":"search","status":"done","query":"Wasmtime WASI Components technical specifications","elapsed_ms":40236,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-8
+event: step
+data: {"step_id":"8e879a0b-0cb0-480e-a5f8-65309aee0263","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":40238,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-9
+event: step
+data: {"step_id":"8e879a0b-0cb0-480e-a5f8-65309aee0263","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":42540,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-10
+event: step
+data: {"step_id":"76ecdd9e-604a-4a7a-803d-46fdceb3fa64","kind":"read","status":"started","url":"https://component-model.bytecodealliance.org/design/why-component-model.html","elapsed_ms":42540,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-11
+event: step
+data: {"step_id":"41064a99-c91a-4a44-92d3-71c5dbf3afdb","kind":"read","status":"started","url":"https://bytecodealliance.org/articles/the-road-to-component-model-1-0","elapsed_ms":42540,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-12
+event: step
+data: {"step_id":"76ecdd9e-604a-4a7a-803d-46fdceb3fa64","kind":"read","status":"done","url":"https://component-model.bytecodealliance.org/design/why-component-model.html","elapsed_ms":43548,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-13
+event: step
+data: {"step_id":"2c4e0fa5-a563-4160-9ff4-beccfe459c80","kind":"model","status":"started","detail":"Taking notes: component-model.bytecodealliance.org","elapsed_ms":43584,"budget_ms":480000}
+
+: keep-alive
+
+: keep-alive
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-14
+event: step
+data: {"step_id":"2c4e0fa5-a563-4160-9ff4-beccfe459c80","kind":"model","status":"done","detail":"Taking notes: component-model.bytecodealliance.org","elapsed_ms":61079,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-15
+event: step
+data: {"step_id":"0d281074-db1d-4cd7-987f-79494d0fc039","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":61081,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-16
+event: step
+data: {"step_id":"0d281074-db1d-4cd7-987f-79494d0fc039","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":64222,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-17
+event: step
+data: {"step_id":"131229fc-1f77-4740-b82a-c237bb6040d5","kind":"search","status":"started","query":"WebAssembly Component Model runtime support status Wasmtime V8 Wasmer","elapsed_ms":64223,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-18
+event: step
+data: {"step_id":"131229fc-1f77-4740-b82a-c237bb6040d5","kind":"search","status":"done","query":"WebAssembly Component Model runtime support status Wasmtime V8 Wasmer","elapsed_ms":66966,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-19
+event: step
+data: {"step_id":"d0ca167a-933b-4ac7-9482-2b824686d248","kind":"search","status":"started","query":"production ready WASI components support by WebAssembly runtimes list","elapsed_ms":66967,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-20
+event: step
+data: {"step_id":"d0ca167a-933b-4ac7-9482-2b824686d248","kind":"search","status":"done","query":"production ready WASI components support by WebAssembly runtimes list","elapsed_ms":69118,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-21
+event: step
+data: {"step_id":"9363f917-662b-4472-a2ea-996b9e4ea666","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":69119,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-22
+event: step
+data: {"step_id":"9363f917-662b-4472-a2ea-996b9e4ea666","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":71885,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-23
+event: step
+data: {"step_id":"92defdff-8318-4ff0-b6c7-2e480d585717","kind":"read","status":"started","url":"https://eunomia.dev/blog/2025/02/16/wasi-and-the-webassembly-component-model-current-status/","elapsed_ms":71886,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-24
+event: step
+data: {"step_id":"80b3d028-778d-4c43-821b-903d1a63f8cd","kind":"read","status":"started","url":"https://daily.dev/posts/wasi-and-the-webassembly-component-model-current-status-mpzqy0ms4","elapsed_ms":71886,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-25
+event: step
+data: {"step_id":"92defdff-8318-4ff0-b6c7-2e480d585717","kind":"read","status":"done","url":"https://eunomia.dev/blog/2025/02/16/wasi-and-the-webassembly-component-model-current-status/","elapsed_ms":72223,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-26
+event: step
+data: {"step_id":"b2bf6536-9c80-4810-9313-5d3a66357ab7","kind":"model","status":"started","detail":"Taking notes: eunomia.dev","elapsed_ms":72362,"budget_ms":480000}
+
+: keep-alive
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-27
+event: step
+data: {"step_id":"b2bf6536-9c80-4810-9313-5d3a66357ab7","kind":"model","status":"done","detail":"Taking notes: eunomia.dev","elapsed_ms":81896,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-28
+event: step
+data: {"step_id":"0057dcd8-9d56-459e-a724-ffce4f24126c","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":81897,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-29
+event: step
+data: {"step_id":"0057dcd8-9d56-459e-a724-ffce4f24126c","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":85757,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-30
+event: step
+data: {"step_id":"4c81e1db-4b62-415d-9904-8ed86a08fa71","kind":"search","status":"started","query":"WebAssembly Component Model toolchain support Rust Go C++ Python JavaScript","elapsed_ms":85757,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-31
+event: step
+data: {"step_id":"4c81e1db-4b62-415d-9904-8ed86a08fa71","kind":"search","status":"done","query":"WebAssembly Component Model toolchain support Rust Go C++ Python JavaScript","elapsed_ms":88795,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-32
+event: step
+data: {"step_id":"553b5529-3e7e-483c-8fe8-2ea9f47b355c","kind":"search","status":"started","query":"Wasmtime component model language bindings status 2024","elapsed_ms":88795,"budget_ms":480000}
+
+: keep-alive
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-33
+event: step
+data: {"step_id":"553b5529-3e7e-483c-8fe8-2ea9f47b355c","kind":"search","status":"done","query":"Wasmtime component model language bindings status 2024","elapsed_ms":91254,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-34
+event: step
+data: {"step_id":"b78702d6-0570-4c3e-997a-4dc1e0f6842d","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":91255,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-35
+event: step
+data: {"step_id":"b78702d6-0570-4c3e-997a-4dc1e0f6842d","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":93751,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-36
+event: step
+data: {"step_id":"f43a5609-fd9a-4a61-a14a-e745343e94e2","kind":"read","status":"started","url":"https://www.apargoinnovations.com/blog/webassembly-component-model-language-agnostic-modules","elapsed_ms":93752,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-37
+event: step
+data: {"step_id":"e72e766b-1da6-4c15-bad3-245355e3013f","kind":"read","status":"started","url":"https://reptile.haus/journal/webassembly-component-model-wasi-cross-language-development-2026/","elapsed_ms":93752,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-38
+event: step
+data: {"step_id":"f43a5609-fd9a-4a61-a14a-e745343e94e2","kind":"read","status":"done","url":"https://www.apargoinnovations.com/blog/webassembly-component-model-language-agnostic-modules","elapsed_ms":98341,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-39
+event: step
+data: {"step_id":"ce8577ae-dd40-4bbc-bfa3-9db59f465602","kind":"model","status":"started","detail":"Taking notes: apargoinnovations.com","elapsed_ms":98366,"budget_ms":480000}
+
+: keep-alive
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-40
+event: step
+data: {"step_id":"ce8577ae-dd40-4bbc-bfa3-9db59f465602","kind":"model","status":"done","detail":"Taking notes: apargoinnovations.com","elapsed_ms":105923,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-41
+event: step
+data: {"step_id":"41064a99-c91a-4a44-92d3-71c5dbf3afdb","kind":"read","status":"done","url":"https://bytecodealliance.org/articles/the-road-to-component-model-1-0","elapsed_ms":105924,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-42
+event: step
+data: {"step_id":"8659a9ac-d436-4cf0-a7ee-fbc46a71f2cc","kind":"model","status":"started","detail":"Taking notes: bytecodealliance.org","elapsed_ms":105994,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-43
+event: step
+data: {"step_id":"8659a9ac-d436-4cf0-a7ee-fbc46a71f2cc","kind":"model","status":"done","detail":"Taking notes: bytecodealliance.org","elapsed_ms":117093,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-44
+event: step
+data: {"step_id":"80b3d028-778d-4c43-821b-903d1a63f8cd","kind":"read","status":"done","url":"https://daily.dev/posts/wasi-and-the-webassembly-component-model-current-status-mpzqy0ms4","elapsed_ms":117095,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-45
+event: step
+data: {"step_id":"83109914-a3e2-4e05-b495-27106fffb3f9","kind":"model","status":"started","detail":"Taking notes: daily.dev","elapsed_ms":117104,"budget_ms":480000}
+
+: keep-alive
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-46
+event: step
+data: {"step_id":"83109914-a3e2-4e05-b495-27106fffb3f9","kind":"model","status":"done","detail":"Taking notes: daily.dev","elapsed_ms":125192,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-47
+event: step
+data: {"step_id":"e72e766b-1da6-4c15-bad3-245355e3013f","kind":"read","status":"done","url":"https://reptile.haus/journal/webassembly-component-model-wasi-cross-language-development-2026/","elapsed_ms":125193,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-48
+event: step
+data: {"step_id":"3abd1648-15c7-4ab5-a47f-6319f3befef0","kind":"model","status":"started","detail":"Taking notes: reptile.haus","elapsed_ms":125228,"budget_ms":480000}
+
+: keep-alive
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-49
+event: step
+data: {"step_id":"3abd1648-15c7-4ab5-a47f-6319f3befef0","kind":"model","status":"done","detail":"Taking notes: reptile.haus","elapsed_ms":139156,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-50
+event: step
+data: {"step_id":"write","kind":"write","status":"started","elapsed_ms":139157,"budget_ms":480000}
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-51
+event: step
+data: {"step_id":"write","kind":"write","status":"done","elapsed_ms":206900,"budget_ms":480000}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-52
+event: content
+data: {"text":"The WebAssembly Component Model is architected as a foundational microkernel distinct from WASI, which serves as an optional layer of OS services [1]. Its primary design goal is to resolve interoperability issues in core modules by enriching the type system and enforcing explicit calling contracts [2]. Unlike standard core modules, the Component Model explicitly prohibits memory exports, thereby preventing unsafe indirect communication and enabling interoperability between languages with differing memory models, such as those using garbage collection versus linear memory [2]. This architecture specifically addresses the dual problems of the limited type system in core modules and cross-language memory layout incompatibilities [2].\n\nRegarding runtime support, while major platforms like Wasmtime, Wasmer, WAMR, and Node.js are being evaluated for their capabilities, the analysis suggests that production-ready status remains incomplete or uneven across these platforms [4]. In contrast to WasmEdge, which had not yet integrated the official Component Model or Preview2 APIs at the time of review and instead relied on its own extensions [3], the landscape is evolving. However, specific toolchains have reached a state of stability that makes adoption practical for production teams today [5].\n\nThe current state of library and toolchain support varies by language. The Rust ecosystem offers the most mature and comprehensive toolchain, centered around `cargo-component` and the `wit-bindgen` crate [6]. For other languages, Python and JavaScript provide viable alternatives with established tools like `componentize-py` and `jco`, though their documentation may be less polished than Rust's [5]. The Component Model supports interoperability across multiple languages including Go, Python, and JavaScript through a shared type system that allows modules to safely share types and interfaces without serialization overhead [6]."}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-53
+event: sources
+data: {"items":[{"title":"The Road to Component Model 1.0","url":"https://bytecodealliance.org/articles/the-road-to-component-model-1-0","n":1},{"title":"Why the Component Model? - The WebAssembly Component Model","url":"https://component-model.bytecodealliance.org/design/why-component-model.html","n":2},{"title":"WASI and the WebAssembly Component Model: Current Status","url":"https://eunomia.dev/blog/2025/02/16/wasi-and-the-webassembly-component-model-current-status/","n":3},{"title":"WASI and the WebAssembly Component Model: Current Status","url":"https://daily.dev/posts/wasi-and-the-webassembly-component-model-current-status-mpzqy0ms4","n":4},{"title":"The WebAssembly Component Model Is Here: What It Means for Cross-Language","url":"https://reptile.haus/journal/webassembly-component-model-wasi-cross-language-development-2026/","n":5},{"title":"WebAssembly Component Model: Modular Polyglot Systems","url":"https://www.apargoinnovations.com/blog/webassembly-component-model-language-agnostic-modules","n":6}]}
+
+id: 273b488d-72fb-4e77-8bd5-42d0a0c9018d-54
+event: done
+data: {"status":"complete","model":"qwen3.5:35b-a3b","eval_count":3095,"tokens_per_second":46.276311205524706,"research":{"status":"complete","elapsed_ms":206900,"budget_ms":480000}}
+

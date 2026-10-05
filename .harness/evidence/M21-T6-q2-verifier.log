@@ -1,0 +1,196 @@
+VERIFICATION FOR M21-T6 QUESTION q2
+Task Packet: /Users/ryankenny/Projects/CodingHarnessv2/.harness/tasks/M21-T6.md
+Diff Range: 3b2f585..HEAD + working tree
+Verifier Invocation: 2026-10-03
+
+================================================================================
+PRECONDITION CHECK
+================================================================================
+Command: pgrep -fl ac29-live-run
+Exit Status: 1
+Output: (no processes found - correct, precondition met)
+
+================================================================================
+TEST 1: RESULT.JSON AND RUN LOG VERIFICATION
+================================================================================
+
+Result JSON exists: YES
+File: /Users/ryankenny/Projects/CodingHarnessv2/.harness/evidence/M21-T6-q2-result.json
+
+Result JSON contents (relevant fields):
+{
+  "generation_id": "cb5db5c2-a80e-4b3f-ab32-1fdd95decca5",
+  "started_at": "2026-10-03T16:29:52.422Z",
+  "ended_at": "2026-10-03T16:33:08.508Z",
+  "total_wall_s": 196.086,
+  "planning_s": 13.808,
+  "research_phase_calls": 12,
+  "routine_calls": 13,
+  "routine_p50_s": 3.207,
+  "routine_p95_s": 11.524,
+  "fr41_lines": 16,
+  "distinct_pages_read": 6,
+  "notes_kept": 17,
+  "final_status": "complete",
+  "cited_read_pages": 6,
+  "unresolved_citations": [],
+  "pass": true
+}
+
+Run Log Contents:
+The run log ends with: exit=0
+
+================================================================================
+TEST 2: CHECK-ONLY VERIFICATION
+================================================================================
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M21-T6-q2-stream.txt --log ../.harness/evidence/M21-T6-q2-fr41.log
+
+Exit Status: 0
+
+Output (JSON):
+{
+  "stream_file": "../.harness/evidence/M21-T6-q2-stream.txt",
+  "note": "check-only: total_wall_s taken from done.research.elapsed_ms (0 when absent)",
+  "budget_s": 480,
+  "total_wall_s": 196.081,
+  "planning_s": 13.808,
+  "research_phase_calls": 12,
+  "routine_calls": 13,
+  "routine_p50_s": 3.207,
+  "routine_p95_s": 11.524,
+  "fr41_lines": 16,
+  "distinct_pages_read": 6,
+  "notes_kept": 17,
+  "final_status": "complete",
+  "cited_read_pages": 6,
+  "unresolved_citations": [],
+  "checks": {
+    "status_ok": {
+      "ok": true,
+      "value": "complete"
+    },
+    "within_budget": {
+      "ok": true,
+      "value": {
+        "total_wall_s": 196.081,
+        "limit_s": 540
+      }
+    },
+    "cited_read_pages_ok": {
+      "ok": true,
+      "value": 6
+    },
+    "no_unresolved_citations": {
+      "ok": true,
+      "value": []
+    }
+  },
+  "pass": true
+}
+
+================================================================================
+CRITICAL VERIFICATION: READ STEP URLS vs FINAL SOURCES
+================================================================================
+This test verifies the fix for the previous failure caused by redirects in read step URLs.
+
+Read Step Done URLs (from stream.txt):
+1. Step 4bde9346-2596-4c81-a6f1-071bbf00ae89: https://solartodo.com/knowledge/battery-energy-storage-market-data-2026-lfp-vs-nmc-cost-performance-benchmarks
+2. Step 3eaabf57-fe35-4fbd-aeb6-b9dca3bf5a7f: https://www.insumenergy.com/lifepo4-vs-nmc-lithium-batteries-which-is-best-for-home-energy-storage-in-2026/
+3. Step 65dc8029-ed7b-45d1-9cab-d196575dbd0f: https://agaicpower.com/blogs/news/are-home-batteries-safe-lifepo4-vs-nmc-fire-risk-the-real-data
+4. Step 0b3d57ca-2106-4aa9-bb03-1020b3f86c22: https://www.ohmsnap.com/battery-storage-cost-2026
+5. Step cbf6ecfe-91a8-48ac-bde6-bf029b994b8e: https://batteryplanning.com/lfp-vs-nmc-home-battery
+6. Step 65586400-3bc7-4365-84fb-696ad7c56214: https://sunlithenergy.com/nmc-battery-vs-lfp-safety/
+
+Final Sources Event (from stream.txt, line 242-243):
+{
+  "items": [
+    {"title": "Home Battery Storage Cost 2026", "url": "https://www.ohmsnap.com/battery-storage-cost-2026", "n": 1},
+    {"title": "Battery Energy Storage Market 2026: LFP vs NMC Benchmarks", "url": "https://solartodo.com/knowledge/battery-energy-storage-market-data-2026-lfp-vs-nmc-cost-performance-benchmarks", "n": 2},
+    {"title": "LiFePO4 vs NMC Lithium Batteries: Which Is Best for Home Energy Storage in 2026?", "url": "https://www.insumenergy.com/lifepo4-vs-nmc-lithium-batteries-which-is-best-for-home-energy-storage-in-2026/", "n": 3},
+    {"title": "LFP vs. NMC Batteries: Home Backup Chemistry Comparison", "url": "https://batteryplanning.com/lfp-vs-nmc-home-battery", "n": 4},
+    {"title": "Are Home Batteries Safe? LiFePO4 vs NMC Fire Risk — The Real Data", "url": "https://agaicpower.com/blogs/news/are-home-batteries-safe-lifepo4-vs-nmc-fire-risk-the-real-data", "n": 5},
+    {"title": "NMC Battery vs LFP Safety: The Complete BESS Risk Breakdown", "url": "https://sunlithenergy.com/nmc-battery-vs-lfp-safety/", "n": 6}
+  ]
+}
+
+URL Matching Results:
+Read URL #1: https://solartodo.com/knowledge/battery-energy-storage-market-data-2026-lfp-vs-nmc-cost-performance-benchmarks
+  → Found in final sources: YES (n=2) - MATCH
+
+Read URL #2: https://www.insumenergy.com/lifepo4-vs-nmc-lithium-batteries-which-is-best-for-home-energy-storage-in-2026/
+  → Found in final sources: YES (n=3) - MATCH
+
+Read URL #3: https://agaicpower.com/blogs/news/are-home-batteries-safe-lifepo4-vs-nmc-fire-risk-the-real-data
+  → Found in final sources: YES (n=5) - MATCH
+  → Note: The read step "done" URL differs from the "started" URL (which had "-1" suffix), indicating a redirect was followed and the final URL was recorded correctly.
+
+Read URL #4: https://www.ohmsnap.com/battery-storage-cost-2026
+  → Found in final sources: YES (n=1) - MATCH
+
+Read URL #5: https://batteryplanning.com/lfp-vs-nmc-home-battery
+  → Found in final sources: YES (n=4) - MATCH
+
+Read URL #6: https://sunlithenergy.com/nmc-battery-vs-lfp-safety/
+  → Found in final sources: YES (n=6) - MATCH
+
+URL MATCHING SUMMARY: All 6 read step done URLs are present in the final sources event.
+No mismatches detected.
+
+================================================================================
+FILES CHANGED VERIFICATION
+================================================================================
+Committed changes (git diff 3b2f585..HEAD):
+  None outside .harness/ directory
+
+Untracked files:
+  .harness/evidence/M21-T6-q2-fr41.log (allowed - .harness/evidence/M21-T6-q2-*)
+  .harness/evidence/M21-T6-q2-result.json (allowed - .harness/evidence/M21-T6-q2-*)
+  .harness/evidence/M21-T6-q2-run.log (allowed - .harness/evidence/M21-T6-q2-*)
+  .harness/evidence/M21-T6-q2-stream.txt (allowed - .harness/evidence/M21-T6-q2-*)
+  .harness/evidence/M21-T6-q2-worker.log (allowed - .harness/evidence/M21-T6-q2-*)
+  "reports/Fast local deep research redesign.md" (ignored - owner's file, excluded per task invocation)
+  "research_notes/Fast local deep research redesign/" (ignored - owner's file, excluded per task invocation)
+
+All production files allowed or excluded.
+
+================================================================================
+ACCEPTANCE CRITERIA VERIFICATION
+================================================================================
+Task AC: M21-AC1 (verbatim): "Live on the Mac with `qwen3.5:35b-a3b` resident: 
+3 real research-style questions plus the 2026-10-02 heat-pump question each end 
+within the budget plus a small margin with status `complete` or `partial`, a 
+report citing at least 3 distinct read pages, and no citation number that fails 
+to resolve to a saved source; the owner's opinion of report quality is recorded 
+in the evidence (not a gate)."
+
+For q2 specifically:
+1. Status within budget: PASS
+   - final_status: "complete" ✓
+   - total_wall_s: 196.086 (budget: 480, margin: 540) ✓
+   - Within budget plus margin
+
+2. Report citing at least 3 distinct read pages: PASS
+   - distinct_pages_read: 6 ✓
+   - cited_read_pages: 6 ✓
+   - Requirement met (6 >= 3)
+
+3. No citation number that fails to resolve to a saved source: PASS
+   - unresolved_citations: [] ✓
+   - All URLs in read steps match final sources ✓
+   - No unresolved citations
+
+4. Owner opinion of report quality: RECORDED
+   - Evidence file: M21-T6-q2-worker.log (contains owner's assessment)
+
+================================================================================
+SUMMARY
+================================================================================
+All verification checks PASSED:
+✓ Precondition check (no running processes)
+✓ Result JSON exists with pass: true
+✓ Run log ends with exit=0
+✓ --check-only command exited 0
+✓ Pass-bar values reproduced correctly
+✓ All 6 read step done URLs appear in final sources (no mismatches, redirect fix confirmed)
+✓ Only allowed files changed
+✓ AC29 acceptance criteria met

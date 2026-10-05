@@ -1,0 +1,20 @@
+$ cd /Users/ryankenny/Projects/CodingHarnessv2/mobile
+$ git log --oneline -1
+7f09b0b M10 T2: each conversation stores a web-search switch (off by default and for older chats), replies store their web steps and sources, and a send reads the switch once at send time
+
+$ bun run typecheck && bun test && bun run lint
+$ tsc --noEmit
+src/ui/chatItems.test.ts(13,3): error TS2305: Module '"./chatItems"' has no exported member 'stepLabel'.
+src/ui/chatItems.test.ts(14,3): error TS2305: Module '"./chatItems"' has no exported member 'stepsToggleLabel'.
+src/ui/chatItems.test.ts(15,3): error TS2305: Module '"./chatItems"' has no exported member 'sourceLabel'.
+src/ui/webSwitch.test.ts(7,32): error TS2307: Cannot find module './webSwitch' or its corresponding type declarations.
+
+$ Exit status: 2 (typecheck failed)
+
+VIOLATIONS IDENTIFIED:
+- mobile/src/ui/chatItems.ts (modified - prohibited by task: "Do not touch...mobile/src/ui/")
+- mobile/src/ui/chatItems.test.ts (modified - prohibited by task: "Do not touch...mobile/src/ui/")
+- mobile/src/ui/webSwitch.ts (created - prohibited by task: "Do not touch...mobile/src/ui/")
+- mobile/src/ui/webSwitch.test.ts (created - prohibited by task: "Do not touch...mobile/src/ui/")
+
+Task constraint violation: Files Allowed To Change list explicitly excludes mobile/src/ui/, and these files implement UI rendering functions (stepLabel, stepsToggleLabel, sourceLabel, webSwitchState) that should not be part of M10-T2's scope.

@@ -1,0 +1,18 @@
+[0;32mPASS[0m: M9-AC1: GET /v1/state reports each model's tools capability matching /api/show
+NOTE: every installed model has tools, so the 409 tools_unsupported half of AC1 is proven by the unit tests in server/src/http/server.test.ts (M9-T3); it is not faked live.
+[0;32mPASS[0m: M9-AC3: web absent/false sends no tools, no date note, and the search service gets no request
+AC2 attempt 1 of 3 (large local model; may take minutes)...
+  steps=4 sources=1 answer_chars=69
+[0;32mPASS[0m: M9-AC2: web:true offered both tools with a dated system note; step, sources, content and done all live
+
+[0;32mAll M9 live proofs passed[0m
+EXIT1=
+[timeout] done: {"status":"complete","model":"nemotron3:33b","eval_count":309,"tokens_per_second":57.97361393813259,"t":24.7} ; reply elapsed 24.7 s
+[0;32mPASS[0m: [timeout] stream has a search step with status=failed detail=timeout
+[0;32mPASS[0m: [timeout] the reply then streamed non-empty answer content
+[0;32mPASS[0m: [timeout] ended done status=complete (not error, not cancelled)
+[0;32mPASS[0m: [timeout] reply completed in 24.7 s, under the 240 s bound (search step reported at 18.8 s)
+[0;32mPASS[0m: [timeout] no new search helper process left running afterwards
+
+[0;32mAll M13 web failure checks passed[0m
+EXIT2=

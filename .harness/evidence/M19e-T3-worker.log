@@ -1,0 +1,33 @@
+TASK: M19e-T3 — Update one existing exact step-sequence assertion for the new "model" started/done steps
+
+SUMMARY:
+Updated the test at server/src/generations/research.test.ts to account for the new "model" steps with their details emitted by M19e-T2.
+
+CHANGES MADE:
+1. Updated the collapsed step kinds array at line 182 from:
+   ["plan", "search", "read", "search", "read", "write"]
+   to:
+   ["plan", "model", "search", "model", "read", "model", "search", "model", "read", "model", "read", "model", "read", "model", "write"]
+
+2. Added a new assertion after line 182 to verify the detail values of "model" steps with status "started":
+   Asserts that modelDetails equals:
+   ["Choosing searches", "Choosing pages", "Taking notes: alpha.example", "Choosing searches", "Choosing pages", "Taking notes: gamma.example", "Taking notes: alpha.example", "Taking notes: gamma.example", "Checking for gaps", "Checking for gaps"]
+
+TEST RESULTS:
+Test 1: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/generations/research.test.ts
+Result: 47 pass, 0 fail, 470 expect() calls [4.23s]
+Status: PASS
+
+Test 2: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bunx tsc --noEmit
+Result: 349 pass, 0 fail, 2465 expect() calls [18.68s]
+TSC: Clean (no compilation errors)
+Status: PASS
+
+FILES MODIFIED:
+- server/src/generations/research.test.ts (lines 182-187)
+
+CONSTRAINTS SATISFIED:
+- Do not edit research.ts or any other file: SATISFIED (only edited research.test.ts)
+- Do not commit: SATISFIED (no git commit created)
+- No git stash: SATISFIED
+- Do not touch reports/, research_notes/ or .harness/: SATISFIED

@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "Phone Models",
+    "slug": "phone-models",
+    "version": "0.1.0",
+    "scheme": "phonemodels",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.harness.phonemodels",
+      "deploymentTarget": "13.0"
+    },
+    "android": {
+      "package": "com.harness.phonemodels"
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ],
+    "extra": {
+      "serverUrl": "https://ryans-mac-studio.tailc3648a.ts.net:8443",
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "68fa3c3c-82ba-4f81-8fea-e0cdff5c0fa5"
+      }
+    },
+    "owner": "harness"
+  }
+}

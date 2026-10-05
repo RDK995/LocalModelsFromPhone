@@ -1,0 +1,119 @@
+bun test v1.4.0 (1381054db)
+
+src/http/server.test.ts:
+478 |       manager: new GenerationManager(client, fakeWeb),
+479 |       port: 0,
+480 |     });
+481 |     try {
+482 |       const res = await postChat(server.port, JSON.stringify({ model: "fake-model", messages: [{ role: "user", content: "hello" }] }));
+483 |       expect(res.status).toBe(200);
+                               ^
+error: expect(received).toBe(expected)
+
+Expected: 200
+Received: 400
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/server.test.ts:483:26)
+(fail) HTTP Server with Bearer Auth > POST /v1/chat without web: fake Ollama sees no tools and web tools are never used (M9-AC3) [0.92ms]
+526 |     });
+527 |     try {
+528 |       const res = await postChat(server.port, webBody(true));
+529 |       expect(res.status).toBe(200);
+530 |       const events = parseSSE(await res.text());
+531 |       expect(events.map((e) => e.event)).toEqual(["step", "step", "content", "sources", "done"]);
+                                               ^
+error: expect(received).toEqual(expected)
+
+@@ -1,6 +1,2 @@
+  [
+-   "step",
+-   "step",
+-   "content",
+-   "sources",
+    "done",
+
+- Expected  - 4
++ Received  + 0
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/server.test.ts:531:42)
+(fail) HTTP Server with Bearer Auth > POST /v1/chat web:true streams step and sources events before done [1.10ms]
+
+src/generations/manager.test.ts:
+303 |       const web_ = new FakeWebTools();
+304 |       const manager = new GenerationManager(client, web_);
+305 |       manager.startGeneration("gen-1", { model: "test", messages: userMessages, web: true });
+306 |       const events = await collect(manager);
+307 | 
+308 |       expect(seen).toHaveLength(2);
+                         ^
+error: expect(received).toHaveLength(expected)
+
+Expected length: 2
+Received length: 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/generations/manager.test.ts:308:20)
+(fail) GenerationManager > web tool loop (M9) > web:true, one search then an answer: note first, tools offered, step events, sources before done [0.36ms]
+333 |       const web_ = new FakeWebTools();
+334 |       const manager = new GenerationManager(client, web_);
+335 |       manager.startGeneration("gen-1", { model: "test", messages: userMessages, web: true });
+336 |       const events = await collect(manager);
+337 | 
+338 |       expect(web_.executed).toHaveLength(10);
+                                  ^
+error: expect(received).toHaveLength(expected)
+
+Expected length: 10
+Received length: 0
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/generations/manager.test.ts:338:29)
+(fail) GenerationManager > web tool loop (M9) > caps a reply at 10 tool calls and withdraws the tools for the answer [0.20ms]
+353 |       const web_ = new FakeWebTools();
+354 |       const manager = new GenerationManager(client, web_);
+355 |       manager.startGeneration("gen-1", { model: "test", messages: userMessages, web: true });
+356 |       const events = await collect(manager);
+357 | 
+358 |       expect(web_.executed).toHaveLength(10);
+                                  ^
+error: expect(received).toHaveLength(expected)
+
+Expected length: 10
+Received length: 0
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/generations/manager.test.ts:358:29)
+(fail) GenerationManager > web tool loop (M9) > executes only the calls within the budget in one round; the surplus gets the limit message [0.32ms]
+384 |       });
+385 |       const manager = new GenerationManager(client, web_);
+386 |       manager.startGeneration("gen-1", { model: "test", messages: userMessages, web: true });
+387 |       const events = await collect(manager);
+388 |       const sources = events.find((e) => e.type === "sources")!;
+389 |       expect(JSON.parse(sources.data)).toEqual({
+                              ^
+TypeError: undefined is not an object (evaluating 'sources.data')
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/generations/manager.test.ts:389:25)
+(fail) GenerationManager > web tool loop (M9) > deduplicates sources by url in first-occurrence order [0.17ms]
+(fail) GenerationManager > web tool loop (M9) > cancel during execute ends in done cancelled and releases the slot [5000.00ms]
+  ^ this test timed out after 5000ms.
+430 |         throw new Error("boom");
+431 |       };
+432 |       const manager = new GenerationManager(client, web_);
+433 |       manager.startGeneration("gen-1", { model: "test", messages: userMessages, web: true });
+434 |       const events = await collect(manager);
+435 |       expect(events.map((e) => e.type)).toEqual(["error"]);
+                                              ^
+error: expect(received).toEqual(expected)
+
+  [
+-   "error",
++   "done",
+  ]
+
+- Expected  - 1
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/generations/manager.test.ts:435:41)
+(fail) GenerationManager > web tool loop (M9) > an execute failure that is not an abort ends in error with no sources [0.92ms]
+
+ 57 pass
+ 8 fail
+ 349 expect() calls
+Ran 65 tests across 2 files. [6.39s]

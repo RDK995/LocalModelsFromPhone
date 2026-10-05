@@ -1,0 +1,47 @@
+stream dropped: HTTP 409
+{
+  "id": "q2",
+  "question": "What are the trade-offs between LFP and NMC lithium battery chemistries for home battery storage, including cost, lifespan, safety and cold-weather performance?",
+  "generation_id": null,
+  "started_at": "2026-10-02T20:42:01.334Z",
+  "ended_at": "2026-10-02T20:42:01.336Z",
+  "fr41_selection": "server.log bytes written between just before the POST and after done (lines carry no run id)",
+  "saw_done": false,
+  "budget_s": 480,
+  "total_wall_s": 0.002,
+  "planning_s": 0,
+  "research_phase_calls": 0,
+  "routine_calls": 0,
+  "routine_p50_s": null,
+  "routine_p95_s": null,
+  "fr41_lines": 0,
+  "distinct_pages_read": 0,
+  "notes_kept": null,
+  "notes_kept_reason": "no deep_research_run_end line in the selected server.log window",
+  "final_status": null,
+  "cited_read_pages": 0,
+  "unresolved_citations": [],
+  "checks": {
+    "status_ok": {
+      "ok": false,
+      "value": null
+    },
+    "within_budget": {
+      "ok": true,
+      "value": {
+        "total_wall_s": 0.002,
+        "limit_s": 540
+      }
+    },
+    "cited_read_pages_ok": {
+      "ok": false,
+      "value": 0
+    },
+    "no_unresolved_citations": {
+      "ok": true,
+      "value": []
+    }
+  },
+  "pass": false
+}
+exit=1

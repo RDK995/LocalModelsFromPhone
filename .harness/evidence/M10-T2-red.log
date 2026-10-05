@@ -1,0 +1,454 @@
+bun test v1.4.0 (1381054db)
+
+src/chat/conversationSession.test.ts:
+629 |   }
+630 | 
+631 |   it("sends web:true when the stored switch is on", async () => {
+632 |     const store = createConversationStore(createMemoryStorage());
+633 |     const c = await store.create();
+634 |     await store.setWebSearch(c.id, true);
+                      ^
+TypeError: store.setWebSearch is not a function. (In 'store.setWebSearch(c.id, !0)', 'store.setWebSearch' is undefined)
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/chat/conversationSession.test.ts:634:17)
+(fail) sendInConversation: web switch and web steps (M10) > sends web:true when the stored switch is on [0.24ms]
+657 |   });
+658 | 
+659 |   it("takes a switch change made mid-reply from the next prompt, not the in-flight one", async () => {
+660 |     const store = createConversationStore(createMemoryStorage());
+661 |     const c = await store.create();
+662 |     await store.setWebSearch(c.id, true);
+                      ^
+TypeError: store.setWebSearch is not a function. (In 'store.setWebSearch(c.id, !0)', 'store.setWebSearch' is undefined)
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/chat/conversationSession.test.ts:662:17)
+(fail) sendInConversation: web switch and web steps (M10) > takes a switch change made mid-reply from the next prompt, not the in-flight one [0.13ms]
+683 |   });
+684 | 
+685 |   it("persists the reply's steps (final statuses) and sources", async () => {
+686 |     const store = createConversationStore(createMemoryStorage());
+687 |     const c = await store.create();
+688 |     await store.setWebSearch(c.id, true);
+                      ^
+TypeError: store.setWebSearch is not a function. (In 'store.setWebSearch(c.id, !0)', 'store.setWebSearch' is undefined)
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/chat/conversationSession.test.ts:688:17)
+(fail) sendInConversation: web switch and web steps (M10) > persists the reply's steps (final statuses) and sources [0.10ms]
+
+src/store/conversationStore.test.ts:
+298 |     expect("web_search" in loaded!).toBe(false);
+299 |   });
+300 | 
+301 |   it("creates conversations with web search off", async () => {
+302 |     const created = await newStore().create();
+303 |     expect(created.web_search).toBe(false);
+                                     ^
+error: expect(received).toBe(expected)
+
+Expected: false
+Received: undefined
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/store/conversationStore.test.ts:303:32)
+(fail) conversation store: web search switch and web steps (M10) > creates conversations with web search off [0.13ms]
+306 |   it("persists setWebSearch across a fresh store on the same storage, on and back off", async () => {
+307 |     const storage = createMemoryStorage();
+308 |     const store = newStore(storage);
+309 |     const c = await store.create();
+310 | 
+311 |     const on = await store.setWebSearch(c.id, true);
+                                 ^
+TypeError: store.setWebSearch is not a function. (In 'store.setWebSearch(c.id, !0)', 'store.setWebSearch' is undefined)
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/store/conversationStore.test.ts:311:28)
+(fail) conversation store: web search switch and web steps (M10) > persists setWebSearch across a fresh store on the same storage, on and back off [0.09ms]
+317 |   });
+318 | 
+319 |   it("bumps updated_at when the switch changes", async () => {
+320 |     const store = newStore();
+321 |     const c = await store.create();
+322 |     const after = await store.setWebSearch(c.id, true);
+                                    ^
+TypeError: store.setWebSearch is not a function. (In 'store.setWebSearch(c.id, !0)', 'store.setWebSearch' is undefined)
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/store/conversationStore.test.ts:322:31)
+(fail) conversation store: web search switch and web steps (M10) > bumps updated_at when the switch changes [0.07ms]
+322 |     const after = await store.setWebSearch(c.id, true);
+323 |     expect(Date.parse(after.updated_at)).toBeGreaterThan(Date.parse(c.updated_at));
+324 |   });
+325 | 
+326 |   it("rejects setWebSearch for an unknown conversation", async () => {
+327 |     await expect(newStore().setWebSearch("nope", true)).rejects.toThrow();
+                                  ^
+TypeError: newStore().setWebSearch is not a function. (In 'newStore().setWebSearch("nope", !0)', 'newStore().setWebSearch' is undefined)
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/store/conversationStore.test.ts:327:29)
+(fail) conversation store: web search switch and web steps (M10) > rejects setWebSearch for an unknown conversation [0.07ms]
+328 |   });
+329 | 
+330 |   it("drops a conversation whose web_search is not a boolean", async () => {
+331 |     const storage = createMemoryStorage();
+332 |     await seed(storage, { ...legacy, web_search: "yes" });
+333 |     expect(await newStore(storage).get("old")).toBeNull();
+                                                     ^
+error: expect(received).toBeNull()
+
+Received: {
+  id: "old",
+  title: "Old",
+  created_at: "2024-01-01T00:00:00.000Z",
+  updated_at: "2024-01-01T00:00:00.000Z",
+  messages: [
+    {
+      id: "m",
+      role: "user",
+      content: "hi",
+      status: "complete",
+    }
+  ],
+  web_search: "yes",
+}
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/store/conversationStore.test.ts:333:48)
+(fail) conversation store: web search switch and web steps (M10) > drops a conversation whose web_search is not a boolean [0.09ms]
+372 |       const storage = createMemoryStorage();
+373 |       await seed(storage, {
+374 |         ...legacy,
+375 |         messages: [{ id: "a", role: "assistant", content: "c", status: "complete", ...extra }],
+376 |       });
+377 |       expect(await newStore(storage).get("old")).toBeNull();
+                                                       ^
+error: expect(received).toBeNull()
+
+Received: {
+  id: "old",
+  title: "Old",
+  created_at: "2024-01-01T00:00:00.000Z",
+  updated_at: "2024-01-01T00:00:00.000Z",
+  messages: [
+    {
+      id: "a",
+      role: "assistant",
+      content: "c",
+      status: "complete",
+      steps: "x",
+    }
+  ],
+}
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/store/conversationStore.test.ts:377:50)
+(fail) conversation store: web search switch and web steps (M10) > drops a conversation with a malformed message: steps not an array [0.08ms]
+372 |       const storage = createMemoryStorage();
+373 |       await seed(storage, {
+374 |         ...legacy,
+375 |         messages: [{ id: "a", role: "assistant", content: "c", status: "complete", ...extra }],
+376 |       });
+377 |       expect(await newStore(storage).get("old")).toBeNull();
+                                                       ^
+error: expect(received).toBeNull()
+
+Received: {
+  id: "old",
+  title: "Old",
+  created_at: "2024-01-01T00:00:00.000Z",
+  updated_at: "2024-01-01T00:00:00.000Z",
+  messages: [
+    {
+      id: "a",
+      role: "assistant",
+      content: "c",
+      status: "complete",
+      sources: {},
+    }
+  ],
+}
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/store/conversationStore.test.ts:377:50)
+(fail) conversation store: web search switch and web steps (M10) > drops a conversation with a malformed message: sources not an array [0.05ms]
+372 |       const storage = createMemoryStorage();
+373 |       await seed(storage, {
+374 |         ...legacy,
+375 |         messages: [{ id: "a", role: "assistant", content: "c", status: "complete", ...extra }],
+376 |       });
+377 |       expect(await newStore(storage).get("old")).toBeNull();
+                                                       ^
+error: expect(received).toBeNull()
+
+Received: {
+  id: "old",
+  title: "Old",
+  created_at: "2024-01-01T00:00:00.000Z",
+  updated_at: "2024-01-01T00:00:00.000Z",
+  messages: [
+    {
+      id: "a",
+      role: "assistant",
+      content: "c",
+      status: "complete",
+      steps: [
+        {
+          kind: "search",
+          status: "done",
+        }
+      ],
+    }
+  ],
+}
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/store/conversationStore.test.ts:377:50)
+(fail) conversation store: web search switch and web steps (M10) > drops a conversation with a malformed message: step without step_id [0.05ms]
+372 |       const storage = createMemoryStorage();
+373 |       await seed(storage, {
+374 |         ...legacy,
+375 |         messages: [{ id: "a", role: "assistant", content: "c", status: "complete", ...extra }],
+376 |       });
+377 |       expect(await newStore(storage).get("old")).toBeNull();
+                                                       ^
+error: expect(received).toBeNull()
+
+Received: {
+  id: "old",
+  title: "Old",
+  created_at: "2024-01-01T00:00:00.000Z",
+  updated_at: "2024-01-01T00:00:00.000Z",
+  messages: [
+    {
+      id: "a",
+      role: "assistant",
+      content: "c",
+      status: "complete",
+      steps: [
+        {
+          step_id: "s",
+          kind: "fetch",
+          status: "done",
+        }
+      ],
+    }
+  ],
+}
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/store/conversationStore.test.ts:377:50)
+(fail) conversation store: web search switch and web steps (M10) > drops a conversation with a malformed message: step with bad kind [0.04ms]
+372 |       const storage = createMemoryStorage();
+373 |       await seed(storage, {
+374 |         ...legacy,
+375 |         messages: [{ id: "a", role: "assistant", content: "c", status: "complete", ...extra }],
+376 |       });
+377 |       expect(await newStore(storage).get("old")).toBeNull();
+                                                       ^
+error: expect(received).toBeNull()
+
+Received: {
+  id: "old",
+  title: "Old",
+  created_at: "2024-01-01T00:00:00.000Z",
+  updated_at: "2024-01-01T00:00:00.000Z",
+  messages: [
+    {
+      id: "a",
+      role: "assistant",
+      content: "c",
+      status: "complete",
+      steps: [
+        {
+          step_id: "s",
+          kind: "search",
+          status: "ok",
+        }
+      ],
+    }
+  ],
+}
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/store/conversationStore.test.ts:377:50)
+(fail) conversation store: web search switch and web steps (M10) > drops a conversation with a malformed message: step with bad status [0.04ms]
+372 |       const storage = createMemoryStorage();
+373 |       await seed(storage, {
+374 |         ...legacy,
+375 |         messages: [{ id: "a", role: "assistant", content: "c", status: "complete", ...extra }],
+376 |       });
+377 |       expect(await newStore(storage).get("old")).toBeNull();
+                                                       ^
+error: expect(received).toBeNull()
+
+Received: {
+  id: "old",
+  title: "Old",
+  created_at: "2024-01-01T00:00:00.000Z",
+  updated_at: "2024-01-01T00:00:00.000Z",
+  messages: [
+    {
+      id: "a",
+      role: "assistant",
+      content: "c",
+      status: "complete",
+      steps: [
+        {
+          step_id: "s",
+          kind: "search",
+          status: "done",
+          query: 1,
+        }
+      ],
+    }
+  ],
+}
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/store/conversationStore.test.ts:377:50)
+(fail) conversation store: web search switch and web steps (M10) > drops a conversation with a malformed message: step with non-string query [0.04ms]
+372 |       const storage = createMemoryStorage();
+373 |       await seed(storage, {
+374 |         ...legacy,
+375 |         messages: [{ id: "a", role: "assistant", content: "c", status: "complete", ...extra }],
+376 |       });
+377 |       expect(await newStore(storage).get("old")).toBeNull();
+                                                       ^
+error: expect(received).toBeNull()
+
+Received: {
+  id: "old",
+  title: "Old",
+  created_at: "2024-01-01T00:00:00.000Z",
+  updated_at: "2024-01-01T00:00:00.000Z",
+  messages: [
+    {
+      id: "a",
+      role: "assistant",
+      content: "c",
+      status: "complete",
+      steps: [
+        {
+          step_id: "s",
+          kind: "read",
+          status: "done",
+          url: 1,
+        }
+      ],
+    }
+  ],
+}
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/store/conversationStore.test.ts:377:50)
+(fail) conversation store: web search switch and web steps (M10) > drops a conversation with a malformed message: step with non-string url [0.04ms]
+372 |       const storage = createMemoryStorage();
+373 |       await seed(storage, {
+374 |         ...legacy,
+375 |         messages: [{ id: "a", role: "assistant", content: "c", status: "complete", ...extra }],
+376 |       });
+377 |       expect(await newStore(storage).get("old")).toBeNull();
+                                                       ^
+error: expect(received).toBeNull()
+
+Received: {
+  id: "old",
+  title: "Old",
+  created_at: "2024-01-01T00:00:00.000Z",
+  updated_at: "2024-01-01T00:00:00.000Z",
+  messages: [
+    {
+      id: "a",
+      role: "assistant",
+      content: "c",
+      status: "complete",
+      steps: [
+        {
+          step_id: "s",
+          kind: "read",
+          status: "done",
+          detail: 1,
+        }
+      ],
+    }
+  ],
+}
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/store/conversationStore.test.ts:377:50)
+(fail) conversation store: web search switch and web steps (M10) > drops a conversation with a malformed message: step with non-string detail [0.04ms]
+372 |       const storage = createMemoryStorage();
+373 |       await seed(storage, {
+374 |         ...legacy,
+375 |         messages: [{ id: "a", role: "assistant", content: "c", status: "complete", ...extra }],
+376 |       });
+377 |       expect(await newStore(storage).get("old")).toBeNull();
+                                                       ^
+error: expect(received).toBeNull()
+
+Received: {
+  id: "old",
+  title: "Old",
+  created_at: "2024-01-01T00:00:00.000Z",
+  updated_at: "2024-01-01T00:00:00.000Z",
+  messages: [
+    {
+      id: "a",
+      role: "assistant",
+      content: "c",
+      status: "complete",
+      steps: [ null ],
+    }
+  ],
+}
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/store/conversationStore.test.ts:377:50)
+(fail) conversation store: web search switch and web steps (M10) > drops a conversation with a malformed message: step that is null [0.04ms]
+372 |       const storage = createMemoryStorage();
+373 |       await seed(storage, {
+374 |         ...legacy,
+375 |         messages: [{ id: "a", role: "assistant", content: "c", status: "complete", ...extra }],
+376 |       });
+377 |       expect(await newStore(storage).get("old")).toBeNull();
+                                                       ^
+error: expect(received).toBeNull()
+
+Received: {
+  id: "old",
+  title: "Old",
+  created_at: "2024-01-01T00:00:00.000Z",
+  updated_at: "2024-01-01T00:00:00.000Z",
+  messages: [
+    {
+      id: "a",
+      role: "assistant",
+      content: "c",
+      status: "complete",
+      sources: [
+        {
+          title: "t",
+        }
+      ],
+    }
+  ],
+}
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/store/conversationStore.test.ts:377:50)
+(fail) conversation store: web search switch and web steps (M10) > drops a conversation with a malformed message: source without url [0.04ms]
+372 |       const storage = createMemoryStorage();
+373 |       await seed(storage, {
+374 |         ...legacy,
+375 |         messages: [{ id: "a", role: "assistant", content: "c", status: "complete", ...extra }],
+376 |       });
+377 |       expect(await newStore(storage).get("old")).toBeNull();
+                                                       ^
+error: expect(received).toBeNull()
+
+Received: {
+  id: "old",
+  title: "Old",
+  created_at: "2024-01-01T00:00:00.000Z",
+  updated_at: "2024-01-01T00:00:00.000Z",
+  messages: [
+    {
+      id: "a",
+      role: "assistant",
+      content: "c",
+      status: "complete",
+      sources: [
+        {
+          url: "u",
+        }
+      ],
+    }
+  ],
+}
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/store/conversationStore.test.ts:377:50)
+(fail) conversation store: web search switch and web steps (M10) > drops a conversation with a malformed message: source without title [0.04ms]
+
+ 44 pass
+ 19 fail
+ 111 expect() calls
+Ran 63 tests across 3 files. [18.00ms]

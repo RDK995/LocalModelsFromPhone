@@ -1,0 +1,129 @@
+VERIFIER LOG FOR M10c3-C4
+
+Date: 2026-09-30
+Task: M10c3-C4 (review fix cycle 3, named human override)
+Branch: m10c3-readable-tables
+HEAD Commit: f1e924dc66fabdcd0bd5e4860afb80b00a2f5459
+
+============================================================
+VALIDATION COMMAND RUN
+============================================================
+
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint
+
+Exit Status: 0
+
+Output:
+$ tsc --noEmit
+bun test v1.4.0 (1381054db)
+
+ 396 pass
+ 0 fail
+ 11870 expect() calls
+Ran 396 tests across 26 files. [207.00ms]
+$ eslint src --max-warnings 0
+
+All commands passed successfully.
+
+============================================================
+FILES CHANGED (FROM GIT DIFF HEAD)
+============================================================
+
+Modified Files:
+- mobile/src/ui/MarkdownText.tsx (added useWindowDimensions, gridWidth imports; added tableWidth parameter and gridWidth calculation; updated grid View style and added tableGrid style)
+- mobile/src/ui/markdownText.test.ts (added 4 new tests for 2-column grid width handling)
+- mobile/src/ui/tableLayout.ts (added gridWidth export function with comments explaining fix)
+- mobile/src/ui/tableLayout.test.ts (added 2 new test cases for gridWidth function)
+
+Untracked Files (orchestrator only):
+- .harness/evidence/M10c3-C4-red.log
+- .harness/evidence/M10c3-C4-worker.log
+- .harness/tasks/M10c3-C4.md
+
+Staged File (orchestrator):
+- .harness/milestones.md (excluded from files changed check per instructions)
+
+File Verification:
+- chat.tsx: UNCHANGED (verified via git diff - no changes)
+- Card branch in MarkdownText.tsx: UNCHANGED (no diff lines in layout.cards.map section)
+
+============================================================
+RED TEST VERIFICATION
+============================================================
+
+Unfixed Code Test Run:
+- Restored HEAD versions of MarkdownText.tsx and tableLayout.ts
+- Ran: cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun test
+
+Results on Unfixed Code:
+- 1 Error: "Export named 'gridWidth' not found in module" (in tableLayout.test.ts)
+- 3 Test Failures (in markdownText.test.ts):
+  1. "MarkdownText reads the window width and derives the grid width from it" - FAILED (useWindowDimensions import not found)
+  2. "the grid container gets that width, bounded by the bubble, with no horizontal scroll" - FAILED (style pattern not found)
+  3. Additional failures in the test suite due to missing gridWidth export
+
+Total: 387 pass, 3 fail, 1 error (on unfixed code)
+Total: 396 pass, 0 fail (on fixed code)
+
+This confirms the new tests fail first and pass after the fix.
+
+============================================================
+ACCEPTANCE CRITERIA VERIFICATION
+============================================================
+
+AC1 (Red first - test fails on current code and passes after fix):
+✓ Confirmed - new tests fail with gridWidth export error and assertion failures on HEAD code
+✓ Confirmed - all 396 tests pass with the fix applied
+
+AC2 (Full suite passes):
+✓ typecheck: PASS (tsc --noEmit with no errors)
+✓ test: PASS (396 pass, 0 fail)
+✓ lint: PASS (eslint with max-warnings 0)
+
+AC3 (3+ column card branch unchanged):
+✓ Confirmed - no diff lines in layout.cards.map section
+✓ Card rendering code identical to HEAD version
+✓ Card tests included in the 396 passing tests
+
+AC4 (No horizontal scroll, width bounded):
+✓ Verified in new tests: "no horizontal scroll" check for ScrollView and horizontal keywords
+✓ tableGrid style includes maxWidth: "100%" to bound width
+
+AC5 (Cell text wraps inside column):
+✓ Verified in new tests: cells still have flex: 1 for equal width sharing
+✓ No numberOfLines attribute that would prevent wrapping
+
+AC6 (Cells aligned across rows):
+✓ Verified in new tests: tableCell style unchanged (flex: 1, paddingRight: 8)
+✓ Width calculation is per-grid, not per-row
+
+============================================================
+TEST QUALITY VERIFICATION
+============================================================
+
+Existing Tests:
+- No tests deleted or renamed
+- No assertions weakened (only exact-text assertions exist, unchanged)
+- No skip/xfail/ignore markers added to existing tests
+- All 387 pre-existing tests still pass with the new code
+
+New Tests (4 in markdownText.test.ts, 2 in tableLayout.test.ts):
+- Test 1: "MarkdownText reads the window width and derives the grid width from it"
+  Checks: useWindowDimensions import, gridWidth import, useWindowDimensions() call, gridWidth() call
+  
+- Test 2: "the grid container gets that width, bounded by the bubble, with no horizontal scroll"
+  Checks: grid container has width style, maxWidth 100%, no ScrollView, no horizontal keyword
+  
+- Test 3: "cells still share the row equally (aligned columns) and wrap"
+  Checks: tableCell present, flex: 1 with paddingRight, no numberOfLines
+  
+- Test 4: "gridWidth's constants match the chat bubble styles they mirror"
+  Checks: chat.tsx bubble styles (padding, maxWidth, alignSelf) match gridWidth constants
+  
+- Test 5: "gridWidth calculation formula (tableLayout.test.ts)"
+  Checks: gridWidth(390) = 280, verifies formula (window - 32) * 0.85 - 24
+  
+- Test 6: "gridWidth edge cases and properties"
+  Checks: non-negative values, integer results, grows with window width
+

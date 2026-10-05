@@ -1,0 +1,115 @@
+=== M8-T2 Validation Log ===
+
+Task: Write C13 search service HTTP API reference
+Date: Wed 30 Sep 2026 06:43:12 BST
+
+=== File Existence Test ===
+✓ search/API.md exists and is not empty
+
+=== Route Documentation Check ===
+✓ /v1/health documented
+✓ /v1/search documented
+✓ /v1/read documented
+
+=== Base URL Check ===
+✓ Base URL 127.0.0.1:7790 documented
+
+=== Error Code Verification (Grep in search/src) ===
+
+Verifying error code: bad_request
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/search/search.test.ts:121:      expect(await r.json()).toEqual({ error: "bad_request" });
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.ts:32:    return json(400, { error: "bad_request" });
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.ts:45:    return json(400, { error: "bad_request" });
+✓ Found: bad_request
+
+Verifying error code: bad_url
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.test.ts:91:      await expectCode(fetchPage(url), "bad_url");
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.ts:33:export type FetchPageErrorCode = "bad_url" | "blocked_destination" | "unsupported_content" | "fetch_failed" | "timeout";
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.ts:107:  if (!startUrl) throw new FetchPageError("bad_url", "URL must be an absolute http(s) URL");
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.test.ts:70:      expect(await r.json()).toEqual({ error: "bad_url" });
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.ts:71:      return json(400, { error: "bad_url" });
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.ts:73:    if (typeof url !== "string") return json(400, { error: "bad_url" });
+✓ Found: bad_url
+
+Verifying error code: blocked_destination
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.test.ts:115:    await expectCode(fetchPage(`http://r6-probe.invalid:${srv.port}/`, { resolve: r.resolve }), "blocked_destination");
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.test.ts:127:    await expectCode(fetchPage(`http://mixed.invalid:${srv.port}/`, { resolve: r.resolve }), "blocked_destination");
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.test.ts:134:    await expectCode(fetchPage(`http://mapped.invalid:${srv.port}/`, { resolve: r.resolve }), "blocked_destination");
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.test.ts:139:    await expectCode(fetchPage(`http://localhost:${srv.port}/`), "blocked_destination");
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.test.ts:164:      await expectCode(fetchPage(make(srv.port), { resolve: r.resolve }), "blocked_destination");
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.test.ts:248:    await expectCode(fetchPage(`http://site.invalid:${srv.port}/`, { resolve, isAllowedAddress: allowLoopbackOnly }), "blocked_destination");
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.test.ts:259:    await expectCode(fetchPage(`http://site.invalid:${srv.port}/`, { resolve, isAllowedAddress: allowLoopbackOnly }), "blocked_destination");
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.test.ts:268:    await expectCode(fetchPage(`http://site.invalid:${srv.port}/`, opts()), "blocked_destination");
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.ts:33:export type FetchPageErrorCode = "bad_url" | "blocked_destination" | "unsupported_content" | "fetch_failed" | "timeout";
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.ts:140:          throw new FetchPageError("blocked_destination", `redirect to ${next.protocol} refused`);
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.ts:203:    return Promise.reject(new FetchPageError("blocked_destination", "destination address is not public"));
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.ts:225:            blocked = new FetchPageError("blocked_destination", "destination resolves to a non-public address");
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.test.ts:78:      expect(await r.json()).toEqual({ error: "blocked_destination" });
+✓ Found: blocked_destination
+
+Verifying error code: unsupported_content
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.test.ts:342:      await expectCode(fetchPage(`http://site.invalid:${srv.port}/`, opts()), "unsupported_content");
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.ts:33:export type FetchPageErrorCode = "bad_url" | "blocked_destination" | "unsupported_content" | "fetch_failed" | "timeout";
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.ts:154:        throw new FetchPageError("unsupported_content", `content type ${contentType || "(none)"} not supported`);
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.test.ts:101:    expect(await r.json()).toEqual({ error: "unsupported_content" });
+✓ Found: unsupported_content
+
+Verifying error code: fetch_failed
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.test.ts:146:    await expectCode(fetchPage(`http://empty.invalid:${srv.port}/`, { resolve: r.resolve }), "fetch_failed");
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.test.ts:293:    await expectCode(fetchPage(`http://site.invalid:${srv.port}/0`, opts()), "fetch_failed");
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.test.ts:302:    const err = await expectCode(fetchPage(`http://site.invalid:${srv.port}/`, opts()), "fetch_failed");
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.ts:33:export type FetchPageErrorCode = "bad_url" | "blocked_destination" | "unsupported_content" | "fetch_failed" | "timeout";
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.ts:130:        if (!location) throw new FetchPageError("fetch_failed", "redirect without Location", status);
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.ts:131:        if (hop >= maxRedirects) throw new FetchPageError("fetch_failed", "too many redirects", status);
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.ts:136:          throw new FetchPageError("fetch_failed", "invalid redirect Location", status);
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.ts:148:        throw new FetchPageError("fetch_failed", `upstream status ${status}`, status);
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.ts:171:    throw new FetchPageError("fetch_failed", err instanceof Error ? err.message : String(err));
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.ts:323:      finish(() => reject(new FetchPageError("fetch_failed", "connection closed before the body completed"))),
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.test.ts:111:    expect(await r.json()).toEqual({ error: "fetch_failed", status: 404 });
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.ts:93:        if (err.code === "fetch_failed" && err.status !== undefined) body.status = err.status;
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.ts:97:      return json(502, { error: "fetch_failed" });
+✓ Found: fetch_failed
+
+Verifying error code: timeout
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/search/timeout.test.ts:88:    const { command, helperPidFile, childPidFile } = treeHelper("timeout");
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/search/timeout.test.ts:99:    expect(await res.json()).toEqual({ error: "timeout" });
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/search/runHelper.ts:73:  const timedOut = new Promise<"timeout">((resolve) => {
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/search/runHelper.ts:74:    timer = setTimeout(() => resolve("timeout"), timeoutMs);
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/search/runHelper.ts:85:    if (first === "timeout" || first === "aborted") {
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/search/runHelper.ts:87:      return first === "timeout"
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/search/runHelper.ts:96:    if ((await Promise.race([stdoutClosed, timedOut])) === "timeout") {
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.test.ts:351:    await expectCode(fetchPage(`http://site.invalid:${srv.port}/`, opts({ timeoutMs: 300 })), "timeout");
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.test.ts:362:    await expectCode(fetchPage(`http://site.invalid:${srv.port}/`, opts({ timeoutMs: 300 })), "timeout");
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.ts:33:export type FetchPageErrorCode = "bad_url" | "blocked_destination" | "unsupported_content" | "fetch_failed" | "timeout";
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/fetch/fetchPage.ts:169:    if (timedOut) throw new FetchPageError("timeout", `no complete response within ${timeoutMs} ms`);
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.test.ts:120:    expect(await r.json()).toEqual({ error: "timeout" });
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.ts:48:  if (!outcome.ok && outcome.timeout) return json(504, { error: "timeout" });
+✓ Found: timeout
+
+Verifying error code: search_unavailable
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/search/search.test.ts:79:    expect(await r.json()).toEqual({ error: "search_unavailable", detail: "slow down" });
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/search/search.test.ts:86:    expect(((await r.json()) as { error: string }).error).toBe("search_unavailable");
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/search/search.test.ts:93:    expect(((await r.json()) as { error: string }).error).toBe("search_unavailable");
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/search/search.test.ts:101:    expect(body.error).toBe("search_unavailable");
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.ts:49:  if (!outcome.ok) return json(503, { error: "search_unavailable", detail: outcome.detail });
+✓ Found: search_unavailable
+
+Verifying error code: method_not_allowed
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.ts:57:      if (req.method !== "GET") return json(405, { error: "method_not_allowed" });
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.ts:61:      if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.ts:65:    if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
+✓ Found: method_not_allowed
+
+Verifying error code: not_found
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.test.ts:60:    expect(await a.json()).toEqual({ error: "not_found" });
+/Users/ryankenny/Projects/CodingHarnessv2/search/src/http/server.ts:64:    if (path !== "/v1/read") return json(404, { error: "not_found" });
+✓ Found: not_found
+
+=== Test Results ===
+✓ All file and route checks passed
+
+=== Running bun test ===
+bun test v1.4.0 (1381054db)
+
+=== Validation Complete ===
+All checks passed successfully.

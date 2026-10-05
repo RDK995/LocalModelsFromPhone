@@ -1,0 +1,48 @@
+M24-T3: Run q1 (Raft vs Paxos question) live through server API
+================================================================
+
+Task: Run ONE AC37 question (q1) live through the server API and record its result.
+
+Execution:
+- Precondition check: pgrep -fl ac29-live-run → exit 1 (no process running, OK)
+- Script run: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --id q1 --out-dir ../.harness/evidence --prefix M24-T3
+- Timeout: 600000ms (10 minutes)
+- Actual duration: 216.395 seconds (within budget)
+
+Result Files Created:
+- M24-T3-q1-run.log (1.4K)
+- M24-T3-q1-result.json (1.4K)
+- M24-T3-q1-stream.txt (16K)
+- M24-T3-q1-fr41.log (6.4K)
+- M24-T3-q1-sources-text.json (78K)
+
+Verification (--check-only):
+Exit: 0 (all checks passed)
+
+Result JSON (verbatim):
+  generation_id: "af0d2484-3ca5-47ce-b650-e9a0f7328e64"
+  final_status: "complete"
+  total_wall_s: 216.395
+  budget_s: 480
+  distinct_pages_read: 5
+  cited_read_pages: 5
+  unresolved_citations: []
+  notes_kept: 19
+  notes_dropped: 8
+  drop_reasons: {"quote_not_found": 8}
+  sources_check: {
+    "sources_checked": 5,
+    "unreadable_sources": [],
+    "unchecked_sources": [],
+    "ok": true
+  }
+  pass: true
+  ac37_pass: true
+
+Run Times:
+  Started: 2026-10-05T09:16:11.741Z
+  Ended: 2026-10-05T09:19:48.136Z
+
+All acceptance criteria met:
+- M24-AC2: Run completed with status "complete", 5 distinct cited read pages, all citations resolved
+- M24-AC3: No unreadable sources, notes_kept/dropped logged with drop reasons recorded

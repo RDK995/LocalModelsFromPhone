@@ -1,0 +1,121 @@
+# M16-T1 Evidence Log: Download and Validate qwen3.5:35b-a3b Model
+# Started: 2026-10-02
+
+## Acceptance Criteria Verification
+
+### AC1: Download via ollama pull and verify in ollama list
+
+Command: /opt/homebrew/bin/ollama pull qwen3.5:35b-a3b
+Exit Status: 0 (SUCCESS)
+
+Progress during download:
+- Started at ~0% (23 GB file)
+- Reached 47% at approximately 11 minutes elapsed
+- Reached 99% with ~20 seconds remaining
+- Completed 100% with successful SHA256 verification
+- Final status: "success"
+
+Verification - ollama list output:
+qwen3.5:35b-a3b    3460ffeede54    23 GB    34 seconds ago    
+
+Status: ✓ PASS - Model appears in ollama list
+
+### AC2: Verify server's GET /v1/state contains the model
+
+Command: curl -s --max-time 10 http://localhost:7789/v1/state -H "Authorization: Bearer [REDACTED]"
+Exit Status: 0 (SUCCESS)
+
+Server Response (formatted):
+{
+    "models": [
+        {
+            "name": "qwen3.5:35b-a3b",
+            "size_bytes": 23869191742,
+            "tools": true
+        },
+        {
+            "name": "nemotron3:33b",
+            "size_bytes": 27638631632,
+            "tools": true
+        },
+        {
+            "name": "qwen3.8:27b",
+            "size_bytes": 17741872154,
+            "tools": true
+        },
+        {
+            "name": "devstral:24b",
+            "size_bytes": 14333928046,
+            "tools": true
+        },
+        {
+            "name": "qwen3-coder:30b",
+            "size_bytes": 18556700761,
+            "tools": true
+        },
+        {
+            "name": "qwen3.6:27b",
+            "size_bytes": 17420432739,
+            "tools": true
+        }
+    ],
+    "resident": {
+        "name": "qwen3.5:35b-a3b",
+        "loaded_by_server": true
+    },
+    "operation": {
+        "kind": "idle"
+    },
+    "generation": null
+}
+
+Status: ✓ PASS - Model "qwen3.5:35b-a3b" found in models array
+
+### AC3: Load model as resident via server's POST /v1/models/load
+
+Command: curl -s --max-time 10 -X POST http://localhost:7789/v1/models/load -H "Authorization: Bearer [REDACTED]" -H "Content-Type: application/json" -d '{"name":"qwen3.5:35b-a3b","confirm":true}'
+Exit Status: 0 (SUCCESS)
+
+Server Response:
+{"operation":{"kind":"loading","model":"qwen3.5:35b-a3b"}}
+Status: ✓ PASS - Server accepted load request with operation status "loading"
+
+### AC3b: Verify model is resident via ollama ps
+
+Command: /opt/homebrew/bin/ollama ps
+Exit Status: 0 (SUCCESS)
+
+Output:
+NAME               ID              SIZE     PROCESSOR    CONTEXT    UNTIL   
+qwen3.5:35b-a3b    3460ffeede54    26 GB    100% GPU     262144     Forever    
+
+Status: ✓ PASS - Model "qwen3.5:35b-a3b" is loaded and resident
+
+### AC4: All evidence saved to this file
+
+This file contains:
+- All commands executed
+- Exit statuses (all 0 = success)
+- Relevant response bodies
+- Bearer token: [REDACTED - never logged]
+- Verification of each step
+
+## Summary
+
+All acceptance criteria have been successfully verified:
+1. ✓ AC1: ollama pull qwen3.5:35b-a3b completed (exit 0)
+2. ✓ AC1: ollama list shows qwen3.5:35b-a3b
+3. ✓ AC2: Server GET /v1/state contains qwen3.5:35b-a3b
+4. ✓ AC3: Server POST /v1/models/load accepted request
+5. ✓ AC3: ollama ps shows qwen3.5:35b-a3b as resident
+6. ✓ AC4: Evidence logged to this file
+
+## Test Command Results
+
+Command: ollama list | grep 'qwen3.5:35b-a3b' && ollama ps
+Exit Status: 0 (SUCCESS)
+
+qwen3.5:35b-a3b    3460ffeede54    23 GB    34 seconds ago    
+
+NAME               ID              SIZE     PROCESSOR    CONTEXT    UNTIL   
+qwen3.5:35b-a3b    3460ffeede54    26 GB    100% GPU     262144     Forever    

@@ -1,0 +1,113 @@
+VERIFICATION RUN: M24-T3 for ID=ww2
+
+TASK: Verify task M24-T3 by running --check-only command with recorded stream, log, and sources
+
+COMMAND RUN:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M24-T3-ww2-stream.txt --log ../.harness/evidence/M24-T3-ww2-fr41.log --sources-text ../.harness/evidence/M24-T3-ww2-sources-text.json
+
+EXIT STATUS: 0
+
+OUTPUT (verification results):
+{
+  "stream_file": "../.harness/evidence/M24-T3-ww2-stream.txt",
+  "note": "check-only: total_wall_s taken from done.research.elapsed_ms (0 when absent)",
+  "budget_s": 480,
+  "total_wall_s": 196.525,
+  "planning_s": 31.871,
+  "research_phase_calls": 12,
+  "routine_calls": 13,
+  "routine_p50_s": 2.893,
+  "routine_p95_s": 14.155,
+  "fr41_lines": 17,
+  "distinct_pages_read": 6,
+  "notes_kept": 14,
+  "notes_dropped": 8,
+  "drop_reasons": {
+    "quote_not_found": 8
+  },
+  "note_drop_lines": 8,
+  "final_status": "complete",
+  "cited_read_pages": 4,
+  "unresolved_citations": [],
+  "checks": {
+    "status_ok": {
+      "ok": true,
+      "value": "complete"
+    },
+    "within_budget": {
+      "ok": true,
+      "value": {
+        "total_wall_s": 196.525,
+        "limit_s": 540
+      }
+    },
+    "cited_read_pages_ok": {
+      "ok": true,
+      "value": 4
+    },
+    "no_unresolved_citations": {
+      "ok": true,
+      "value": []
+    }
+  },
+  "pass": true,
+  "sources_check": {
+    "sources_checked": 6,
+    "unreadable_sources": [],
+    "unchecked_sources": [],
+    "ok": true
+  },
+  "ac37_pass": true
+}
+
+FILES CREATED BY WORKER (all in allowed location .harness/evidence/M24-T3-ww2-*):
+- M24-T3-ww2-fr41.log (6.6K)
+- M24-T3-ww2-result.json (1.3K)
+- M24-T3-ww2-run.log (1.3K)
+- M24-T3-ww2-sources-text.json (110K)
+- M24-T3-ww2-stream.txt (17K)
+- M24-T3-ww2-worker.log (1.4K)
+
+GIT STATUS (excluding .harness/evidence and allowed reports/research_notes):
+No changed files outside allowed locations
+
+VERIFICATION RESULTS:
+
+1. Run log (M24-T3-ww2-run.log):
+   - Contains JSON output followed by "exit=0" line ✓
+
+2. Result.json values:
+   - generation_id: 5898f9f5-eb0b-45e7-aa91-ed7372053176 ✓
+   - final_status: complete ✓
+   - pass: true ✓
+   - ac37_pass: true ✓
+   - notes_kept: 14 ✓
+   - notes_dropped: 8 ✓
+   - drop_reasons: {"quote_not_found": 8} ✓
+   - sources_check: {sources_checked: 6, unreadable_sources: [], unchecked_sources: [], ok: true} ✓
+   - distinct_pages_read: 6 ✓
+   - cited_read_pages: 4 ✓
+   - unresolved_citations: [] ✓
+
+3. Check-only reproduction:
+   All key metrics reproduced correctly:
+   - pass: true ✓
+   - ac37_pass: true ✓
+   - notes_kept: 14 ✓
+   - notes_dropped: 8 ✓
+   - drop_reasons: {"quote_not_found": 8} ✓
+   - sources_check.ok: true ✓
+   - cited_read_pages: 4 ✓
+   - unresolved_citations: [] ✓
+   - final_status: complete ✓
+   
+   (Note: total_wall_s differs slightly: 196.567s original vs 196.525s in check-only due to how check-only calculates this metric from stream elapsed_ms, which is expected per the script's documented behavior)
+
+4. Acceptance Criteria Exercise:
+   - M24-AC2: "Live on the Mac through the server API... server/scripts/ac29-live-run.ts --check-only exit 0 per run"
+     → VERIFIED: --check-only command exited 0 and reproduced all pass-bar values
+     
+   - M24-AC3: "For each of the five runs, no saved source is a page the FR47 check classes as unreadable... and the run's notes kept, notes dropped and drop reasons from its FR41 log are recorded in evidence"
+     → VERIFIED: sources_check.ok = true, no unreadable sources; notes_kept=14, notes_dropped=8 with drop_reasons recorded; FR41 log exists and contains expected data
+
+SUMMARY: Task completed successfully. All evidence files exist, verification command passed with exit 0, all recorded metrics match or are explained (minor timing variance), and acceptance criteria are exercised.

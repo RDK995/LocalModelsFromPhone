@@ -1,0 +1,79 @@
+$ tsc --noEmit
+bun test v1.4.0 (1381054db)
+
+ 246 pass
+ 0 fail
+ 514 expect() calls
+Ran 246 tests across 20 files. [92.00ms]
+$ eslint src --max-warnings 0
+=== Web Switch Live Proof ===
+
+Restarting LaunchAgents...
+Waiting for server to be ready...
+Server is up and enforcing auth
+
+--- Recording original Ollama state (before proof) ---
+Before: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":27038329075,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-10T06:23:37.288437807Z","size_vram":27038329075,"context_length":131072}]}
+Originally resident: nemotron3:33b
+
+--- Running proof (mobile/scripts/web-switch-proof.ts) ---
+--- Setup: choosing a tools-capable model ---
+Installed: nemotron3:33b (tools=true), qwen3.8:27b (tools=true), devstral:24b (tools=true), qwen3-coder:30b (tools=true), qwen3.6:27b (tools=true)
+Resident: nemotron3:33b
+Using tools model: nemotron3:33b
+
+--- Check 1: switch persistence (AC1) ---
+PASS: Check 1: a new conversation has web_search off
+PASS: Check 1: the legacy conversation JSON has no web_search key
+PASS: Check 1: the legacy conversation loads as off
+PASS: Check 1: a NEW store instance over the same file reads on
+PASS: Check 1: a NEW store instance reads off after setting it back
+
+--- Check 2: switch off sends no web (AC1/FR18) ---
+PASS: Check 2: the reply finished (done event)
+PASS: Check 2: zero step events with the switch off (got 0)
+PASS: Check 2: zero sources events with the switch off (got 0)
+PASS: Check 2: an assistant message was persisted
+PASS: Check 2: the persisted reply has no steps/sources keys
+
+--- Check 3: capability gate (AC2) ---
+webSwitchState(live models, resident nemotron3:33b) = {"enabled":true,"explanation":null}
+PASS: Check 3: the resident tools model yields an enabled switch
+Every installed model has tools; using a STUBBED model { name: stub-no-tools, size_bytes: 0, tools: false }
+webSwitchState(no-tools model resident) = {"enabled":false,"explanation":"stub-no-tools can't use web search (it has no tools support)."}
+PASS: Check 3: a resident model without tools disables the switch with an explanation
+
+--- Checks 4+5: live steps and sources; switch flipped off during the reply ---
+  +12080ms step 66af0b92-3758-4f1b-b8a2-659182670d45 started: Searching: top news headlines September 30 2026
+  +12080ms step 66af0b92-3758-4f1b-b8a2-659182670d45 done: Searching: top news headlines September 30 2026
+  +56081ms sources (5)
+  +56081ms done (complete)
+PASS: Check 5: at least one search step arrived
+PASS: Check 5: a step event arrived before the done event
+PASS: Check 5: a step event arrived before the last content token
+PASS: Check 5: for every step_id, `started` arrived before its final status
+PASS: Check 5: a sources event with >= 1 item, each with an http(s) URL (got 5)
+PASS: Check 4: the switch is off after being flipped mid-reply (not clobbered by the reply's save)
+PASS: Check 4: the in-flight request still carried web (it produced step events) after the switch was flipped off
+PASS: Check 5: an assistant message was persisted
+PASS: Check 5: the persisted reply holds steps with no duplicate step_id (1)
+PASS: Check 5: persisted steps carry final statuses
+PASS: Check 5: the persisted reply holds sources (5)
+buildChatItems: assistant item has 1 step(s); toggle label = "Show web steps (1)"
+  step: Searching: top news headlines September 30 2026
+  source: The Wall Street Journal's News Archive for September 30, 2026 - WSJ.com <https://www.wsj.com/news/archive/2026/09/30>
+  source: Video. Latest news bulletin | September 30th, 2026 - Morning <https://www.euronews.com/video/2026/09/30/latest-news-bulletin-september-30th-2026-morning>
+  source: Global News Brief: Key Developments Around the World, September 29, 2026 <https://openchronicle.org/2026/09/29/global-news-brief-key-developments-around-the-world-september-29-2026/>
+  source: UK News Archive - September 2026 | The Hear <https://www.thehear.org/en/uk/history/2026/09>
+  source: September 30, 2026 | News Headlines | New York Post <https://nypost.com/2026/09/30/>
+PASS: Check 5: buildChatItems carries the steps and sources for the reply
+PASS: Check 4: the next prompt's reply finished
+PASS: Check 4: the next prompt (after the flip) produced zero step events (got 0)
+
+All web switch proof checks passed.
+
+--- Cleanup: restoring original Ollama state ---
+Before cleanup: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":27038329075,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-10T06:40:57.075293807Z","size_vram":27038329075,"context_length":131072}]}
+nemotron3:33b is already resident, nothing to restore
+After cleanup: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":27038329075,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-10T06:40:57.075293807Z","size_vram":27038329075,"context_length":131072}]}
+[0;32m=== Proof PASSED, Mac restored to its original state ===[0m

@@ -1,0 +1,25 @@
+=== M19c-T2 Verification ===
+
+COMMAND 1: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/http/deepResearchPassages.test.ts
+
+Exit Status: 0
+
+Output:
+ 4 pass
+ 0 fail
+ 62 expect() calls
+Ran 4 tests across 1 file. [38.00ms]
+
+---
+
+COMMAND 2: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bunx tsc --noEmit
+
+Exit Status: 0 (both bun test and tsc --noEmit)
+
+Output:
+ 319 pass
+ 0 fail
+ 2172 expect() calls
+Ran 319 tests across 19 files. [12.94s]
+
+(tsc --noEmit produced no output - typecheck clean)

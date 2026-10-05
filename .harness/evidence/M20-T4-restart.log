@@ -1,0 +1,19 @@
+=== Before restart ===
+Old process info:
+3758	-15	com.harness.search
+
+=== Restart command ===
+launchctl kickstart -k gui/503/com.harness.search
+
+=== After restart ===
+New process info:
+61417	-15	com.harness.search
+
+=== Health check ===
+Health check result: 200
+
+=== STEP 1 (re-check): Git diff check ===
+(empty - no changes to server/)
+
+=== STEP 2 (re-check): Health check ===
+200

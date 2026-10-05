@@ -1,0 +1,89 @@
+=== M21-T6R Verification Log (Verifier) ===
+Date: 2026-10-03
+Verifier: Claude Code Verification Agent
+
+=== 1. Test Execution ===
+
+Command: bash ops/scripts/boot-readiness-check.sh
+Exit Status: 0
+Output:
+  PASS: ALL CHECKS PASSED
+  (All individual checks passed: LaunchAgent states, process start times, server reachability, bundle host reachability, pf daemon configuration)
+
+=== 2. Files Changed ===
+
+Checked: git status --porcelain (excluding .harness/)
+Result: CLEAN (no changes to server/, search/, or mobile/ directories)
+
+Only allowed change: .harness/evidence/M21-T6-readiness.log
+Verification: File exists ✓
+
+=== 3. Acceptance Criteria Verification ===
+
+Command: pgrep -fl ac29-live-run
+Exit Status: 1 (no processes found)
+Result: PASS ✓
+
+Command: git status --porcelain -- server search mobile
+Exit Status: 0
+Output: (empty - clean working tree)
+Result: PASS ✓
+
+Command: git log -1 --format='%H %cI' -- server/ ':!server/scripts'
+Output: 1034b0c8f5021146b5357aa63a30c7771e43c8f4 2026-10-03T17:19:02+01:00
+Verification: This is the M21-T5 fix commit ✓
+
+Command: ps -o pid,lstart,command -p 71661 (com.harness.server)
+Output: 71661 Sat  3 Oct 17:20:10 2026 /opt/homebrew/bin/bun src/index.ts
+Comparison: 17:20:10 (process start) > 17:19:02 (M21-T5 fix commit)
+Result: Server started after last non-scripts server/ commit ✓
+
+Command: git log -1 --format='%H %cI' -- search/
+Output: cbd55666655e078193d2598e9cb10371dcac51d1 2026-10-03T15:53:08+01:00
+
+Command: ps -o pid,lstart,command -p 61417 (com.harness.search)
+Output: 61417 Sat  3 Oct 15:54:11 2026 /opt/homebrew/bin/bun src/index.ts
+Comparison: 15:54:11 (process start) > 15:53:08 (search/ commit)
+Result: Search started after last search/ commit ✓
+
+Command: ollama ps
+Output: NAME               ID              SIZE     PROCESSOR    CONTEXT    UNTIL
+         qwen3.5:35b-a3b    3460ffeede54    23 GB    100% GPU     32768      Forever
+Result: qwen3.5:35b-a3b is resident ✓
+
+=== 4. Verification Against Worker's Claim ===
+
+Worker claimed:
+- Result PASS ✓
+- kickstarted com.harness.server, old pid 4781 -> new pid 71661 ✓ (verified current pid is 71661)
+- server start 17:20:10 after last non-scripts server/ commit 2026-10-03T17:19:02+01:00 ✓ (verified)
+- search start 15:54:11 after last search/ commit 15:53:08 ✓ (verified)
+- health 401 ✓ (verified by boot-readiness-check.sh)
+- ollama ps lists qwen3.5:35b-a3b ✓ (verified)
+- pgrep -fl ac29-live-run empty ✓ (verified)
+- git status --porcelain -- server search mobile empty ✓ (verified)
+- boot-readiness-check.sh exit 0 "PASS: ALL CHECKS PASSED" ✓ (verified)
+
+All claims verified.
+
+=== 5. Test Weakening Check ===
+
+This task is read-only verification. No test files were modified.
+Result: NO TEST WEAKENING ✓
+
+=== Summary ===
+
+✓ Test command executed: bash ops/scripts/boot-readiness-check.sh
+✓ Exit status: 0 (PASS)
+✓ Files allowed changed: Only .harness/evidence/M21-T6-readiness.log (exists)
+✓ No files changed outside allowed list
+✓ No tests weakened (no test files modified)
+✓ All acceptance criteria exercised and passing:
+  - Server running (pid 71661) started after M21-T5 fix commit (1034b0c)
+  - Search service running (pid 61417) started after last search/ commit
+  - qwen3.5:35b-a3b model resident in Ollama
+  - No ac29-live-run processes in flight
+  - Working tree clean (server/search/mobile unchanged)
+  - Boot readiness script passed all checks
+
+Verification Result: PASS

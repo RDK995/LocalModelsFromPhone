@@ -1,0 +1,8 @@
+M10c3-AC5 owner phone observation, attempt 3 — 2026-09-30 17:53 BST, Expo Go after a full quit/reopen (bundle host restarted 17:41:15 with fix cycle 3 code), branch m10c3-readable-tables at a7cc0b7.
+Result: PASS (both parts). Raw answer text not supplied by the owner (optional).
+
+(a) 3+-column table — M10c3-AC5-owner-phone-3.png (web switch on, "Today's top news headlines – September 30 2026"):
+    one card per row with "heading: value" lines (#, Headline, Key points, Source); text wraps, no squeezing, no sideways scroll. PASS.
+(b) 2-column table — M10c3-AC5-owner-phone-3b.png (prompt "I need a two column table of fruits and their colours"):
+    the assistant bubble is wide (~85% of the screen); header "Fruit" | "Colour" in bold; 17 rows (Apple ... Papaya) each value under its own heading,
+    both columns aligned across all rows; long values wrap inside the Colour column (e.g. "Orange/Red/Green (depending on variety)"); no clipping, no sideways scroll. PASS.

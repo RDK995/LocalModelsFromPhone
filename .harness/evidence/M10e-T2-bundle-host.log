@@ -1,0 +1,21 @@
+=== Bundle Host Restart Log ===
+Restart time: 2026-09-30T21:48:53Z
+
+Current commit:
+3240b9527e03085fb111c8c5fad0a7aefe77a864
+
+Restarting com.harness.bundle-host...
+Kickstart command completed
+
+Launchctl status (state and pid):
+	state = xpcproxy
+	pid = 16349
+		state = active
+		state = active
+
+Performing readiness check (curl with up to 60s total)...
+HTTP status code: 200
+
+✓ Bundle host is ready and responding (status: 200)
+
+=== End Log ===

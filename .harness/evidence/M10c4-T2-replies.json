@@ -1,0 +1,129 @@
+{
+  "model": "nemotron3:33b",
+  "records": [
+    {
+      "prompt": "What are today's news trends",
+      "done": "complete",
+      "sources": [
+        {
+          "title": "Journalism, media, and technology trends and predictions 2026",
+          "url": "https://reutersinstitute.politics.ox.ac.uk/journalism-media-and-technology-trends-and-predictions-2026"
+        },
+        {
+          "title": "PDF Journalism and Technology Trends and Predictions 2026",
+          "url": "https://reutersinstitute.politics.ox.ac.uk/sites/default/files/2026-01/Trends_and_Predictions_2026.pdf"
+        },
+        {
+          "title": "Your 2026 Briefing: Trending News, Latest Updates, Analysis",
+          "url": "https://www.bloomberg.com/latest/2026-guides"
+        },
+        {
+          "title": "Latest Tech Innovations 2026: 15+ Trends Reshaping Business | StartUs ...",
+          "url": "https://www.startus-insights.com/innovators-guide/latest-tech-innovations/"
+        },
+        {
+          "title": "The trends that will shape AI and tech in 2026 - IBM",
+          "url": "https://www.ibm.com/think/news/ai-tech-trends-predictions-2026"
+        }
+      ],
+      "reply": "Today's news trends include significant challenges facing the media industry due to economic and technological pressures, with executives needing to adapt to unevenly distributed changes across regions and demographics [1](https://reutersinstitute.ox.ac.uk/journalism-media-and-technology-2026). Additionally, technological advancements such as AI, quantum computing, and cybersecurity innovations are reshaping business strategies and competitive advantages, driven by market data and real-world deployments [4](https://www.startus-insights.com/innovators-guide/latest-tech-innovations/), [5](https://www.ibm.com/think/news/ai-tech-trends-predictions-2026).",
+      "distinctHosts": [
+        "reutersinstitute.politics.ox.ac.uk",
+        "bloomberg.com",
+        "startus-insights.com",
+        "ibm.com"
+      ],
+      "linksTotal": 3,
+      "matchedDistinct": 2,
+      "unmatchedCount": 1,
+      "unmatchedUrls": [
+        "https://reutersinstitute.ox.ac.uk/journalism-media-and-technology-2026"
+      ],
+      "diversityPass": true,
+      "linkPass": false
+    },
+    {
+      "prompt": "What are the latest developments in artificial intelligence?",
+      "done": "complete",
+      "sources": [
+        {
+          "title": "Latest AI developments 2026: Models, agentic AI, infrastructure",
+          "url": "https://www.netguru.com/blog/latest-ai-developments-2026"
+        },
+        {
+          "title": "Top 10 Artificial Intelligence Trends in 2026: Your Future Tech Roadmap",
+          "url": "https://www.cognitivetoday.com/2026/06/top-10-artificial-intelligence-trends-in-2026/"
+        },
+        {
+          "title": "30 AI Breakthroughs in 2026 That Redefined the Year — From GPT-5.2 to ...",
+          "url": "https://realifeai.com/ai-breakthroughs-in-2026/"
+        },
+        {
+          "title": "The trends that will shape AI and tech in 2026 - IBM",
+          "url": "https://www.ibm.com/think/news/ai-tech-trends-predictions-2026"
+        },
+        {
+          "title": "AI News Today 2026 | Latest AI Model Releases, Trends & Analysis",
+          "url": "https://blog.buildfastwithai.com/ai-industry-news-trends"
+        }
+      ],
+      "reply": "**Latest AI developments (2026)**  \n\n| Area | Key developments | Sources |\n|------|------------------|---------|\n| **Frontier models & benchmark narrowing** | • OpenAI and Google have pushed LLMs so that top models now sit within single‑digit points of each other on common benchmarks. <br>• Zhipu’s **GLM‑5.2** (753 B parameters, MIT‑licensed, 1 M‑token context) scores 80.3 % on GPQA Diamond and costs a fraction of closed models. <br>• Anthropic’s **Claude Opus 5** also offers a 1 M‑token context but at $5‑$25 per million tokens, making open‑weight models attractive for cost‑sensitive workloads. | [Netguru blog 2026 – Models & benchmarks](https://www.netguru.com/blog/latest-ai-developments-2026) |\n| **Agentic AI moving into production** | • Real‑world deployments show dramatic cycle‑time reductions: an ARC Europe claims‑processing agent cut processing from 30 min to 5 min (‑83 %). <br>• Merck’s research team uses an agent to automate literature searches, merging internal data with public chemistry databases in seconds. <br>• The value comes from **model routing**: cheap models handle retrieval/triage while a stronger model is invoked only for the few cases that need deep reasoning. | [Netguru blog 2026 – Agentic AI](https://www.netguru.com/blog/latest-ai-developments-2026) |\n| **Model routing & vendor‑agnostic architecture** | • Tools such as **OpenRouter** let engineers send context‑appropriate tasks to the cheapest or most capable model, avoiding lock‑in to a single vendor. <br>• This routing layer is now the primary mechanism for controlling token‑cost spikes in production pipelines. | [Netguru blog 2026 – Model routing](https://www.netguru.com/blog/latest-ai-developments-2026) |\n| **AI infrastructure & data‑center regulation** | • The EU’s AI data‑center regulation (EU / 2023/1791) now requires power‑ and water‑use disclosure for sites ≥ 500 kW, creating 12‑18 month permitting delays. <br>• Hyperscalers (AWS, Google, Microsoft) cite grid‑interconnection bottlenecks—not GPU scarcity—as the main siting constraint, and many are pursuing nuclear‑backed power‑purchase agreements. | [Netguru blog 2026 – Infrastructure](https://www.netguru.com/blog/latest-ai-developments-2026) |\n| **AI security & safety incidents** | • AI‑driven attacks rose **56 %** in 2026, led by deep‑fake impersonations and AI‑enabled malware (IBM Data‑Breach Report). <br>• Unmonitored agentic AI can cause runaway token‑cost loops and prompt‑injection exploits; 65 % of enterprises reported an AI‑agent security incident in the past year (Cloud Security Alliance). <br>• Companies are now treating token‑cost anomalies as security alerts and enforcing spend thresholds and least‑privilege tool permissions. | [Netguru blog 2026 – Security](https://www.netguru.com/blog/latest-ai-developments-2026); [IBM Data‑Breach Report 2026](https://www.ibm.com/reports/data-breach) |\n| **Generative AI multimodal mastery** | • Models now generate high‑fidelity video, 3D environments, code, and even biological sequences from a single prompt, enabling new creative workflows (e.g., architects receiving instant photorealistic 3D renders). | [Cognitivetoday – Multimodal AI](https://www.cognitivetoday.com/2026/06/top-10-artificial-intelligence-trends-in-2026/) |\n| **Edge AI & hyper‑personalization** | • AI is shifting from cloud‑only to on‑device processing, delivering real‑time, privacy‑preserving personalization (smart homes, retail, autonomous vehicles). <br>• Edge AI devices are projected to grow exponentially, reducing latency and bandwidth costs. | [Cognitivetoday – Edge AI](https://www.cognitivetoday.com/2026/06/top-10-artificial-intelligence-trends-in-2026/) |\n| **Autonomous systems beyond transportation** | • Intelligent agents are being deployed in logistics, agriculture, and infrastructure management, handling complex tasks with minimal human oversight. <br>• The autonomous robotics market is expected to exceed **$150 B** by the mid‑2020s. | [Cognitivetoday – Autonomous agents](https://www.cognitivetoday.com/2026/06/top-10-artificial-intelligence-trends-in-2026/) |\n| **Ethical AI & governance** | • Explainable AI (XAI), bias‑mitigation tools, and global regulatory frameworks are becoming non‑negotiable as AI permeates critical domains. <br>• IBM’s Granite family of open, trusted models and AI Academy aim to embed trustworthy‑AI practices into enterprise adoption. | [IBM – AI trends & governance](https://www.ibm.com/think/news/ai-tech-trends-2026) |\n| **AI in healthcare & drug discovery** | • Agentic diagnostic assistants and drug‑discovery copilots are entering clinical pilots, cutting chemical‑identification cycles from 6 months to 6 hours (Merck case study). <br>• AI‑driven analysis of genomic data enables earlier disease risk detection and personalized treatment plans. | [Netguru blog 2026 – Healthcare](https://www.netguru.com/blog/latest-ai-developments-2026) |\n\n**Take‑away:**  \nThe most impactful 2026 AI shifts are the maturation of **agentic systems** that rely on **efficient model routing** to keep costs and latency in check, the emergence of **multimodal generative models** that broaden use cases, and the **infrastructure & regulatory changes** that force organizations to plan data‑center capacity and security around AI‑specific risks. Companies that focus on architecture‑level improvements (routing, spend guardrails, vendor‑agnostic pipelines) rather than chasing every headline model release will be best positioned to reap the productivity and innovation benefits of AI in 2026.",
+      "distinctHosts": [
+        "netguru.com",
+        "cognitivetoday.com",
+        "realifeai.com",
+        "ibm.com",
+        "blog.buildfastwithai.com"
+      ],
+      "linksTotal": 11,
+      "matchedDistinct": 2,
+      "unmatchedCount": 2,
+      "unmatchedUrls": [
+        "https://www.ibm.com/reports/data-breach",
+        "https://www.ibm.com/think/news/ai-tech-trends-2026"
+      ],
+      "diversityPass": true,
+      "linkPass": false
+    },
+    {
+      "prompt": "What is happening in the world economy right now?",
+      "done": "complete",
+      "sources": [
+        {
+          "title": "Weekly Global Economic Update | Deloitte Insights",
+          "url": "https://www.deloitte.com/us/en/insights/topics/economy/global-economic-outlook/weekly-update.html"
+        },
+        {
+          "title": "Global Economics Intelligence executive summary, July 2026",
+          "url": "https://www.mckinsey.com/capabilities/strategy-and-corporate-finance/our-insights/global-economics-intelligence"
+        },
+        {
+          "title": "PDF Global Economic Trends: Analysis of Current Global Economic Trends and ...",
+          "url": "https://ijrcms.com/uploads2025/ijrcms_07_450.pdf"
+        },
+        {
+          "title": "Economic Outlook - OECD",
+          "url": "https://www.oecd.org/en/topics/economic-outlook.html"
+        },
+        {
+          "title": "Is global growth really defying gravity? Top economic stories to read ...",
+          "url": "https://www.weforum.org/stories/economic-growth/global-growth-resilience-and-more-top-economic-stories/"
+        }
+      ],
+      "reply": "The world economy is navigating a patchwork of divergent growth, persistent inflation, and shifting monetary stances, all underscored by geopolitical tensions and supply‑chain disruptions.\n\n**Growth is mixed.**  \n- The United States grew at a modest 1.5% annualised rate in Q2 2026, slowing from 2.1% in Q1, while the eurozone contracted by 0.2% quarter‑on‑quarter – its first quarterly decline since 2023【McKinsey Global Economics Intelligence, July 2026】[https://www.mckinsey.com/capabilities/strategy-and-corporate-finance/our-insights/global-economics-intelligence](https://www.mckinsey.com/capabilities/strategy-and-corporate-finance/our-insights/global-economics-intelligence)  \n- China’s expansion slowed to 4.3% in Q2, below its 5% target, whereas India’s economy is expanding rapidly at 7.7% for FY 2025‑26【McKinsey Global Economics Intelligence, July 2026】[https://www.mckinsey.com/capabilities/strategy-and-corporate-finance/our-insights/global-economics-intelligence](https://www.mckinsey.com/capabilities/strategy-and-corporate-finance/our-insights/global-economics-intelligence)  \n\n**Inflation remains elevated, driven largely by energy prices.**  \n- U.S. CPI rose 3.5% year‑over‑year in June, with core inflation at 2.6% (annualised)【McKinsey Global Economics Intelligence, July 2026】[https://www.mckinsey.com/capabilities/strategy-and-corporate-finance/our-insights/global-economics-intelligence](https://www.mckinsey.com/capabilities/strategy-and-corporate-finance/our-insights/global-economics-intelligence)  \n- In the eurozone, headline CPI was 2.6% in June, but core inflation stayed sticky at 2.6%【McKinsey Global Economics Intelligence, July 2026】[https://www.mckinsey.com/capabilities/strategy-and-corporate-finance/our-insights/global-economics-intelligence](https://www.mckinsey.com/capabilities/strategy-and-corporate-finance/our-insights/global-economics-intelligence)  \n- China’s consumer price inflation is unusually low, around 1% for both headline and core measures, reflecting weak domestic demand【McKinsey Global Economics Intelligence, July 2026】[https://www.mckinsey.com/capabilities/strategy-and-corporate-finance/our-insights/global-economics-intelligence](https://www.mckinsey.com/capabilities/strategy-and-corporate-finance/our-insights/global-economics-intelligence)  \n\n**Monetary policy is diverging.**  \n- The U.S. Federal Reserve raised its benchmark rate for the first time in three years, signalling a unanimous decision and a dot‑plot that expects at least one more hike this year, with market pricing showing a 50 % chance of another increase before year‑end【McKinsey Global Economics Intelligence, July 2026】[https://www.mckinsey.com/capabilities/strategy-and-corporate-finance/our-insights/global-economics-intelligence](https://www.mckinsey.com/capabilities/strategy-and-corporate-finance/our-insights/global-economics-intelligence)  \n- The Bank of Japan tightened to 1.25%, its highest level since 1995, and indicated further hikes are likely, marking the end of the yen‑carry‑trade era【McKinsey Global Economics Intelligence, July 2026】[https://www.mckinsey.com/capabilities/strategy-and-corporate-finance/our-insights/global-economics-intelligence](https://www.mckinsey.com/capabilities/strategy-and-corporate-finance/our-insights/global-economics-intelligence)  \n- Russia and Brazil each cut their policy rates in July, to 14% and 14.25% respectively, as growth stalled and inflation eased modestly【McKinsey Global Economics Intelligence, July 2026】[https://www.mckinsey.com/capabilities/strategy-and-corporate-finance/our-insights/global-economics-intelligence](https://www.mckinsey.com/capabilities/strategy-and-corporate-finance/our-insights/global-economics-intelligence)  \n\n**Trade and geopolitical tensions shape the outlook.**  \n- China’s exports surged 25 % year‑over‑year in August, the third consecutive month of growth above 24 %, driven largely by AI‑related goods such as integrated circuits (+130 % YoY) and high‑technology equipment (+57 % YoY)【Deloitte Weekly Global Economic Update, September 2026】[https://www.deloitte.com/us/en/insights/topics/economy/global-ecological-outlook/weekly- update. html](https://www.deloitte.com/us/en/insights/topics/economy/global-ecological-outlook/weekly- update. html)  \n- China controls about 60 % of global rare‑earth mining and 90 % of refining, and it used export restrictions to exert leverage in U.S.–China talks, with U.S. shipments of rare earths down 13 % YoY in August【Deloitte Weekly Global Economic Update, September 2026】[https://www.deloitte.com/us/en/insights/topics/economy/global-ecological-outlook/weekly- update. html](https://www.deloitte.com/us/en/insights/topics/economy/global-ecological-outlook/weekly- update. html)  \n- Persistent Middle‑East conflict has kept oil prices high; Brent crude is up roughly 43 % since the start of the crisis, while U.S. diesel prices have risen 53 % to a record level, reflecting refinery capacity shortages and geopolitical disruptions【Deloitte Weekly Global Economic Update, September 2026】[https://www.deloitte.com/us/en/insights/topics/economy/global-ecological-outlook/weekly- update. html](https://www.deloitte.com/us/en/insights/topics/economy/global-ecological-outlook/weekly- update. html)  \n\n**Labour markets are uneven.**  \n- U.S. non‑farm payrolls added only 57 000 jobs in June, with almost all the increase coming from women in health‑care and education, while male employment was flat or slightly declining【Deloitte Weekly Global Economic Update, September 2026】[https://www.deloitte.com/us/en/insights/topics/economy/global-ecological-outlook/weekly- update. html](https://www.deloitte.com/us/en/insights/topics/economy/global-ecological-outlook/weekly- update. html)  \n\n**Financial markets react to higher yields and energy risk.**  \n- The U.S. 10‑year Treasury yield climbed to 4.96 %, its highest level in three years, pushing the 30‑year mortgage rate above 7 % and dampening housing activity【McKinsey Global Economics Intelligence, July 2026】[https://www.mckinsey.com/capabilities/strategy-and-corporate-finance/our-insights/global-economics-intelligence](https://www.mckinsey.com/capabilities/strategy-and-corporate-finance/our-insights/global-economics-intelligence)  \n- Bond yields in the United Kingdom (5.38 %) and Germany (3.5 %) have also risen sharply, reflecting global inflation expectations and tighter monetary stances【McKinsey Global Economics Intelligence, July 2026】[https://www.mckinsey.com/capabilities/strategy-and-corporate-finance/our-insights/global-economics-intelligence](https://www.mckinsey.com/capabilities/strategy-and-corporate-finance/our-insights/global-economics-intelligence)  \n\n**Key risks** include lingering Middle‑East tension, persistent energy‑price inflation, potential asset‑price corrections as equity valuations remain high relative to corporate earnings, and the possibility that China’s export‑driven growth loses momentum if global demand weakens or if trade restrictions intensify.  \n\nIn sum, the global economy is growing unevenly, inflation is still above target, central banks are navigating a delicate balance between tightening and supporting growth, and geopolitical and supply‑chain shocks continue to pose significant downside risks.",
+      "distinctHosts": [
+        "deloitte.com",
+        "mckinsey.com",
+        "ijrcms.com",
+        "oecd.org",
+        "weforum.org"
+      ],
+      "linksTotal": 10,
+      "matchedDistinct": 1,
+      "unmatchedCount": 0,
+      "unmatchedUrls": [],
+      "diversityPass": true,
+      "linkPass": false
+    }
+  ]
+}

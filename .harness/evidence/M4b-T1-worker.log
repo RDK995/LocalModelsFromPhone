@@ -1,0 +1,61 @@
+=== Command: cd mobile && bun run typecheck ===
+$ tsc --noEmit
+
+=== Command: bun test src/api src/chat src/store src/ui src/app-routing ===
+bun test v1.4.0 (1381054db)
+
+ 137 pass
+ 0 fail
+ 326 expect() calls
+Ran 137 tests across 17 files. [111.00ms]
+
+=== Command: bun run lint ===
+$ eslint src --max-warnings 0
+
+=== Command: bun run smoke:runtime ===
+$ scripts/runtime-smoke.sh
+=== token present ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.CH4DJG/dist/_expo/static/js/ios/expo-router-f0e15bbf98301719192136bcacf54863.js
+stored token: present; expected first screen: Conversations
+rendered text: ["Conversations","Models","Settings","New chat","No conversations yet. Tap \"New chat\" to start one."]
+native stack headers: [{"title":"Conversations","hidden":true}]
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 5
+RESULT: PASS (app launched, Conversations rendered, no JS exception)
+=== token absent ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.CH4DJG/dist/_expo/static/js/ios/expo-router-f0e15bbf98301719192136bcacf54863.js
+stored token: absent; expected first screen: Setup
+rendered text: ["Enter Bearer Token","Paste the token from your server","Continue"]
+native stack headers: [{"title":"Setup","hidden":false}]
+drive Setup -> Conversations: {"ok":true,"conversationsMounted":true,"backOnSetup":false,"singleTopBar":true,"rendered_text":["Conversations","Models","Settings","New chat","No conversations yet. Tap \"New chat\" to start one."],"native_stack_headers":[{"title":"Conversations","hidden":true}]}
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 9
+RESULT: PASS (app launched, Setup rendered, no JS exception, Setup -> Conversations drive reached Conversations with one top bar)
+=== token wrong ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.CH4DJG/dist/_expo/static/js/ios/expo-router-f0e15bbf98301719192136bcacf54863.js
+stored token: wrong; expected first screen: Conversations
+rendered text: ["Conversations","Models","Settings","New chat","No conversations yet. Tap \"New chat\" to start one."]
+native stack headers: [{"title":"Conversations","hidden":true}]
+drive Conversations -> Chat -> 401 -> Settings: {"ok":true,"wrongAlertShown":true,"errorAlertShown":false,"settingsMounted":true,"alerts":[{"title":"Password wrong or changed","message":"The password on this phone no longer matches the Mac. Paste the current one from the Mac (pbcopy < ~/.phone-models/token)."}],"rendered_text":["Conversations","Models","Settings","New chat","No conversations yet. Tap \"New chat\" to start one.","Chat","hello","Send","Bearer Token","Cancel","Save","Logout"]}
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 11
+RESULT: PASS (app launched, Conversations rendered, no JS exception, Conversations -> Chat -> 401 drive reached Settings with the token form open)
+=== token stream ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.CH4DJG/dist/_expo/static/js/ios/expo-router-f0e15bbf98301719192136bcacf54863.js
+stored token: stream; expected first screen: Conversations
+rendered text: ["Conversations","Models","Settings","New chat","No conversations yet. Tap \"New chat\" to start one."]
+native stack headers: [{"title":"Conversations","hidden":true}]
+stream step 1 (prompt shown before any reply byte): PASS - {"rendered_text":["Conversations","Models","Settings","New chat","No conversations yet. Tap \"New chat\" to start one.","Chat","What is six times seven?","Stop"]}
+stream step 2 (partial reply shown, thinking collapsed): PASS - {"message_texts":["Conversations","Models","Settings","New chat","No conversations yet. Tap \"New chat\" to start one.","Chat","What is six times seven?","Show thinking","Partial answer","Stop"],"partial_answer_node_count":1,"show_thinking_present":true,"thinking_text_hidden":true}
+stream step 3 (thinking expands into its own section): PASS - {"thinking_text_present":true,"hide_thinking_present":true,"thinking_separate_from_answer":true}
+stream step 4 (reply updates in place through completion): PASS - {"send_back_stop_gone":true,"final_answer_node_count":1,"prompt_occurrences":1,"model_label_shown":true,"order_ok":true,"partial_answer_container_tag_step2":158,"final_answer_container_tag":158,"same_fabric_node":true,"rendered_text":["Conversations","Models","Settings","New chat","No conversations yet. Tap \"New chat\" to start one.","Chat","What is six times seven?","Hide thinking","Thinking:","SMOKE-THINKING-TEXT","Partial answer 42","smoke-model:1b","Send"]}
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 13
+RESULT: PASS (app launched, Conversations rendered, no JS exception, Conversations -> Chat -> streamed reply drive passed all 4 steps)
+
+=== Commit ===
+309f9e75cc997609feee417cdf251fe149bd0139

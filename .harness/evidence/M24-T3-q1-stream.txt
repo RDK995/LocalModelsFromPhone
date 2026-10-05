@@ -1,0 +1,242 @@
+: connected
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-0
+event: step
+data: {"step_id":"plan","kind":"plan","status":"started","elapsed_ms":0,"budget_ms":480000}
+
+: keep-alive
+
+: keep-alive
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-1
+event: step
+data: {"step_id":"plan","kind":"plan","status":"done","elapsed_ms":35368,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-2
+event: step
+data: {"step_id":"d1bccc75-3024-414a-96bd-694538d79167","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":35368,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-3
+event: step
+data: {"step_id":"d1bccc75-3024-414a-96bd-694538d79167","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":37694,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-4
+event: step
+data: {"step_id":"b66ae366-91c7-483e-85d6-59498bfba33e","kind":"search","status":"started","query":"Raft vs Paxos leader election mechanism differences","elapsed_ms":37694,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-5
+event: step
+data: {"step_id":"b66ae366-91c7-483e-85d6-59498bfba33e","kind":"search","status":"done","query":"Raft vs Paxos leader election mechanism differences","elapsed_ms":38884,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-6
+event: step
+data: {"step_id":"9d01c4fd-ae19-4956-82a9-e3bf5e7ee9bd","kind":"search","status":"started","query":"Raft log replication vs Multi-Paxos operational flow","elapsed_ms":38884,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-7
+event: step
+data: {"step_id":"9d01c4fd-ae19-4956-82a9-e3bf5e7ee9bd","kind":"search","status":"done","query":"Raft log replication vs Multi-Paxos operational flow","elapsed_ms":43526,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-8
+event: step
+data: {"step_id":"11177dd9-8d12-4661-ac0f-5e7c44dd4b14","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":43526,"budget_ms":480000}
+
+: keep-alive
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-9
+event: step
+data: {"step_id":"11177dd9-8d12-4661-ac0f-5e7c44dd4b14","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":45667,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-10
+event: step
+data: {"step_id":"1398a337-ac71-4dca-af4d-885bed23ec93","kind":"read","status":"started","url":"https://www.systutorials.com/comparing-paxos-and-raft/","elapsed_ms":45667,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-11
+event: step
+data: {"step_id":"98492e6c-268f-4243-8aeb-b5a5d65766e9","kind":"read","status":"started","url":"https://systeminternals.dev/paxos-vs-raft/","elapsed_ms":45667,"budget_ms":480000}
+
+: keep-alive
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-12
+event: step
+data: {"step_id":"1398a337-ac71-4dca-af4d-885bed23ec93","kind":"read","status":"failed","url":"https://www.systutorials.com/comparing-paxos-and-raft/","detail":"timeout","elapsed_ms":60682,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-13
+event: step
+data: {"step_id":"98492e6c-268f-4243-8aeb-b5a5d65766e9","kind":"read","status":"done","url":"https://systeminternals.dev/paxos-vs-raft/","elapsed_ms":60682,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-14
+event: step
+data: {"step_id":"9f38ffb5-928c-4191-928b-ee2eaa1d85a3","kind":"model","status":"started","detail":"Taking notes: systeminternals.dev","elapsed_ms":60757,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-15
+event: step
+data: {"step_id":"9f38ffb5-928c-4191-928b-ee2eaa1d85a3","kind":"model","status":"done","detail":"Taking notes: systeminternals.dev","elapsed_ms":72521,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-16
+event: step
+data: {"step_id":"6fb32a3f-c82d-40de-a010-c7bbdcb6b722","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":72524,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-17
+event: step
+data: {"step_id":"6fb32a3f-c82d-40de-a010-c7bbdcb6b722","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":74949,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-18
+event: step
+data: {"step_id":"6a81ad71-2ee2-440a-866a-898ec7f309f4","kind":"search","status":"started","query":"Raft vs Multi-Paxos implementation complexity comparison","elapsed_ms":74949,"budget_ms":480000}
+
+: keep-alive
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-19
+event: step
+data: {"step_id":"6a81ad71-2ee2-440a-866a-898ec7f309f4","kind":"search","status":"done","query":"Raft vs Multi-Paxos implementation complexity comparison","elapsed_ms":80910,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-20
+event: step
+data: {"step_id":"67fbba22-a050-4ab9-82ba-5d15446223be","kind":"search","status":"started","query":"difficulty of implementing Raft compared to Paxos consensus algorithms","elapsed_ms":80910,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-21
+event: step
+data: {"step_id":"67fbba22-a050-4ab9-82ba-5d15446223be","kind":"search","status":"done","query":"difficulty of implementing Raft compared to Paxos consensus algorithms","elapsed_ms":82464,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-22
+event: step
+data: {"step_id":"59804952-7db0-4369-88d5-e5aa3a686e99","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":82465,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-23
+event: step
+data: {"step_id":"59804952-7db0-4369-88d5-e5aa3a686e99","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":84362,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-24
+event: step
+data: {"step_id":"f9d094b7-25b0-4125-84e0-bc064e9f7640","kind":"read","status":"started","url":"https://www.systemoverflow.com/learn/distributed-primitives/consensus-algorithms/raft-vs-multi-paxos-architecture-and-implementation-differences","elapsed_ms":84362,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-25
+event: step
+data: {"step_id":"b1b2c1df-3780-4820-99b2-b26eba827a86","kind":"read","status":"started","url":"https://thecodeforge.io/system-design/consensus-paxos-raft/","elapsed_ms":84362,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-26
+event: step
+data: {"step_id":"f9d094b7-25b0-4125-84e0-bc064e9f7640","kind":"read","status":"done","url":"https://www.systemoverflow.com/learn/distributed-primitives/consensus-algorithms/raft-vs-multi-paxos-architecture-and-implementation-differences","elapsed_ms":84729,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-27
+event: step
+data: {"step_id":"0d02dc4e-895a-4e04-b954-548cd6728f32","kind":"model","status":"started","detail":"Taking notes: systemoverflow.com","elapsed_ms":84741,"budget_ms":480000}
+
+: keep-alive
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-28
+event: step
+data: {"step_id":"0d02dc4e-895a-4e04-b954-548cd6728f32","kind":"model","status":"done","detail":"Taking notes: systemoverflow.com","elapsed_ms":93780,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-29
+event: step
+data: {"step_id":"ac58676f-6a16-4101-ba90-f87f412914cf","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":93781,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-30
+event: step
+data: {"step_id":"ac58676f-6a16-4101-ba90-f87f412914cf","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":96738,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-31
+event: step
+data: {"step_id":"04a54a87-769d-4719-809a-a660cd2716dc","kind":"search","status":"started","query":"Raft vs Paxos use cases comparison leader election","elapsed_ms":96738,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-32
+event: step
+data: {"step_id":"04a54a87-769d-4719-809a-a660cd2716dc","kind":"search","status":"done","query":"Raft vs Paxos use cases comparison leader election","elapsed_ms":101835,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-33
+event: step
+data: {"step_id":"1d607170-9f4d-4bb3-9d72-543aebc5bd87","kind":"search","status":"started","query":"when to choose Raft over Multi-Paxos fault tolerance","elapsed_ms":101836,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-34
+event: step
+data: {"step_id":"1d607170-9f4d-4bb3-9d72-543aebc5bd87","kind":"search","status":"done","query":"when to choose Raft over Multi-Paxos fault tolerance","elapsed_ms":103021,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-35
+event: step
+data: {"step_id":"53f2541d-2a87-41ce-83bf-7ea3729f1730","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":103022,"budget_ms":480000}
+
+: keep-alive
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-36
+event: step
+data: {"step_id":"53f2541d-2a87-41ce-83bf-7ea3729f1730","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":105039,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-37
+event: step
+data: {"step_id":"b92a2ded-f299-4df1-af51-246d512d5d99","kind":"read","status":"started","url":"https://penluma.com/blog/distributed-systems/07-multi-paxos-raft-vs-paxos-the-real-world/","elapsed_ms":105040,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-38
+event: step
+data: {"step_id":"cd1b2ef3-67e7-482c-8847-d4b418e10bc3","kind":"read","status":"started","url":"https://www.geeksforgeeks.org/system-design/paxos-vs-raft-algorithm-in-distributed-systems/","elapsed_ms":105040,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-39
+event: step
+data: {"step_id":"b92a2ded-f299-4df1-af51-246d512d5d99","kind":"read","status":"done","url":"https://penluma.com/blog/distributed-systems/07-multi-paxos-raft-vs-paxos-the-real-world/","elapsed_ms":105365,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-40
+event: step
+data: {"step_id":"cb646dd5-adcd-4edb-b32d-032b450fc9ee","kind":"model","status":"started","detail":"Taking notes: penluma.com","elapsed_ms":105459,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-41
+event: step
+data: {"step_id":"cb646dd5-adcd-4edb-b32d-032b450fc9ee","kind":"model","status":"done","detail":"Taking notes: penluma.com","elapsed_ms":117246,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-42
+event: step
+data: {"step_id":"b1b2c1df-3780-4820-99b2-b26eba827a86","kind":"read","status":"done","url":"https://thecodeforge.io/system-design/consensus-paxos-raft/","elapsed_ms":117249,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-43
+event: step
+data: {"step_id":"2337554e-6952-41a8-a7df-d11f9b4ea9bd","kind":"model","status":"started","detail":"Taking notes: thecodeforge.io","elapsed_ms":117422,"budget_ms":480000}
+
+: keep-alive
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-44
+event: step
+data: {"step_id":"2337554e-6952-41a8-a7df-d11f9b4ea9bd","kind":"model","status":"done","detail":"Taking notes: thecodeforge.io","elapsed_ms":129816,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-45
+event: step
+data: {"step_id":"cd1b2ef3-67e7-482c-8847-d4b418e10bc3","kind":"read","status":"done","url":"https://www.geeksforgeeks.org/system-design/paxos-vs-raft-algorithm-in-distributed-systems/","elapsed_ms":129821,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-46
+event: step
+data: {"step_id":"fd4c689d-061f-4cd3-8ff0-17126ee5424d","kind":"model","status":"started","detail":"Taking notes: geeksforgeeks.org","elapsed_ms":129839,"budget_ms":480000}
+
+: keep-alive
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-47
+event: step
+data: {"step_id":"fd4c689d-061f-4cd3-8ff0-17126ee5424d","kind":"model","status":"done","detail":"Taking notes: geeksforgeeks.org","elapsed_ms":142646,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-48
+event: step
+data: {"step_id":"write","kind":"write","status":"started","elapsed_ms":142648,"budget_ms":480000}
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-49
+event: step
+data: {"step_id":"write","kind":"write","status":"done","elapsed_ms":216388,"budget_ms":480000}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-50
+event: content
+data: {"text":"Raft and Paxos differ fundamentally in how they structure consensus operations. Raft's architecture decomposes consensus into three independent sub-problems: leader election, log replication, and safety, which improves understandability compared to the more abstract nature of Paxos [1]. In contrast, traditional Paxos variants lack specific guidance on key operational components such as managing the log structure, handling leader failure, performing log compaction, and managing membership changes [2]. This underspecification in Paxos forces implementers to make many design choices independently, resulting in diverse implementations that are difficult to compare or reason about operationally [2]. While both algorithms achieve similar performance in steady state, Raft provides explicit algorithms for all aspects of consensus, whereas Multi-Paxos requires implementers to fill in substantial gaps [2]. Consequently, the real difference is whether a human can read the spec and build it without quietly introducing a bug that corrupts your data months later [4].\n\nRegarding implementation complexity, Raft was designed explicitly for understandability and practical implementation, lowering the barrier for correct implementation by breaking consensus into modular concerns [2]. Implementing correct Paxos requires solving complex edge cases around multiple proposers and failure handling that are not fully defined in the original protocol [3]. The reduced complexity of Raft has led to its adoption as the standard for new systems, including etcd, Consul, and TiKV [3]. Despite being the mathematical foundation of consensus, Paxos presents significant practical challenges that make it difficult to implement correctly without errors [3]. Raft is preferable when operational simplicity and clarity are prioritized over theoretical performance gains, as both algorithms offer identical safety and speed guarantees [4].\n\nIn terms of specific use cases, Raft is the preferred choice when operational constraints prioritize ease of implementation and understandability [5]. For standard use cases like leader election or distributed locks, neither algorithm should be implemented manually; instead, established libraries implementing these algorithms are the preferred solution, such as etcd, ZooKeeper, or Consul [4]. Within internal cluster management where nodes fail silently rather than act maliciously, Raft or Paxos (crash-fault tolerance) is the appropriate choice over Byzantine fault tolerance mechanisms [4]. However, Paxos is often used in systems where high reliability and fault tolerance are critical, making it preferable for specific use cases like distributed lock services requiring strong consistency guarantees [5]. Google Chubby, a distributed lock service ensuring coordination among distributed systems, is a notable example of Paxos usage [5]. Additionally, distributed storage systems requiring consistent write propagation utilize Paxos, as seen in Microsoft Azure Storage [5]. The original paper describes a 'single decree' Paxos which Multi-Paxos extends to a log of values, but the protocol remains underspecified regarding operational details [3]. Every production 'Paxos' system, such as Google's Chubby and ZooKeeper's Zab, is actually a custom variant because the core idea involves handling multiple proposers and failures in ways not fully defined by the original protocol [3]."}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-51
+event: sources
+data: {"items":[{"title":"Paxos vs Raft: How Distributed Consensus Algorithms Compare","url":"https://systeminternals.dev/paxos-vs-raft/","n":1},{"title":"Raft vs Multi Paxos: Architecture and Implementation Differences","url":"https://www.systemoverflow.com/learn/distributed-primitives/consensus-algorithms/raft-vs-multi-paxos-architecture-and-implementation-differences","n":2},{"title":"Distributed Consensus: Paxos vs Raft – Which One Won't Fail","url":"https://thecodeforge.io/system-design/consensus-paxos-raft/","n":3},{"title":"Raft vs Paxos: The Honest Comparison","url":"https://penluma.com/blog/distributed-systems/07-multi-paxos-raft-vs-paxos-the-real-world/","n":4},{"title":"Paxos vs. Raft Algorithm in Distributed Systems","url":"https://www.geeksforgeeks.org/system-design/paxos-vs-raft-algorithm-in-distributed-systems/","n":5}]}
+
+id: af0d2484-3ca5-47ce-b650-e9a0f7328e64-52
+event: done
+data: {"status":"complete","model":"qwen3.5:35b-a3b","eval_count":2991,"tokens_per_second":46.551732188967215,"research":{"status":"complete","elapsed_ms":216389,"budget_ms":480000}}
+

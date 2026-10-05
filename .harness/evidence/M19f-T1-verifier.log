@@ -1,0 +1,152 @@
+VERIFICATION LOG FOR M19f-T1
+===========================
+Date: 2026-10-02
+Task: M19f-AC2 - The app's 300 s resume allowance applies per outage and resets after every successful resume
+Verifier: Claude Haiku 4.5
+
+STEP 1: VERIFY webQuietSession.test.ts IS UNCHANGED
+=====================================================
+Command: git diff --quiet HEAD -- mobile/src/chat/webQuietSession.test.ts && echo UNCHANGED || echo CHANGED
+Result: UNCHANGED
+
+The lint errors (5 quote errors in webQuietSession.test.ts lines 255, 258, 261, 264, 333) are pre-existing in HEAD.
+
+STEP 2: RUN SPECIFIC TEST FILES
+================================
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun test src/api/client.test.ts src/chat/conversationSession.test.ts
+
+Exit Status: 0
+Output:
+bun test v1.4.0 (1381054db)
+
+ 97 pass
+ 0 fail
+ 307 expect() calls
+Ran 97 tests across 2 files. [116.00ms]
+
+STEP 3: RUN ALL MOBILE TESTS
+=============================
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun test
+
+Exit Status: 0
+Output:
+bun test v1.4.0 (1381054db)
+
+ 497 pass
+ 0 fail
+ 12245 expect() calls
+Ran 497 tests across 32 files. [264.00ms]
+
+STEP 4: RUN TYPE CHECKER (tsc)
+===============================
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bunx tsc --noEmit
+
+Exit Status: 0
+Output: (no output - clean)
+
+STEP 5: RUN LINTER
+===================
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run lint
+
+Exit Status: 1
+Output:
+$ eslint src --max-warnings 0
+
+/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/chat/webQuietSession.test.ts
+  255:9   error  Strings must use doublequote  quotes
+  258:9   error  Strings must use doublequote  quotes
+  261:9   error  Strings must use doublequote  quotes
+  264:9   error  Strings must use doublequote  quotes
+  333:15  error  Strings must use doublequote  quotes
+
+✖ 5 problems (5 errors, 0 warnings)
+
+NOTE: These 5 errors exist in the unchanged file webQuietSession.test.ts (pre-existing in HEAD).
+
+STEP 6: VERIFY FILES CHANGED VS ALLOWED
+=========================================
+Command: git diff HEAD --name-only -- . | grep -v "^\.harness/" | grep -v "^reports/" | grep -v "^research_notes/"
+
+Result:
+- mobile/src/api/client.test.ts (ALLOWED)
+- mobile/src/api/client.ts (ALLOWED)
+- mobile/src/api/resume.ts (ALLOWED)
+- mobile/src/chat/conversationSession.test.ts (ALLOWED)
+
+All 4 files are in the "Files Allowed To Change" list.
+
+STEP 7: VERIFY NO TESTS WERE WEAKENED
+======================================
+Checked for:
+- Deleted test functions or assertions
+- Added skip/xfail/ignore markers
+- Loosened comparisons or removed assertions
+
+Result: No deleted test code found. No skip/only markers added.
+
+STEP 8: VERIFY CODE CHANGES
+============================
+
+Key change in mobile/src/api/client.ts (line ~594):
+  BEFORE: firstDropAt = resumed.firstDropAt;
+  AFTER:  firstDropAt = null;
+
+This resets the budget clock after every successful resume, implementing the per-outage allowance.
+
+The ResumeOutcome type was also updated to remove `firstDropAt` from the response (line ~164).
+
+Documentation updated in mobile/src/api/resume.ts (~lines 29-34):
+  Changed from: "Wall-clock budget... for the whole resume loop for one reply, measured from the first transport drop"
+  Changed to: "Wall-clock budget... for one outage's resume loop, measured from the transport drop that started that outage. It resets after every successful resume..."
+
+STEP 9: VERIFY NEW TESTS EXERCISE ACCEPTANCE CRITERIA
+=====================================================
+
+Acceptance Criterion AC2: "App tests through the app server client with scripted dropping streams: the 300 s resume allowance applies per outage and resets after every successful resume, so several short outages in one reply all resume; a single outage longer than 300 s ends the reply on the phone with error status and its steps kept."
+
+New test (a) in APIClient per-outage resume allowance describe block:
+  "several 200 s outages in one reply all resume, even though the total outage time exceeds 300 s"
+  - Creates 4 sequential drops, each lasting 200 s of fake time (total 800 s)
+  - Asserts all 5 resume requests are made
+  - Asserts onError does not fire, onComplete does fire
+  - Asserts all events arrive exactly once in order
+  - EXERCISES: Multiple short outages in one reply all resume successfully
+
+New test (b) in APIClient per-outage resume allowance describe block:
+  "a single outage longer than 300 s after an earlier short outage ends the reply with an error and no further requests"
+  - Creates initial request + stream
+  - First outage: 100 s (successful)
+  - Second outage: 300+ s (fails with error)
+  - Asserts state.completed is false
+  - Asserts state.errored is not null (error message contains "connection to the Mac was lost")
+  - Asserts only 3 fetch calls made (not 4)
+  - EXERCISES: Single outage longer than 300 s ends the reply with error
+
+New test (c) in APIClient per-outage resume allowance describe block:
+  "the allowance is measured from the start of the current outage: 299 s still retries, over 300 s does not"
+  - First outage: 250 s (successful)
+  - Second outage: Tries at 299 s (still within budget, makes request)
+  - Second outage: Tries again at 301 s (exceeds budget, fails)
+  - Asserts 4 fetch calls made
+  - Asserts 3 sleeps happen
+  - Asserts final error is thrown
+  - EXERCISES: Budget reset per outage, 299s retries but 300+ doesn't
+
+New test in conversationSession describe block:
+  "ends the reply with status error and keeps its steps when the connection never comes back within 300 s"
+  - Emits 2 step events then drops the connection
+  - Simulates connection never coming back (all resume attempts fail)
+  - Advances 200+ s of fake time per attempt
+  - Asserts reply.status === "error"
+  - Asserts reply.steps contains the 2 emitted steps
+  - EXERCISES: Outage longer than 300s ends with error and steps are kept
+
+SUMMARY
+=======
+Command 1 (specific tests): PASS (97 tests, 0 fails)
+Command 2 (all tests): PASS (497 tests, 0 fails)
+Command 3 (tsc): PASS (no output)
+Command 4 (lint): FAIL (5 pre-existing errors in unchanged file)
+Files changed vs allowed: ALL ALLOWED
+Tests weakened: NO
+Acceptance criteria exercised: YES (all via new tests a, b, c, and conversationSession)

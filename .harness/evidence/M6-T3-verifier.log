@@ -1,0 +1,95 @@
+Verification of M6-T3: live proof script search/scripts/read-proof.sh
+
+=== COMMAND RUN ===
+cd /Users/ryankenny/Projects/CodingHarnessv2/search && bash -n scripts/read-proof.sh && bash scripts/read-proof.sh && ! lsof -nP -iTCP:7790 -sTCP:LISTEN
+
+=== TEST OUTPUT ===
+==== service ====
+      started search service (pid 23080)
+PASS: service health -> 200
+
+==== M6-AC1: read a real article; oversize is truncated ====
+      url: https://en.wikipedia.org/wiki/Ada_Lovelace_Day  status=200  markdown_length=7725  truncated=false  elapsed=0.278833s
+      first 300 chars of markdown:
+        | ![Frosted cake featuring iconic portrait of Ada Lovelace and text Ada Lovelace Day 2013.](https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3d/Cake_from_Ada_Lovelace_Day_2013_Editathon_Oxford.JPG/250px-Cake_from_Ada_Lovelace_Day_2013_Editathon_Oxford.JPG?utm_source=en.wikipedia.org&utm_campaign=
+PASS: AC1 normal article -> 200, truncated false
+PASS: AC1 markdown contains article body sentence
+PASS: AC1 boilerplate removed: 'Privacy policy' (present in raw HTML, absent from markdown)
+PASS: AC1 boilerplate removed: 'Toggle the table of contents' (present in raw HTML, absent from markdown)
+PASS: AC1 boilerplate removed: 'Contact Wikipedia' (present in raw HTML, absent from markdown)
+      url: https://en.wikipedia.org/wiki/World_War_II  status=200  markdown_length=40047  truncated=true
+PASS: AC1 oversized page -> 200, truncated true, ends with truncation marker
+
+==== M6-AC2: blocked destinations -> 400 blocked_destination ====
+PASS: AC2 loopback 127.0.0.1:7789 -> 400 blocked_destination
+PASS: AC2 localhost -> 400 blocked_destination
+PASS: AC2 tailnet 100.100.100.100 -> 400 blocked_destination
+PASS: AC2 this Mac's tailnet IP 100.82.139.85 -> 400 blocked_destination
+PASS: AC2 private 192.168.1.1 -> 400 blocked_destination
+PASS: AC2 IPv6 loopback [::1] -> 400 blocked_destination
+      public loopback-DNS names, as seen by the system resolver vs public resolvers:
+        localtest.me: system=[unresolved] @1.1.1.1=[127.0.0.1 ]
+        127.0.0.1.nip.io: system=[unresolved] @1.1.1.1=[127.0.0.1 ]
+        foo.localhost: system=[127.0.0.1 ::1] @1.1.1.1=[]
+PASS: AC2 hostname resolving to 127.0.0.1 (foo.localhost) -> 400 blocked_destination
+      sentinel listener on 127.0.0.1:51866 (would log any request that reaches it)
+PASS: AC2 hostname->loopback with live listener (foo.localhost:51866) -> 400 blocked_destination
+PASS: AC2 literal loopback with live listener (127.0.0.1:51866) -> 400 blocked_destination
+PASS: AC2 sentinel received zero requests (check made before connecting)
+PASS: AC2 sentinel control (direct request is recorded, so zero above is meaningful)
+
+==== M6-AC3: redirects re-checked; non-http scheme -> bad_url ====
+      redirector first hop (direct curl, no follow): 302 http://127.0.0.1:7789/
+PASS: AC3 public redirect -> http://127.0.0.1:7789/ -> 400 blocked_destination
+      redirector first hop (direct curl, no follow): 302 http://100.100.100.100/
+PASS: AC3 public redirect -> http://100.100.100.100/ -> 400 blocked_destination
+PASS: AC3 file:///etc/passwd -> 400 bad_url
+PASS: AC3 ftp://example.com/ -> 400 bad_url
+
+==== M6-AC4: non-text -> 415; slow fetch -> 504 (not a hang) ====
+PASS: AC4 non-text image/png -> 415 unsupported_content
+      url: https://httpbin.org/drip?duration=1&delay=20&numbytes=1&code=200  status=504  error=timeout  service answered in 15.010707s (curl --max-time 30)
+PASS: AC4 slow fetch -> 504 timeout in 15.010707s (<20s)
+
+==== result ====
+ALL CASES PASSED
+
+Exit Status: 0
+
+=== RESOLVER VERIFICATION ===
+dig +short localtest.me: [empty]
+dscacheutil localtest.me: [empty]
+
+dig +short 127.0.0.1.nip.io: [empty]
+dscacheutil 127.0.0.1.nip.io: [empty]
+
+dig +short foo.localhost: [empty]
+dscacheutil foo.localhost:
+  name: localhost
+  ipv6_address: ::1
+  name: localhost
+  ip_address: 127.0.0.1
+
+Verified: Public loopback-DNS names (localtest.me, 127.0.0.1.nip.io) do not resolve via the system resolver
+on this Mac, only via public resolvers. The special *.localhost pattern resolves locally to 127.0.0.1 and ::1.
+
+=== ADDRESS CHECK MECHANISM ANALYSIS ===
+Source: search/src/fetch/fetchPage.ts, lines 200-240
+
+The foo.localhost rejection is NOT name-based. Analysis:
+1. Lines 200-203: IP literals checked directly before connect
+2. Lines 210-240: Hostname resolution via custom lookup hook
+3. Line 224: ALL resolved records checked against isPublicAddress policy
+4. If ANY record fails the policy check, connection is refused with "blocked_destination"
+
+foo.localhost is resolved by the system resolver to [127.0.0.1, ::1]. Since both 127.0.0.1 and ::1
+are in BLOCKED_V4 and BLOCKED_V6 (see addressPolicy.ts), the lookup rejects the entire host BEFORE
+the socket connects.
+
+Connect-time verification for non-special hostname resolving to loopback:
+Found in search/src/fetch/fetchPage.test.ts, lines 113-120, R6 test:
+  "refuses a hostname resolving to 127.0.0.1 under the default policy, with no connection made"
+  - Uses injected resolver mapping r6-probe.invalid to 127.0.0.1
+  - Verifies: resolver was called, but srv.connections === 0, and fetch fails with blocked_destination
+  - Proves the address check happens BEFORE connection, not after
+

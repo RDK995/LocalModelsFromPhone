@@ -1,0 +1,7 @@
+{"execution": 1, "exit_code": 127, "inputs": {"command": ["bash", "-lc", "cd mobile && bun install >/dev/null 2>&1; bun run typecheck && bun test src/api src/ui && bun run lint && npx expo export --platform ios"], "environment": {"cwd": ".", "dependencies": {}, "environment": {"LANG": "ed8e9a8e277e89e97fb391676cb629b3a326002a82296f2abbc38135c3a106c2"}, "executable_resolution": "/bin/bash", "platform": {"machine": "arm64", "python": "3.14", "system": "Darwin"}, "workspace": {"changed_files": ["mobile/.eslintrc.json", "mobile/.gitignore", "mobile/.prettierrc.json", "mobile/app.json", "mobile/assets/.gitkeep", "mobile/expo-router.js", "mobile/package.json", "mobile/src/api/client.test.ts", "mobile/src/api/client.ts", "mobile/src/api/token.test.ts", "mobile/src/api/token.ts", "mobile/src/app/_layout.tsx", "mobile/src/app/chat.tsx", "mobile/src/app/settings.tsx", "mobile/src/app/setup.tsx", "mobile/src/ui/ui.test.ts", "mobile/tsconfig.json"], "sha256": "c512958a1ef75c976a332923780bd14491a475db419017a0812a2c882c2daf92"}}, "environment_fingerprint": "e0684f708c55b668dbd37e7795676c2be6463fde0de297a15de11c8a8cdf45cb", "head": "01f4b1dbdf9b82e1782edbd7ef5b070541cd329e", "purpose": "worker"}, "key": "7af45f5910088214b83494ff013d6981544c94771328ef25b70a4b0cd59ce5c6"}
+--- stdout ---
+
+--- stderr ---
+$ tsc --noEmit
+/bin/bash: tsc: command not found
+error: script "typecheck" exited with code 127

@@ -1,0 +1,15 @@
+=== Test Run ===
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun test
+bun test v1.4.0 (1381054db)
+
+ 493 pass
+ 0 fail
+ 12228 expect() calls
+Ran 493 tests across 32 files. [233.00ms]
+
+=== Typecheck ===
+bun run typecheck
+$ tsc --noEmit
+
+=== Eslint ===
+npx eslint --max-warnings 0 src/chat/conversationSession.test.ts src/ui/chatItems.test.ts src/api/client.test.ts

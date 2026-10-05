@@ -1,0 +1,100 @@
+# Task M17-T2 Verification Report
+# Generated: 2026-10-02
+
+## Current Commit
+0ccd1ab M17 T1: deep research run has one time budget with a writing reserve, one cancellation signal per phase, and ends complete/partial/failed with elapsed time on its events
+
+## Test Command
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/http/deepResearch.test.ts src/generations/manager.test.ts && bun test && bun run typecheck
+
+## Test Output
+
+### Focused Tests (deepResearch.test.ts + manager.test.ts)
+bun test v1.4.0 (1381054db)
+
+ 28 pass
+ 0 fail
+ 202 expect() calls
+Ran 28 tests across 2 files. [3.41s]
+
+### Full Test Suite
+bun test v1.4.0 (1381054db)
+
+ 239 pass
+ 0 fail
+ 1465 expect() calls
+Ran 239 tests across 12 files. [11.25s]
+
+### TypeCheck
+$ tsc --noEmit
+(no errors)
+
+## Exit Status: 0
+
+## Files Changed (git diff HEAD + git status --porcelain)
+M server/src/generations/manager.ts
+ M server/src/http/deepResearch.test.ts
+ M server/src/index.ts
+
+All files are within the allowed list.
+
+## Tests Weakened
+NO - Existing tests were not modified. The setup() function was enhanced with optional parameters (opts: SetupOptions = {}), maintaining backward compatibility. No assertions were deleted, loosened, or skipped.
+
+## Acceptance Criteria Exercised
+
+### Setting: GenerationManager accepts optional research settings override
+✓ Test evidence: server/src/http/deepResearch.test.ts line 130 shows new GenerationManager(client, web, opts.research) passing research settings
+✓ Test evidence: server/src/index.ts lines 72-76 parseResearchBudget function validates PHONE_MODELS_RESEARCH_BUDGET_MS env var
+✓ Test evidence: server/src/index.ts line 9-11 documents PHONE_MODELS_RESEARCH_BUDGET_MS as a server setting
+✓ Test evidence: server/src/index.ts line 86-87 passes parsed budget to GenerationManager constructor
+
+### Never an error with no reply
+✓ Test evidence: server/src/generations/manager.ts lines 180-195 catch non-abort errors and create content event with sentence + done with status "complete" and research.status "failed"
+✓ Test evidence: server/src/http/deepResearch.test.ts lines 370-388 test "a thrown error inside the run ends with a content sentence and failed research, never an error event"
+
+### AC1: slow step uses up research time, run writes, ends partial, every step carries elapsed/budget
+✓ Test evidence: server/src/http/deepResearch.test.ts lines 230-255 test "AC1: a slow step uses up research time, the run writes, ends partial, and every step carries elapsed/budget"
+  - Verifies write step exists (line 241)
+  - Verifies every step has elapsed_ms and budget_ms (lines 243-244)
+  - Verifies budget_ms equals configured BUDGET (244)
+  - Verifies done.status "complete" and research.status "partial" (247-248)
+  - Verifies done.research has elapsed_ms and budget_ms (249-250)
+  - Verifies wall-time assertion within budget+500ms (251)
+
+### AC2: every search failing ends within budget+500ms with failed and COULD_NOT_SEARCH_NOTE
+✓ Test evidence: server/src/http/deepResearch.test.ts lines 257-270 test "AC2: every search failing ends within budget with failed and the could-not-search note"
+  - Verifies research.status "failed" (262)
+  - Verifies content equals COULD_NOT_SEARCH_NOTE (263)
+  - Verifies failed/unavailable search steps present (265)
+  - Verifies wall-time within budget+500ms (266)
+
+### AC3a: in-flight search receives aborted signal at deadline
+✓ Test evidence: server/src/http/deepResearch.test.ts lines 272-291 test "AC3a: an in-flight search receives an aborted signal at the deadline and the stream ends in time"
+  - Verifies signal.aborted is true (285)
+  - Verifies wall-time within budget+500ms (287)
+
+### AC3a: in-flight read receives aborted signal at deadline
+✓ Test evidence: server/src/http/deepResearch.test.ts lines 293-315 test "AC3a: an in-flight read receives an aborted signal at the deadline and the stream ends in time"
+  - Verifies signal.aborted is true (309)
+  - Verifies wall-time within budget+500ms (311)
+
+### AC3a: in-flight model request receives aborted signal at deadline
+✓ Test evidence: server/src/http/deepResearch.test.ts lines 317-340 test "AC3a: an in-flight model request receives an aborted signal at the deadline and the stream ends in time"
+  - Verifies signal.aborted is true (334)
+  - Verifies wall-time within budget+500ms (336)
+
+### AC3b: hanging write request ends partial within budget with non-empty content
+✓ Test evidence: server/src/http/deepResearch.test.ts lines 342-368 test "AC3b: a hanging write request ends partial within budget with non-empty content"
+  - Verifies signal.aborted is true (358)
+  - Verifies research.status "partial" (360)
+  - Verifies content is non-empty (362)
+  - Verifies wall-time within budget+500ms (364)
+
+### Thrown error handling
+✓ Test evidence: server/src/http/deepResearch.test.ts lines 370-388 test "a thrown error inside the run ends with a content sentence and failed research, never an error event"
+  - Verifies no error event (379)
+  - Verifies content has length > 0 (380)
+  - Verifies done.status "complete" (382)
+  - Verifies done.research.status "failed" (383)
+  - Verifies budget_ms and elapsed_ms are present (384-385)

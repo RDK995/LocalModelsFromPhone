@@ -1,0 +1,134 @@
+=== VERIFICATION: M10c3-C3 ===
+Task: Establish whether HEAD can produce the owner's on-phone table render, or prove it cannot.
+Repository: /Users/ryankenny/Projects/CodingHarnessv2
+Branch: m10c3-readable-tables
+HEAD commit: 5ccf325 (M10c3: fix cycle 1 complete; Review Cycles 1; return at REVIEW)
+Date: 2026-09-30
+
+=== CHANGED FILES (git diff HEAD) ===
+Only non-.harness files:
+- mobile/src/ui/markdown.test.ts (modified)
+- mobile/src/ui/markdownText.test.ts (modified)
+
+All changes are in allowed files per task packet.
+
+=== TEST COMMAND ===
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun test && bun run typecheck && bun run lint
+
+=== TEST RESULTS ===
+Exit Status: 0
+
+Test output:
+bun test v1.4.0 (1381054db)
+
+ 390 pass
+ 0 fail
+ 11848 expect() calls
+Ran 390 tests across 26 files. [204.00ms]
+$ tsc --noEmit
+$ eslint src --max-warnings 0
+
+All three commands (bun test, typecheck, lint) passed.
+
+=== DISCRIMINATION CLAIM VERIFICATION ===
+Tested: New markdown.test.ts against f8bae28's markdown.ts (pre-milestone baseline)
+Method: git worktree add at f8bae28, copied new test files and current HEAD's tableLayout.ts,
+ran bun test src/ui/markdown.test.ts
+
+Result: 7 failures (exit 1)
+- FR29: a row missing a column separator is padded, not re-split... (existing test)
+- FR29: surplus body cells are joined into the last column... (existing test)
+- FR29: a table still streaming parses and keeps header width (existing test)
+- FR29: every streamed prefix of a table parses with header-width rows (existing test)
+- case 1b: the screenshot's apparent mix (4-cell row, then 3-cell last row) (NEW case)
+- case 4: every mid-stream prefix keeps header-width rows (NEW case)
+- case 5: a body row with fewer cells is padded; more cells joined with " | " (NEW case)
+
+Worker's claim: "7 fails (cases 1b, 4, 5 + 4 existing FR29 tests)" — CONFIRMED.
+
+=== TEST CASE VERIFICATION ===
+All 6 cases present in markdown.test.ts (lines 403-492):
+
+Case 1: 3- and 4-column screenshot-like tables
+- Uses TABLE3 (3 columns) and TABLE4 (4 columns)
+- Verifies both produce "cards" layout (3+ columns per task requirement)
+- Tests headings are paired with values in output
+
+Case 1b: The screenshot's apparent mix (header 4 cells, body 3 cells)
+- 4-cell header row followed by 3-cell body row
+- Verifies FR29: body row is padded to 4 cells (lines 430-432)
+
+Case 2: Final row with NO trailing newline and NO trailing pipe
+- Replaces trailing " |" from TABLE3 and TABLE4
+- Verifies result matches non-modified version (padding works correctly)
+
+Case 3: Final row with trailing pipe but NO newline
+- Verifies behavior is same whether newline present or absent
+- Tests both TABLE3 and TABLE4
+
+Case 4: Mid-stream prefixes (streaming incomplete tables)
+- Verifies every prefix from end-of-separator onwards keeps header width
+- Tests half-written last row: "| 13 | **Other notable" (line 462)
+- Verifies empty cells in incomplete row
+
+Case 5: Body row with fewer cells (padded) and more cells (joined)
+- Fewer cells: "| 1 | **a** |" → padded to 4 cells with empty cells
+- More cells: "| 2 | b | c | d | e | f |" → joined as "d | e | f" in last column
+- 2-column table test confirms same behavior
+- Assertions at lines 476-480
+
+Case 6: Prose context and final position
+- Table preceded and followed by prose
+- Table as very last thing (no following prose)
+- Verifies all contextual placements parse correctly
+
+=== ITEM 7: RENDER PATH VERIFICATION ===
+markdownText.test.ts tests (lines 101-123):
+
+Test 1: "chat.tsx renders every assistant reply through a single MarkdownText"
+- Assertion: chat file has exactly 1 <MarkdownText call (line 103)
+- Assertion: chat.tsx contains "buildChatItems(messages, pending)" call
+- Verification: grep <MarkdownText> in chat.tsx → count 1
+- Verification: grep buildChatItems in chat.tsx → line 290 call confirmed
+
+Test 2: "the table branch never lays out block.rows directly"
+- Assertion: MarkdownText.tsx does not contain "block.rows.map" (line 107)
+- Assertion: MarkdownText.tsx has exactly 1 tableLayout() call (line 108)
+- Verification: grep block.rows.map MarkdownText.tsx → no results
+- Verification: Line 121 in MarkdownText.tsx: const layout = tableLayout(block.rows);
+
+Test 3: "no other app or ui source renders markdown tables"
+- Walks src/ excluding test files
+- Filters for files containing parseMarkdown, tableLayout, MarkdownText, tableRow, or tableCard
+- Expected result: ["app/chat.tsx", "ui/MarkdownText.tsx", "ui/markdown.ts", "ui/tableLayout.ts"]
+- Verification: grep -l parseMarkdown|tableLayout|MarkdownText mobile/src → exact match
+
+File usage confirmed:
+- src/app/chat.tsx: line 46 (imports MarkdownText), line 57 (imports buildChatItems), 
+  line 290 (calls buildChatItems), line 415 (renders MarkdownText)
+- src/ui/MarkdownText.tsx: line 13 (imports tableLayout), line 121 (calls tableLayout)
+- src/ui/markdown.ts: parseMarkdown implementation
+- src/ui/tableLayout.ts: tableLayout implementation and tests
+
+Render path: both streaming (buildChatItems handles pending) and saved messages
+use the same single MarkdownText → tableLayout path. No alternative grid renderer.
+
+=== NO TESTS WEAKENED ===
+git diff of test files shows:
+- markdown.test.ts: only additions (new describe block, no removals)
+- markdownText.test.ts: only additions (new describe block, no removals)
+No existing tests modified, deleted, or weakened.
+
+=== ACCEPTANCE CRITERIA MET ===
+✓ AC1: Tests for cases 1-6 exist in markdown.test.ts and pass at end
+✓ AC2: No code defect found; worker stated "NO CODE DEFECT FOUND" (correct)
+✓ AC3: Summary states item 7 conclusion with file:line references (confirmed in test)
+✓ AC4: Existing tests not weakened or deleted (confirmed)
+
+=== CONCLUSION ===
+- Tests run successfully: 390 pass, 0 fail, exit 0
+- Changed files: only allowed test files (markdown.test.ts, markdownText.test.ts)
+- Discrimination: new tests fail on pre-milestone code (7 failures), pass on HEAD (0 failures)
+- All test cases (1-6) present and exercising required scenarios
+- Item 7 render path verified: single MarkdownText → tableLayout path for all messages
+- No code defect found; all tests demonstrate HEAD behavior matches FR29 requirements

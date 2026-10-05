@@ -1,0 +1,22 @@
+M10c3 review cycle 2 - bundle host facts (navigator, 2026-09-30, read-only; nothing started/stopped)
+
+LaunchAgent ~/Library/LaunchAgents/com.harness.bundle-host.plist
+  ProgramArguments: /opt/homebrew/bin/bun x expo start --no-dev --minify --port 8081
+  WorkingDirectory: /Users/ryankenny/Projects/CodingHarnessv2/mobile   (same checkout; no other worktree)
+  REACT_NATIVE_PACKAGER_HOSTNAME=ryans-mac-studio.tailc3648a.ts.net
+  Log: ~/Library/Logs/phone-models/bundle-host.log
+launchctl: com.harness.bundle-host PID 82114, last exit 0
+Process 82114: node .../mobile/node_modules/.bin/expo start --no-dev --minify --port 8081
+  Started: Wed 30 Sep 13:32:45 2026; cwd /Users/ryankenny/Projects/CodingHarnessv2/mobile; listening *:8081
+
+Commit times: 30fa036 (T2, card layout) 2026-09-30 14:28:09 +0100; 5ccf325 2026-09-30 16:24:06 +0100.
+Owner observation attempt 1: ~17:07 BST.
+
+Served bundle now (curl http://localhost:8081/expo-router.bundle?platform=ios&dev=false&...&minify=true...):
+  packager-status:running; contains tableLayout (require + call at 101483: tableLayout(block.rows)) and kind: "cards" (102233).
+  => Metro serves current HEAD code from disk.
+
+Reading: the served bundle is current, and HEAD cannot produce the screenshot (C3 tests; pre-milestone f8bae28 code
+reproduces it exactly: per-row flex:1 cells, no padding). Production mode (--no-dev) has no fast refresh, so an Expo Go
+session opened before 14:28 keeps running the old JavaScript until the app is fully reloaded. Cause: stale bundle on the
+phone, not a code defect.

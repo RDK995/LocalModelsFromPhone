@@ -1,0 +1,315 @@
+=== M19g Verification Report ===
+Verifier run: 2026-10-02
+Repository: /Users/ryankenny/Projects/CodingHarnessv2
+Branch: m19g-live-mac-proof
+HEAD: 1015056
+
+=== TASK M19g-T6: Server Restart ===
+
+VERIFICATION OF T6-restart.log:
+
+Before State:
+  Command: pgrep -fl ac29-live-run
+  Output: (no matches)
+  Exit status: 1
+  
+  Command: launchctl list | grep com.harness.server
+  Output: 3614	-15	com.harness.server
+  Old PID: 3614
+  
+  Command: ps -o pid,lstart,command -p 3614
+  Output: PID STARTED                      COMMAND
+           3614 Fri  2 Oct 21:41:35 2026     /opt/homebrew/bin/bun src/index.ts
+  Old start time: Fri 2 Oct 21:41:35 2026
+  
+  Command: git log -1 --format='%H %cI' -- server/
+  Output: 22c9a004391b102ce3b53eda067ac491630552e7 2026-10-02T21:53:11+01:00
+  Last server/ commit: 2026-10-02T21:53:11+01:00
+
+After State:
+  Command: launchctl list | grep com.harness.server
+  Output: 4781	-15	com.harness.server
+  New PID: 4781
+  
+  Command: ps -o pid,lstart -p 4781
+  Output: PID STARTED
+           4781 Fri  2 Oct 21:56:12 2026    
+  New start time: Fri 2 Oct 21:56:12 2026
+  
+  Command: ollama ps
+  Output:
+    NAME               ID              SIZE     PROCESSOR    CONTEXT    UNTIL   
+    qwen3.5:35b-a3b    3460ffeede54    23 GB    100% GPU     32768      Forever    
+  
+  Command: pgrep -fl ac29-live-run
+  Output: (no matches)
+  Exit status: 1
+  
+  Command: curl -s --connect-timeout 5 --max-time 20 http://127.0.0.1:7789/health
+  Output: {"error":"unauthorized","message":"Invalid or missing bearer token"}
+  HTTP Status: 401
+
+Test Criteria Met:
+✓ PID changed: 3614 → 4781
+✓ New start time (21:56:12 2026 local = 20:56:12 UTC) after commit time (21:53:11+01:00 local = 20:53:11 UTC)
+✓ Health endpoint returns 401 (valid response)
+✓ qwen3.5:35b-a3b is in ollama ps output
+✓ No ac29-live-run process before or after
+
+=== TASK M19g-T7: AC29 Question Runs ===
+
+TIMING VERIFICATION:
+Server restart time (new PID 4781): 2026-10-02 21:56:12 local = 20:56:12 UTC
+
+Run Timing (UTC):
+  q1: started 2026-10-02T20:57:04.073Z, ended 2026-10-02T21:00:27.859Z
+  q2: started 2026-10-02T21:01:10.711Z, ended 2026-10-02T21:04:35.886Z
+  q3: started 2026-10-02T21:05:19.951Z, ended 2026-10-02T21:08:46.857Z
+  heat: started 2026-10-02T21:09:23.677Z, ended 2026-10-02T21:13:07.199Z
+
+Sequencing Check (no overlap):
+✓ q1 ended at 21:00:27, q2 started at 21:01:10 (43s gap)
+✓ q2 ended at 21:04:35, q3 started at 21:05:19 (44s gap)
+✓ q3 ended at 21:08:46, heat started at 21:09:23 (37s gap)
+
+All Started After T6 Restart (20:56:12 UTC):
+✓ q1 started 20:57:04 > 20:56:12
+✓ q2 started 21:01:10 > 20:56:12
+✓ q3 started 21:05:19 > 20:56:12
+✓ heat started 21:09:23 > 20:56:12
+
+RUN LOGS VERIFICATION:
+✓ M19g-T7-q1-run.log ends with: exit=0
+✓ M19g-T7-q2-run.log ends with: exit=0
+✓ M19g-T7-q3-run.log ends with: exit=0
+✓ M19g-T7-heat-run.log ends with: exit=0
+
+CHECK-ONLY TEST RESULTS:
+
+q1 check-only output:
+{
+  "stream_file": "../.harness/evidence/M19g-T7-q1-stream.txt",
+  "budget_s": 480,
+  "total_wall_s": 203.747,
+  "planning_s": 32.286,
+  "research_phase_calls": 12,
+  "routine_calls": 13,
+  "routine_p50_s": 3.051,
+  "routine_p95_s": 14.142,
+  "fr41_lines": 17,
+  "distinct_pages_read": 6,
+  "notes_kept": 18,
+  "final_status": "complete",
+  "cited_read_pages": 5,
+  "unresolved_citations": [],
+  "pass": true
+}
+Exit status: 0
+
+q2 check-only output:
+{
+  "stream_file": "../.harness/evidence/M19g-T7-q2-stream.txt",
+  "budget_s": 480,
+  "total_wall_s": 205.168,
+  "planning_s": 32.625,
+  "research_phase_calls": 11,
+  "routine_calls": 12,
+  "routine_p50_s": 3.279,
+  "routine_p95_s": 15.865,
+  "fr41_lines": 16,
+  "distinct_pages_read": 5,
+  "notes_kept": 13,
+  "final_status": "complete",
+  "cited_read_pages": 5,
+  "unresolved_citations": [],
+  "pass": true
+}
+Exit status: 0
+
+q3 check-only output:
+{
+  "stream_file": "../.harness/evidence/M19g-T7-q3-stream.txt",
+  "budget_s": 480,
+  "total_wall_s": 206.9,
+  "planning_s": 32.701,
+  "research_phase_calls": 12,
+  "routine_calls": 13,
+  "routine_p50_s": 3.859,
+  "routine_p95_s": 17.495,
+  "fr41_lines": 17,
+  "distinct_pages_read": 6,
+  "notes_kept": 12,
+  "final_status": "complete",
+  "cited_read_pages": 6,
+  "unresolved_citations": [],
+  "pass": true
+}
+Exit status: 0
+
+heat check-only output:
+{
+  "stream_file": "../.harness/evidence/M19g-T7-heat-stream.txt",
+  "budget_s": 480,
+  "total_wall_s": 223.517,
+  "planning_s": 32.707,
+  "research_phase_calls": 11,
+  "routine_calls": 12,
+  "routine_p50_s": 4.911,
+  "routine_p95_s": 18.605,
+  "fr41_lines": 16,
+  "distinct_pages_read": 6,
+  "notes_kept": 16,
+  "final_status": "complete",
+  "cited_read_pages": 5,
+  "unresolved_citations": [],
+  "pass": true
+}
+Exit status: 0
+
+RESULT.JSON EXTRACTION:
+
+q1 result.json:
+  "generation_id": "87ff5544-4093-4178-bce6-7e41f1e82ade",
+  "started_at": "2026-10-02T20:57:04.073Z",
+  "ended_at": "2026-10-02T21:00:27.859Z",
+  "final_status": "complete",
+  "total_wall_s": 203.786,
+  "budget_s": 480,
+  "research_phase_calls": 12,
+  "distinct_pages_read": 6,
+  "notes_kept": 18,
+  "planning_s": 32.286,
+  "routine_p50_s": 3.051,
+  "routine_p95_s": 14.142,
+  "cited_read_pages": 5,
+  "unresolved_citations": [],
+  "pass": true
+
+q2 result.json:
+  "generation_id": "66430539-37c0-439e-81f8-2ceab9f452bd",
+  "started_at": "2026-10-02T21:01:10.711Z",
+  "ended_at": "2026-10-02T21:04:35.886Z",
+  "final_status": "complete",
+  "total_wall_s": 205.175,
+  "budget_s": 480,
+  "research_phase_calls": 11,
+  "distinct_pages_read": 5,
+  "notes_kept": 13,
+  "planning_s": 32.625,
+  "routine_p50_s": 3.279,
+  "routine_p95_s": 15.865,
+  "cited_read_pages": 5,
+  "unresolved_citations": [],
+  "pass": true
+
+q3 result.json:
+  "generation_id": "273b488d-72fb-4e77-8bd5-42d0a0c9018d",
+  "started_at": "2026-10-02T21:05:19.951Z",
+  "ended_at": "2026-10-02T21:08:46.857Z",
+  "final_status": "complete",
+  "total_wall_s": 206.906,
+  "budget_s": 480,
+  "research_phase_calls": 12,
+  "distinct_pages_read": 6,
+  "notes_kept": 12,
+  "planning_s": 32.701,
+  "routine_p50_s": 3.859,
+  "routine_p95_s": 17.495,
+  "cited_read_pages": 6,
+  "unresolved_citations": [],
+  "pass": true
+
+heat result.json:
+  "generation_id": "89391a29-2a64-4842-b485-acf03d86b873",
+  "started_at": "2026-10-02T21:09:23.677Z",
+  "ended_at": "2026-10-02T21:13:07.199Z",
+  "final_status": "complete",
+  "total_wall_s": 223.522,
+  "budget_s": 480,
+  "research_phase_calls": 11,
+  "distinct_pages_read": 6,
+  "notes_kept": 16,
+  "planning_s": 32.707,
+  "routine_p50_s": 4.911,
+  "routine_p95_s": 18.605,
+  "cited_read_pages": 5,
+  "unresolved_citations": [],
+  "pass": true
+
+=== FILE CHANGES VERIFICATION ===
+
+git status --porcelain output:
+?? .harness/evidence/M19g-T6-restart.log
+?? .harness/evidence/M19g-T7-heat-fr41.log
+?? .harness/evidence/M19g-T7-heat-result.json
+?? .harness/evidence/M19g-T7-heat-run.log
+?? .harness/evidence/M19g-T7-heat-stream.txt
+?? .harness/evidence/M19g-T7-heat-worker.log
+?? .harness/evidence/M19g-T7-q1-fr41.log
+?? .harness/evidence/M19g-T7-q1-result.json
+?? .harness/evidence/M19g-T7-q1-run.log
+?? .harness/evidence/M19g-T7-q1-stream.txt
+?? .harness/evidence/M19g-T7-q1-worker.log
+?? .harness/evidence/M19g-T7-q2-fr41.log
+?? .harness/evidence/M19g-T7-q2-result.json
+?? .harness/evidence/M19g-T7-q2-run.log
+?? .harness/evidence/M19g-T7-q2-stream.txt
+?? .harness/evidence/M19g-T7-q2-worker.log
+?? .harness/evidence/M19g-T7-q3-fr41.log
+?? .harness/evidence/M19g-T7-q3-result.json
+?? .harness/evidence/M19g-T7-q3-run.log
+?? .harness/evidence/M19g-T7-q3-stream.txt
+?? .harness/evidence/M19g-T7-q3-worker.log
+?? .harness/tasks/M19g-T6.md
+?? .harness/tasks/M19g-T7.md
+?? "reports/Fast local deep research redesign.md"
+?? "research_notes/Fast local deep research redesign/"
+
+All new .harness/evidence files are allowed per task packets.
+Pre-existing reports/ and research_notes/ entries excluded from validation.
+
+git diff --stat HEAD:
+(no output - no source/test/script files modified)
+
+=== ACCEPTANCE CRITERIA EXERCISE ===
+
+M19g-AC2 (verbatim): "Live on the Mac with com.harness.server restarted on this code 
+and `qwen3.5:35b-a3b` resident: the AC29 question set (3 real research-style questions 
+plus the 2026-10-02 heat-pump question) is run through the server API with FR41 logging, 
+and per run the total wall time, research-phase model calls, distinct pages read, notes 
+kept, planning time and routine-call p50/p95 are recorded in evidence; each run ends 
+within the budget plus a small margin with status `complete` or `partial`, a report 
+citing at least 3 distinct read pages, and no citation number that fails to resolve to 
+a saved source. Speed figures are recorded, not gated (reference targets: routine 
+p50 < 10 s, planning < 40 s)."
+
+Exercise check:
+✓ Server restarted on current code: T6 restart to commit 22c9a00, all T7 runs started after restart
+✓ qwen3.5:35b-a3b resident: confirmed in ollama ps
+✓ 4 questions run through server API: q1, q2, q3, heat all show check-only pass
+✓ FR41 logging: all runs have M19g-T7-*-fr41.log files
+✓ Metrics recorded in result.json:
+  - total_wall_s: q1=203.786, q2=205.175, q3=206.906, heat=223.522 (all < 480s budget)
+  - research_phase_calls: q1=12, q2=11, q3=12, heat=11
+  - distinct_pages_read: q1=6, q2=5, q3=6, heat=6 (all ≥ 3)
+  - notes_kept: q1=18, q2=13, q3=12, heat=16
+  - planning_s: q1=32.286, q2=32.625, q3=32.701, heat=32.707 (all < 40s)
+  - routine_p50_s: q1=3.051, q2=3.279, q3=3.859, heat=4.911 (all < 10s)
+  - routine_p95_s: q1=14.142, q2=15.865, q3=17.495, heat=18.605
+✓ All runs end with status "complete"
+✓ All runs cite at least 3 distinct read pages (5-6 pages each)
+✓ No unresolved_citations: [] for all runs
+✓ Speed figures recorded (within reference targets)
+
+=== SUMMARY ===
+
+All tests passed:
+- M19g-T6 restart: PASS (all test criteria met)
+- M19g-T7 q1: PASS (run log exit=0, check-only pass=true)
+- M19g-T7 q2: PASS (run log exit=0, check-only pass=true)
+- M19g-T7 q3: PASS (run log exit=0, check-only pass=true)
+- M19g-T7 heat: PASS (run log exit=0, check-only pass=true)
+
+No files changed outside .harness/evidence/
+No source, test, or script files modified
+AC2 acceptance criteria fully exercised

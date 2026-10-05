@@ -1,0 +1,107 @@
+VERIFICATION FOR TASK M1-C14
+Date: 2026-09-25
+Commit: c9e3560
+
+COMMAND RUN:
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test src/api src/ui src/chat src/app-routing && bun run lint
+
+EXIT STATUS: 0
+
+OUTPUT:
+$ tsc --noEmit
+bun test v1.4.0 (1381054db)
+
+ 38 pass
+ 0 fail
+ 101 expect() calls
+Ran 38 tests across 9 files. [40.00ms]
+$ eslint src --max-warnings 0
+
+
+FILES CHANGED (against c9e3560):
+- mobile/src/chat/chatController.ts
+- mobile/src/chat/chatController.test.ts
+- mobile/src/app/chat.tsx
+- mobile/src/app/settings.tsx
+
+All production files are in the allowed list per task packet.
+
+ACCEPTANCE CRITERIA VERIFICATION:
+
+Criterion 1 - chatController.ts SendMessageCallbacks:
+✓ EXERCISED: SendMessageCallbacks interface adds onUnauthorized: () => void (line 37)
+✓ EXERCISED: sendMessage calls onUnauthorized for UnauthorizedError from getState() (line 60-62)
+✓ EXERCISED: sendMessage calls onUnauthorized for UnauthorizedError from chat() thrown (line 102-104)
+✓ EXERCISED: sendMessage calls onUnauthorized for UnauthorizedError via onError callback (line 84-86)
+✓ EXERCISED: ModelNotResidentError still routes to onBlocked (line 98-100)
+✓ EXERCISED: Other errors still route to onError (lines 64-66, 106-108)
+
+Criterion 2 - UNAUTHORIZED_MESSAGE export:
+✓ EXERCISED: chatController.ts exports UNAUTHORIZED_MESSAGE = "Password wrong or changed" (line 27)
+
+Criterion 3 - chatController.test.ts tests:
+✓ EXERCISED: Test (a) - line 218-243: "a 401 from GET /v1/state calls onUnauthorized once, not onError, and makes no POST /v1/chat request"
+   - Mocks GET /v1/state to return 401
+   - Verifies unauthorizedCount = 1
+   - Verifies errored = null
+   - Verifies blocked = null
+   - Verifies no /v1/chat request made
+
+✓ EXERCISED: Test (b) - line 245-269: "a 401 from POST /v1/chat calls onUnauthorized once and does not call onError"
+   - Returns 401 from /v1/chat
+   - Verifies unauthorizedCount = 1
+   - Verifies errored = null
+   - Verifies blocked = null
+
+✓ EXERCISED: Test (c) - line 271-291: "a non-401 failure (500 from GET /v1/state) still calls onError and not onUnauthorized"
+   - Returns 500 from /v1/state
+   - Verifies errored is not null
+   - Verifies unauthorizedCount = 0
+   - Demonstrates existing onError behaviour unchanged
+
+Criterion 4 - chat.tsx onUnauthorized callback:
+✓ EXERCISED: chat.tsx passes onUnauthorized callback to sendMessage (line 137-146)
+✓ EXERCISED: Shows Alert.alert with UNAUTHORIZED_MESSAGE title (line 138-139)
+✓ EXERCISED: Shows correct detailed message (line 140)
+✓ EXERCISED: Navigates to /settings with updateToken:"1" param (line 142-145)
+✓ EXERCISED: UNAUTHORIZED_MESSAGE imported (line 25)
+✓ EXERCISED: Existing onError alert for other errors still present (line 134-135)
+
+Criterion 5 - settings.tsx updateToken handling:
+✓ EXERCISED: useLocalSearchParams reads updateToken param (line 26)
+✓ EXERCISED: showForm initial state set to updateToken === "1" (line 29)
+✓ EXERCISED: Token form renders when showForm is true (line 98-144)
+✓ EXERCISED: Save/Cancel/Logout handlers unchanged (lines 33-70)
+
+Criterion 6 - Module doc comment:
+✓ EXERCISED: Updated module doc in chatController.ts (lines 17-19):
+   "A `401` from either `GET /v1/state` or `POST /v1/chat` (however it arrives -- thrown or delivered to `onError`) is reported via `onUnauthorized` instead of `onError` (FR13)."
+
+TEST RESULTS:
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test src/api src/ui src/chat src/app-routing && bun run lint
+Output:
+  $ tsc --noEmit
+  bun test v1.4.0 (1381054db)
+   38 pass
+   0 fail
+   101 expect() calls
+  Ran 38 tests across 9 files. [40.00ms]
+  $ eslint src --max-warnings 0
+
+Exit Status: 0
+All tests pass. 38 tests including the 3 new FR13 tests (a, b, c).
+
+TESTS WEAKENED:
+NO - All existing tests remain unchanged and passing. New tests added without deleting or weakening any existing tests.
+- Tests in F2 group (model attribution) unchanged
+- Tests in F3 group (stop generation) unchanged
+- New FR13 group added with tests (a), (b), (c)
+- newCallbacks() helper extended with unauthorizedCount tracking and onUnauthorized callback support
+
+FILES ALLOWED VERIFICATION:
+✓ mobile/src/chat/chatController.ts (allowed)
+✓ mobile/src/chat/chatController.test.ts (allowed)
+✓ mobile/src/app/chat.tsx (allowed)
+✓ mobile/src/app/settings.tsx (allowed)
+✓ .harness/state.json (excluded from check - orchestrator file)
+

@@ -1,0 +1,44 @@
+{
+  "id": "q1",
+  "question": "What are the main differences between the Raft and Paxos consensus algorithms, and when would you choose one over the other?",
+  "generation_id": "d438e975-04a9-45e5-8c32-f9094d14fcc8",
+  "started_at": "2026-10-03T16:23:34.261Z",
+  "ended_at": "2026-10-03T16:27:05.564Z",
+  "fr41_selection": "server.log bytes written between just before the POST and after done (lines carry no run id)",
+  "saw_done": true,
+  "budget_s": 480,
+  "total_wall_s": 211.303,
+  "planning_s": 32.233,
+  "research_phase_calls": 12,
+  "routine_calls": 13,
+  "routine_p50_s": 3.684,
+  "routine_p95_s": 17.302,
+  "fr41_lines": 17,
+  "distinct_pages_read": 6,
+  "notes_kept": 14,
+  "final_status": "complete",
+  "cited_read_pages": 6,
+  "unresolved_citations": [],
+  "checks": {
+    "status_ok": {
+      "ok": true,
+      "value": "complete"
+    },
+    "within_budget": {
+      "ok": true,
+      "value": {
+        "total_wall_s": 211.303,
+        "limit_s": 540
+      }
+    },
+    "cited_read_pages_ok": {
+      "ok": true,
+      "value": 6
+    },
+    "no_unresolved_citations": {
+      "ok": true,
+      "value": []
+    }
+  },
+  "pass": true
+}

@@ -1,0 +1,68 @@
+=== Markdown Render Live Proof ===
+
+Restarting LaunchAgents...
+Waiting for server to be ready...
+Server is up and enforcing auth
+
+--- Recording original Ollama state (before proof) ---
+Before: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":27038329075,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-10T11:13:24.628217807Z","size_vram":27038329075,"context_length":131072}]}
+Originally resident: nemotron3:33b
+
+--- Running proof (mobile/scripts/markdown-render-proof.ts) ---
+--- Setup: choosing a model ---
+Installed: nemotron3:33b, qwen3.8:27b, devstral:24b, qwen3-coder:30b, qwen3.6:27b
+Resident: nemotron3:33b
+Using model: nemotron3:33b
+
+--- Check 1: streamed reply formats without raw markdown (AC20) ---
+Attempt 1 of 3
+--- Attempt 1: raw reply ---
+## Overview
+**Important step**  
+- Item one  
+- Item two  
+- Item three  
+Run `npm install` to set up the project. For more info see [Example](https://example.com).
+--- Attempt 1: visible text ---
+Overview
+Important step  
+• Item one  
+• Item two  
+• Item three   Run npm install to set up the project. For more info see Example.
+---
+PASS: Check 1: content events were captured (39 prefixes)
+PASS: Check 1: every streamed prefix parses without error (39 prefixes, 0 errors)
+PASS: Check 1: the stored reply, via buildChatItems, has a heading, a list, and bold, code and link inlines
+PASS: Check 1: visible text has no raw markdown characters
+
+--- Check 2: mid-stream unterminated markup ---
+Live prefixes that ended inside unterminated markup: 14 of 39
+PASS: Check 2: all 14 live unterminated prefixes parse and show no `**` or `](`
+
+--- Check 3: a reply saved before this change renders the same way ---
+PASS: Check 3: a fresh store over the file loads the saved conversation
+PASS: Check 3: the chat item carries the saved content unchanged
+--- Saved reply: raw reply ---
+# Title
+
+Some **bold** text with `code` and a [Docs](https://example.com/docs) link.
+
+- item one
+- item two
+
+--- Saved reply: visible text ---
+Title
+Some bold text with code and a Docs link.
+• item one
+• item two
+---
+PASS: Check 3: parsed blocks have a heading, a list, and bold, code and link inlines
+PASS: Check 3: visible text has no raw markdown characters
+
+All markdown render proof checks passed.
+
+--- Cleanup: restoring original Ollama state ---
+Before cleanup: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":27038329075,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-10T11:16:03.881310807Z","size_vram":27038329075,"context_length":131072}]}
+nemotron3:33b is already resident, nothing to restore
+After cleanup: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":27038329075,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-10T11:16:03.881310807Z","size_vram":27038329075,"context_length":131072}]}
+[0;32m=== Proof PASSED, Mac restored to its original state ===[0m

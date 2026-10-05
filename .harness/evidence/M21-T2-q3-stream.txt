@@ -1,0 +1,248 @@
+: connected
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-0
+event: step
+data: {"step_id":"plan","kind":"plan","status":"started","elapsed_ms":0,"budget_ms":480000}
+
+: keep-alive
+
+: keep-alive
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-1
+event: step
+data: {"step_id":"plan","kind":"plan","status":"done","elapsed_ms":33120,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-2
+event: step
+data: {"step_id":"9c598ff0-009b-4cd8-80ae-a1babc99d8d2","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":33121,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-3
+event: step
+data: {"step_id":"9c598ff0-009b-4cd8-80ae-a1babc99d8d2","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":35552,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-4
+event: step
+data: {"step_id":"19b3ad2e-b330-4955-8938-9d051fbe3754","kind":"search","status":"started","query":"WebAssembly Component Model formal definition specification site:w3.org","elapsed_ms":35552,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-5
+event: step
+data: {"step_id":"19b3ad2e-b330-4955-8938-9d051fbe3754","kind":"search","status":"done","query":"WebAssembly Component Model formal definition specification site:w3.org","elapsed_ms":36674,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-6
+event: step
+data: {"step_id":"55fe00f0-d453-4861-911c-2036c3ff862c","kind":"search","status":"started","query":"WACM technical spec 2026","elapsed_ms":36675,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-7
+event: step
+data: {"step_id":"55fe00f0-d453-4861-911c-2036c3ff862c","kind":"search","status":"done","query":"WACM technical spec 2026","elapsed_ms":39810,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-8
+event: step
+data: {"step_id":"73b61f70-4ce2-4b12-9510-79381884ec74","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":39812,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-9
+event: step
+data: {"step_id":"73b61f70-4ce2-4b12-9510-79381884ec74","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":42093,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-10
+event: step
+data: {"step_id":"975ff93b-8b0d-493e-a020-695bf5f36171","kind":"read","status":"started","url":"https://www.w3.org/TR/wasm-core-2/","elapsed_ms":42094,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-11
+event: step
+data: {"step_id":"38dcbb55-4e44-4171-a60b-d46e76919cd8","kind":"read","status":"started","url":"https://www.w3.org/TR/wasm-core-1/","elapsed_ms":42094,"budget_ms":480000}
+
+: keep-alive
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-12
+event: step
+data: {"step_id":"975ff93b-8b0d-493e-a020-695bf5f36171","kind":"read","status":"done","url":"https://www.w3.org/TR/wasm-core-2/","elapsed_ms":57571,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-13
+event: step
+data: {"step_id":"3a1a71bd-80c4-44bb-9ec3-8c3baa72d906","kind":"model","status":"started","detail":"Taking notes: w3.org","elapsed_ms":57634,"budget_ms":480000}
+
+: keep-alive
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-14
+event: step
+data: {"step_id":"3a1a71bd-80c4-44bb-9ec3-8c3baa72d906","kind":"model","status":"done","detail":"Taking notes: w3.org","elapsed_ms":60810,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-15
+event: step
+data: {"step_id":"5aafeb3d-6b9c-4f3a-9b41-82b98b116ed1","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":60812,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-16
+event: step
+data: {"step_id":"5aafeb3d-6b9c-4f3a-9b41-82b98b116ed1","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":63140,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-17
+event: step
+data: {"step_id":"8ee20cfb-2c20-4fc5-a39f-f4e9150ec2ea","kind":"search","status":"started","query":"WebAssembly Component Model vs core Wasm modules differences","elapsed_ms":63140,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-18
+event: step
+data: {"step_id":"8ee20cfb-2c20-4fc5-a39f-f4e9150ec2ea","kind":"search","status":"done","query":"WebAssembly Component Model vs core Wasm modules differences","elapsed_ms":65249,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-19
+event: step
+data: {"step_id":"4fdd0afd-95ab-4a3c-949f-ab8b5fd63b57","kind":"search","status":"started","query":"functional and structural differences between Wasm components and binary modules","elapsed_ms":65250,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-20
+event: step
+data: {"step_id":"4fdd0afd-95ab-4a3c-949f-ab8b5fd63b57","kind":"search","status":"done","query":"functional and structural differences between Wasm components and binary modules","elapsed_ms":66921,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-21
+event: step
+data: {"step_id":"463399a8-573f-418b-a49e-0a42f4d5d332","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":66922,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-22
+event: step
+data: {"step_id":"463399a8-573f-418b-a49e-0a42f4d5d332","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":69070,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-23
+event: step
+data: {"step_id":"e59e6c61-0a2d-4814-b7ad-d02ea38ca1af","kind":"read","status":"started","url":"https://minhvo.is-a.dev/blogs/webassembly-component-model-composing-wasm-modules","elapsed_ms":69070,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-24
+event: step
+data: {"step_id":"411927e4-ad6d-495a-9c4c-767e22302415","kind":"read","status":"started","url":"https://moalyousef.github.io/blog/WasmCompModel.html","elapsed_ms":69070,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-25
+event: step
+data: {"step_id":"e59e6c61-0a2d-4814-b7ad-d02ea38ca1af","kind":"read","status":"done","url":"https://minhvo.is-a.dev/blogs/webassembly-component-model-composing-wasm-modules","elapsed_ms":69701,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-26
+event: step
+data: {"step_id":"6c2d5b92-8f54-47ff-af9d-348532db32d9","kind":"model","status":"started","detail":"Taking notes: minhvo.is-a.dev","elapsed_ms":69799,"budget_ms":480000}
+
+: keep-alive
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-27
+event: step
+data: {"step_id":"6c2d5b92-8f54-47ff-af9d-348532db32d9","kind":"model","status":"done","detail":"Taking notes: minhvo.is-a.dev","elapsed_ms":83967,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-28
+event: step
+data: {"step_id":"b748983d-eca2-4ee8-b49d-cd0c5916a687","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":83968,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-29
+event: step
+data: {"step_id":"b748983d-eca2-4ee8-b49d-cd0c5916a687","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":87338,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-30
+event: step
+data: {"step_id":"3a8284da-e59e-43f9-8689-e4ce41c3d7ea","kind":"search","status":"started","query":"WebAssembly Component Model runtime support list 2026","elapsed_ms":87338,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-31
+event: step
+data: {"step_id":"3a8284da-e59e-43f9-8689-e4ce41c3d7ea","kind":"search","status":"done","query":"WebAssembly Component Model runtime support list 2026","elapsed_ms":88948,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-32
+event: step
+data: {"step_id":"3d1e46d8-664e-4776-a005-9fc639b2bd04","kind":"search","status":"started","query":"which programming languages support Wasm component model 2026","elapsed_ms":88948,"budget_ms":480000}
+
+: keep-alive
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-33
+event: step
+data: {"step_id":"3d1e46d8-664e-4776-a005-9fc639b2bd04","kind":"search","status":"done","query":"which programming languages support Wasm component model 2026","elapsed_ms":94369,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-34
+event: step
+data: {"step_id":"9f65f577-4431-4204-8aa1-e729dcab4cdf","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":94369,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-35
+event: step
+data: {"step_id":"9f65f577-4431-4204-8aa1-e729dcab4cdf","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":97040,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-36
+event: step
+data: {"step_id":"a6347c65-316e-4e0a-b9b1-9ee78d6d3b2f","kind":"read","status":"started","url":"https://wasmcloud.com/docs/wash/developer-guide/language-support/","elapsed_ms":97040,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-37
+event: step
+data: {"step_id":"32703659-0a16-45ca-9d9e-0cbd1decf425","kind":"read","status":"started","url":"https://component-model.bytecodealliance.org/language-support","elapsed_ms":97040,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-38
+event: step
+data: {"step_id":"a6347c65-316e-4e0a-b9b1-9ee78d6d3b2f","kind":"read","status":"done","url":"https://wasmcloud.com/docs/wash/developer-guide/language-support/","elapsed_ms":97684,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-39
+event: step
+data: {"step_id":"77df82e4-c182-4ca5-9387-c17a720beac8","kind":"model","status":"started","detail":"Taking notes: wasmcloud.com","elapsed_ms":97707,"budget_ms":480000}
+
+: keep-alive
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-40
+event: step
+data: {"step_id":"77df82e4-c182-4ca5-9387-c17a720beac8","kind":"model","status":"done","detail":"Taking notes: wasmcloud.com","elapsed_ms":116999,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-41
+event: step
+data: {"step_id":"38dcbb55-4e44-4171-a60b-d46e76919cd8","kind":"read","status":"done","url":"https://www.w3.org/TR/wasm-core-1/","elapsed_ms":116999,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-42
+event: step
+data: {"step_id":"5bfe8778-86f1-47e7-a3f9-a5be7eb5ad99","kind":"model","status":"started","detail":"Taking notes: w3.org","elapsed_ms":117110,"budget_ms":480000}
+
+: keep-alive
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-43
+event: step
+data: {"step_id":"5bfe8778-86f1-47e7-a3f9-a5be7eb5ad99","kind":"model","status":"done","detail":"Taking notes: w3.org","elapsed_ms":120745,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-44
+event: step
+data: {"step_id":"411927e4-ad6d-495a-9c4c-767e22302415","kind":"read","status":"done","url":"https://moalyousef.github.io/blog/WasmCompModel.html","elapsed_ms":120747,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-45
+event: step
+data: {"step_id":"2713460b-3cd7-4cac-b6e5-827b6d421c8d","kind":"model","status":"started","detail":"Taking notes: moalyousef.github.io","elapsed_ms":120787,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-46
+event: step
+data: {"step_id":"2713460b-3cd7-4cac-b6e5-827b6d421c8d","kind":"model","status":"done","detail":"Taking notes: moalyousef.github.io","elapsed_ms":132140,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-47
+event: step
+data: {"step_id":"32703659-0a16-45ca-9d9e-0cbd1decf425","kind":"read","status":"done","url":"https://component-model.bytecodealliance.org/language-support","elapsed_ms":132141,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-48
+event: step
+data: {"step_id":"c2989b87-a9bb-4015-a96c-c9775b77ac05","kind":"model","status":"started","detail":"Taking notes: component-model.bytecodealliance.org","elapsed_ms":132144,"budget_ms":480000}
+
+: keep-alive
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-49
+event: step
+data: {"step_id":"c2989b87-a9bb-4015-a96c-c9775b77ac05","kind":"model","status":"done","detail":"Taking notes: component-model.bytecodealliance.org","elapsed_ms":139327,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-50
+event: step
+data: {"step_id":"write","kind":"write","status":"started","elapsed_ms":139328,"budget_ms":480000}
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-51
+event: step
+data: {"step_id":"write","kind":"write","status":"done","elapsed_ms":205113,"budget_ms":480000}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-52
+event: content
+data: {"text":"The WebAssembly Component Model is formally defined as a framework enabling multiple WebAssembly modules, potentially written in different programming languages, to compose together through rich, typed interfaces [4]. Structurally, it differs from core WebAssembly by introducing the WIT (WebAssembly Interface Types) type system, which supports complex data types such as strings, lists, records, variants, and enums [4]. Unlike core modules that lack a formal interface definition layer, Components rely on the WIT specification to declare types and interfaces, typically defined in `wit` files within a `wit` directory [3]. Functionally, core WebAssembly is restricted to importing and exporting functions that accept and return only numeric types like integers and floats [4]. In contrast, Core modules limit data exchange to basic primitive types, requiring manual memory management for complex data like strings, whereas the Component Model automatically generates serialization code to bridge different languages' memory models [4]. As of October 2026, support for the WebAssembly Component Model is available across major programming languages including C/C++, C#, Go, JavaScript, Python, Rust, MoonBit, and WAT [5]. Major runtimes support this model by relying on 'world' definitions rather than language-specific binary formats, ensuring portability across different host environments [5]."}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-53
+event: sources
+data: {"items":[{"title":"WebAssembly Core Specification","url":"https://www.w3.org/TR/wasm-core-1/","n":1},{"title":"WebAssembly Core Specification","url":"https://www.w3.org/TR/wasm-core-2/","n":2},{"title":"Forays into the Wasm Component Model","url":"https://moalyousef.github.io/blog/WasmCompModel.html","n":3},{"title":"WebAssembly Component Model: Composing Wasm Modules","url":"https://minhvo.is-a.dev/blogs/webassembly-component-model-composing-wasm-modules","n":4},{"title":"Creating Components - The WebAssembly Component Model","url":"https://component-model.bytecodealliance.org/language-support","n":5},{"title":"Language Support for WebAssembly Components","url":"https://wasmcloud.com/docs/wash/developer-guide/language-support/","n":6}]}
+
+id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8-54
+event: done
+data: {"status":"complete","model":"qwen3.5:35b-a3b","eval_count":2588,"tokens_per_second":46.97424000199223,"research":{"status":"complete","elapsed_ms":205114,"budget_ms":480000}}
+

@@ -1,0 +1,151 @@
+# M19d-F1 Verification Log
+
+## Task Packet
+/Users/ryankenny/Projects/CodingHarnessv2/.harness/tasks/M19d-F1.md
+
+## Verification Date
+2026-10-02
+
+## Test 1: Focused Test File (pre-correction code)
+
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/http/deepResearchBreadthFirst.test.ts
+
+Pre-correction Code (git show d615923):
+- searchOnce returned number | null
+- Round-1 loop: if (added === null || added === 0) { sq.searchOver = true; break; }
+- Later-rounds loop: if (added === 0) { sq.searchOver = true; continue; }
+- No handling for failed/unavailable search status
+
+Exit Status: 0
+Output Summary: 7 pass, 3 fail, 82 expect() calls
+
+Failed Tests:
+- F1: a sub-question whose first search failed searches again and still gets its first page
+- F1: a sub-question whose first search unavailable searches again and still gets its first page
+- F1: a later-round failed search does not end that sub-question's searching
+
+## Test 2: Focused Test File (corrected code)
+
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/http/deepResearchBreadthFirst.test.ts
+
+Corrected Code:
+- searchOnce now checks events for failed/unavailable status
+- Returns "failed" string when search step status is failed or unavailable
+- Round-1 loop unchanged: if (added === null || added === 0) still breaks (null means no query, 0 means successful empty)
+- Later-rounds loop: if (added === "failed") continue; then checks if (added === 0)
+- Comments updated to clarify only successful searches trigger early end
+
+Exit Status: 0
+Output Summary: 10 pass, 0 fail, 90 expect() calls
+
+All Tests Passing:
+- AC1a tests pass
+- AC1b tests pass (successful-but-empty search still ends searching)
+- AC2a tests pass
+- AC2b tests pass
+- AC2c tests pass
+- F1a tests pass (both "failed" and "unavailable" status variants)
+- F1b test passes (later-round failed search)
+
+## Test 3: Full Suite First Run
+
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bunx tsc --noEmit
+
+Exit Status: 0 (tests) and 0 (tsc)
+Output Summary: 339 pass, 0 fail, 2222 expect() calls
+
+## Test 4: Full Suite Second Run
+
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test
+
+Exit Status: 0
+Output Summary: 339 pass, 0 fail, 2225 expect() calls
+
+## Files Changed
+
+Only files outside .harness/:
+- server/src/generations/research.ts
+- server/src/http/deepResearchBreadthFirst.test.ts
+
+Both are in the Files Allowed To Change list.
+
+## Test File Changes Analysis
+
+server/src/http/deepResearchBreadthFirst.test.ts changes:
+1. Added searchFails option to SetupOptions interface (line 82-83)
+   - Allows specifying which queries should fail
+
+2. Modified fake search backend to support failures (lines 162, 164-168):
+   - Checks searchFails(query) to determine if search fails
+   - Returns status "failed" or "unavailable" in step event
+   - Returns empty results array when search fails
+
+3. Added three new tests (lines 356-393):
+   - Test "F1: a sub-question whose first search failed searches again and still gets its first page"
+   - Test "F1: a sub-question whose first search unavailable searches again and still gets its first page" 
+   - Test "F1: a later-round failed search does not end that sub-question's searching"
+
+NO EXISTING TESTS WERE MODIFIED OR WEAKENED:
+- All existing assertions remain unchanged
+- AC1a tests untouched
+- AC1b tests untouched and PASS (confirming successful-but-empty search still ends searching)
+- AC2a/AC2b/AC2c tests untouched
+
+## Research.ts Changes Analysis
+
+Key changes in searchOnce function:
+1. Return type changed from AsyncGenerator<ResearchEvent, number | null> to AsyncGenerator<ResearchEvent, number | "failed" | null>
+
+2. Added failure detection logic:
+   const searchFailed = events.some(
+     (e) => e.type === "step" && e.data.kind === "search" && (e.data.status === "failed" || e.data.status === "unavailable")
+   );
+   if (searchFailed) return "failed";
+
+3. Function documentation updated to explain new return value
+
+4. Round-1 loop comment updated:
+   - Old: "No new query, or FR44: a search that adds no new URLs ends this sub-question's searching."
+   - New: "No new query, or FR44: a successful search that adds no new URLs ends this sub-question's searching. A failed search does not; the next query is tried (FR35 floor)."
+
+5. Later-rounds loop updated:
+   - Added: if (added === "failed") continue; (before the added === 0 check)
+   - Updated comment: "A failed search is not an early end; the sub-question may search again next round."
+
+NO ASSERTIONS WEAKENED: The logic for handling successful-but-empty searches (added === 0) remains identical. Only the addition of "failed" status handling was added.
+
+## Acceptance Criteria Verification
+
+From task packet M19d-AC1 and the Test section:
+
+AC1a: First search fails, next succeeds → sub-question searches again, gets first page, breadth-first order holds
+- Exercised by: "F1: a sub-question whose first search failed searches again and still gets its first page"
+- Tests verify: searches(2).slice(0, 2) includes both "q2a" and "q2b"; noteSubs.slice(0, 3) equals [1, 2, 3]
+
+AC1b: Successful search with zero results still ends searching (unchanged behavior)
+- Exercised by: "AC1b: a sub-question whose second search adds no new URLs runs no further search and no gap check; the others continue"
+- Exercised by: "AC1b: a later search that returns nothing ends that sub-question's searching"
+- Both tests PASS (10 total tests pass, including AC1b tests)
+
+AC1c: Failed search in round 1 continues to next query (FR35 floor)
+- Exercised by: "F1: a sub-question whose first search unavailable searches again and still gets its first page"
+- Tests verify: Failed query "q2a" is followed by successful query "q2b" in the same round
+
+AC1d: Failed search in later rounds doesn't end sub-question
+- Exercised by: "F1: a later-round failed search does not end that sub-question's searching"
+- Tests verify: searches(1) equals ["q1a", "q1gap1", "q1gap2"] even though q1gap1 fails
+
+## Summary
+
+All validation tests pass:
+- Focused test file: 10 pass (3 new + 7 existing)
+- Full suite: 339 pass twice
+- TypeScript: Clean
+- Pre-correction code: 3 fail (as expected)
+- Corrected code: All pass
+- No test weakening
+- All acceptance criteria have test coverage

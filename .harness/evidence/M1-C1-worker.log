@@ -1,0 +1,33 @@
+M1-C1 worker validation
+commit: cf31dd346de750904eeb599b58a1e956f0c7a0eb (uncommitted working-tree changes on top)
+date: 2026-09-25T08:05:34Z
+command: cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh
+
+bun test v1.4.0 (1381054db)
+
+ 39 pass
+ 0 fail
+ 152 expect() calls
+Ran 39 tests across 3 files. [275.00ms]
+$ tsc --noEmit
+Entry smoke: starting server on 127.0.0.1:59072
+PASS: server started and is listening on http://127.0.0.1:59072
+PASS: listens on 127.0.0.1 only (127.0.0.1:59072)
+PASS: no token -> 401
+PASS: wrong token -> 401
+PASS: correct token -> 200 (not 401)
+PASS: 0644 token file -> exits non-zero (1)
+PASS: missing token file -> exits non-zero (1)
+Entry smoke: all checks passed
+EXIT: 0
+
+--- flakiness re-runs: bun test x3 ---
+ 39 pass
+ 0 fail
+Ran 39 tests across 3 files. [261.00ms]
+ 39 pass
+ 0 fail
+Ran 39 tests across 3 files. [221.00ms]
+ 39 pass
+ 0 fail
+Ran 39 tests across 3 files. [222.00ms]

@@ -1,0 +1,45 @@
+=== VERIFICATION LOG FOR M16-T3 ===
+Date: 2026-10-02
+Commit: 72f720ed4cb12bb3434bae2267171263723a5319
+
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck
+
+Test Output:
+bun test v1.4.0 (1381054db)
+
+ 221 pass
+ 0 fail
+ 1278 expect() calls
+Ran 221 tests across 12 files. [3.63s]
+
+Typecheck Output:
+$ tsc --noEmit
+
+(No errors)
+
+Exit Status: 0
+
+Files Changed (vs HEAD):
+- server/src/ollama/client.ts
+- server/src/ollama/client.test.ts
+
+Verification Details:
+1. Files changed are within allowed list: YES
+2. Tests pass: YES (221 pass, 0 fail)
+3. Typecheck passes: YES
+4. No untracked files outside .harness/: YES
+5. Doc comment updated for explicit false: YES
+6. New tests added for explicit false: YES (2 tests added)
+7. Existing tests weakened: NO
+
+Acceptance Criteria Verification:
+- AC1: When request.think === false, body contains think: false
+  Evidence: Tests at lines 260-279 and 281-300 verify this behavior
+- AC2: When request.think === true, body contains think: true
+  Evidence: Existing test at line 304+ still passes and verifies this
+- AC3: When request.think is undefined, behavior unchanged
+  Evidence: Existing tests at lines 172-189, 191-207, 209-225, 227-243, 245-258 all pass
+- AC4: New tests written first (Red), in existing describe block, covering explicit false
+  Evidence: Two new tests added to "OllamaClient chat think capability" describe block
+- AC5: Doc comment updated to state explicit-false behaviour
+  Evidence: Doc comment lines 253-258 updated with explicit false explanation

@@ -1,0 +1,8 @@
+bun test v1.4.0 (1381054db)
+
+ 60 pass
+ 0 fail
+ 189 expect() calls
+Ran 60 tests across 2 files. [72.00ms]
+$ tsc --noEmit
+src/ui/sourceLinks.test.ts(15,8): error TS2307: Cannot find module './sourceLinks' or its corresponding type declarations.

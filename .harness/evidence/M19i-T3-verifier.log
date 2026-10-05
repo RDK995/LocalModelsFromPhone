@@ -1,0 +1,135 @@
+=== VERIFICATION REPORT: M19i-T3 (Attempt 2) ===
+
+Validation Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/http/deepResearchPrices.test.ts && bun test && bun run typecheck
+
+Current Commit: 2544604
+Branch: m19i-dated-priced-reports
+
+=== TEST EXECUTION RESULTS ===
+
+Focused test (deepResearchPrices.test.ts):
+ 7 pass
+ 0 fail
+ 84 expect() calls
+Ran 7 tests across 1 file. [33.00ms]
+
+Full test suite:
+ 373 pass
+ 0 fail
+ 2850 expect() calls
+Ran 373 tests across 26 files. [18.51s]
+
+TypeCheck: Clean (no output = no errors)
+
+Exit Status: 0
+
+=== FILES CHANGED ===
+
+Working tree changes:
+ M server/src/generations/research.ts (modified)
+?? server/src/http/deepResearchPrices.test.ts (new file)
+
+Both files are in Files Allowed To Change list (packet lines 41-43).
+
+=== CONSTANTS VERIFICATION ===
+
+All four constants are present and byte-exact:
+✓ PLAN_PRICES_RULE: "If the question asks about costs, prices, bills or running costs..."
+✓ WRITE_DATE_RULE: "Never call a price or period \"current\" or \"today's\"..."
+✓ WRITE_SUM_RULE: "Where the notes give a quantity (for example kWh a year)..."
+✓ WRITE_NO_PRICE_RULE: "If the question asks about cost but no note gives a price..."
+
+Key phrases verified present:
+✓ "current unit prices" (in PLAN_PRICES_RULE)
+✓ "early 2024" (in WRITE_DATE_RULE)
+✓ "sum shown" (in WRITE_SUM_RULE)
+✓ "no current price was found" (in WRITE_NO_PRICE_RULE)
+
+=== CODE CHANGES VERIFICATION ===
+
+✓ Plan step task (line 969): Appends PLAN_PRICES_RULE with space
+✓ Write step task (line 1092): Appends WRITE_DATE_RULE + " " + WRITE_SUM_RULE + " " + WRITE_NO_PRICE_RULE
+✓ Citation text preserved: "every sentence that uses a note must end with that note's page number..."
+✓ SYSTEM_INSTRUCTIONS unchanged (compared with commit 2544604)
+✓ No changes to manager.ts or tools.ts
+
+=== TESTS STRUCTURE (deepResearchPrices.test.ts) ===
+
+Test 1 (AC2): Plan request contains PLAN_PRICES_RULE for cost question
+- Filters for plan requests (stepOf(r) === "plan")
+- Asserts "current unit prices" phrase present
+Test 2 (AC2): Plan request unconditionally includes PLAN_PRICES_RULE (non-cost question)
+- Proves no server-side classifier
+- Asserts rule present even for "Why do cats purr?"
+Test 3 (AC3): Write request contains all three WRITE_* rules + citation text
+- Asserts citation instruction preserved
+- Asserts WRITE_DATE_RULE fragments ("early 2024")
+- Asserts WRITE_SUM_RULE fragments ("sum shown")
+- Asserts WRITE_NO_PRICE_RULE fragments ("no current price was found")
+Test 4 (AC3): Non-write requests lack WRITE_* rules
+- Filters for stepOf(r) !== "write"
+- Asserts write-only fragments absent
+Test 5 (AC3): Non-plan requests lack PLAN_PRICES_RULE
+- Filters for stepOf(r) !== "plan"
+- Asserts plan-only text absent
+
+Test 6 (AC4 fix): Ordinary web reply (web:true, no deep_research)
+- Line 202: expect(requests.length).toBe(1) - exact count assertion
+- Lines 206-208: Deep-equal check for system message + user message
+- Lines 211-216: Asserts no message contains any of PLAN_PRICES_RULE, WRITE_DATE_RULE, WRITE_SUM_RULE, WRITE_NO_PRICE_RULE (using constants, not fragments)
+
+Test 7 (AC4 fix): Switch-off reply (web:false)
+- Line 224: expect(requests.length).toBe(1) - exact count assertion
+- Line 228: Deep-equal check for posted messages exactly: [{ role: "user", content: "..." }]
+- Lines 231-236: Asserts no message contains any of the four rule constants (using constants, not fragments)
+
+=== PREVIOUS ATTEMPT REQUIREMENTS MET ===
+
+Requirement: Fix only tests 6-7, keep research.ts and tests 1-5 unchanged
+✓ Tests 1-5 intact and passing
+✓ research.ts constants and integrations correct
+
+Requirement from lines 58-62: Tests 6-7 must:
+✓ Assert exactly one model request made
+✓ Switch-off: messages deep-equal posted messages exactly
+✓ Ordinary web: messages deep-equal [{role:"system", content:"SYSTEM NOTE"}, ...posted] exactly
+✓ Assert no message of any role contains any of the four rule constants (use constants, not fragments)
+
+=== ACCEPTANCE CRITERIA EXERCISED ===
+
+AC2 (packet line 12): "plan request carries pricing instruction"
+- Exercised by: Test 1 (cost question) and Test 2 (non-cost question)
+- Assertion: PLAN_PRICES_RULE and "current unit prices" present in plan request user message
+
+AC3 (packet lines 13): "write request carries date/sum/no-price rules with citation text"
+- Exercised by: Test 3 (write request assertions)
+- Assertions: WRITE_DATE_RULE, WRITE_SUM_RULE, WRITE_NO_PRICE_RULE, citation instruction all present
+- Also exercised by: Test 4 (non-write requests lack write rules)
+
+AC4 (packet line 14): "Ordinary web and switch-off replies unchanged: no FR46 text, all existing tests pass"
+- Exercised by: Test 6 (ordinary web reply message structure and no FR46 rules)
+- Exercised by: Test 7 (switch-off reply message structure and no FR46 rules)
+- All existing tests passing (373 pass, 0 fail)
+
+=== TEST WEAKENING CHECK ===
+
+No existing tests modified:
+✓ deepResearchModelCalls.test.ts unchanged
+✓ deepResearchPassages.test.ts unchanged
+✓ deepResearchDate.test.ts unchanged
+✓ All other test files unchanged
+
+=== SUMMARY ===
+
+✓ Validation command executed successfully
+✓ Exit status: 0
+✓ All tests passing: 7 focused, 373 total, 0 failures
+✓ TypeCheck clean
+✓ Files changed match allowed list exactly
+✓ Constants match packet byte-for-byte
+✓ Code integrations correct (plan/write task updates)
+✓ AC4 test fixes properly implemented per Previous Attempt(s) requirements
+✓ All acceptance criteria exercised by test suite
+✓ No existing tests weakened
+✓ SYSTEM_INSTRUCTIONS, citation text, and unrelated code unchanged

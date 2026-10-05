@@ -1,0 +1,57 @@
+{
+  "id": "q3",
+  "question": "What is the WebAssembly component model, how does it differ from core WebAssembly modules, and how widely is it supported by runtimes and languages today?",
+  "generation_id": "1dfd519e-5fcc-46fe-82c1-ed65648827eb",
+  "started_at": "2026-10-05T09:27:13.303Z",
+  "ended_at": "2026-10-05T09:30:50.400Z",
+  "fr41_selection": "server.log bytes written between just before the POST and after done (lines carry no run id)",
+  "saw_done": true,
+  "budget_s": 480,
+  "total_wall_s": 217.097,
+  "planning_s": 32.151,
+  "research_phase_calls": 12,
+  "routine_calls": 13,
+  "routine_p50_s": 4.066,
+  "routine_p95_s": 22.173,
+  "fr41_lines": 17,
+  "distinct_pages_read": 6,
+  "notes_kept": 17,
+  "notes_dropped": 13,
+  "drop_reasons": {
+    "quote_not_found": 13
+  },
+  "note_drop_lines": 13,
+  "final_status": "complete",
+  "cited_read_pages": 5,
+  "unresolved_citations": [],
+  "checks": {
+    "status_ok": {
+      "ok": true,
+      "value": "complete"
+    },
+    "within_budget": {
+      "ok": true,
+      "value": {
+        "total_wall_s": 217.097,
+        "limit_s": 540
+      }
+    },
+    "cited_read_pages_ok": {
+      "ok": true,
+      "value": 5
+    },
+    "no_unresolved_citations": {
+      "ok": true,
+      "value": []
+    }
+  },
+  "pass": true,
+  "sources_check": {
+    "sources_checked": 6,
+    "unreadable_sources": [],
+    "unchecked_sources": [],
+    "ok": true
+  },
+  "ac37_pass": true
+}
+exit=0

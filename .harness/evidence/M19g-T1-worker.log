@@ -1,0 +1,27 @@
+=== M19g-T1 VALIDATION ===
+
+Test 1: Run probe with thinking off
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/probe-format-think.ts --model qwen3.5:35b-a3b --calls 5
+Exit Status: 0
+Result: PASS - think-off validity rate: 7/7 (100%)
+
+Test 2: Verify new process PID and start time
+Command: launchctl list | grep com.harness.server
+Old PID: 2034, start time: Fri  2 Oct 21:08:42 2026
+New PID: 2057, start time: Fri  2 Oct 21:08:52 2026
+Result: PASS - new pid 2057 is different from old pid 2034, start time is after server commit
+
+Test 3: Verify server commit time
+Latest server commit: 30043cc5f86aa6b7f91b775559a679dca3940e6f 2026-10-02T20:37:00+01:00
+New process start time: Fri  2 Oct 21:08:52 2026 (20:08:52)
+Result: PASS - new process start time (20:08:52) is after latest server commit (20:37:00+01:00)
+
+Test 4: Verify readiness check
+Command: curl -m 10 http://127.0.0.1:7789/v1/health
+Response: HTTP/1.1 401 Unauthorized
+Result: PASS - server is listening (401 is acceptable)
+
+All evidence files created successfully:
+- .harness/evidence/M19g-T1-restart.log
+- .harness/evidence/M19g-T1-probe.log
+- .harness/evidence/M19g-T1-probe.json

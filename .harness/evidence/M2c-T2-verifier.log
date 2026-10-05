@@ -1,0 +1,38 @@
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test src/api src/ui src/chat src/app-routing && bun run lint && bun run smoke:runtime
+
+Current commit: ef16c78 (HEAD of m2c-busy-confirmation branch)
+
+Exit Status: 0
+
+Output (salient lines):
+
+=== typecheck ===
+$ tsc --noEmit
+(passed silently)
+
+=== tests ===
+bun test v1.4.0 (1381054db)
+
+ 72 pass
+ 0 fail
+ 183 expect() calls
+Ran 72 tests across 12 files. [47.00ms]
+
+=== lint ===
+$ eslint src --max-warnings 0
+(passed silently)
+
+=== smoke:runtime ===
+$ scripts/runtime-smoke.sh
+
+=== token present ===
+RESULT: PASS (app launched, Chat rendered, no JS exception)
+
+=== token absent ===
+RESULT: PASS (app launched, Setup rendered, no JS exception, Setup -> Chat drive reached Chat with one top bar)
+
+=== token wrong ===
+RESULT: PASS (app launched, Chat rendered, no JS exception, Chat 401 drive reached Settings with the token form open)
+
+All validation tests passed.

@@ -1,0 +1,20 @@
+commit: bad5a7fb91c6be3cb7b67ea084ccc106c3176361 (uncommitted changes on top)
+$ bun test src/generations/research.test.ts
+bun test v1.4.0 (1381054db)
+
+ 32 pass
+ 0 fail
+ 410 expect() calls
+Ran 32 tests across 1 file. [4.32s]
+exit: 0
+$ bun test
+bun test v1.4.0 (1381054db)
+
+ 232 pass
+ 0 fail
+ 1410 expect() calls
+Ran 232 tests across 12 files. [7.84s]
+exit: 0
+$ bun run typecheck
+$ tsc --noEmit
+exit: 0

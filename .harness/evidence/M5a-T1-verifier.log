@@ -1,0 +1,136 @@
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2 && bash ops/scripts/verify-ops-install.sh && bash ops/scripts/restart-proof.sh
+Exit Status: 0
+
+=== Starting tests at 2026-09-26 14:03:30 ===
+Git commit: 296b9e5b87b04a92fcac5ad92df442366f636454
+
+Verifying ops installation scripts...
+Verifying LaunchAgent plist files...
+Verifying LaunchAgent plist contents...
+Verifying Tailscale Serve script...
+Verifying token command integration...
+Verifying pf anchor configuration...
+pf anchor safety check (no sudo)
+  ok    anchor name 'com.apple/harness.bundle-host' is under com.apple/ (evaluated by the stock pf.conf 'anchor "com.apple/*"')
+  ok    [utun4] renderer exits 0
+  ok    [utun4] exactly 3 rule lines (got 3)
+  ok    [utun4] rule 0 contains 'port 8081': pass in quick on lo0 proto tcp from any to any port 8081
+  ok    [utun4] rule 0 is an inbound quick rule (no out, no bare pass/open)
+  ok    [utun4] rule 0 has no out/all/table/scrub/nat/rdr/anchor keywords
+  ok    [utun4] rule 1 contains 'port 8081': pass in quick on utun4 proto tcp from any to any port 8081
+  ok    [utun4] rule 1 is an inbound quick rule (no out, no open/block)
+  ok    [utun4] rule 1 has no out/all/table/scrub/nat/rdr/anchor keywords
+  ok    [utun4] rule 2 contains 'port 8081': block drop in quick proto tcp from any to any port 8081
+  ok    [utun4] rule 2 is an inbound quick rule (no out, no open/block)
+  ok    [utun4] rule 2 has no out/all/table/scrub/nat/rdr/anchor keywords
+  ok    [utun4] no 'block all' anywhere in the rendered text
+  ok    [utun4] lo0 open rule present
+  ok    [utun4] utun4 open rule present
+  ok    [utun4] 8081 block rule present
+  ok    [utun4] lo0 (0) and utun4 (1) open rules precede the block (2)
+  ok    [utun4] pfctl -n parses the rendered rules
+  ok    [utun12] renderer exits 0
+  ok    [utun12] exactly 3 rule lines (got 3)
+  ok    [utun12] rule 0 contains 'port 8081': pass in quick on lo0 proto tcp from any to any port 8081
+  ok    [utun12] rule 0 is an inbound quick rule (no out, no open/block)
+  ok    [utun12] rule 0 has no out/all/table/scrub/nat/rdr/anchor keywords
+  ok    [utun12] rule 1 contains 'port 8081': pass in quick on utun12 proto tcp from any to any port 8081
+  ok    [utun12] rule 1 is an inbound quick rule (no out, no open/block)
+  ok    [utun12] rule 1 has no out/all/table/scrub/nat/rdr/anchor keywords
+  ok    [utun12] rule 2 contains 'port 8081': block drop in quick proto tcp from any to any port 8081
+  ok    [utun12] rule 2 is an inbound quick rule (no out, no open/block)
+  ok    [utun12] rule 2 has no out/all/table/scrub/nat/rdr/anchor keywords
+  ok    [utun12] no 'block all' anywhere in the rendered text
+  ok    [utun12] lo0 open rule present
+  ok    [utun12] utun12 open rule present
+  ok    [utun12] 8081 block rule present
+  ok    [utun12] lo0 (0) and utun12 (1) open rules precede the block (2)
+  ok    [utun12] pfctl -n parses the rendered rules
+  ok    renderer refuses interface '''' (exit 1, no output)
+  ok    renderer refuses interface 'en0' (exit 1, no output)
+  ok    renderer refuses interface 'lo0' (exit 1, no output)
+  ok    renderer refuses interface 'utun' (exit 1, no output)
+  ok    renderer refuses interface 'utun4\ ' (exit 1, no output)
+  ok    renderer refuses interface 'utun4\;\ block\ all' (exit 1, no output)
+  ok    renderer refuses interface '$'utun4\nblock all'' (exit 1, no output)
+  ok    renderer refuses interface 'any' (exit 1, no output)
+  ok    resolver finds the utun carrying the tailnet IP (got 'utun7', want utun7)
+  ok    resolver refuses a non-utun interface (the LAN IP on en1)
+  ok    resolver fails when no interface carries the IP
+  ok    resolver fails on an empty IP
+  ok    pf-bundle-host-load.sh refuses to run without root (exit 1)
+  ok    install-pf-anchor.sh refuses to run without root (exit 1)
+  ok    uninstall-pf-anchor.sh refuses to run without root (exit 1)
+  ok    pf-bundle-host-load.sh never disables pf (no 'pfctl -d')
+  ok    pf-bundle-host-load.sh only flushes with an explicit anchor (-F only alongside -a "$ANCHOR")
+  ok    pf-bundle-host-load.sh loads rules only into the anchor (every 'pfctl ... -f' has -a "$ANCHOR" or -n)
+  ok    pf-bundle-host-load.sh never writes the system pf.conf or pf.anchors
+  ok    install-pf-anchor.sh never disables pf (no 'pfctl -d')
+  ok    install-pf-anchor.sh only flushes with an explicit anchor (-F only alongside -a "$ANCHOR")
+  ok    install-pf-anchor.sh loads rules only into the anchor (every 'pfctl ... -f' has -a "$ANCHOR" or -n)
+  ok    install-pf-anchor.sh never writes the system pf.conf or pf.anchors
+  ok    uninstall-pf-anchor.sh never disables pf (no 'pfctl -d')
+  ok    uninstall-pf-anchor.sh only flushes with an explicit anchor (-F only alongside -a "$ANCHOR")
+  ok    uninstall-pf-anchor.sh loads rules only into the anchor (every 'pfctl ... -f' has -a "$ANCHOR" or -n)
+  ok    uninstall-pf-anchor.sh never writes the system pf.conf or pf.anchors
+  ok    no file in ops/scripts carries 'block all' or refers to editing /etc/pf.conf
+  ok    unsafe legacy file com.harness.pf.anchor is gone
+  ok    unsafe legacy file create-pf-anchor.sh is gone
+/Users/ryankenny/Projects/CodingHarnessv2/ops/scripts/com.harness.pf-bundle-host.plist: OK
+  ok    LaunchDaemon plist passes plutil -lint
+  ok    plist Label is com.harness.pf-bundle-host
+  ok    plist RunAtLoad is true
+  ok    plist runs /bin/bash
+  ok    plist runs the root-owned installed loader (/Library/Application Support/com.harness.pf-bundle-host/pf-bundle-host-load.sh), not the repo copy
+  ok    install script installs the loader to the path the plist runs
+pf anchor safety check: all passed
+All verification checks passed!
+M5a restart proof (M5-AC2 / FR15)  (2026-09-26 14:03:31)
+repo commit: 296b9e5b87b04a92fcac5ad92df442366f636454
+
+==== com.harness.server: precondition ====
+  PASS  com.harness.server loaded and running (state: running)
+  PASS  com.harness.server healthy before kill
+        unauth /v1/models -> 401, auth /v1/state -> 200
+
+==== com.harness.server: kill launchd-tracked pid, prove restart ====
+        launchd-tracked pid: 88260
+        2026-09-26 14:03:31  sending SIGKILL to pid 88260
+        2026-09-26 14:03:32  new pid 89022, healthy after 1s (unauth /v1/models -> 401, auth /v1/state -> 200)
+  PASS  com.harness.server restarted with a new pid (88260 -> 89022) and is healthy within 60s (took 1s)
+
+==== com.harness.bundle-host: precondition ====
+  PASS  com.harness.bundle-host loaded and running (state: running)
+  PASS  com.harness.bundle-host healthy before kill
+        /status -> 'packager-status:running', manifest -> 200, launchAsset.url -> http://ryans-mac-studio.tailc3648a.ts.net:8081/expo-router.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=src%2Fapp&unstable_transformProfile=hermes-stable
+  PASS  exactly one listener on 8081 before kill (got 1)
+
+==== com.harness.bundle-host: kill launchd-tracked pid, prove restart ====
+        launchd-tracked pid: 88461; TCP 8081 listener pid: 88461
+        launchd's tracked pid IS the TCP 8081 listener (bun x expo execs into node, same pid)
+        2026-09-26 14:03:33  sending SIGKILL to pid 88461
+        2026-09-26 14:03:36  new pid 89068, healthy after 3s (/status -> 'packager-status:running', manifest -> 200, launchAsset.url -> http://ryans-mac-studio.tailc3648a.ts.net:8081/expo-router.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=src%2Fapp&unstable_transformProfile=hermes-stable)
+  PASS  com.harness.bundle-host restarted with a new pid (88461 -> 89068) and is healthy within 60s (took 3s)
+  PASS  exactly one listener on 8081 after restart A (got 1)
+
+==== com.harness.bundle-host: kill whichever process is actually listening on TCP 8081, prove restart ====
+        launchd-tracked pid now: 89068; TCP 8081 listener pid now: 89068
+        listener pid matches launchd's tracked pid on this run; killing it is still an independent proof via lsof discovery
+        2026-09-26 14:03:36  sending SIGKILL to TCP 8081 listener pid 89068
+        2026-09-26 14:03:46  new pid 89216, healthy after 10s (/status -> 'packager-status:running', manifest -> 200, launchAsset.url -> http://ryans-mac-studio.tailc3648a.ts.net:8081/expo-router.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=src%2Fapp&unstable_transformProfile=hermes-stable)
+  PASS  com.harness.bundle-host restarted with a new pid (89068 -> 89216) and is healthy within 60s after killing the TCP 8081 listener (took 10s)
+  PASS  exactly one listener on 8081 after restart B, no orphan from the previous instance (got 1)
+
+==== Final: both services running and healthy ====
+  PASS  com.harness.server state running
+  PASS  com.harness.server healthy
+        unauth /v1/models -> 401, auth /v1/state -> 200
+  PASS  com.harness.bundle-host state running
+  PASS  com.harness.bundle-host healthy
+        /status -> 'packager-status:running', manifest -> 200, launchAsset.url -> http://ryans-mac-studio.tailc3648a.ts.net:8081/expo-router.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=src%2Fapp&unstable_transformProfile=hermes-stable
+  PASS  exactly one listener on 8081 at the end (got 1)
+
+==== Result ====
+  PASS: ALL CHECKS PASSED
+
+=== Tests completed at 2026-09-26 14:03:47 with exit code 0 ===

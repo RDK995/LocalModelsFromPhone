@@ -1,0 +1,135 @@
+VERIFICATION: M24-T3 q1 — read-only --check-only validation
+============================================================
+
+Current HEAD: f9e348b54f5a57140548608f68a5ccabd4e80332
+
+Task packet requirement: Run --check-only to reproduce the run's pass-bar values.
+
+Command executed:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M24-T3-q1-stream.txt --log ../.harness/evidence/M24-T3-q1-fr41.log --sources-text ../.harness/evidence/M24-T3-q1-sources-text.json
+
+Exit Status: 0
+
+Output (complete JSON + exit code):
+{
+  "stream_file": "../.harness/evidence/M24-T3-q1-stream.txt",
+  "note": "check-only: total_wall_s taken from done.research.elapsed_ms (0 when absent)",
+  "budget_s": 480,
+  "total_wall_s": 216.389,
+  "planning_s": 33.691,
+  "research_phase_calls": 11,
+  "routine_calls": 12,
+  "routine_p50_s": 2.425,
+  "routine_p95_s": 12.807,
+  "fr41_lines": 16,
+  "distinct_pages_read": 5,
+  "notes_kept": 19,
+  "notes_dropped": 8,
+  "drop_reasons": {
+    "quote_not_found": 8
+  },
+  "note_drop_lines": 8,
+  "final_status": "complete",
+  "cited_read_pages": 5,
+  "unresolved_citations": [],
+  "checks": {
+    "status_ok": {
+      "ok": true,
+      "value": "complete"
+    },
+    "within_budget": {
+      "ok": true,
+      "value": {
+        "total_wall_s": 216.389,
+        "limit_s": 540
+      }
+    },
+    "cited_read_pages_ok": {
+      "ok": true,
+      "value": 5
+    },
+    "no_unresolved_citations": {
+      "ok": true,
+      "value": []
+    }
+  },
+  "pass": true,
+  "sources_check": {
+    "sources_checked": 5,
+    "unreadable_sources": [],
+    "unchecked_sources": [],
+    "ok": true
+  },
+  "ac37_pass": true
+}
+
+Verification of run log end (from M24-T3-q1-run.log):
+- Line 56: exit=0
+- Confirms the live run completed with exit 0
+
+Verification of result.json values:
+Worker's claimed values from live run (M24-T3-q1-result.json):
+- generation_id: af0d2484-3ca5-47ce-b650-e9a0f7328e64
+- final_status: complete
+- total_wall_s: 216.395
+- budget_s: 480
+- distinct_pages_read: 5
+- cited_read_pages: 5
+- unresolved_citations: []
+- notes_kept: 19
+- notes_dropped: 8
+- drop_reasons: {"quote_not_found": 8}
+- sources_check: {"sources_checked": 5, "unreadable_sources": [], "unchecked_sources": [], "ok": true}
+- pass: true
+- ac37_pass: true
+
+Check-only command reproduced (at same precision):
+- pass: true ✓
+- ac37_pass: true ✓
+- notes_kept: 19 ✓
+- notes_dropped: 8 ✓
+- drop_reasons: {"quote_not_found": 8} ✓
+- sources_check: {"sources_checked": 5, "unreadable_sources": [], "unchecked_sources": [], "ok": true} ✓
+- final_status: complete ✓
+- cited_read_pages: 5 ✓
+- unresolved_citations: [] ✓
+
+Git status check (excluding .harness/evidence and owner's reports/research_notes):
+- No files changed outside allowed list
+- No committed files modified
+- Only untracked: reports/ and research_notes/ (excepted per instructions)
+
+Files allowed to change (per task packet):
+- .harness/evidence/M24-T3-q1-* (new files only) ✓
+
+Files created by worker's live run (verified present):
+- .harness/evidence/M24-T3-q1-stream.txt (16592 bytes)
+- .harness/evidence/M24-T3-q1-fr41.log (6543 bytes)
+- .harness/evidence/M24-T3-q1-sources-text.json (80062 bytes)
+- .harness/evidence/M24-T3-q1-result.json (1392 bytes)
+- .harness/evidence/M24-T3-q1-run.log (1399 bytes)
+
+Worker log file created:
+- .harness/evidence/M24-T3-worker.log (1532 bytes) — contains summary of run execution and results
+
+Acceptance Criteria Verification:
+
+M24-AC2: "Live on the Mac through the server API... are each run once, one at a time; every run ends within the budget plus a small margin with status `complete` or `partial`, at least 3 distinct cited read pages and no citation number that fails to resolve to a saved source"
+
+Demonstrated by:
+- final_status: "complete" (within budget + margin: 216.395s < 540s limit)
+- cited_read_pages: 5 (≥ 3)
+- unresolved_citations: [] (no unresolved citations)
+- --check-only exit 0 passes
+
+M24-AC3: "For each of the five runs, no saved source is a page the FR47 check classes as unreadable (checked by applying that check to each saved source's stored text), and the run's notes kept, notes dropped and drop reasons from its FR41 log are recorded in evidence"
+
+Demonstrated by:
+- sources_check.unreadable_sources: [] (no unreadable sources)
+- sources_check.ok: true (FR47 check passed)
+- notes_kept: 19 (recorded in result.json and reproducible via --check-only)
+- notes_dropped: 8 (recorded in result.json and reproducible via --check-only)
+- drop_reasons: {"quote_not_found": 8} (recorded in result.json and reproducible via --check-only)
+- fr41.log exists with 16 lines (logs the note-drop reasons)
+
+Result: PASS — all checks pass, --check-only reproduces the worker's claimed values, no files outside allowed list changed.

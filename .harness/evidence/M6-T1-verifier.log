@@ -1,0 +1,170 @@
+=== M6-T1 Verification Run ===
+Date: 2026-09-29
+Task: search/ package scaffold + SSRF-guarded page fetcher
+
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/search && bun install && bun test && bun run typecheck
+
+Working Directory: /Users/ryankenny/Projects/CodingHarnessv2/search
+
+Output:
+bun install v1.4.0 (1381054db)
+Checked 4 installs across 5 packages (no changes) [2.00ms]
+bun test v1.4.0 (1381054db)
+
+ 102 pass
+ 0 fail
+ 180 expect() calls
+Ran 102 tests across 2 files. [1262.00ms]
+$ tsc --noEmit
+
+Exit Status: 0
+
+=== R6 Mutation Test: Removing Custom Lookup ===
+Mutation: Removed line "lookup: lookup as unknown as net.LookupFunction," from fetchPage.ts
+Result before restoration:
+ 77 pass
+ 25 fail
+This confirms R6 proof is genuine - custom lookup is essential for 25 tests.
+Critical tests that fail without lookup:
+- R6: Bun honours the custom lookup > connects via injected resolver
+- R6: refuses hostname resolving to 127.0.0.1 under default policy
+- All tests requiring injected resolver and loopback access
+
+After restoring original file (diff confirms identical):
+ 102 pass
+ 0 fail
+Working tree identical to original after restoration.
+
+=== External Network Calls Check ===
+No external network calls found. All tests use:
+- Local loopback server (127.0.0.1)
+- Injected resolver mapping test hostnames to loopback
+- RFC 6761 .invalid TLD (guaranteed unresolvable, RFC 6761)
+- Test-only addresses and policies
+
+=== Default Policy Verification ===
+Test: "refuses 'localhost' with the real (default) resolver, no connection made"
+- Uses real DNS resolver (no override)
+- Uses real address policy (no override)
+- Correctly rejects loopback
+- No connection made to test server
+
+=== Files Changed ===
+All files are within Files Allowed To Change list
+
+=== Acceptance Criteria Verification ===
+
+AC1: fetchPage(url, opts?) returns { url, finalUrl, status, contentType, body: string }
+  Exercise: fetchPage.test.ts, line 177-189
+  Test: "fetchPage — successful fetch > returns url, finalUrl, status, contentType and body"
+  Assertion: expect(page).toEqual({ url, finalUrl, status, contentType, body, bodyTruncated })
+
+AC2: fetchPage error codes: bad_url, blocked_destination, unsupported_content, fetch_failed, timeout
+  bad_url:
+    Exercise: fetchPage.test.ts, line 88-94
+    Test suite: "fetchPage — URL validation" with 6 test cases
+    Examples: file://, ftp://, javascript:, invalid URL, empty string, data:
+  blocked_destination:
+    Exercise: fetchPage.test.ts, line 96-175 (R6 tests)
+    Examples: loopback IP literals, loopback hostnames, mixed public/non-public records
+  unsupported_content:
+    Exercise: fetchPage.test.ts, line 336-344
+    Test: "refuses content type ... as unsupported_content"
+  fetch_failed:
+    Exercise: fetchPage.test.ts, line 297-304
+    Test: "non-2xx final response → fetch_failed with upstream status"
+  timeout:
+    Exercise: fetchPage.test.ts, line 346-355
+    Test: "a server that never responds → timeout within the configured limit"
+
+AC3: isPublicAddress(ip: string): boolean classifier with unit tests
+  Exercise: addressPolicy.test.ts, line 4-82
+  Coverage: 43 test cases
+  IPv4 ranges tested:
+    - Non-public: 127.0.0.1, 10.x, 172.16.x, 192.168.x, 169.254.x, 100.64.0.1, 100.100.100.100, 0.0.0.0, 224.0.0.1, 255.255.255.255
+    - Public: 93.184.216.34, 1.1.1.1, 8.8.8.8, 172.15.255.255, 172.32.0.1, 100.63.255.255, 100.128.0.1
+  IPv6 ranges tested:
+    - Non-public: ::, ::1, fc00::1, fd12::1, fe80::1, ff02::1, ::ffff:127.0.0.1, ::ffff:192.168.1.1
+    - Public: 2606:4700::1111, 2a00:1450:4009:81f::200e
+
+AC4: Custom lookup resolves all records and rejects non-public
+  Exercise: fetchPage.test.ts, line 122-130
+  Test: "refuses when ANY resolved record is non-public, even if another is public"
+  Assertion: Records with mixed public/non-public result in blocked_destination
+
+AC5: R6 PROOF TEST - Bun honours custom lookup for connections
+  Exercise: fetchPage.test.ts, line 97-111
+  Test: "R6: Bun honours the custom lookup > connects via the injected resolver for a hostname that cannot resolve in real DNS"
+  Proof mechanism:
+    - Hostname: r6-probe.invalid (RFC 6761 guaranteed unresolvable)
+    - Injected resolver maps to 127.0.0.1
+    - If custom lookup NOT used: test FAILS (hostname cannot be resolved via real DNS)
+    - If custom lookup IS used: test succeeds (injected resolver provides address)
+  Assertions:
+    - Resolver was called: expect(r.calls).toEqual(["r6-probe.invalid"])
+    - Server received connection: expect(srv.connections).toBe(1)
+    - Server received request: expect(srv.requests).toHaveLength(1)
+  Mutation proof: Removing lookup: line causes 25 tests to fail (77 pass, 25 fail)
+
+AC5b: Hostname resolving to loopback rejected under default policy
+  Exercise: fetchPage.test.ts, line 113-120
+  Test: "refuses a hostname resolving to 127.0.0.1 under the default policy, with no connection made"
+  Assertions:
+    - Resolver called: expect(r.calls).toEqual(["r6-probe.invalid"])
+    - No connection made: expect(srv.connections).toBe(0) after Bun.sleep(50)
+
+AC6: Redirect test - blocked destinations refused
+  Exercise: fetchPage.test.ts, line 241-250
+  Test: "re-checks every hop: redirect to a blocked host is refused"
+  Assertion: Redirect to 10.0.0.5 (non-public) results in blocked_destination
+
+AC6b: Redirect test - max 5 redirects
+  Exercise: fetchPage.test.ts, line 271-295
+  Test 1: "follows up to 5 redirects" (line 271-285)
+    - 6 requests total (initial + 5 redirects)
+  Test 2: "more than 5 redirects → fetch_failed" (line 287-295)
+    - 6 requests made (detects 6th would exceed limit)
+
+AC7: Limits test - body byte cap
+  Exercise: fetchPage.test.ts, line 314-334
+  Test 1: "truncates a body over the byte cap and flags it"
+    - Assertion: expect(page.bodyTruncated).toBe(true)
+  Test 2: "does not flag a body exactly at the cap"
+    - Assertion: expect(page.bodyTruncated).toBe(false)
+
+AC8: Limits test - content-type validation
+  Exercise: fetchPage.test.ts, line 336-344
+  Test: "refuses content type ... as unsupported_content"
+  Content types tested: image/png, application/pdf, application/octet-stream, text/htmlx, (none)
+
+AC9: Limits test - timeout
+  Exercise: fetchPage.test.ts, line 346-355
+  Test: "a server that never responds → timeout within the configured limit"
+  Assertion: expect(elapsed).toBeGreaterThanOrEqual(250) and .toBeLessThan(2000)
+  Also covers stalling body: line 357-363
+
+AC10: Limits test - AbortSignal support
+  Exercise: fetchPage.test.ts, line 365-398
+  Test 1: "aborts the request when the AbortSignal fires"
+    - Signal fires after 100ms
+    - Assertion: expect((caught as Error).name).toBe("AbortError")
+  Test 2: "rejects immediately with AbortError if the signal is already aborted"
+    - Assertion: expect(srv.connections).toBe(0)
+
+AC11: Testability without weakening guard
+  Exercise: fetchPage.test.ts, line 8-9, 61-65, 64-65, 172
+  Test-only options exist:
+    - resolve?: (hostname: string) => Promise<ResolvedAddress[]>
+    - isAllowedAddress?: (ip: string) => boolean
+  Default behavior verified:
+    - Line 138-142: Test with NO options uses real resolver and real policy
+    - Result: localhost correctly rejected as blocked_destination
+  Documentation: fetchPage.ts, line 62-72 warns "PRODUCTION CALLERS MUST NEVER PASS"
+
+AC12: typecheck exit 0
+  Exercise: Command output
+  Result: "$ tsc --noEmit" with no error output, exit 0
+
+AC13: Tests all pass
+  Exercise: Test command output
+  Result: "102 pass, 0 fail, 180 expect() calls"

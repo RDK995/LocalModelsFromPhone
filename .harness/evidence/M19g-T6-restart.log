@@ -1,0 +1,124 @@
+=== M19g-T6 Server Restart Sequence ===
+Timestamp: 2026-10-02T20:56:12Z
+
+=== BEFORE STATE ===
+
+1. Check for ac29-live-run processes:
+$ pgrep -fl ac29-live-run
+(no matches)
+Exit status: 1
+
+2. LaunchAgent status:
+$ launchctl list | grep com.harness.server
+3614	-15	com.harness.server
+Old PID: 3614
+
+3. Old process start time and command:
+$ ps -o pid,lstart,command -p 3614
+  PID STARTED                      COMMAND
+ 3614 Fri  2 Oct 21:41:35 2026     /opt/homebrew/bin/bun src/index.ts
+Old start time extracted: Fri 2 Oct 21:41:35 2026
+
+4. Current git HEAD:
+$ git rev-parse HEAD
+101505694a3260639a01aaf2b621f2b8e86f48ec
+
+5. Last server/ commit:
+$ git log -1 --format='%H %cI' -- server/
+22c9a004391b102ce3b53eda067ac491630552e7 2026-10-02T21:53:11+01:00
+
+=== RESTARTING SERVER ===
+
+$ launchctl kickstart -k gui/501/com.harness.server
+Exit status: 0
+
+=== READINESS CHECK ===
+
+$ curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:7789/health
+000
+Exit status: 0
+
+Health code not 200 or 401, retrying with longer timeout...
+$ curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:7789/health (15s timeout)
+000
+
+=== AFTER STATE ===
+
+1. New process status:
+$ launchctl list | grep com.harness.server
+4781	-15	com.harness.server
+New PID: 4781
+
+2. New process start time:
+$ ps -o pid,lstart -p 4781
+  PID STARTED
+ 4781 Fri  2 Oct 21:56:12 2026    
+New start time extracted: Fri 2 Oct 21:56:12 2026
+
+3. Ollama models loaded:
+$ ollama ps
+NAME               ID              SIZE     PROCESSOR    CONTEXT    UNTIL   
+qwen3.5:35b-a3b    3460ffeede54    23 GB    100% GPU     32768      Forever    
+
+4. Check for ac29-live-run processes (after restart):
+$ pgrep -fl ac29-live-run
+(no matches)
+Exit status: 1
+
+=== SUMMARY ===
+
+Old PID: 3614 (start time: Fri 2 Oct 21:41:35 2026)
+New PID: 4781 (start time: Fri 2 Oct 21:56:12 2026)
+Last server/ commit: 22c9a004391b102ce3b53eda067ac491630552e7 2026-10-02T21:53:11+01:00
+Health check: HTTP 000
+ac29-live-run before: exit 1 (1=no processes)
+ac29-live-run after: exit 1 (1=no processes)
+
+Ollama ps output:
+NAME               ID              SIZE     PROCESSOR    CONTEXT    UNTIL   
+qwen3.5:35b-a3b    3460ffeede54    23 GB    100% GPU     32768      Forever    
+
+
+=== ADDITIONAL HEALTH CHECKS ===
+
+Health check attempt 1:
+$ curl -s --connect-timeout 5 --max-time 20 http://127.0.0.1:7789/health
+{"error":"unauthorized","message":"Invalid or missing bearer token"}
+[HTTP 401]
+
+Server is responding with HTTP 401
+
+=== FINAL VERIFICATION ===
+
+Final Process State:
+  PID: 4781
+  Start Time: Fri 2 Oct 21:56:12 2026
+
+Server Restart Verification Summary:
+
+✓ Before restart:
+    Old PID: 3614
+    Old start time: Fri  2 Oct 21:41:35 2026 (local)
+
+✓ After restart:
+    New PID: 4781
+    New start time: Fri  2 Oct 21:56:12 2026 (local)
+
+✓ Verification:
+    Last server/ commit time: 2026-10-02T21:53:11+01:00 (UTC+01:00)
+    New start time (21:56:12 local) is AFTER commit time (21:53:11 local)
+    Time delta: ~3 minutes (as expected after restart)
+
+✓ Health Check:
+    HTTP Status: 401 (OK - server responding)
+
+✓ Process State:
+    PID changed: YES (3614 → 4781)
+    Deep research generation: NOT IN FLIGHT (pgrep ac29-live-run = exit 1)
+
+✓ Ollama Models:
+    qwen3.5:35b-a3b: loaded and ready
+
+=== ALL CRITERIA MET ===
+Restart completed successfully. No deep research generation in flight.
+Server is ready for next operations (M19g-AC2 precondition satisfied).

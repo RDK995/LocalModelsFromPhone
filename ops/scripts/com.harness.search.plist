@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.harness.search</string>
+
+  <!-- C13: location search service. Binds 127.0.0.1:7790 only (see search/src/index.ts).
+       No token, no port/timeout overrides are set here; those are test-only. -->
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/homebrew/bin/bun</string>
+    <string>src/index.ts</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/ryankenny/Projects/CodingHarnessv2/search</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>KeepAlive</key>
+  <true/>
+
+  <key>ThrottleInterval</key>
+  <integer>10</integer>
+
+  <key>StandardOutPath</key>
+  <string>/Users/ryankenny/Library/Logs/phone-models/search.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/Users/ryankenny/Library/Logs/phone-models/search.log</string>
+
+  <key>Umask</key>
+  <integer>63</integer>
+
+  <key>ProcessType</key>
+  <string>Standard</string>
+</dict>
+</plist>

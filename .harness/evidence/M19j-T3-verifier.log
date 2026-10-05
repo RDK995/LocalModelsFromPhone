@@ -1,0 +1,84 @@
+=== M19j-T3 Verifier Test Run ===
+Current commit: 4b3c1d07d96d5dc3801899248099a66e3aebcb62
+Verifier started: Sat 3 Oct 2026 06:40:59 BST
+
+=== Running Verification Tests ===
+
+Command: launchctl list | grep com.harness.server
+Output: 29953	-15	com.harness.server
+Exit Status: 0
+
+Command: ps -o pid,lstart -p 29953
+Output:
+  PID STARTED
+29953 Sat  3 Oct 06:39:40 2026    
+Exit Status: 0
+
+Command: git log -1 --format=%cI -- server/src
+Output: 2026-10-03T06:25:09+01:00
+Exit Status: 0
+
+Command: curl --max-time 10 -s -o /dev/null -w '%{http_code}' http://127.0.0.1:7789/health
+Output: 401
+Exit Status: 0
+
+Command: pgrep -fl ac29-live-run
+Output: (no process found)
+Exit Status: 1
+
+Command: ollama ps
+Output:
+NAME               ID              SIZE     PROCESSOR    CONTEXT    UNTIL   
+qwen3.5:35b-a3b    3460ffeede54    23 GB    100% GPU     32768      Forever    
+Exit Status: 0
+
+=== Acceptance Criteria Verification ===
+
+Criterion 1: launchctl list | grep com.harness.server shows a pid different from the before pid, whose ps -o lstart start time is after git log -1 --format=%cI -- server/src.
+
+Verification:
+- Current PID from launchctl: 29953
+- PID start time: Sat 3 Oct 06:39:40 2026 (06:39:40)
+- Last server/src commit time: 2026-10-03T06:25:09+01:00 (06:25:09)
+- The new start time 06:39:40 is after the commit time 06:25:09 ✓
+- From worker's log, old PID was 29827, new PID is 29953 (different) ✓
+PASS
+
+Criterion 2: curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:7789/health prints 401 or 200.
+
+Verification:
+- Health endpoint returned: 401
+- This is an acceptable response (either 401 or 200) ✓
+PASS
+
+Criterion 3: pgrep -fl ac29-live-run prints nothing.
+
+Verification:
+- pgrep -fl ac29-live-run output: (empty)
+- Exit status: 1 (indicates no matching process)
+- No live run in flight ✓
+PASS
+
+=== File Changes Verification ===
+
+Only file allowed to change: .harness/evidence/M19j-T3-restart.log (new file only)
+
+Actual files created/modified in this task:
+- .harness/evidence/M19j-T3-restart.log (new, allowed) ✓
+
+Other files changed in repo (confirmed as pre-existing or from other tasks):
+- server/scripts/ac29-live-run.ts (modified by other task)
+- server/scripts/ac29-questions.json (modified by other task)
+- reports/ and research_notes/ (pre-existing per task instructions)
+
+=== Result Summary ===
+
+All verification tests passed:
+✓ Server restarted successfully (PID 29953)
+✓ New server process started after last server/src code change (06:39:40 after 06:25:09)
+✓ Health endpoint responsive (401 status)
+✓ qwen3.5:35b-a3b model resident in ollama
+✓ No ac29-live-run process in flight
+✓ Only allowed file changed (.harness/evidence/M19j-T3-restart.log)
+
+Verifier completed: Sat 3 Oct 2026 06:40:59 BST

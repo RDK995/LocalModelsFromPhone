@@ -1,0 +1,82 @@
+=== RED ===
+bun test v1.4.0 (1381054db)
+
+src/ui/sourceList.test.ts:
+
+# Unhandled error between tests
+-------------------------------
+error: Cannot find module './sourceList' from '/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/sourceList.test.ts'
+-------------------------------
+
+
+ 0 pass
+ 1 fail
+ 1 error
+Ran 1 test across 1 file. [10.00ms]
+=== GREEN ===
+$ tsc --noEmit
+src/app/chat.tsx(47,10): error TS2305: Module '"@/ui/SourceList"' has no exported member 'SourceList'.
+=== GREEN ===
+$ tsc --noEmit
+bun test v1.4.0 (1381054db)
+
+src/ui/sourceListModel.test.ts:
+ 98 |     expect(comp).toContain("<SourceLogo");
+ 99 |     expect(comp).toContain("flexDirection: \"row\"");
+100 |   });
+101 |   it("entries are not nested inline inside a shared Text", () => {
+102 |     const row = comp.slice(comp.indexOf("key={entry.key}"));
+103 |     expect(row.indexOf("<TouchableOpacity")).toBeGreaterThan(-1);
+                                                   ^
+error: expect(received).toBeGreaterThan(expected)
+
+Expected: > -1
+Received: -1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/sourceListModel.test.ts:103:46)
+(fail) SourceList.tsx > entries are not nested inline inside a shared Text [0.13ms]
+
+ 426 pass
+ 1 fail
+ 11956 expect() calls
+Ran 427 tests across 27 files. [215.00ms]
+=== GREEN ===
+$ tsc --noEmit
+bun test v1.4.0 (1381054db)
+
+ 427 pass
+ 0 fail
+ 11957 expect() calls
+Ran 427 tests across 27 files. [217.00ms]
+$ eslint src --max-warnings 0
+
+/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdownText.test.ts
+  159:36  error  Strings must use doublequote  quotes
+  159:63  error  Strings must use doublequote  quotes
+
+/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/sourceListModel.test.ts
+  89:28  error  Strings must use doublequote  quotes
+  96:28  error  Strings must use doublequote  quotes
+
+✖ 4 problems (4 errors, 0 warnings)
+  4 errors and 0 warnings potentially fixable with the `--fix` option.
+
+error: script "lint" exited with code 1
+=== FINAL ===
+$ tsc --noEmit
+bun test v1.4.0 (1381054db)
+
+ 427 pass
+ 0 fail
+ 11957 expect() calls
+Ran 427 tests across 27 files. [212.00ms]
+$ eslint src --max-warnings 0
+
+/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdownText.test.ts
+  159:36  error  Strings must use doublequote  quotes
+  159:63  error  Strings must use doublequote  quotes
+
+✖ 2 problems (2 errors, 0 warnings)
+  2 errors and 0 warnings potentially fixable with the `--fix` option.
+
+error: script "lint" exited with code 1

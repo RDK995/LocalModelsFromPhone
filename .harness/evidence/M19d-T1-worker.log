@@ -1,0 +1,23 @@
+commit 8bf351b7745397b74cb6cfbe4c768be016f09302
+bun test v1.4.0 (1381054db)
+
+src/http/deepResearchPassages.test.ts:
+
+src/http/deepResearchStop.test.ts:
+
+src/http/deepResearchResume.test.ts:
+
+src/http/deepResearch.test.ts:
+
+src/http/deepResearchPartialNotes.test.ts:
+
+src/generations/manager.test.ts:
+
+src/generations/research.test.ts:
+
+ 329 pass
+ 0 fail
+ 2196 expect() calls
+Ran 329 tests across 20 files. [13.94s]
+bun test exit 
+tsc exit 0

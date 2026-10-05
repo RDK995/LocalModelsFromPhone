@@ -1,0 +1,9 @@
+M8 search service proof (M8-AC1/AC2/AC3)  (2026-09-30 06:47:56)
+repo commit: 9b8fe66ee89e055447882920f887cea6ac21cb79
+
+==== 1. Install + load ====
+  SKIP  install skipped (PROOF_SKIP_INSTALL=1)
+
+==== 2. AC1: running under launchd, healthy, loopback-only listener ====
+  FAIL  com.harness.search not running+healthy within 30s (state: not loaded, pid: none)
+search-service-proof: FAIL

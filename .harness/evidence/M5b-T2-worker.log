@@ -1,0 +1,61 @@
+$ tsc --noEmit
+$ eslint src --max-warnings 0
+=== Plain-Language Error Mapping Live Proof (M5b-T2 / FR16) ===
+date: Sat 26 Sep 2026 18:49:18 UTC
+
+--- Confirming the server is up before starting ---
+Server answering 401
+
+--- Recording original state ---
+Before: {"models":[{"name":"qwen3.8:27b","model":"qwen3.8:27b","size":18573604944,"digest":"22130167c4c20e20c7b71454612966ca8e8171e9b3cc8ab6ce8aa6cbfec79643","details":{"parent_model":"","format":"gguf","family":"qwen35","families":["qwen35"],"parameter_size":"27.3B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-06T18:33:56.083606807Z","size_vram":18573604944,"context_length":262144}]}
+Originally resident: qwen3.8:27b
+
+--- Scenario 1: wrong password ---
+PASS wrong password: Password wrong or changed
+
+--- Scenario 2: model no longer installed ---
+Smallest installed model: devstral:24b
+copied 'devstral:24b' to 'm5b-gone-probe'
+probe m5b-gone-probe is listed in /v1/state models as m5b-gone-probe:latest
+[?2026h[?25l[1G⠙ [K[?25h[?2026l[?25l[?2026h[?25l[1G[K[?25h[?2026l[2K[1G[?25hdeleted 'm5b-gone-probe'
+PASS model no longer installed: m5b-gone-probe is no longer installed on the Mac. Pull down to refresh the list.
+
+--- Scenario 3: model failed to load ---
+Base model for the failed-load probe: devstral:24b (architecture llama)
+Modelfile:
+FROM devstral:24b
+ADAPTER /private/tmp/m5b-t2-error-proof.mu4mtl/adapter.gguf
+Probe created
+PASS model failed to load: Couldn't load m5b-failed-load-probe:latest. Ollama failed to start it.
+
+--- Scenario 4: reply already in progress ---
+Loaded devstral:24b so a reply can be started
+PASS reply already in progress: A reply is already being written. Wait for it to finish, or stop it first.
+First generation cancelled and settled
+
+--- Scenario 5: Ollama down ---
+How Ollama runs on this Mac:
+not a LaunchAgent
+ollama none                 
+ryankenny         4790   0.0  0.1 436748320  70992   ??  S     7:46p.m.   0:02.44 ollama serve
+Ollama runs as a plain background process (pid 4790, not a LaunchAgent or brew service); stopping it with kill
+Ollama stopped
+PASS ollama down: The Mac is reachable, but Ollama isn't running on it.
+Restarting Ollama...
+Ollama is back up
+
+--- Scenario 6: Mac/server unreachable ---
+Stopping the server LaunchAgent (it has KeepAlive, so a plain kill would relaunch it)...
+Server stopped
+FAIL: getState() threw TypeError: null is not an object (evaluating 'body.error'), expected UnreachableError
+Restarting the server LaunchAgent...
+Server is back up
+[0;31mFAIL: scenario 6 (Mac/server unreachable) failed[0m
+
+--- Cleanup: restoring the Mac to its original state ---
+Server answering 401
+Ollama answering /api/tags
+[?2026h[?25l[1G⠋ [K[?25h[?2026l[?25l[?2026h[?25l[1G[K[?25h[?2026l[2K[1G[?25hdeleted 'm5b-failed-load-probe'
+Restoring qwen3.8:27b (keep_alive -1)...
+After cleanup: {"models":[{"name":"qwen3.8:27b","model":"qwen3.8:27b","size":18573604944,"digest":"22130167c4c20e20c7b71454612966ca8e8171e9b3cc8ab6ce8aa6cbfec79643","details":{"parent_model":"","format":"gguf","family":"qwen35","families":["qwen35"],"parameter_size":"27.3B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-06T18:37:59.737296807Z","size_vram":18573604944,"context_length":262144}]}
+[0;31m=== Proof FAILED (exit 1) ===[0m

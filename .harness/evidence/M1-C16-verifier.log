@@ -1,0 +1,154 @@
+=== VERIFIER START ===
+Date: 2026-09-25
+Task: M1-C16
+Diff Range: c4d390e..HEAD
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2 && bash -n ops/scripts/e2e-tailnet-proof.sh && grep -n 'TS_IF' ops/scripts/e2e-tailnet-proof.sh && bash ops/scripts/e2e-tailnet-proof.sh
+
+=== SYNTAX CHECK (bash -n) ===
+Exit Status: 0
+(No output from bash -n indicates successful syntax check)
+
+=== GREP TS_IF ===
+243:TS_IF="$(ifconfig 2>/dev/null | awk -v ip="$TS_IP" '/^[a-z]/ { sub(":", "", $1); ifc = $1 } $1 == "inet" && $2 == ip { print ifc }')"
+244:info "LAN interface ${LAN_IF:-?} address ${LAN_IP:-?}; tailnet interface ${TS_IF:-?} address ${TS_IP:-?}"
+268:check "pf anchor loaded for the current Tailscale interface ($IFACE_FILE_CONTENT == $TS_IF)" \
+269:  bash -c '[[ -n "$2" && "$1" == "$2" ]]' _ "$IFACE_FILE_CONTENT" "$TS_IF"
+
+=== LIVE E2E RUN ===
+Exit Status: 0
+
+M1 end-to-end tailnet proof  (2026-09-25 17:21:35 BST)
+repo commit: c4d390e3fec14d67d2227a55c81066712c1e250c
+tailnet server URL: https://ryans-mac-studio.tailc3648a.ts.net:8443
+
+==== Preconditions: token file, LaunchAgents, Tailscale Serve ====
+  PASS  token file mode is 600 (got 600)
+  PASS  LaunchAgent com.harness.server loaded and running (state: running)
+  PASS  LaunchAgent com.harness.bundle-host loaded and running (state: running)
+  tailscale serve status:
+        https://ryans-mac-studio.tailc3648a.ts.net (tailnet only)
+        |-- /    proxy http://127.0.0.1:7787
+        |-- /app proxy http://127.0.0.1:7788
+        
+        https://ryans-mac-studio.tailc3648a.ts.net:8443 (tailnet only)
+        |-- / proxy http://127.0.0.1:7789
+        
+  PASS  existing Serve mapping :443 / -> http://127.0.0.1:7787 unchanged
+  PASS  existing Serve mapping :443 /app -> http://127.0.0.1:7788 unchanged
+  PASS  Serve maps tailnet HTTPS :8443 -> http://127.0.0.1:7789 (only)
+  PASS  Tailscale Funnel is not enabled (tailnet only)
+
+==== M1-AC1: live token streaming through the tailnet URL ====
+        resident model (from Ollama /api/ps): devstral:24b
+        first 6 SSE events (elapsed seconds, as received over the tailnet):
+             0.559 event: content
+             0.559 data: {"text":"1"}
+             0.667 event: content
+             0.667 data: {"text":" "}
+             0.747 event: content
+             0.747 data: {"text":"2"}
+             0.833 event: content
+             0.833 data: {"text":" "}
+             0.913 event: content
+             0.913 data: {"text":"3"}
+             1.007 event: content
+             1.007 data: {"text":" "}
+        ...
+        last SSE events:
+             6.290 event: content
+             6.290 data: {"text":"0"}
+             6.329 event: done
+             6.329 data: {"status":"complete","model":"devstral:24b","eval_count":81,"tokens_per_second":14.039269396420611}
+        content events: 80, first at 0.559s, last at 6.290s, terminal event: done {"status":"complete","model":"devstral:24b","eval_count":81,"tokens_per_second":14.039269396420611}
+  PASS  multiple content (token) events arrived (got 80, need >= 5)
+  PASS  tokens arrived over time, not in one burst (spread 0.559s..6.290s)
+  PASS  stream ended with a terminal done event, status complete
+
+==== M1-AC2: every route rejects missing and wrong tokens (via tailnet) ====
+  PASS  GET /v1/state: no token -> 401, wrong token -> 401 (expect 401/401)
+  PASS  POST /v1/models/load: no token -> 401, wrong token -> 401 (expect 401/401)
+  PASS  POST /v1/models/unload: no token -> 401, wrong token -> 401 (expect 401/401)
+  PASS  POST /v1/chat: no token -> 401, wrong token -> 401 (expect 401/401)
+  PASS  GET /v1/generations/00000000-0000-0000-0000-000000000000/events: no token -> 401, wrong token -> 401 (expect 401/401)
+  PASS  POST /v1/generations/00000000-0000-0000-0000-000000000000/cancel: no token -> 401, wrong token -> 401 (expect 401/401)
+  PASS  GET /v1/no-such-route: no token -> 401, wrong token -> 401 (expect 401/401)
+  PASS  control: GET /v1/state with the real token -> 200 (expect 200)
+        token command (ops/src/token.ts), run in a private temp dir:
+  PASS  token command creates a token (exit 0, mode 600, 64 chars; value not shown)
+        mode 644 -> exit 1: Error: Token file "/var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T/tmp.3h3rdRgGDN/unsafe-644" exists with group or world-readable permissions (mode must be 0600)
+  PASS  token command refuses a mode-644 token file and leaves it untouched
+        mode 640 -> exit 1: Error: Token file "/var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T/tmp.3h3rdRgGDN/unsafe-640" exists with group or world-readable permissions (mode must be 0600)
+  PASS  token command refuses a mode-640 token file and leaves it untouched
+        mode 604 -> exit 1: Error: Token file "/var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T/tmp.3h3rdRgGDN/unsafe-604" exists with group or world-readable permissions (mode must be 0600)
+  PASS  token command refuses a mode-604 token file and leaves it untouched
+
+==== M1-AC3: cancel stops generation in Ollama ====
+        Ollama serve pid 75302, runner pid 67376, Ollama log /private/tmp/ollama.log
+        long generation started: id 70922edb-4cfb-4f25-af98-4d32bd281ad0, 23 tokens so far
+        cancel sent at 17:21:47 via tailnet after 49 tokens; response: {"status":"cancelled"}
+        stream: 49 content events total (0 in flight after cancel), terminal: done {"status":"cancelled","model":"devstral:24b","eval_count":49,"tokens_per_second":0}
+        server event log replay, last event: data: {"status":"cancelled","model":"devstral:24b","eval_count":49,"tokens_per_second":0}
+        Ollama runner CPU seconds per 2s window: while generating 2.10, after cancel 0.01
+        Ollama's own log since this test started:
+          [GIN] 2026/09/25 - 17:21:47 | 200 |  4.693948375s |       127.0.0.1 | POST     "/api/chat"
+          srv          stop: cancel task, id_task = 1884
+  PASS  cancel endpoint answered {"status":"cancelled"}
+  PASS  the SSE stream ended by itself after cancel
+  PASS  terminal event is done with status cancelled
+  PASS  no further bytes arrived after the terminal event (6023 -> 6023 bytes over 3s)
+  PASS  server reports no active generation afterwards (generation: null)
+  PASS  Ollama logged the /api/chat request as finished after the cancel (connection closed)
+  PASS  Ollama runner went idle: CPU after cancel (0.01 s) < half of CPU while generating (2.10 s)
+
+==== M1-AC4: network exposure ====
+        listeners on port 7789: 127.0.0.1:7789 
+  PASS  server listens on 127.0.0.1:7789 only
+  PASS  server reachable through the tailnet URL (200 via 100.82.139.85)
+        LAN interface en1 address 192.168.0.27; tailnet interface utun4 address 100.82.139.85
+  PASS  LAN 192.168.0.27:7789 refuses connections (curl exit 7; 7 = refused)
+  PASS  LAN 192.168.0.27:8443 refuses connections (curl exit 7; 7 = refused)
+        bundle manifest: 200 application/expo+json; launchAsset: http://ryans-mac-studio.tailc3648a.ts.net:8081/expo-router.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=src%2Fapp&unstable_transformProfile=hermes-stable
+  PASS  bundle host on 8081 serves the Expo manifest via the tailnet name
+  PASS  manifest points the phone at the tailnet name, production bundle (dev=false, minify=true)
+  PASS  pf anchor LaunchDaemon is loaded and healthy (last exit code = 0)
+  PASS  pf anchor loaded for the current Tailscale interface (utun4 == utun4)
+        Mac-local probe of LAN IP 192.168.0.27 goes over interface lo0 (lo0 is passed by the pf anchor; cannot test the actual LAN path)
+
+==== Result ====
+  ALL AUTOMATED CHECKS PASSED
+
+==== REMAINING FOR THE HUMAN (cannot be proven from the Mac) ====
+1. On the iPhone (on the tailnet), open Expo Go and enter: exp://ryans-mac-studio.tailc3648a.ts.net:8081
+   - the app loads (production bundle, no dev menu);
+   - in Settings, paste the bearer token (on the Mac: pbcopy < ~/.phone-models/token,
+     or read it with: cat ~/.phone-models/token) and save;
+   - send a prompt: the reply renders token by token, not all at once;
+   - send a long prompt and tap Stop: output halts within a moment and does not resume.
+2. From a device on the same Wi-Fi but NOT on the tailnet (or the phone with Tailscale off):
+   - https://ryans-mac-studio.tailc3648a.ts.net:8443/v1/state does not resolve/connect;
+   - http://192.168.0.27:7789 and :8443 refuse;
+   - http://192.168.0.27:8081 must not load.
+
+=== DIRECT CONDITION TESTS ===
+Test 1: both empty values
+Command: bash -c '[[ -n "$2" && "$1" == "$2" ]]' _ "" ""
+Exit Status: 1 (non-zero, as required)
+
+Test 2: both utun4
+Command: bash -c '[[ -n "$2" && "$1" == "$2" ]]' _ "utun4" "utun4"
+Exit Status: 0 (zero, as required)
+
+Test 3: different values (utun3 vs utun4)
+Command: bash -c '[[ -n "$2" && "$1" == "$2" ]]' _ "utun3" "utun4"
+Exit Status: 1 (non-zero, as required)
+
+=== FILES CHANGED VERIFICATION ===
+Modified files:
+- ops/scripts/e2e-tailnet-proof.sh (line 269 only)
+
+Untracked/new files:
+- .harness/evidence/M1-C16-worker.log (expected)
+
+All files in allowed list: YES
+
+=== VERIFIER END ===

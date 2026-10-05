@@ -1,0 +1,47 @@
+=== Conversation Live Proof ===
+
+Restarting LaunchAgents...
+Waiting for server to be ready...
+Server is up and enforcing auth
+
+--- Recording original Ollama state (before proof) ---
+Before: {"models":[{"name":"devstral:24b","model":"devstral:24b","size":35816011202,"digest":"9bd74193e93935e9d8564d88607b220a9d341c4a36b748cffcbd9ad4f47a9ca9","details":{"parent_model":"","format":"gguf","family":"llama","families":["llama"],"parameter_size":"23.6B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-06T04:21:26.172820807Z","size_vram":35816011202,"context_length":131072}]}
+Originally resident: devstral:24b
+
+--- Running proof (mobile/scripts/conversation-proof.ts) ---
+Derived from /api/tags (two smallest by size): A=devstral:24b, B=qwen3.6:27b
+
+--- Step 1: load A (devstral:24b) via app client ---
+PASS: Step 1: devstral:24b is resident
+
+--- Step 2: create conversation, send turn 1 with secret code word ---
+  Secret code word: "cascade"
+PASS: Step 2 turn 1: sent and persisted
+PASS: Step 2: turn 1 reply is persisted with model devstral:24b
+
+--- Step 3: send turn 2 asking for secret code word ---
+PASS: Step 3 (M3-AC2): messages sent to client.chat include turn-1 user and assistant messages
+PASS: Step 3 (M3-AC2): context check passed
+
+--- Step 4: swap to model B (qwen3.6:27b) ---
+PASS: Step 4: swapped to qwen3.6:27b
+--- Step 5: send turn 3 with model B ---
+PASS: Step 5 (M3-AC3): turn 1 has model devstral:24b, turn 3 (after swap) has model qwen3.6:27b
+
+--- Step 6: unload model and test blocked send ---
+PASS: Step 6: unload successful, /api/ps is empty
+PASS: Step 6 (M3-AC4): send correctly blocked with message: "No model loaded — load one on the Models screen to send."
+PASS: Step 6 (M3-AC4): no POST /v1/chat was made (client.chat not called)
+PASS: Step 6 (M3-AC4): no assistant message added to blocked send
+
+--- Step 7: create fresh store over same storage (M3-AC5 proxy) ---
+PASS: Step 7 (M3-AC5 proxy): fresh store sees identical conversation and all messages
+  Note: on-device force-quit check is a separate human step.
+
+All conversation proof checks passed.
+
+--- Cleanup: restoring original Ollama state ---
+Before cleanup: {"models":[]}
+Restoring devstral:24b (keep_alive -1)...
+After cleanup: {"models":[{"name":"devstral:24b","model":"devstral:24b","size":35816011202,"digest":"9bd74193e93935e9d8564d88607b220a9d341c4a36b748cffcbd9ad4f47a9ca9","details":{"parent_model":"","format":"gguf","family":"llama","families":["llama"],"parameter_size":"23.6B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-06T04:26:03.318101807Z","size_vram":35816011202,"context_length":131072}]}
+[0;32m=== Proof PASSED, Mac restored to its original state ===[0m

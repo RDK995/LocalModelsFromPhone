@@ -1,0 +1,11 @@
+M10c3-AC5 owner phone observation, attempt 1 — 2026-09-30 ~17:07 BST, Expo Go, branch m10c3-readable-tables at 5ccf325 (tree clean).
+Result: FAIL (owner reported "Something's wrong").
+
+Owner's words, verbatim:
+"As text is streaming it's slightly to the right and then snaps into the correct place once the next item starts. The last item in the list doesn't snap into place, see screenshot of this"
+
+Screenshot: M10c3-AC5-owner-phone-1.png (web search on; a web answer containing a table).
+Observed in the screenshot (description only, no diagnosis):
+- The table renders as a side-by-side grid of columns, not as one card per row with "heading: value" lines; no heading labels are visible beside values.
+- The last row ("13" | "Other notable stories – Eiffel Tower ..." (bold lead) | "Open Chronicle") has its columns starting at different horizontal positions from the row above it (row above: bold "meeting" column starts further left, its text column starts left of where "Open Chronicle" starts).
+- Column text is squeezed narrow (words broken mid-word: "highlight/s", "multilater/al", "gender-equa/lity", "Hurricane Pol/o").

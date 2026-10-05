@@ -1,0 +1,13 @@
+M16-T5 live deep research run (token never printed or stored; read from ~/.phone-models/token into a shell variable)
+Commit: cc06b6845fd2f16f7e9f0c84274b0561e5e287cb
+Server: see M16-T5-restart.log (launchctl kickstart done by orchestrator, human-authorised). Re-confirmed: pid 30541 started Fri 2 Oct 07:09:09 2026; latest server commit 8bdee34 at 00:32:17 BST -> process is newer. No restart by this worker. qwen3.5:35b-a3b resident throughout (ollama ps, Forever).
+
+1) POST http://127.0.0.1:7789/v1/chat  model=qwen3.5:35b-a3b web=true deep_research=true, question: Raft vs Paxos differences / when to choose
+   curl -sN --max-time 900 -> http=200, curl exit 28 (900 s client timeout), elapsed 900 s. Stream so far: 20 step events (seq 0-19), no done. Saved: M16-T5-stream-part1.txt (4136 bytes).
+   Generation id 34b0b39e-d9bc-4a41-af08-7c94d8ba9c13 was still active on the server (the generation outlives the subscriber by design).
+2) Resume: GET /v1/generations/34b0b39e-.../events with Last-Event-ID ...-19, curl --max-time 560 -> http=200, exit 0, elapsed 533 s. Events: 10 step, content, sources, done. Saved: M16-T5-stream-resume.txt.
+   Total wall time of the run ~ 1433 s (900 + ~533 plus gaps). Long: the 600 s guidance in the packet was exceeded; the 900 s client limit was too short for this run.
+3) M16-T5-stream.txt = cat part1 resume (the full ordered event stream, seq 0..end; no edits).
+4) bun .harness/evidence/M16-T5-check.ts .harness/evidence/M16-T5-stream.txt > M16-T5-check.json -> exit 0
+   final_status=complete, sources=5, citations=[1..5], unresolved=[], cited read pages=4 (5 pages read, 1 read failed), report 3010 chars, done: eval_count 2352, 35.4 tok/s.
+Result vs M16-AC3: status complete (PASS); >=1 cited read page (PASS, 4); no unresolved citation (PASS).

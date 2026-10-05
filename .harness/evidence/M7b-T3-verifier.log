@@ -1,0 +1,65 @@
+=== Task: M7b-T3 Verification ===
+Current commit: 3e57675
+Date: Wed 30 Sep 2026 05:38:08 BST
+
+=== Running: search/helper/.venv/bin/python -m unittest discover -s search/helper -p 'test_*.py' -v && cd search && bash scripts/fallback-proof.sh ===
+
+test_bad_max (test_search.CliTests.test_bad_max) ... ok
+test_blank_query (test_search.CliTests.test_blank_query) ... ok
+test_missing_query (test_search.CliTests.test_missing_query) ... ok
+test_browser_closed_when_scrape_raises (test_search.FallbackTests.test_browser_closed_when_scrape_raises) ... ok
+test_browser_empty_is_search_failed (test_search.FallbackTests.test_browser_empty_is_search_failed) ... ok
+test_browser_raises_reports_both (test_search.FallbackTests.test_browser_raises_reports_both) ... ok
+test_ddgs_empty_uses_browser (test_search.FallbackTests.test_ddgs_empty_uses_browser) ... ok
+test_ddgs_ok_skips_browser (test_search.FallbackTests.test_ddgs_ok_skips_browser) ... ok
+test_ddgs_raises_uses_browser (test_search.FallbackTests.test_ddgs_raises_uses_browser) ... ok
+test_decode_bing_redirect (test_search.FallbackTests.test_decode_bing_redirect) ... ok
+test_env_fail_and_empty_route_to_browser (test_search.FallbackTests.test_env_fail_and_empty_route_to_browser) ... ok
+test_pick_title_all_empty_returns_empty (test_search.PickTitleTests.test_pick_title_all_empty_returns_empty) ... ok
+test_pick_title_all_whitespace_returns_empty (test_search.PickTitleTests.test_pick_title_all_whitespace_returns_empty) ... ok
+test_pick_title_collapses_whitespace_in_text_content (test_search.PickTitleTests.test_pick_title_collapses_whitespace_in_text_content) ... ok
+test_pick_title_falls_back_to_aria_label (test_search.PickTitleTests.test_pick_title_falls_back_to_aria_label) ... ok
+test_pick_title_falls_back_to_text_content (test_search.PickTitleTests.test_pick_title_falls_back_to_text_content) ... ok
+test_pick_title_falls_back_to_title_attr (test_search.PickTitleTests.test_pick_title_falls_back_to_title_attr) ... ok
+test_pick_title_strips_aria_label (test_search.PickTitleTests.test_pick_title_strips_aria_label) ... ok
+test_pick_title_strips_inner_text (test_search.PickTitleTests.test_pick_title_strips_inner_text) ... ok
+test_pick_title_strips_title_attr (test_search.PickTitleTests.test_pick_title_strips_title_attr) ... ok
+test_pick_title_uses_inner_text_when_present (test_search.PickTitleTests.test_pick_title_uses_inner_text_when_present) ... ok
+test_exception_gives_search_failed (test_search.RunTests.test_exception_gives_search_failed) ... ok
+test_max_clamped (test_search.RunTests.test_max_clamped) ... ok
+test_normalises_hits_and_skips_missing_url (test_search.RunTests.test_normalises_hits_and_skips_missing_url) ... ok
+test_uses_uk_region_and_max (test_search.RunTests.test_uses_uk_region_and_max) ... ok
+test_zero_results (test_search.RunTests.test_zero_results) ... ok
+
+----------------------------------------------------------------------
+Ran 26 tests in 0.121s
+
+OK
+
+==== M7b-AC1: setup ====
+      pre-existing headless Chromium pids (not ours): <none>
+
+==== M7b-AC1: SEARCH_HELPER_FORCE_DDGS=fail ====
+      started own service on http://127.0.0.1:7791 (pid 34732, mode fail)
+PASS: [fail] service health -> 200
+      status=200 verdict=ok 5
+      response (first 800 chars):
+        | {"results":[{"title":"Ada Lovelace | Biography, Computer, Day, & Facts","url":"https://www.britannica.com/biography/Ada-Lovelace","snippet":"Ada Lovelace (born December 10, 1815, Piccadilly Terrace, Middlesex [now in …"},{"title":"Who was Ada Lovelace? - BBC Newsround","url":"https://www.bbc.co.uk/newsround/49960544","snippet":"13 Oct 2020 · Ada Lovelace was a leading 19th century mathematician and daughter of the famous poet Lord Byron. She was born …"},{"title":"Ada Lovelace - History of Math and Technology","url":"https://www.historymath.com/ada-lovelace/","snippet":"Ada Lovelace’s contributions to mathematics and the sciences are profound and enduring. As the world’s …"},{"title":"Ada Lovelace – Complete Biography, History and …","url":"https://history-computer.com/peop
+PASS: [fail] HTTP 200
+PASS: [fail] backend browser, 5 results, each with title and external absolute http(s) url
+PASS: no new headless Chromium process after the [fail] request completed
+PASS: no new headless Chromium process after the [fail] service was stopped
+
+==== M7b-AC1: SEARCH_HELPER_FORCE_DDGS=empty ====
+      started own service on http://127.0.0.1:7791 (pid 34774, mode empty)
+PASS: [empty] service health -> 200
+      status=200 verdict=ok 5
+      response (first 800 chars):
+        | {"results":[{"title":"Ada Lovelace - Wikipedia","url":"https://en.wikipedia.org/wiki/Ada_Lovelace","snippet":"Augusta Ada King, Countess of Lovelace (née Byron; 10 December 1815 – 27 November 1852), also known as Ada Lovelace, was …Read more"},{"title":"Ada Lovelace | Biography, Computer, Day, & Facts | Britannica","url":"https://www.britannica.com/biography/Ada-Lovelace","snippet":"Ada Lovelace (born December 10, 1815, Piccadilly Terrace, Middlesex [now in London], England—died November 27, 1852, …"},{"title":"Ada Lovelace C of E High School","url":"https://adalovelace.org.uk/","snippet":"Headteacher’s Welcome \"We are a value centred school that is relentless in its approach to deliver the highest standards of …"},{"title":"Who was Ada Lovelace? - BBC Newsround","url":"https
+PASS: [empty] HTTP 200
+PASS: [empty] backend browser, 5 results, each with title and external absolute http(s) url
+PASS: no new headless Chromium process after the [empty] request completed
+PASS: no new headless Chromium process after the [empty] service was stopped
+
+==== result ====
+ALL CASES PASSED

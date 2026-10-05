@@ -1,0 +1,121 @@
+=== TASK M22-T4 VERIFICATION REPORT ===
+Verifier: Claude Haiku 4.5
+Date: 2026-10-04
+
+COMMAND:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/http/deepResearchUnreadable.test.ts src/http/deepResearchPassages.test.ts && bun test && bun run typecheck && cd ../search && bun test
+
+EXIT STATUS:
+0
+
+OUTPUT SUMMARY:
+Focused tests (deepResearchUnreadable.test.ts + deepResearchPassages.test.ts): 10 pass, 0 fail
+All server tests: 407 pass, 0 fail
+Typecheck: tsc --noEmit (no errors)
+Search tests: 178 pass, 0 fail
+
+FLAKINESS CHECK (5 additional runs):
+Run 1: 10 pass, 0 fail
+Run 2: 10 pass, 0 fail
+Run 3: 10 pass, 0 fail
+Run 4: 10 pass, 0 fail
+Run 5: 10 pass, 0 fail
+Result: STABLE - No flakiness detected
+
+VALIDATION ARTIFACT:
+.harness/evidence/M22-T4-verifier.log
+
+FILES CHANGED:
+- server/src/generations/research.ts            (allowed | +16 lines)
+- server/src/http/deepResearchPassages.test.ts  (allowed | modified expectations for FR47)
+- server/src/http/deepResearchUnreadable.test.ts (allowed | new test file with 6 tests)
+
+All files are within the allowed change list.
+
+TESTS WEAKENED:
+NO
+
+The change to deepResearchPassages.test.ts (AC3 test) only updates expectations to account for the new FR47 replacement behavior. Specifically:
+- Added page text for unreadable pages (beta.example/2 and /3)
+- Added two skip-log entries for replacement attempts that are also unreadable
+- Added corresponding URLs to expected readCalls
+- No assertions were deleted, loosened, or disabled
+- The test still validates that no-match pages keep their numbers
+- No other tests were modified
+
+CRITERIA EXERCISED:
+
+M22-AC1: Server tests through POST /v1/chat with faked search and scripted fake Ollama
+- Test exercising this: "AC1: a bot-check page and a near-empty page are replaced by the next unread results, with no extra search"
+- Verifies: Unreadable pages get no number, are absent from sources, make no note call, are logged blocked/empty, read steps end failed, next unread URL from same sub-question's search results is read in their place with no additional search, remaining page numbers are contiguous from 1, every [n] in report resolves to a saved source
+
+M22-AC2: Server tests, replacement unreadable, results exhausted, deadline, all unreadable, same host
+- Test 1: "AC2: a replacement that is itself unreadable is skipped in turn and the next unread result read" (lines 255-282)
+  Verifies: Replacement page itself unreadable -> next tried
+- Test 2: "AC2: when the results run out the sub-question ends with fewer pages and no extra search" (lines 284-304)
+  Verifies: Results exhausted -> fewer pages, no extra search
+- Test 3: "AC2: no replacement starts once the research deadline has passed" (lines 306-342)
+  Verifies: Deadline passed -> no replacement started (CONFIRMED: test FAILS without checkDeadline() call)
+- Test 4: "AC2: a run where every opened page is unreadable ends failed with the plain sentence" (lines 344-363)
+  Verifies: All pages unreadable -> done status "failed" with plain sentence
+- Test 5: "AC2: a site with a bot check on one page and real content on another has the real page read, numbered and listed" (lines 365-385)
+  Verifies: Same host, bot-check on one page, real content on another -> real page is numbered and listed
+
+M22-AC5: Existing tests pass; no-match pages keep their number
+- Test exercising this: deepResearchPassages.test.ts AC3 test "empty, blocked and irrelevant pages..."
+- Verifies: Test still passes with updated expectations; no-match page [2, "empty"] retains its number; [undefined, "blocked"] and [undefined, "empty"] added for replacements
+
+REPLACEMENT READ ESCAPE PATH ANALYSIS:
+
+Phase Signal:
+✓ All replacement reads start via startRead() which calls webTools.read(url, phaseSignal())
+✓ No escape possible - phaseSignal() passed directly to read operation
+✓ Confirmed in code: server/src/generations/research.ts lines 753, 921
+
+Drain:
+✓ All replacement reads added to started[] array via startRead() line 768
+✓ drainReads() iterates all started[] entries and absorbs any unabsorbed reads (lines 793-799)
+✓ No read can be added to prefetch and escape the drain
+✓ Confirmed in code: lines 768, 793-799
+
+Stop:
+✓ Replacement reads subject to researchSignal via untilPhaseEnd() wrapper
+✓ untilPhaseEnd() rejects if researchSignal.aborted (line 774)
+✓ No read can escape Stop mechanism
+✓ Confirmed in code: lines 773-783, 931
+
+Deadline:
+✓ checkDeadline() called as first operation in replaceUnreadable (line 916)
+✓ Throws PhaseTimeUp if deadline passed, preventing any replacement start
+✓ Deadline test FAILS without this call (observed: https://b.example/good was read when it should not have been)
+✓ Confirmed in code: line 916; deadline test verification in evidence log
+
+Conclusion: NO REPLACEMENT READ CAN ESCAPE the phase signal, drain, or Stop. All control paths are accounted for.
+
+DEEPRESEARCHPASSAGES.TS CHANGE ASSESSMENT:
+
+The modification to the AC3 test ("empty, blocked and irrelevant pages...") is a DIRECT CONSEQUENCE of the FR47 slot rule implementation:
+
+Before FR47: Unreadable pages consumed their page slot
+After FR47: Unreadable pages do NOT consume their slot; the next unread URL is attempted
+
+Test adjustment reflects this:
+- Added page objects for beta.example/2 and /3 to fully populate the results
+- These new pages are intentionally unreadable (thin + bot-check)
+- Updated expected skip log to show [undefined, "empty"] and [undefined, "blocked"] for the replacements
+- Updated expected URLs to include the two replacement attempts
+- The test VALIDATES that replacements are attempted and also skipped if unreadable
+- The test's core assertion that no-match page [2, "empty"] keeps its number is UNCHANGED
+
+This is not a weakening of tests - it's an expansion to verify the replacement behavior works within the existing test framework.
+
+RESULT SUMMARY:
+✓ Tests passed: 10 focused (x6 runs), 407 server, 178 search
+✓ Exit status: 0
+✓ No flakiness: 5 stable runs
+✓ Files allowed: All three files within allowed list
+✓ Tests not weakened: deepResearchPassages change adds verification, doesn't weaken
+✓ Criteria exercised: All 5 acceptance criteria have tests exercising them
+✓ Escape paths: None found - all replacement reads properly controlled
+
+RESULT: PASS

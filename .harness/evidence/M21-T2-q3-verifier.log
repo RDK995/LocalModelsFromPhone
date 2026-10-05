@@ -1,0 +1,92 @@
+VERIFICATION LOG: M21-T2-q3
+
+Task: Verify M21-T2 q3 live research run via check-only validation
+
+Current commit: 436308e (M21 T2 q2: LFP vs NMC live run fails pass bar)
+Working tree: Uncommitted evidence files (M21-T2-q3-*)
+
+PROCESS CHECK:
+The heat question was running at verification time, but the task explicitly permits check-only 
+commands during another question's run. No new run was started.
+
+RESULT.JSON VERIFICATION:
+File: .harness/evidence/M21-T2-q3-result.json
+Status: EXISTS, pass: true
+Result JSON contents:
+  - id: q3
+  - generation_id: 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8
+  - started_at: 2026-10-03T15:57:50.757Z
+  - ended_at: 2026-10-03T16:01:15.874Z
+  - final_status: complete
+  - total_wall_s: 205.117
+  - budget_s: 480
+  - distinct_pages_read: 6
+  - notes_kept: 10
+  - cited_read_pages: 3
+  - unresolved_citations: [] (empty array)
+  - All checks passed: status_ok, within_budget, cited_read_pages_ok, no_unresolved_citations
+  - pass: true
+
+RUN.LOG VERIFICATION:
+File: .harness/evidence/M21-T2-q3-run.log
+Last lines:
+  }
+  },
+  "pass": true
+}
+exit=0
+
+CHECK-ONLY COMMAND EXECUTION:
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M21-T2-q3-stream.txt --log ../.harness/evidence/M21-T2-q3-fr41.log
+Exit status: 0
+Output: JSON with pass: true
+
+Check-only output values (vs result.json):
+  - total_wall_s: 205.114 (result.json: 205.117) [minor rounding difference, acceptable]
+  - planning_s: 31.478 [matches]
+  - research_phase_calls: 12 [matches]
+  - routine_calls: 13 [matches]
+  - routine_p50_s: 3.176 [matches]
+  - routine_p95_s: 19.291 [matches]
+  - fr41_lines: 16 [matches]
+  - distinct_pages_read: 6 [matches]
+  - notes_kept: 10 [matches]
+  - final_status: complete [matches]
+  - cited_read_pages: 3 [matches]
+  - unresolved_citations: [] [matches]
+  - All checks: pass: true [matches]
+
+FILES CHANGED:
+Only the following files exist as new (uncommitted):
+  - .harness/evidence/M21-T2-q3-fr41.log
+  - .harness/evidence/M21-T2-q3-result.json
+  - .harness/evidence/M21-T2-q3-run.log
+  - .harness/evidence/M21-T2-q3-stream.txt
+All within the allowed "Files Allowed To Change: .harness/evidence/M21-T2-<ID>-* (new files only)"
+
+No source, test, script, config, reports/ or research_notes/ files were modified.
+git diff --name-only HEAD: (empty)
+git status --porcelain excluding .harness/, reports/, research_notes/: (empty)
+
+ACCEPTANCE CRITERIA VERIFICATION:
+Criterion M21-AC1: "Live on the Mac with `qwen3.5:35b-a3b` resident: 3 real research-style 
+questions plus the 2026-10-02 heat-pump question each end within the budget plus a small 
+margin with status `complete` or `partial`, a report citing at least 3 distinct read pages, 
+and no citation number that fails to resolve to a saved source"
+
+Evidence exercising this criterion:
+  - Status `complete`: final_status = "complete" in result.json
+  - Within budget + margin: total_wall_s 205.117 < limit_s 540 (540s = 480s + 60s margin)
+  - Citations: cited_read_pages = 3 (required >= 3) ✓
+  - No unresolved citations: unresolved_citations = [] ✓
+
+VERIFICATION SUMMARY:
+✓ result.json exists and pass = true
+✓ run.log ends with exit=0
+✓ check-only command exits 0
+✓ check-only reproduces result.json values (minor floating-point variance expected)
+✓ No files changed outside allowed list
+✓ No test files weakened
+✓ All acceptance criteria exercised
+
+RESULT: PASS

@@ -1,0 +1,82 @@
+=== PROBE OUTPUT ===
+{
+  "model": "qwen3.5:35b-a3b",
+  "num_ctx": 32768,
+  "callsPerSetting": 5,
+  "settings": {
+    "think:true": {
+      "valid": 7,
+      "total": 7,
+      "perStep": {
+        "brief": {
+          "valid": 1,
+          "total": 1
+        },
+        "plan": {
+          "valid": 1,
+          "total": 1
+        },
+        "queries": {
+          "valid": 1,
+          "total": 1
+        },
+        "select": {
+          "valid": 1,
+          "total": 1
+        },
+        "note": {
+          "valid": 1,
+          "total": 1
+        },
+        "gap": {
+          "valid": 1,
+          "total": 1
+        },
+        "write": {
+          "valid": 1,
+          "total": 1
+        }
+      },
+      "failures": []
+    },
+    "think:false": {
+      "valid": 7,
+      "total": 7,
+      "perStep": {
+        "brief": {
+          "valid": 1,
+          "total": 1
+        },
+        "plan": {
+          "valid": 1,
+          "total": 1
+        },
+        "queries": {
+          "valid": 1,
+          "total": 1
+        },
+        "select": {
+          "valid": 1,
+          "total": 1
+        },
+        "note": {
+          "valid": 1,
+          "total": 1
+        },
+        "gap": {
+          "valid": 1,
+          "total": 1
+        },
+        "write": {
+          "valid": 1,
+          "total": 1
+        }
+      },
+      "failures": []
+    }
+  }
+}
+
+=== SUMMARY ===
+think-off validity: 7/7 (100%) per step: brief: 1/1, plan: 1/1, queries: 1/1, select: 1/1, note: 1/1, gap: 1/1, write: 1/1
+think-on validity: 7/7 (100%) per step: brief: 1/1, plan: 1/1, queries: 1/1, select: 1/1, note: 1/1, gap: 1/1, write: 1/1

@@ -1,0 +1,250 @@
+: connected
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-0
+event: step
+data: {"step_id":"plan","kind":"plan","status":"started","elapsed_ms":0,"budget_ms":480000}
+
+: keep-alive
+
+: keep-alive
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-1
+event: step
+data: {"step_id":"plan","kind":"plan","status":"done","elapsed_ms":33851,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-2
+event: step
+data: {"step_id":"969cec5a-0cad-4b13-bc53-7eb902fa9efe","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":33851,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-3
+event: step
+data: {"step_id":"969cec5a-0cad-4b13-bc53-7eb902fa9efe","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":36203,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-4
+event: step
+data: {"step_id":"a12c73e6-a358-42aa-b87f-e74b2cfdc423","kind":"search","status":"started","query":"WebAssembly Core Modules vs Components type system differences","elapsed_ms":36203,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-5
+event: step
+data: {"step_id":"a12c73e6-a358-42aa-b87f-e74b2cfdc423","kind":"search","status":"done","query":"WebAssembly Core Modules vs Components type system differences","elapsed_ms":37433,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-6
+event: step
+data: {"step_id":"af2dd8db-8f03-4c92-b21a-48f26fc9ba79","kind":"search","status":"started","query":"Wasm Component Model binary format structure vs core module","elapsed_ms":37433,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-7
+event: step
+data: {"step_id":"af2dd8db-8f03-4c92-b21a-48f26fc9ba79","kind":"search","status":"done","query":"Wasm Component Model binary format structure vs core module","elapsed_ms":38835,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-8
+event: step
+data: {"step_id":"37be5c78-f064-45fc-947c-3a9b364c740d","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":38836,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-9
+event: step
+data: {"step_id":"37be5c78-f064-45fc-947c-3a9b364c740d","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":41120,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-10
+event: step
+data: {"step_id":"785abf5c-e2b1-4323-bae3-9f747396ac03","kind":"read","status":"started","url":"https://dev.to/vaib/the-webassembly-component-model-a-new-era-of-interoperability-and-composition-4am5","elapsed_ms":41120,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-11
+event: step
+data: {"step_id":"b8d75c60-eb22-48be-9a85-224cb40c07e2","kind":"read","status":"started","url":"https://github.com/WebAssembly/component-model/blob/main/design/mvp/Binary.md","elapsed_ms":41121,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-12
+event: step
+data: {"step_id":"785abf5c-e2b1-4323-bae3-9f747396ac03","kind":"read","status":"done","url":"https://dev.to/vaib/the-webassembly-component-model-a-new-era-of-interoperability-and-composition-4am5","elapsed_ms":42450,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-13
+event: step
+data: {"step_id":"a7193445-917d-4f01-9be3-01a321eca871","kind":"model","status":"started","detail":"Taking notes: dev.to","elapsed_ms":42486,"budget_ms":480000}
+
+: keep-alive
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-14
+event: step
+data: {"step_id":"a7193445-917d-4f01-9be3-01a321eca871","kind":"model","status":"done","detail":"Taking notes: dev.to","elapsed_ms":53796,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-15
+event: step
+data: {"step_id":"eb3d7491-6704-40e6-86d8-ab6b76e3b2a8","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":53797,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-16
+event: step
+data: {"step_id":"eb3d7491-6704-40e6-86d8-ab6b76e3b2a8","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":57864,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-17
+event: step
+data: {"step_id":"3f9e8b3b-d09c-42f9-ad18-9cc47ca73ae8","kind":"search","status":"started","query":"WebAssembly Component Model runtime support list 2026","elapsed_ms":57865,"budget_ms":480000}
+
+: keep-alive
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-18
+event: step
+data: {"step_id":"3f9e8b3b-d09c-42f9-ad18-9cc47ca73ae8","kind":"search","status":"done","query":"WebAssembly Component Model runtime support list 2026","elapsed_ms":60601,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-19
+event: step
+data: {"step_id":"87ad756e-d061-46ea-ac4a-8a36d2f8edc8","kind":"search","status":"started","query":"Wasmtime wasi component model status October 2026","elapsed_ms":60602,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-20
+event: step
+data: {"step_id":"87ad756e-d061-46ea-ac4a-8a36d2f8edc8","kind":"search","status":"done","query":"Wasmtime wasi component model status October 2026","elapsed_ms":61975,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-21
+event: step
+data: {"step_id":"ca9b0141-2049-4cc9-919a-42f024dd1341","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":61975,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-22
+event: step
+data: {"step_id":"ca9b0141-2049-4cc9-919a-42f024dd1341","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":64707,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-23
+event: step
+data: {"step_id":"ab8b5e54-4ae3-40f6-9a8d-438ecfa52985","kind":"read","status":"started","url":"https://component-model.bytecodealliance.org/running-components/wasmtime.html","elapsed_ms":64707,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-24
+event: step
+data: {"step_id":"4aaa46fa-cdad-40ea-9191-2f3880e9db04","kind":"read","status":"started","url":"https://techbytes.app/posts/wasi-0-3-and-beyond-webassembly-interfaces-2026/","elapsed_ms":64708,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-25
+event: step
+data: {"step_id":"ab8b5e54-4ae3-40f6-9a8d-438ecfa52985","kind":"read","status":"done","url":"https://component-model.bytecodealliance.org/running-components/wasmtime.html","elapsed_ms":65345,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-26
+event: step
+data: {"step_id":"ffbf09d9-bec6-43d0-be75-273d9dbc5fb0","kind":"model","status":"started","detail":"Taking notes: component-model.bytecodealliance.org","elapsed_ms":65349,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-27
+event: step
+data: {"step_id":"ffbf09d9-bec6-43d0-be75-273d9dbc5fb0","kind":"model","status":"done","detail":"Taking notes: component-model.bytecodealliance.org","elapsed_ms":73144,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-28
+event: step
+data: {"step_id":"dd8d126f-d5d6-43a5-a74c-b08ff92ee975","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":73145,"budget_ms":480000}
+
+: keep-alive
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-29
+event: step
+data: {"step_id":"dd8d126f-d5d6-43a5-a74c-b08ff92ee975","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":77203,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-30
+event: step
+data: {"step_id":"4dc03623-8495-4871-b320-1998d8bda0b8","kind":"search","status":"started","query":"WebAssembly Component Model language support October 2026","elapsed_ms":77203,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-31
+event: step
+data: {"step_id":"4dc03623-8495-4871-b320-1998d8bda0b8","kind":"search","status":"done","query":"WebAssembly Component Model language support October 2026","elapsed_ms":81417,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-32
+event: step
+data: {"step_id":"bb1c2815-fe34-4c0c-ad38-da6622bac743","kind":"search","status":"started","query":"WIT compiler tooling languages 2026 list","elapsed_ms":81418,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-33
+event: step
+data: {"step_id":"bb1c2815-fe34-4c0c-ad38-da6622bac743","kind":"search","status":"done","query":"WIT compiler tooling languages 2026 list","elapsed_ms":83773,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-34
+event: step
+data: {"step_id":"63cffce2-f9a7-4f60-ba68-4f0cfdbcb50f","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":83774,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-35
+event: step
+data: {"step_id":"63cffce2-f9a7-4f60-ba68-4f0cfdbcb50f","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":86771,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-36
+event: step
+data: {"step_id":"76685884-1d81-47de-a5f6-8d0ea8a80dbe","kind":"read","status":"started","url":"https://component-model.bytecodealliance.org/language-support.html","elapsed_ms":86772,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-37
+event: step
+data: {"step_id":"fa81e077-9336-4065-833d-19429fcea363","kind":"read","status":"started","url":"https://github.com/appcypher/awesome-wasm-langs","elapsed_ms":86773,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-38
+event: step
+data: {"step_id":"76685884-1d81-47de-a5f6-8d0ea8a80dbe","kind":"read","status":"done","url":"https://component-model.bytecodealliance.org/language-support.html","elapsed_ms":86989,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-39
+event: step
+data: {"step_id":"9bee9e24-385f-40d8-bfe6-949c83b6e94e","kind":"model","status":"started","detail":"Taking notes: component-model.bytecodealliance.org","elapsed_ms":86994,"budget_ms":480000}
+
+: keep-alive
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-40
+event: step
+data: {"step_id":"9bee9e24-385f-40d8-bfe6-949c83b6e94e","kind":"model","status":"done","detail":"Taking notes: component-model.bytecodealliance.org","elapsed_ms":96761,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-41
+event: step
+data: {"step_id":"b8d75c60-eb22-48be-9a85-224cb40c07e2","kind":"read","status":"done","url":"https://github.com/WebAssembly/component-model/blob/main/design/mvp/Binary.md","elapsed_ms":96762,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-42
+event: step
+data: {"step_id":"462150a0-8ad3-411f-a887-dca4abcce958","kind":"model","status":"started","detail":"Taking notes: github.com","elapsed_ms":96869,"budget_ms":480000}
+
+: keep-alive
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-43
+event: step
+data: {"step_id":"462150a0-8ad3-411f-a887-dca4abcce958","kind":"model","status":"done","detail":"Taking notes: github.com","elapsed_ms":111460,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-44
+event: step
+data: {"step_id":"4aaa46fa-cdad-40ea-9191-2f3880e9db04","kind":"read","status":"done","url":"https://techbytes.app/posts/wasi-0-3-and-beyond-webassembly-interfaces-2026/","elapsed_ms":111464,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-45
+event: step
+data: {"step_id":"7e04bd2f-852c-4f3e-adb0-6b69b97bfbde","kind":"model","status":"started","detail":"Taking notes: techbytes.app","elapsed_ms":111469,"budget_ms":480000}
+
+: keep-alive
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-46
+event: step
+data: {"step_id":"7e04bd2f-852c-4f3e-adb0-6b69b97bfbde","kind":"model","status":"done","detail":"Taking notes: techbytes.app","elapsed_ms":120091,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-47
+event: step
+data: {"step_id":"fa81e077-9336-4065-833d-19429fcea363","kind":"read","status":"done","url":"https://github.com/appcypher/awesome-wasm-langs","elapsed_ms":120092,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-48
+event: step
+data: {"step_id":"e4a3e0f8-0638-4632-ac5b-8e840851b028","kind":"model","status":"started","detail":"Taking notes: github.com","elapsed_ms":120257,"budget_ms":480000}
+
+: keep-alive
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-49
+event: step
+data: {"step_id":"e4a3e0f8-0638-4632-ac5b-8e840851b028","kind":"model","status":"done","detail":"Taking notes: github.com","elapsed_ms":142430,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-50
+event: step
+data: {"step_id":"write","kind":"write","status":"started","elapsed_ms":142436,"budget_ms":480000}
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-51
+event: step
+data: {"step_id":"write","kind":"write","status":"done","elapsed_ms":217088,"budget_ms":480000}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-52
+event: content
+data: {"text":"The WebAssembly Component Model represents a significant evolution from traditional Core WebAssembly modules by addressing inherent limitations in type systems and binary representation. While Core WebAssembly defines a low-level binary instruction format that does not inherently dictate how higher-level language constructs like strings, complex data structures, or basic numbers are represented or passed across module boundaries [2], Components introduce a standardized high-level interface system. Unlike raw Core modules, Components include metadata defining their interface contracts (imports/exports) via the WebAssembly Interface Type (WIT), providing a language-agnostic type system that allows for explicit declaration of interfaces [2]. This architectural shift enables components to encapsulate one or more core Wasm modules along with metadata about their interfaces, making them self-describing units [2]. A critical technical distinction lies in the binary representation: Components include an explicit 'layer' field in the header to distinguish them from core modules, and they use specific type sorting mechanisms and prefixes (such as the `core-prefix` meta-function) to differentiate component types from core types [1]. Furthermore, components are built for a specific 'world', enabling type-safety that Core modules lack by enforcing strict type matching and name resolution during instantiation [2][1]. The binary format strictly validates resource types within the interface, ensuring that all transitively used types are introduced via an import or export declaration, thereby guaranteeing type safety across boundaries [1].\n\nRegarding the runtime landscape as of October 2026, Wasmtime stands out as the primary environment supporting the WebAssembly Component Model with advanced capabilities. While earlier versions required an explicit flag to enable the model, Wasmtime has evolved significantly; specifically, version 37+ (as of October 2026) supports the model with features including native async execution, threading, and zero-copy operations [4]. As of October 2026, Wasmtime 37+ serves as the practical place to try the model with the newer interface surface provided by WASI 0.3 previews [4]. This runtime implements necessary infrastructure for the Component Model's async requirements, utilizing shared event loops capable of parking and resuming component execution when I/O is required [4]. Additionally, Wasmtime version 33.0.0 introduced support for invoking components with custom exports, demonstrating continuous evolution in its adoption status [3].\n\nIn terms of programming language and framework tooling as of October 2026, active support exists across multiple ecosystems to facilitate building WebAssembly Components. A curated list of languages with active compiler and runtime tooling targets a standardized 'world' interface, ensuring portability and compatibility across different runtimes [5]. These toolchains allow developers to build components within their respective ecosystems, where each section details the creation of a component for a specific world that can be run in example hosts or applications [5]. One of the key benefits highlighted is that these tools target a standardized interface, ensuring that the runtime only needs to know what world the component is targeting in order to import or execute it [5]. Consequently, developers have access to various languages with compilers that support WebAssembly with WASI as a target platform, enabling the creation of type-safe, composable components [5]."}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-53
+event: sources
+data: {"items":[{"title":"component-model/design/mvp/Binary.md at main","url":"https://github.com/WebAssembly/component-model/blob/main/design/mvp/Binary.md","n":1},{"title":"The WebAssembly Component Model: A New Era of Interoperability and Composition","url":"https://dev.to/vaib/the-webassembly-component-model-a-new-era-of-interoperability-and-composition-4am5","n":2},{"title":"Wasmtime - The WebAssembly Component Model","url":"https://component-model.bytecodealliance.org/running-components/wasmtime.html","n":3},{"title":"WASI 0.3 WebAssembly Interfaces in Wasmtime 37+","url":"https://techbytes.app/posts/wasi-0-3-and-beyond-webassembly-interfaces-2026/","n":4},{"title":"Creating Components - The WebAssembly Component Model","url":"https://component-model.bytecodealliance.org/language-support.html","n":5},{"title":"appcypher/awesome-wasm-langs: 😎 A curated list of languages that compile directly to or have their VMs in WebAssembly","url":"https://github.com/appcypher/awesome-wasm-langs","n":6}]}
+
+id: 1dfd519e-5fcc-46fe-82c1-ed65648827eb-54
+event: done
+data: {"status":"complete","model":"qwen3.5:35b-a3b","eval_count":3748,"tokens_per_second":45.99735507844795,"research":{"status":"complete","elapsed_ms":217089,"budget_ms":480000}}
+

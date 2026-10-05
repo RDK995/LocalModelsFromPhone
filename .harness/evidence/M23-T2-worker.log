@@ -1,0 +1,82 @@
+bun test v1.4.0 (1381054db)
+
+src/http/deepResearchQuotes.test.ts:
+162 |     notes: () => quotes.map((quote, i) => ({ quote, claim: `claim-${i}` })),
+163 |   });
+164 |   try {
+165 |     const events = await s.run();
+166 |     const write = s.requests[s.requests.length - 1];
+167 |     expect(Object.keys(write.format.properties)).toContain("report");
+                                                       ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "report"
+Received: [ "enough", "next_query" ]
+
+      at runOne (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/deepResearchQuotes.test.ts:167:50)
+      at async <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/deepResearchQuotes.test.ts:201:44)
+(fail) deep research quote matching (M23 FR48) > (a) keeps a note whose quote differs only by: curly apostrophe on the page, straight in the quote [13.40ms]
+162 |     notes: () => quotes.map((quote, i) => ({ quote, claim: `claim-${i}` })),
+163 |   });
+164 |   try {
+165 |     const events = await s.run();
+166 |     const write = s.requests[s.requests.length - 1];
+167 |     expect(Object.keys(write.format.properties)).toContain("report");
+                                                       ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "report"
+Received: [ "enough", "next_query" ]
+
+      at runOne (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/deepResearchQuotes.test.ts:167:50)
+      at async <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/deepResearchQuotes.test.ts:201:44)
+(fail) deep research quote matching (M23 FR48) > (a) keeps a note whose quote differs only by: straight apostrophe on the page, curly in the quote [2.36ms]
+162 |     notes: () => quotes.map((quote, i) => ({ quote, claim: `claim-${i}` })),
+163 |   });
+164 |   try {
+165 |     const events = await s.run();
+166 |     const write = s.requests[s.requests.length - 1];
+167 |     expect(Object.keys(write.format.properties)).toContain("report");
+                                                       ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "report"
+Received: [ "enough", "next_query" ]
+
+      at runOne (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/deepResearchQuotes.test.ts:167:50)
+      at async <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/deepResearchQuotes.test.ts:201:44)
+(fail) deep research quote matching (M23 FR48) > (a) keeps a note whose quote differs only by: curly double quotes on the page [2.29ms]
+205 |     });
+206 |   }
+207 | 
+208 |   it("(a) all variants together in one run are all kept and cite page 1", async () => {
+209 |     const { writeText, sources } = await runOne(page(...KEPT.map((c) => c.page)), KEPT.map((c) => c.quote));
+210 |     KEPT.forEach((c, i) => expect(hasNote(writeText, 1, i, c.quote.replace(/\s+/g, " ").trim())).toBe(true));
+                ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at forEach (1:11)
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/deepResearchQuotes.test.ts:210:10)
+(fail) deep research quote matching (M23 FR48) > (a) all variants together in one run are all kept and cite page 1 [5.51ms]
+263 |           : [{ quote: "Quokkas hum loudly at dawn on remote islands.", claim: "claim dropped" }],
+264 |     });
+265 |     try {
+266 |       const events = await s.run();
+267 |       const writeText = String(s.requests[s.requests.length - 1].messages[1].content);
+268 |       expect(writeText).toContain("- [1] claim kept");
+                              ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "- [1] claim kept"
+Received: "Research brief: About zebras\n\nPlan (sub-questions):\n1. zebra migration routes\n2. About zebras\n3. cats?\n\nNotes so far:\n(none yet)\n\nCurrent sub-question (2 of 3): About zebras\nSearches already run: gamma | About zebras\n\nToday's date is Monday, October 5, 2026 (2026-10-05).\n\nTask: Decide whether the notes are enough to answer the current sub-question. If not, give one new search query."
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/deepResearchQuotes.test.ts:268:25)
+(fail) deep research quote matching (M23 FR48) > (e) FR37 unchanged: citations resolve to saved sources numbered 1..n in read order; a page whose only note was dropped is still a source [3.22ms]
+
+ 47 pass
+ 5 fail
+ 113 expect() calls
+Ran 52 tests across 2 files. [65.00ms]

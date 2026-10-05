@@ -1,0 +1,90 @@
+=== M11-T1 Verification ===
+Date: 2026-10-01
+
+=== VALIDATION COMMAND ===
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun test src/chat/conversationSession.test.ts && bun run typecheck && bun test
+
+=== TEST RESULTS (MAIN VALIDATION) ===
+Exit Status: 0
+
+Output:
+bun test v1.4.0 (1381054db)
+
+ 27 pass
+ 0 fail
+ 60 expect() calls
+Ran 27 tests across 1 file. [13.00ms]
+$ tsc --noEmit
+bun test v1.4.0 (1381054db)
+
+ 437 pass
+ 0 fail
+ 12028 expect() calls
+Ran 437 tests across 28 files. [226.00ms]
+
+=== FILES CHANGED ===
+mobile/src/chat/conversationSession.ts (allowed)
+mobile/src/chat/conversationSession.test.ts (allowed)
+
+=== BASELINE TEST (Sources-block test against baseline) ===
+Test: "sends a prior answer with its Sources block, and other messages unchanged"
+Exit Status: 1 (FAIL - as expected)
+
+Output:
+error: expect(received).toEqual(expected)
+
+@@ -6,9 +6,3 @@
+    {
+-     "content": 
+- "web answer
+- 
+- Sources:
+- [3] A — https://a.test
+- [2] B — https://b.test"
+- ,
++     "content": "web answer",
+      "role": "assistant",
+
+Expected the content to include Sources block but baseline version only returns "web answer"
+
+This confirms the test fails on baseline and passes with the fix.
+
+=== ACCEPTANCE CRITERIA ===
+
+AC1 (RED first): Test "sends a prior answer with its Sources block, and other messages unchanged"
+   - EVIDENCE: Test assertion at conversationSession.test.ts:780-789 verifies the Sources block format
+   - RESULT: Test fails on baseline (confirmed), passes with fix
+   - VERIFICATION: Baseline test shows only "web answer" without Sources block
+
+AC2 (GREEN): Messages with sources sent with Sources block, without sources unchanged, request contains only role/content
+   - EVIDENCE: conversationSession.test.ts:780-789 verifies all messages in bodies[0].messages contain only role and content keys
+   - Line 787 verifies a message without sources ("plain") is sent unchanged
+   - RESULT: All assertions pass in current implementation
+
+AC3 (Persistence): Web reply persisted with steps and sources, keys subset of allowed
+   - EVIDENCE: conversationSession.test.ts:798-825 (test "persists a web reply's steps and sources...")
+   - Lines 815-819 assert steps and sources are persisted correctly
+   - Lines 820-824 verify all keys are a subset of allowed set
+   - RESULT: All assertions pass
+
+AC4 (Existing tests unchanged): No tests weakened
+   - EVIDENCE: git diff shows no deleted test functions, deleted assertions, or weakened comparisons
+   - Full suite runs with 437 passing tests
+   - RESULT: All existing tests still passing
+
+=== IMPLEMENTATION DETAILS ===
+
+1. historyContent function (conversationSession.ts:74-81):
+   - Exported for unit testing
+   - Returns message.content for non-assistant messages or messages without sources
+   - For assistant messages with sources, appends Sources block with format: "[<n>] <title> — <url>"
+   - Uses s.n if present, otherwise 1-based position
+   
+2. History building (conversationSession.ts:128-131):
+   - Uses historyContent(m) instead of m.content
+   - Request contains only role and content (no steps, thinking, or page text)
+
+3. Tests added (conversationSession.test.ts:739-826):
+   - "sends a prior answer with its Sources block, and other messages unchanged" - Full integration test
+   - "historyContent leaves empty or absent sources alone" - Unit test for edge cases
+   - "persists a web reply's steps and sources and nothing else from the web" - Persistence verification

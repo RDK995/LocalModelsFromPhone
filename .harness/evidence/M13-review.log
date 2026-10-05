@@ -1,0 +1,102 @@
+bun test v1.4.0 (1381054db)
+
+ 178 pass
+ 0 fail
+ 850 expect() calls
+Ran 178 tests across 9 files. [3.49s]
+$ tsc --noEmit
+bun test v1.4.0 (1381054db)
+
+ 446 pass
+ 0 fail
+ 12079 expect() calls
+Ran 446 tests across 30 files. [225.00ms]
+=== Web Failure Live Proof (M13-T3) ===
+Resident model with tools: nemotron3:33b
+
+==== Check 1: both search backends forced to fail ====
+[unavailable] own search service on port 60179, own server on port 60180
+--- [unavailable] attempt 1 of 4 ---
+[unavailable] model searched on attempt 1; steps: [{"step_id":"f078c332-4697-45df-a0e5-abe32d5af3d7","kind":"search","status":"started","query":"top news headlines","t":27.7},{"step_id":"f078c332-4697-45df-a0e5-abe32d5af3d7","kind":"search","status":"unavailable","query":"top news headlines","detail":"search_unavailable","t":27.7}]
+[unavailable] answer (first 200 chars): The web search tool was unavailable, preventing me from retrieving today's top news headlines. Consequently, I cannot provide the requested information. 
+[unavailable] done: {"status":"complete","model":"nemotron3:33b","eval_count":273,"tokens_per_second":57.993464370238776,"t":32.9} ; reply elapsed 32.9 s
+[0;32mPASS[0m: [unavailable] stream has a search step with status=unavailable
+[0;32mPASS[0m: [unavailable] the reply then streamed non-empty answer content
+[0;32mPASS[0m: [unavailable] ended done status=complete (not error, not cancelled)
+[0;32mPASS[0m: [unavailable] reply completed in 32.9 s, under the 240 s bound (search step reported at 27.7 s)
+[0;32mPASS[0m: [unavailable] no new search helper process left running afterwards
+
+==== Check 2: search exceeds its time limit (8000 ms) ====
+[timeout] own search service on port 60200, own server on port 60201
+--- [timeout] attempt 1 of 4 ---
+[timeout] model searched on attempt 1; steps: [{"step_id":"94a7d4dd-68dc-4c5a-a3b2-f3ae1f877809","kind":"search","status":"started","query":"top news headlines","t":28.7},{"step_id":"94a7d4dd-68dc-4c5a-a3b2-f3ae1f877809","kind":"search","status":"failed","query":"top news headlines","detail":"timeout","t":28.7}]
+[timeout] answer (first 200 chars): The web search for today's top news headlines failed due to a timeout, so I cannot provide the current headlines. 
+[timeout] done: {"status":"complete","model":"nemotron3:33b","eval_count":436,"tokens_per_second":57.78009663853686,"t":36.7} ; reply elapsed 36.7 s
+[0;32mPASS[0m: [timeout] stream has a search step with status=failed detail=timeout
+[0;32mPASS[0m: [timeout] the reply then streamed non-empty answer content
+[0;32mPASS[0m: [timeout] ended done status=complete (not error, not cancelled)
+[0;32mPASS[0m: [timeout] reply completed in 36.7 s, under the 240 s bound (search step reported at 28.7 s)
+[0;32mPASS[0m: [timeout] no new search helper process left running afterwards
+
+[0;32mAll M13 web failure checks passed[0m
+
+==== Part A: code and config inspection ====
+self-test: scan of a temp file containing api.tavily.com reports:
+      /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T/tmp.Go1m8cPZz9/planted.ts:1:tavily
+PASS: self-test: scan flags the planted api.tavily.com hit with file:line (Part A would FAIL on it) and ignores a clean file
+      scanning 185 tracked files (excluding .harness/, node_modules, search/scripts/no-hosted-api-check.sh)
+PASS: tracked source and config: no hosted search/fetch API hostnames, SDK names or key variables
+      LaunchAgent plists scanned: /Users/ryankenny/Library/LaunchAgents/com.harness.bundle-host.plist /Users/ryankenny/Library/LaunchAgents/com.harness.search.plist /Users/ryankenny/Library/LaunchAgents/com.harness.server.plist
+PASS: installed LaunchAgent plists: no hosted-API references
+      process environments inspected: port7789:42026 port7790:82117 ollama:927
+PASS: running server/search/ollama process environments: no hosted-API hostnames or key variables
+PART A: PASS
+
+==== Part B: outbound connections during a live web reply ====
+      resolved api.tavily.com -> 44.193.171.14 54.243.194.162 98.87.123.185
+      resolved tavily.com -> 3.173.182.115 3.173.182.118 3.173.182.46 3.173.182.88
+      resolved api.exa.ai -> 172.66.40.91 172.66.43.165 2606:4700:3108::ac42:285b 2606:4700:3108::ac42:2ba5
+      resolved exa.ai -> 216.150.1.1
+      resolved api.parallel.ai -> 34.149.172.212
+      resolved serpapi.com -> 162.159.142.21 172.66.2.17 2606:4700:7::209 2a06:98c1:58::209
+      resolved api.search.brave.com -> 15.197.138.111 3.33.153.106
+      resolved api.bing.microsoft.com -> 172.199.17.73
+      resolved www.googleapis.com -> 172.217.112.4 172.217.113.4 172.217.114.4 172.217.115.4 172.217.116.4 172.217.117.4 172.217.118.4 172.217.119.4 2001:4860:4840:400:: 2001:4860:4841:400:: 2001:4860:4842:400:: 2001:4860:4843:400:: 2001:4860:4844:400:: 2001:4860:4845:400:: 2001:4860:4846:400:: 2001:4860:4847:400::
+      resolved customsearch.googleapis.com -> 172.217.112.4 172.217.113.4 172.217.114.4 172.217.115.4 172.217.116.4 172.217.117.4 172.217.118.4 172.217.119.4 2001:4860:4840:400:: 2001:4860:4841:400:: 2001:4860:4842:400:: 2001:4860:4843:400:: 2001:4860:4844:400:: 2001:4860:4845:400:: 2001:4860:4846:400:: 2001:4860:4847:400::
+      resolved r.jina.ai -> 104.26.10.242 104.26.11.242 172.67.70.54 2606:4700:20::681a:af2 2606:4700:20::681a:bf2 2606:4700:20::ac43:4636
+      resolved s.jina.ai -> 104.26.10.242 104.26.11.242 172.67.70.54 2606:4700:20::681a:af2 2606:4700:20::681a:bf2 2606:4700:20::ac43:4636
+      resolved api.firecrawl.dev -> 35.245.250.27
+      resolved ollama.com -> 34.36.133.15
+      hosted-API address set size: 66
+      resident model: nemotron3:33b
+      own search service pid 69956 on 127.0.0.1:7795
+      own server pid 69964 on http://127.0.0.1:7796
+--- reply attempt 1 of 3 ---
+      done status: complete; completed search steps: 2; completed read steps: 0
+      reply did not both search and read a page and complete; retrying
+--- reply attempt 2 of 3 ---
+      done status: complete; completed search steps: 1; completed read steps: 1
+
+==== Part B: results ====
+      reply with search + read_page completed: yes
+      samples collected: 4759 connection observations
+observed remote addresses (count role comm address class), distinct pids collapsed:
+         1 ollama llama-ser 127.0.0.1 loopback
+         1 ollama ollama 127.0.0.1 loopback
+         1 search bun 127.0.0.1 loopback
+         1 search bun 2a04:4e42:200::223 remote
+         3 search Python 104.18.19.2 remote
+         3 search Python 185.15.59.224 remote
+         1 search Python 3.173.182.82 remote
+         1 search Python 5.102.173.68 remote
+         2 search Python 52.142.124.215 remote
+         1 search Python 63.32.180.52 remote
+         1 server bun 127.0.0.1 loopback
+      observed NON-loopback remote set: 104.18.19.2 185.15.59.224 2a04:4e42:200::223 3.173.182.82 5.102.173.68 52.142.124.215 63.32.180.52 
+PASS: (1) server process: 1 distinct sampled connections, all loopback
+PASS: (2) Ollama process: 2 distinct sampled connections, none to ollama.com addresses (34.36.133.15 )
+PASS: (3) no sampled connection from server/search tree/Ollama to any resolved hosted-API address
+PASS: sampling observed search-service-tree outbound traffic (non-loopback): bun->2a04:4e42:200::223 Python->104.18.19.2 Python->185.15.59.224 Python->3.173.182.82 Python->5.102.173.68 Python->52.142.124.215 Python->63.32.180.52 
+PART B: PASS
+
+ALL PARTS PASS

@@ -1,0 +1,14 @@
+=== bun test ===
+bun test v1.4.0 (1381054db)
+
+ 173 pass
+ 0 fail
+ 408 expect() calls
+Ran 173 tests across 18 files. [150.00ms]
+EXIT:0
+=== bun run typecheck ===
+$ tsc --noEmit
+EXIT:0
+=== bun run lint ===
+$ eslint src --max-warnings 0
+EXIT:0

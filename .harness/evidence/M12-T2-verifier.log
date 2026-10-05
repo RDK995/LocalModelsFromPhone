@@ -1,0 +1,70 @@
+=== M12-T2 Verification ===
+
+Current HEAD: 707112e M12: open milestone - baseline d8db7d5, archive M10e detail
+
+=== VALIDATION COMMAND ===
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck
+Exit Status: 0
+
+Output:
+bun test v1.4.0 (1381054db)
+
+ 174 pass
+ 0 fail
+ 790 expect() calls
+Ran 174 tests across 8 files. [2.56s]
+$ tsc --noEmit
+
+=== FILES CHANGED ===
+- server/src/http/webStop.test.ts (new, untracked)
+
+No production code changes in server/ (git diff empty)
+No changes in tools.ts or manager.ts
+
+=== RED SCENARIO VERIFICATION ===
+
+Modified: server/src/web/tools.ts line 110
+Changed from: signal: AbortSignal.any([signal, timeout])
+Changed to:   signal: AbortSignal.any([timeout])
+
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/http/webStop.test.ts
+
+Exit Status: (non-zero after test failure)
+Output excerpt:
+ 0 pass
+ 2 fail
+ 12 expect() calls
+Ran 2 tests across 1 file. [4.07s]
+
+Failure at line 143:
+error: expect(received).toBe(expected)
+Expected: true
+Received: false
+
+Both test cases failed:
+- (fail) Stop during an in-flight web tool call (M12 FR23) > aborts the search-service request and ends the reply (web_search) [2028.68ms]
+- (fail) Stop during an in-flight web tool call (M12 FR23) > aborts the search-service request and ends the reply (read_page) [2030.52ms]
+
+The test expects the search service to receive an abort signal. Without the signal in AbortSignal.any, the cancel request does not propagate to the fetch, and the search service never sees the abort. The test fails with "Expected: true, Received: false" at the waitFor check for the aborted flag.
+
+Restored: server/src/web/tools.ts back to original
+Verified: git diff src/web/tools.ts is empty after restore
+
+Re-ran with restored code:
+Exit Status: 0
+Output:
+ 2 pass
+ 0 fail
+ 26 expect() calls
+Ran 2 tests across 1 file. [458.00ms]
+
+=== SIGNAL FLOW ANALYSIS ===
+
+POST /v1/generations/{id}/cancel → cancelGeneration(genId)
+  → record.abortController.abort()
+  → signal passed to webTools.execute at manager.ts:205
+  → signal passed to post() function in tools.ts:132 (webSearch) and :167 (readPage)
+  → signal passed to fetch via AbortSignal.any([signal, timeout]) at tools.ts:110
+
+The test verifies that when cancel is issued, the abort signal properly propagates to the search service fetch, causing the request to be aborted and the reply to terminate.
+

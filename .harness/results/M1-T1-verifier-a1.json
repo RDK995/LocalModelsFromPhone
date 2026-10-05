@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "role": "verifier",
+  "milestone": "M1",
+  "task": "M1-T1",
+  "attempt": 1,
+  "result": "PASS",
+  "base": "04bb92b7be06984856c1dd1c34b52e2533f656e3",
+  "changed_files": [
+    "server/package.json",
+    "server/src/http/server.test.ts",
+    "server/src/http/server.ts",
+    "server/src/ollama/client.test.ts",
+    "server/src/ollama/client.ts",
+    "server/tsconfig.json",
+    "shared/api.ts"
+  ],
+  "snapshot": "ff9d32d6906ec576cc9ffa54dd0a20d2cc01df84ceb2dd232183df230637cbaf",
+  "validation": {
+    "ledger_key": "b39243a930263edfa377992d4ba9d2c0458416825ce02f9c4f6dba75d556596e",
+    "execution": 1,
+    "command": "bash -lc 'cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/http src/ollama && bun run typecheck'",
+    "exit_code": 0,
+    "artifact": ".harness/evidence/validation/b39243a930263edfa377992d4ba9d2c0458416825ce02f9c4f6dba75d556596e-1.log",
+    "sha256": "6694094cc25b25e68e6e77b6de455237574770de8491d837cd05b64d28a4ab53"
+  },
+  "worker_result_sha256": "011f56c9f56787dfdf5c1d7c15556b53e5a8045b7e50ff6580710bf933ba4c6b"
+}

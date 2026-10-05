@@ -1,0 +1,68 @@
+=== Sources List Live Proof ===
+
+--- Check 7: bundle freshness ---
+PASS: restarted com.harness.bundle-host at 2026-09-30 22:05:11 BST so the phone downloads the new code
+Preflight ok: bun, Ollama, search service, Mac server
+
+--- Recording Ollama state (before proof) ---
+Before: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":27038329075,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-10T20:50:54.543667807Z","size_vram":27038329075,"context_length":131072}]}
+Resident before: nemotron3:33b
+Resident model with tools: nemotron3:33b
+Proof server on http://127.0.0.1:63624
+
+--- Running proof (mobile/scripts/sources-list-proof.ts) ---
+=== Sources list proof (M10d, FR28 / AC22) ===
+Model: nemotron3:33b
+
+--- Check 2: live web reply with >= 3 saved sources ---
+Prompt: What are today's top technology news stories? Cite your sources. (may take minutes)
+  status=complete sources=6
+    1. n=- | Tech News | Today's Latest Technology News | Reuters | https://www.reuters.com/technology/
+    2. n=1 | Technology News - CNBC | https://www.cnbc.com/technology/
+    3. n=2 | TechCrunch | Startup and Technology News | https://techcrunch.com/
+    4. n=- | Google News - Technology - Latest | https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGRqTVhZU0FtVnVHZ0pWVXlnQVAB
+    5. n=- | Google News - Technology - Latest | https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGRqTVhZU0FtVnVHZ0pWVXlnQVAB?hl=en-US&ceid=US:en
+    6. n=3 | Technology | https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGRqTVhZU0FtVnVHZ0pWVXlnQVAB?ucbcb=1&hl=en-GB&gl=GB&ceid=GB:en
+PASS: a reply has >= 3 saved sources (6, prompt "What are today's top technology news stories? Cite your sources.")
+
+--- Checks 3-4: view-model over the live sources ---
+PASS: live: header is exactly "Sources (6)" (got "Sources (6)")
+PASS: live: initial state collapsed
+PASS: live: toggle -> expanded
+PASS: live: toggle again -> collapsed
+PASS: live: 6 entries for 6 saved sources
+PASS: live: entry keys are distinct
+PASS: live: entry i url equals saved source i url
+PASS: live: every title non-empty and single-line
+PASS: live: no entry title contains another entry's url
+
+--- Check 5: logos through the real Mac /v1/icon ---
+  reuters.com -> image
+  cnbc.com -> image
+  techcrunch.com -> image
+  news.google.com -> image
+PASS: every one of 6 entries has a logo display (image or globe); 4/4 hosts got an image
+PASS: network observation: all 4 requests went to https://ryans-mac-studio.tailc3648a.ts.net:8443/v1/icon?host=...
+
+--- Check 6: screenshot-shaped fixture (offline) ---
+PASS: screenshot fixture: header is exactly "Sources (6)" (got "Sources (6)")
+PASS: screenshot fixture: initial state collapsed
+PASS: screenshot fixture: toggle -> expanded
+PASS: screenshot fixture: toggle again -> collapsed
+PASS: screenshot fixture: 6 entries for 6 saved sources
+PASS: screenshot fixture: entry keys are distinct
+PASS: screenshot fixture: entry i url equals saved source i url
+PASS: screenshot fixture: every title non-empty and single-line
+PASS: screenshot fixture: no entry title contains another entry's url
+PASS: screenshot fixture: 6 separate entries (want 6)
+PASS: www.wsj.com and wsj.com entries share host "wsj.com"
+PASS: identical-URL pair: same host, still two entries with distinct keys
+PASS: empty title (long URL) falls back to "long.example.com"
+PASS: newline title collapsed to "Line one Line two"
+
+All checks passed
+
+--- Check 1: resident model unchanged ---
+After: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":27038329075,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-10T20:54:55.602909807Z","size_vram":27038329075,"context_length":131072}]}
+PASS: resident model unchanged (nemotron3:33b)
+=== Proof PASSED ===

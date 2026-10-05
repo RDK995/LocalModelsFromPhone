@@ -1,0 +1,13 @@
+=== Unit Tests ===
+bun test v1.4.0 (1381054db)
+
+ 51 pass
+ 0 fail
+ 53 expect() calls
+Ran 51 tests across 1 file. [4.00ms]
+
+=== TypeScript Check ===
+$ tsc --noEmit
+
+=== Linting ===
+$ eslint src --max-warnings 0

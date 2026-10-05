@@ -1,0 +1,66 @@
+# M21-T4 Verification Log
+
+## Current commit
+$ git log --oneline -1
+8d17848 M21 T7: owner reading file regenerated from the re-runs; handoff awaiting owner
+
+## Shasum test (byte-identical hashes)
+$ shasum -a 256 /Users/ryankenny/.claude/uploads/db6a6102-6473-4871-aa04-e895eb948ec7/789e0a36-image.png /Users/ryankenny/.claude/uploads/db6a6102-6473-4871-aa04-e895eb948ec7/93437419-image.png .harness/evidence/M21-AC2-phone-screenshot-1.png .harness/evidence/M21-AC2-phone-screenshot-2.png
+
+9898539ec05d20dd9b17b9e12058f19f8a80f5caf584e0ccfa9fb50772eebf61  /Users/ryankenny/.claude/uploads/db6a6102-6473-4871-aa04-e895eb948ec7/789e0a36-image.png
+14bf64ee2d0697fc97647074ced8affae7e18b944a9fdeb98c4a97ca293233b0  /Users/ryankenny/.claude/uploads/db6a6102-6473-4871-aa04-e895eb948ec7/93437419-image.png
+9898539ec05d20dd9b17b9e12058f19f8a80f5caf584e0ccfa9fb50772eebf61  .harness/evidence/M21-AC2-phone-screenshot-1.png
+14bf64ee2d0697fc97647074ced8affae7e18b944a9fdeb98c4a97ca293233b0  .harness/evidence/M21-AC2-phone-screenshot-2.png
+
+✓ Pair 1 (image 1): 9898539ec05d20dd9b17b9e12058f19f8a80f5caf584e0ccfa9fb50772eebf61 identical
+✓ Pair 2 (image 2): 14bf64ee2d0697fc97647074ced8affae7e18b944a9fdeb98c4a97ca293233b0 identical
+
+## File type verification
+$ file .harness/evidence/M21-AC2-phone-screenshot-1.png .harness/evidence/M21-AC2-phone-screenshot-2.png
+
+.harness/evidence/M21-AC2-phone-screenshot-1.png: PNG image data, 1179 x 2556, 8-bit/color RGB, non-interlaced
+.harness/evidence/M21-AC2-phone-screenshot-2.png: PNG image data, 1179 x 2556, 8-bit/color RGB, non-interlaced
+
+## Source file modification times
+$ stat -f '%Sm' -t '%Y-%m-%dT%H:%M:%S%z' /Users/ryankenny/.claude/uploads/db6a6102-6473-4871-aa04-e895eb948ec7/789e0a36-image.png /Users/ryankenny/.claude/uploads/db6a6102-6473-4871-aa04-e895eb948ec7/93437419-image.png
+
+2026-10-03T19:45:13+0100
+2026-10-03T20:28:33+0100
+
+## Visual verification of images
+
+Image 1 (M21-AC2-phone-screenshot-1.png):
+- Phone clock visible: 19:44
+- Answer text visible: "From the German perspective, Nazi political rhetoric..."
+- Sources (n) visible: "Sources (6)" with expanded source list below answer
+- Logo citations visible: Small site-logo icons inline after sentences
+
+Image 2 (M21-AC2-phone-screenshot-2.png):
+- Phone clock visible: 20:28
+- Question visible: "What was the cause of World War Two from German perspective"
+- Status visible: "Deep research: complete"
+- Steps visible: Expanded list including "Planning, Searching: Nazi propaganda Treaty of Versailles causes WWII", "Searching: Hitler rhetoric Versailles injustice Germany", "Reading: bbc.co.uk", "Reading: scribd.com", etc., with "Hide web steps" link
+- Logo citation visible: Site logo icon after "...needed to be reversed"
+
+## Check file verification
+M21-T4-screenshot-check.md exists with all required sections:
+- Images listed and ordered (image 2 = top, image 1 = bottom)
+- Question text recorded
+- Items section with all four items marked VISIBLE:
+  * steps: VISIBLE (image 2, detailed list visible)
+  * status: VISIBLE (image 2, "Deep research: complete")
+  * logo citations: VISIBLE (image 1 and image 2)
+  * "Sources (n)": VISIBLE (image 1, "Sources (6)")
+- Timing section with:
+  * Image 1 clock: 19:44 BST, mtime: 2026-10-03T19:45:13+0100
+  * Image 2 clock: 20:28 BST, mtime: 2026-10-03T20:28:33+0100
+  * Reference: M21-T6 ended 17:45:11 BST
+  * Timing check passes: both dates are 2026-10-03 and clocks (19:44, 20:28) > 17:45 BST
+
+## Timing validation
+Reference time: 2026-10-03T16:45:11Z = 17:45:11 BST
+Image 1 clock: 19:44 BST ✓ (later than 17:45)
+Image 2 clock: 20:28 BST ✓ (later than 17:45)
+Both files dated 2026-10-03 ✓
+Timing check PASSES
+

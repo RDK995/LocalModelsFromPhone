@@ -1,0 +1,39 @@
+Boot readiness check (2026-09-28 18:39:24)
+repo commit: 03566f0de629b033f58a93ef36a3ff57cd94e6c0
+
+==== Boot time and LaunchAgents started by launchd since this boot ====
+  system booted at: Mon 28 Sep 2026 18:35:40 BST (epoch 1790616940)
+2026-09-28 18:39:24 PASS  LaunchAgent com.harness.server loaded and running (state: running)
+        com.harness.server launchd-tracked pid: 718
+2026-09-28 18:39:24 PASS  com.harness.server pid 718 has parent pid 1 (launchd), i.e. not started from a shell (ppid: 1)
+        com.harness.server process start time: Mon Sep 28 18:36:46 2026 (epoch 1790617006)
+2026-09-28 18:39:24 PASS  com.harness.server process started after this boot (start epoch 1790617006 > boot epoch 1790616940)
+2026-09-28 18:39:24 PASS  LaunchAgent com.harness.bundle-host loaded and running (state: running)
+        com.harness.bundle-host launchd-tracked pid: 720
+2026-09-28 18:39:24 PASS  com.harness.bundle-host pid 720 has parent pid 1 (launchd), i.e. not started from a shell (ppid: 1)
+        com.harness.bundle-host process start time: Mon Sep 28 18:36:46 2026 (epoch 1790617006)
+2026-09-28 18:39:24 PASS  com.harness.bundle-host process started after this boot (start epoch 1790617006 > boot epoch 1790616940)
+        com.harness.bundle-host process tree (agent pid + descendants): 720 
+        TCP 8081 listener pid: 720
+2026-09-28 18:39:24 PASS  TCP 8081 listener (pid 720) is com.harness.bundle-host's launchd pid (720) or a descendant of it
+
+==== Server reachable (unauthenticated rejected, authenticated works over the tailnet) ====
+2026-09-28 18:39:24 PASS  unauthenticated GET http://127.0.0.1:7789/v1/models -> 401 (got 401)
+2026-09-28 18:39:24 FAIL  authenticated GET https://ryans-mac-studio.tailc3648a.ts.net:8443/v1/state -> 200 (got 503)
+
+==== Bundle host reachable over the tailnet (status, iOS manifest, bundle fetch) ====
+2026-09-28 18:39:24 PASS  GET http://ryans-mac-studio.tailc3648a.ts.net:8081/status -> packager-status:running (got 'packager-status:running')
+        iOS manifest fetch: 200; launchAsset.url: http://ryans-mac-studio.tailc3648a.ts.net:8081/expo-router.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=src%2Fapp&unstable_transformProfile=hermes-stable
+2026-09-28 18:39:24 PASS  iOS manifest fetch -> 200 JSON (got 200)
+2026-09-28 18:39:24 PASS  manifest's bundle/launch-asset URL names the tailnet host (http://ryans-mac-studio.tailc3648a.ts.net:8081/...)
+        bundle fetch: 200, 3806329 bytes
+2026-09-28 18:39:24 PASS  fetching the bundle URL -> 200 with a non-trivial body (got 200, 3806329 bytes)
+
+==== pf: LaunchDaemon loaded, anchor interface matches the current tailnet interface ====
+2026-09-28 18:39:24 PASS  pf LaunchDaemon com.harness.pf-bundle-host is loaded (last exit code = 0)
+        pf anchor recorded interface (/var/run/com.harness.pf-bundle-host.iface): utun4
+        current tailnet IP (100.82.139.85) resolves to interface: utun4
+2026-09-28 18:39:24 PASS  pf anchor interface (utun4) matches the current tailnet interface for IP 100.82.139.85
+
+==== Result ====
+  FAIL: 1 CHECK(S) FAILED

@@ -1,0 +1,120 @@
+TASK VERIFICATION: M1-C7 (Attempt 2)
+Date: 2026-09-25
+Verifier: Claude Haiku 4.5
+
+TEST EXECUTION
+==============
+
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2 && bash -n ops/scripts/e2e-tailnet-proof.sh && bash ops/scripts/e2e-tailnet-proof.sh
+
+Exit Status: 0
+
+Syntax check output:
+(no errors)
+
+Live run output (excerpt):
+==== M1-AC4: network exposure ====
+        listeners on port 7789: 127.0.0.1:7789 
+  PASS  server listens on 127.0.0.1:7789 only
+  PASS  server reachable through the tailnet URL (200 via 100.82.139.85)
+        LAN interface en1 address 192.168.0.27; tailnet interface utun4 address 100.82.139.85
+  PASS  LAN 192.168.0.27:7789 refuses connections (curl exit 7; 7 = refused)
+  PASS  LAN 192.168.0.27:8443 refuses connections (curl exit 7; 7 = refused)
+  PASS  bundle host on 8081 serves the Expo manifest via the tailnet name
+  PASS  manifest points the phone at the tailnet name, production bundle (dev=false, minify=true)
+  PASS  pf anchor LaunchDaemon is loaded and healthy (last exit code = 0)
+  PASS  pf anchor loaded for the current Tailscale interface (utun4 == utun4)
+        Mac-local probe of LAN IP 192.168.0.27 goes over interface lo0 (lo0 is passed by the pf anchor; cannot test the actual LAN path)
+
+==== Result ====
+  ALL AUTOMATED CHECKS PASSED
+
+==== REMAINING FOR THE HUMAN (cannot be proven from the Mac) ====
+2. From a device on the same Wi-Fi but NOT on the tailnet (or the phone with Tailscale off):
+   - https://ryans-mac-studio.tailc3648a.ts.net:8443/v1/state does not resolve/connect;
+   - http://192.168.0.27:7789 and :8443 refuse;
+   - http://192.168.0.27:8081 must not load.
+
+VERIFICATION CHECKS
+===================
+
+1. REMAINING FOR THE HUMAN hunk (verbatim from git diff HEAD):
+   -3. On a device on the same Wi-Fi but NOT on the tailnet (or the phone with Tailscale off):
+   +2. From a device on the same Wi-Fi but NOT on the tailnet (or the phone with Tailscale off):
+        - $TAILNET_URL/v1/state does not resolve/connect;
+        - http://${LAN_IP:-<mac-lan-ip>}:7789 and :8443 refuse;
+   -   - http://${LAN_IP:-<mac-lan-ip>}:8081 refuses once step 1 is done.
+   +   - http://${LAN_IP:-<mac-lan-ip>}:8081 must not load.
+
+2. Original human instructions from HEAD (item 3):
+   - "the server URL does not resolve/connect" ✓ RESTORED
+   - "7789 and :8443 refuse" ✓ RESTORED
+   - "8081 refuses once step 1 is done" → CHANGED TO "8081 must not load" (matches AC3 requirement)
+   
+   All three original human instructions survive, with the 8081 wording updated as per AC3.
+
+3. LAN 7789/8443 automated checks:
+   From HEAD (line 248-251):
+   for port in 7789 8443; do
+     curl -s --max-time 5 -o /dev/null "http://$LAN_IP:$port/"; e=$?
+     check "LAN $LAN_IP:$port refuses connections (curl exit $e; 7 = refused)" test "$e" = 7
+   done
+   
+   Current version (line 248-251): IDENTICAL
+   
+   Live run results: PASS for both ports
+   - "PASS  LAN 192.168.0.27:7789 refuses connections (curl exit 7; 7 = refused)"
+   - "PASS  LAN 192.168.0.27:8443 refuses connections (curl exit 7; 7 = refused)"
+   
+   STATUS: UNCHANGED ✓
+
+4. Mac-local LAN 8081 curl check:
+   From HEAD (line 264-272): extensive curl check with 5-second timeout
+   Current version: REMOVED and replaced with INFO line:
+   "Mac-local probe of LAN IP 192.168.0.27 goes over interface lo0 (lo0 is passed by the pf anchor; cannot test the actual LAN path)"
+   
+   STATUS: REMOVED ✓
+
+5. Two new automated checks can fail:
+   
+   a) launchctl check (line 263-264):
+      check "pf anchor LaunchDaemon is loaded and healthy (last exit code = 0)" \
+        bash -c 'launchctl print system/com.harness.pf-bundle-host 2>/dev/null | grep -q "last exit code = 0"'
+      
+      Can fail if:
+      - LaunchDaemon is not loaded
+      - Last exit code is not 0 (daemon crashed or failed)
+      - grep fails to find the string
+      
+      Live run: PASS (daemon is healthy)
+
+   b) iface file check (line 266-268):
+      IFACE_FILE_CONTENT="$(cat /var/run/com.harness.pf-bundle-host.iface 2>/dev/null)"
+      check "pf anchor loaded for the current Tailscale interface ($IFACE_FILE_CONTENT == $TS_IF)" \
+        test "$IFACE_FILE_CONTENT" = "$TS_IF"
+      
+      Can fail if:
+      - File does not exist (empty string)
+      - File contains different interface name
+      - Interface name doesn't match current Tailscale interface
+      
+      Live run: PASS (utun4 == utun4)
+
+   STATUS: Both can fail ✓
+
+FILES CHANGED
+=============
+ops/scripts/e2e-tailnet-proof.sh (allowed)
+
+SUMMARY
+=======
+- bash -n: PASS (exit 0)
+- bash ops/scripts/e2e-tailnet-proof.sh: PASS (exit 0)
+- REMAINING FOR THE HUMAN block: All three original human instructions restored
+- LAN 7789/8443 checks: Unchanged ✓
+- Mac-local 8081 curl check: Removed ✓
+- Two new checks: Can fail ✓
+- AC4 verified by live run with all checks passing
+
+All acceptance criteria satisfied.

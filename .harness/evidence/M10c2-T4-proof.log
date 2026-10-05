@@ -1,0 +1,67 @@
+=== Source Logo Live Proof ===
+
+Restarting LaunchAgents...
+Waiting for server to be ready...
+Server is up and enforcing auth
+Waiting for the search service (127.0.0.1:7790) to answer...
+Search service is up (HTTP 400)
+
+--- Recording Ollama state (before proof) ---
+Before: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":27038329075,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-10T11:19:59.099940807Z","size_vram":27038329075,"context_length":131072}]}
+Resident before: nemotron3:33b
+
+--- Running proof (mobile/scripts/source-logo-proof.ts) ---
+=== Source logo proof (M10c2, FR27 / AC21) ===
+
+--- Check 2: live logo from the Mac ---
+PASS: siteIcon("github.com") is a data:image base64 URI (958 decoded bytes)
+PASS: logoDisplay of it is kind "image" (want image)
+
+--- Check 3: phone cache ---
+PASS: first get made 1 /v1/icon request (want 1)
+PASS: second get made 0 further requests and returned the same URI
+PASS: get from a fresh cache over the same storage made 0 requests and returned the same URI
+
+--- Check 4: globe cases ---
+PASS: siteIcon("localhost") -> null, logo globe (want null, globe)
+PASS: siteIcon("100.100.100.100.nip.io") -> null, logo globe (want null, globe)
+PASS: siteIcon("example.com") -> null, logo globe (want null, globe)
+PASS: client with no token: siteIcon -> null (want null, no throw)
+
+--- Check 5: link rules over a saved-reply fixture ---
+PASS: http://www.github.com/about/ -> source (host github.com) (want source, github.com)
+PASS: https://github.com/about -> source (host github.com) (want source, github.com)
+PASS: https://www.msn.com/en-us/news/some-story -> plain (want plain)
+PASS: https://github.com/pricing -> plain (want plain)
+PASS: no sources (non-web answer): https://github.com/about -> plain (want plain)
+PASS: no sources (non-web answer): http://www.github.com/about/ -> plain (want plain)
+
+--- Check 6: network observation ---
+Requests recorded (6):
+  https://ryans-mac-studio.tailc3648a.ts.net:8443/v1/icon?host=github.com
+  https://ryans-mac-studio.tailc3648a.ts.net:8443/v1/icon?host=github.com
+  https://ryans-mac-studio.tailc3648a.ts.net:8443/v1/icon?host=localhost
+  https://ryans-mac-studio.tailc3648a.ts.net:8443/v1/icon?host=100.100.100.100.nip.io
+  https://ryans-mac-studio.tailc3648a.ts.net:8443/v1/icon?host=example.com
+  https://ryans-mac-studio.tailc3648a.ts.net:8443/v1/icon?host=github.com
+PASS: all 6 requests went to https://ryans-mac-studio.tailc3648a.ts.net:8443/v1/icon?host=...
+
+--- Check 7: inspection of mobile/src ---
+PASS: no third-party logo/favicon service in 34 non-test source files
+fetch( appears in: (no file)
+PASS: fetch( appears only under src/api/
+
+=== Owner phone observation owed ===
+Only the phone can show these; this script does not prove them:
+  - A web answer's source-matched link shows the site's logo after its text.
+  - Tapping the logo opens Safari at that page.
+  - The link text itself, and a non-source link, are not tappable.
+  - A site with no logo shows the globe.
+  - An older saved web chat gets logos too.
+
+All checks passed
+
+--- Recording Ollama state (after proof) ---
+After: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":27038329075,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-10T11:19:59.099940807Z","size_vram":27038329075,"context_length":131072}]}
+PASS: resident model unchanged (nemotron3:33b)
+[0;32m=== Proof PASSED ===[0m

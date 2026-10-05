@@ -1,0 +1,77 @@
+M21-T6 Q3 RUN REPORT
+====================
+
+QUESTION ID: q3
+QUESTION: What is the WebAssembly component model, how does it differ from core WebAssembly modules, and how widely is it supported by runtimes and languages today?
+
+RUN TIMING
+----------
+Started: 2026-10-03T16:35:46.949Z
+Ended:   2026-10-03T16:39:08.296Z
+Duration: 201.347 seconds
+
+PRECONDITION CHECK
+------------------
+✓ No ac29-live-run processes were running at start of task
+
+SCRIPT EXECUTION
+----------------
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --id q3 --out-dir ../.harness/evidence --prefix M21-T6
+Exit: 0
+
+RESULT JSON (from M21-T6-q3-result.json)
+-----------------------------------------
+{
+  "id": "q3",
+  "generation_id": "a6c5a24e-5ebe-4f39-852d-19cb066ed006",
+  "started_at": "2026-10-03T16:35:46.949Z",
+  "ended_at": "2026-10-03T16:39:08.296Z",
+  "budget_s": 480,
+  "total_wall_s": 201.347,
+  "planning_s": 32.263,
+  "research_phase_calls": 12,
+  "routine_calls": 13,
+  "routine_p50_s": 3.547,
+  "routine_p95_s": 13.977,
+  "distinct_pages_read": 6,
+  "notes_kept": 22,
+  "final_status": "complete",
+  "cited_read_pages": 6,
+  "unresolved_citations": [],
+  "pass": true
+}
+
+PASS-BAR CHECKS
+---------------
+✓ status_ok: complete
+✓ within_budget: 201.347s / 540s limit
+✓ cited_read_pages_ok: 6 pages
+✓ no_unresolved_citations: [] (empty)
+✓ pass: true
+
+VERIFICATION CHECK-ONLY COMMAND
+--------------------------------
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M21-T6-q3-stream.txt --log ../.harness/evidence/M21-T6-q3-fr41.log
+Exit: 0
+Result: All checks passed, values reproduced successfully
+
+OUTPUT FILES CREATED
+---------------------
+✓ .harness/evidence/M21-T6-q3-run.log
+✓ .harness/evidence/M21-T6-q3-stream.txt (16K)
+✓ .harness/evidence/M21-T6-q3-fr41.log (4.8K)
+✓ .harness/evidence/M21-T6-q3-result.json (1.2K)
+
+ACCEPTANCE CRITERIA ASSESSMENT
+-------------------------------
+M21-AC1 verbatim: "Live on the Mac with `qwen3.5:35b-a3b` resident: 3 real research-style questions plus the 2026-10-02 heat-pump question each end within the budget plus a small margin with status `complete` or `partial`, a report citing at least 3 distinct read pages, and no citation number that fails to resolve to a saved source"
+
+This Q3 run meets AC1 requirements:
+✓ Status: complete (within budget + margin)
+✓ Report cites: 6 distinct read pages (exceeds 3 minimum)
+✓ Unresolved citations: none
+✓ Execution time: 201.347s (well within 540s limit)
+
+SUMMARY
+-------
+PASS - Q3 run completed successfully with exit status 0, all pass-bar checks green, and verification check-only command also passed.

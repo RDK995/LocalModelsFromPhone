@@ -1,0 +1,345 @@
+$ tsc --noEmit
+bun test v1.4.0 (1381054db)
+
+ 137 pass
+ 0 fail
+ 326 expect() calls
+Ran 137 tests across 17 files. [100.00ms]
+$ eslint src --max-warnings 0
+$ scripts/runtime-smoke.sh
+=== token present ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.hy9x5i/dist/_expo/static/js/ios/expo-router-f0e15bbf98301719192136bcacf54863.js
+stored token: present; expected first screen: Conversations
+rendered text: ["Conversations","Models","Settings","New chat","No conversations yet. Tap \"New chat\" to start one."]
+native stack headers: [{"title":"Conversations","hidden":true}]
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 5
+RESULT: PASS (app launched, Conversations rendered, no JS exception)
+=== token absent ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.hy9x5i/dist/_expo/static/js/ios/expo-router-f0e15bbf98301719192136bcacf54863.js
+stored token: absent; expected first screen: Setup
+rendered text: ["Enter Bearer Token","Paste the token from your server","Continue"]
+native stack headers: [{"title":"Setup","hidden":false}]
+drive Setup -> Conversations: {"ok":true,"conversationsMounted":true,"backOnSetup":false,"singleTopBar":true,"rendered_text":["Conversations","Models","Settings","New chat","No conversations yet. Tap \"New chat\" to start one."],"native_stack_headers":[{"title":"Conversations","hidden":true}]}
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 9
+RESULT: PASS (app launched, Setup rendered, no JS exception, Setup -> Conversations drive reached Conversations with one top bar)
+=== token wrong ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.hy9x5i/dist/_expo/static/js/ios/expo-router-f0e15bbf98301719192136bcacf54863.js
+stored token: wrong; expected first screen: Conversations
+rendered text: ["Conversations","Models","Settings","New chat","No conversations yet. Tap \"New chat\" to start one."]
+native stack headers: [{"title":"Conversations","hidden":true}]
+drive Conversations -> Chat -> 401 -> Settings: {"ok":true,"wrongAlertShown":true,"errorAlertShown":false,"settingsMounted":true,"alerts":[{"title":"Password wrong or changed","message":"The password on this phone no longer matches the Mac. Paste the current one from the Mac (pbcopy < ~/.phone-models/token)."}],"rendered_text":["Conversations","Models","Settings","New chat","No conversations yet. Tap \"New chat\" to start one.","Chat","hello","Send","Bearer Token","Cancel","Save","Logout"]}
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 11
+RESULT: PASS (app launched, Conversations rendered, no JS exception, Conversations -> Chat -> 401 drive reached Settings with the token form open)
+=== token stream ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.hy9x5i/dist/_expo/static/js/ios/expo-router-f0e15bbf98301719192136bcacf54863.js
+stored token: stream; expected first screen: Conversations
+rendered text: ["Conversations","Models","Settings","New chat","No conversations yet. Tap \"New chat\" to start one."]
+native stack headers: [{"title":"Conversations","hidden":true}]
+stream step 1 (prompt shown before any reply byte): PASS - {"rendered_text":["Conversations","Models","Settings","New chat","No conversations yet. Tap \"New chat\" to start one.","Chat","What is six times seven?","Stop"]}
+stream step 2 (partial reply shown, thinking collapsed): PASS - {"message_texts":["Conversations","Models","Settings","New chat","No conversations yet. Tap \"New chat\" to start one.","Chat","What is six times seven?","Show thinking","Partial answer","Stop"],"partial_answer_node_count":1,"show_thinking_present":true,"thinking_text_hidden":true}
+stream step 3 (thinking expands into its own section): PASS - {"thinking_text_present":true,"hide_thinking_present":true,"thinking_separate_from_answer":true}
+stream step 4 (reply updates in place through completion): PASS - {"send_back_stop_gone":true,"final_answer_node_count":1,"prompt_occurrences":1,"model_label_shown":true,"order_ok":true,"partial_answer_container_tag_step2":158,"final_answer_container_tag":158,"same_fabric_node":true,"rendered_text":["Conversations","Models","Settings","New chat","No conversations yet. Tap \"New chat\" to start one.","Chat","What is six times seven?","Hide thinking","Thinking:","SMOKE-THINKING-TEXT","Partial answer 42","smoke-model:1b","Send"]}
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 13
+RESULT: PASS (app launched, Conversations rendered, no JS exception, Conversations -> Chat -> streamed reply drive passed all 4 steps)
+=== Model List Proof ===
+
+Restarting LaunchAgents...
+Waiting for server to be ready...
+Server is up and enforcing auth
+
+--- Initial state check ---
+A model is already resident, skipping load/unload cycle
+
+--- Run 1: Current state ---
+PASS (a): model names match Ollama /api/tags (count=5)
+PASS (b): all model sizes match Ollama /api/tags
+PASS (c): resident label matches Ollama /api/ps: "Loaded: nemotron3:33b"
+
+Models: [nemotron3:33b, qwen3.8:27b, devstral:24b, qwen3-coder:30b, qwen3.6:27b]
+Sizes:  [nemotron3:33b=27.6 GB, qwen3.8:27b=17.7 GB, devstral:24b=14.3 GB, qwen3-coder:30b=18.6 GB, qwen3.6:27b=17.4 GB]
+
+
+--- Hardcoded name check ---
+PASS: no hardcoded model names found in source
+
+[0;32mAll proof checks passed![0m
+=== Model Swap/Unload Live Proof ===
+IDLE_SECONDS=600
+
+Restarting LaunchAgents...
+Waiting for server to be ready...
+Server is up and enforcing auth
+
+--- Recording original Ollama state (before proof) ---
+Before: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":25617498110,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-06T08:48:05.583906807Z","size_vram":25617498110,"context_length":131072}]}
+Originally resident: nemotron3:33b
+
+--- Running proof (mobile/scripts/model-swap-proof.ts) ---
+Derived from /api/tags (two smallest by size): A=devstral:24b, B=qwen3.6:27b
+
+--- Step 1: load A (devstral:24b) via app client, wait idle ---
+  residentLabel: "Loaded: devstral:24b"
+  resident.loaded_by_server: true
+  /api/ps: ["devstral:24b"]
+PASS: Step 1 (load A): /api/ps lists exactly ["devstral:24b"]
+PASS: Step 1: residentLabel is "Loaded: devstral:24b"
+PASS: Step 1: resident.loaded_by_server is true
+
+--- Step 2: load B (qwen3.6:27b) via app client, wait idle (swap out A) ---
+  residentLabel: "Loaded: qwen3.6:27b"
+  /api/ps: ["qwen3.6:27b"]
+PASS: Step 2 (load B, swap): /api/ps lists exactly ["qwen3.6:27b"]
+PASS: Step 2: residentLabel is "Loaded: qwen3.6:27b" (M2-AC2 swap)
+
+--- Step 3: chat with B (qwen3.6:27b) via app client, wait for terminal done ---
+  done event: status=complete, model=qwen3.6:27b
+PASS: Step 3: chat completed with a terminal done event
+  /api/ps: ["qwen3.6:27b"]
+PASS: Step 3 (after chat reply): /api/ps lists exactly ["qwen3.6:27b"]
+  expires_at: 2319-01-06T08:49:24.285872807Z (year 2319)
+PASS: Step 3: expires_at is far in the future (year 2319); keep_alive -1 held (M2-AC3, after a chat reply)
+
+--- Step 4: idle 600s, no requests to Ollama in between ---
+  /api/ps: ["qwen3.6:27b"]
+PASS: Step 4 (after 600s idle): /api/ps lists exactly ["qwen3.6:27b"]
+
+--- Step 5: unload via app client, wait idle ---
+  residentLabel: "Nothing loaded"
+  /api/ps: []
+PASS: Step 5 (unload): /api/ps lists exactly []
+PASS: Step 5: residentLabel is "Nothing loaded" (M2-AC2 unload)
+
+All swap/unload proof checks passed.
+
+--- Cleanup: restoring original Ollama state ---
+Before cleanup: {"models":[]}
+Restoring nemotron3:33b (keep_alive -1)...
+After cleanup: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":27838853937,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-06T08:59:38.671968807Z","size_vram":27838853937,"context_length":131072}]}
+[0;32m=== Proof PASSED, Mac restored to its original state ===[0m
+=== Model Failed-Load Live Proof (M2-AC5) ===
+date: Sat 26 Sep 2026 09:12:21 UTC
+
+Restarting LaunchAgents...
+Waiting for server to be ready...
+Server is up and enforcing auth
+
+--- Recording original Ollama state ---
+Before: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":27838853937,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-06T08:59:38.671968807Z","size_vram":27838853937,"context_length":131072}]}
+Originally resident: nemotron3:33b
+
+--- Creating probe m2b-failed-load-probe ---
+Base model (smallest in /api/tags): devstral:24b (architecture llama)
+Modelfile:
+FROM devstral:24b
+ADAPTER /private/tmp/m2b-failed-load-probe.CdWYMw/adapter.gguf
+Probe created
+
+--- Running proof (mobile/scripts/model-failed-load-proof.ts) ---
+PASS: probe listed in /v1/state models as m2b-failed-load-probe:latest
+Resident before load (server view): nemotron3:33b
+Load finished after 7068 ms (8 polls)
+Final operation: {"kind":"idle","model":"m2b-failed-load-probe:latest","error":"Load failed: llama-server process has terminated: exit status 1"}
+Final resident: null
+PASS: operation.kind is "idle"
+PASS: operation.error is non-empty: Load failed: llama-server process has terminated: exit status 1
+PASS: operation.model is m2b-failed-load-probe:latest
+PASS: state.resident is null
+Ollama /api/ps after failed load: {"models":[]}
+PASS: Ollama /api/ps is empty
+PASS: view residentLabel is "Nothing loaded"
+PASS: view busyLabel is null
+Ollama direct load: HTTP 500 {"error":"llama-server process has terminated: exit status 1"}
+PASS: Ollama itself rejects the load: llama-server process has terminated: exit status 1
+App view failureMessage: Load failed: llama-server process has terminated: exit status 1
+PASS: view failureMessage is non-empty
+PASS: view failureMessage contains Ollama's reason
+PASS: Ollama /api/ps still empty after the direct attempt
+
+All failed-load assertions passed
+
+--- Cleanup: removing probe and restoring original Ollama state ---
+[?25l[?2026h[?25l[1G[K[?25h[?2026l[2K[1G[?25hdeleted 'm2b-failed-load-probe'
+Restoring nemotron3:33b (keep_alive -1)...
+After cleanup: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":27838853937,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-06T08:59:52.987556807Z","size_vram":27838853937,"context_length":131072}]}
+[0;32m=== Proof PASSED, Mac restored to its original state ===[0m
+=== Conversation Live Proof ===
+
+Restarting LaunchAgents...
+Waiting for server to be ready...
+Server is up and enforcing auth
+
+--- Recording original Ollama state (before proof) ---
+Before: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":27838853937,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-06T08:59:52.987556807Z","size_vram":27838853937,"context_length":131072}]}
+Originally resident: nemotron3:33b
+
+--- Running proof (mobile/scripts/conversation-proof.ts) ---
+Derived from /api/tags (two smallest by size): A=devstral:24b, B=qwen3.6:27b
+
+--- Step 1: load A (devstral:24b) via app client ---
+PASS: Step 1: devstral:24b is resident
+
+--- Step 2: create conversation, send turn 1 with secret code word ---
+  Secret code word: "phoenix"
+PASS: Step 2 turn 1: sent and persisted
+PASS: Step 2: turn 1 reply is persisted with model devstral:24b
+
+--- Step 3: send turn 2 asking for secret code word ---
+PASS: Step 3 (M3-AC2): messages sent to client.chat include turn-1 user and assistant messages
+PASS: Step 3 (M3-AC2): context check passed
+
+--- Step 4: swap to model B (qwen3.6:27b) ---
+PASS: Step 4: swapped to qwen3.6:27b
+--- Step 5: send turn 3 with model B ---
+PASS: Step 5 (M3-AC3): turn 1 has model devstral:24b, turn 3 (after swap) has model qwen3.6:27b
+
+--- Step 6: unload model and test blocked send ---
+PASS: Step 6: unload successful, /api/ps is empty
+PASS: Step 6 (M3-AC4): send correctly blocked with message: "No model loaded — load one on the Models screen to send."
+PASS: Step 6 (M3-AC4): no POST /v1/chat was made (client.chat not called)
+PASS: Step 6 (M3-AC4): no assistant message added to blocked send
+
+--- Step 7: create fresh store over same storage (M3-AC5 proxy) ---
+PASS: Step 7 (M3-AC5 proxy): fresh store sees identical conversation and all messages
+  Note: on-device force-quit check is a separate human step.
+
+All conversation proof checks passed.
+
+--- Cleanup: restoring original Ollama state ---
+Before cleanup: {"models":[]}
+Restoring nemotron3:33b (keep_alive -1)...
+After cleanup: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":27838853937,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-06T09:00:50.759477807Z","size_vram":27838853937,"context_length":131072}]}
+[0;32m=== Proof PASSED, Mac restored to its original state ===[0m
+=== Thinking Live Proof ===
+
+Restarting LaunchAgents...
+Waiting for server to be ready...
+Server is up and enforcing auth
+
+--- Recording original Ollama state (before proof) ---
+Before: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":27838853937,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-06T09:00:50.759477807Z","size_vram":27838853937,"context_length":131072}]}
+Originally resident: nemotron3:33b
+
+--- Running proof (mobile/scripts/thinking-proof.ts) ---
+--- Check 1: Picking models from Ollama ---
+T (thinking-capable): qwen3.6:27b
+N (non-thinking): devstral:24b
+
+--- Check 2: Testing thinking model (qwen3.6:27b) ---
+Loading qwen3.6:27b...
+PASS: Check 2: qwen3.6:27b is resident
+PASS: Check 2 (M4-AC1): at least one thinking event with non-empty text
+PASS: Check 2 (M4-AC1): at least one content event
+PASS: Check 2 (M4-AC1): first thinking event arrives before first content event
+PASS: Check 2 (M4-AC1): terminal done with status complete
+PASS: Check 2 (M4-AC1): stored message has non-empty thinking field
+PASS: Check 2 (M4-AC1): stored message has non-empty content field
+PASS: Check 2 (M4-AC1): content contains "42"
+PASS: Check 2 (M4-AC1): content does not contain the full thinking text (stored separately)
+  Thinking (first 200 chars): Here's a thinking process:
+
+1.  **Analyze User Input:**
+   - Question: "What is 17 + 25?"
+   - Constraint: "Answer with just the number."
+
+2.  **Perform Calculation:**
+   - 17 + 25 = 42
+
+3.  **Format 
+  Content (first 200 chars): 42
+
+--- Check 3: Testing non-thinking model (devstral:24b) ---
+Loading devstral:24b...
+PASS: Check 3: devstral:24b is resident
+PASS: Check 3: zero thinking events
+PASS: Check 3: non-empty content
+PASS: Check 3: done status complete
+PASS: Check 3: stored message has no thinking field
+
+All thinking proof checks passed.
+
+--- Cleanup: restoring original Ollama state ---
+Before cleanup: {"models":[{"name":"devstral:24b","model":"devstral:24b","size":35816011202,"digest":"9bd74193e93935e9d8564d88607b220a9d341c4a36b748cffcbd9ad4f47a9ca9","details":{"parent_model":"","format":"gguf","family":"llama","families":["llama"],"parameter_size":"23.6B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-06T09:01:36.781082807Z","size_vram":35816011202,"context_length":131072}]}
+Restoring nemotron3:33b (keep_alive -1)...
+After cleanup: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":25617498110,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-06T09:01:46.057206807Z","size_vram":25617498110,"context_length":131072}]}
+[0;32m=== Proof PASSED, Mac restored to its original state ===[0m
+=== Resume Live Proof ===
+
+Restarting LaunchAgents...
+Waiting for server to be ready...
+Server is up and enforcing auth
+
+--- Recording original Ollama state (before proof) ---
+Before: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":25617498110,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-06T09:01:46.057206807Z","size_vram":25617498110,"context_length":131072}]}
+Originally resident: nemotron3:33b
+
+--- Running proof (mobile/scripts/resume-proof.ts) ---
+--- Check 1: Picking non-thinking model from Ollama ---
+N (non-thinking): devstral:24b
+
+--- Check 2: Loading and verifying model (devstral:24b) ---
+Loading devstral:24b...
+PASS: Check 2: devstral:24b is resident
+
+--- Check 3: Sending message with connection kill ---
+--- Assertion 3a: Kill happened ---
+PASS: Assertion 3a: exactly 5 content events forwarded before kill
+PASS: Assertion 3a: kill fired
+--- Assertion 3b: Resume requests made ---
+PASS: Assertion 3b: 1 resume request(s) made
+PASS: Assertion 3b: valid Last-Event-ID header found in resume requests
+--- Assertion 3c: Done event validation ---
+PASS: Assertion 3c: exactly 1 done event
+PASS: Assertion 3c: done event status is complete
+--- Assertion 3d: Oracle check ---
+PASS: Assertion 3d: recorded content matches oracle
+PASS: Assertion 3d: content event count matches (309)
+--- Assertion 3e: Stored conversation validation ---
+PASS: Assertion 3e: assistant message status is complete
+PASS: Assertion 3e: stored message content matches recorded content
+--- Assertion 3f: Response contains 80 ---
+PASS: Assertion 3f: response contains 80
+
+Response (first 200 chars): 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 5
+Content event count: 309
+
+All resume proof checks passed.
+
+--- Cleanup: restoring original Ollama state ---
+Before cleanup: {"models":[{"name":"devstral:24b","model":"devstral:24b","size":35816011202,"digest":"9bd74193e93935e9d8564d88607b220a9d341c4a36b748cffcbd9ad4f47a9ca9","details":{"parent_model":"","format":"gguf","family":"llama","families":["llama"],"parameter_size":"23.6B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-06T09:02:30.581661807Z","size_vram":35816011202,"context_length":131072}]}
+Restoring nemotron3:33b (keep_alive -1)...
+After cleanup: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":25617498110,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-06T09:02:39.799768807Z","size_vram":25617498110,"context_length":131072}]}
+[0;32m=== Proof PASSED, Mac restored to its original state ===[0m
+Using src/app as the root directory for Expo Router.
+Starting Metro Bundler
+
+iOS Bundled 7721ms expo-router.js (1135 modules)
+
+› Assets (23):
+node_modules/expo-router/assets/arrow_down.png (9.5KB)
+node_modules/expo-router/assets/error.png (469B)
+node_modules/expo-router/assets/file.png (138B)
+node_modules/expo-router/assets/forward.png (188B)
+node_modules/expo-router/assets/pkg.png (364B)
+node_modules/expo-router/assets/react-navigation/elements/back-icon-mask.png (653B)
+node_modules/expo-router/assets/react-navigation/elements/back-icon.png (4 variations | 566B)
+node_modules/expo-router/assets/react-navigation/elements/clear-icon.png (4 variations | 425B)
+node_modules/expo-router/assets/react-navigation/elements/close-icon.png (4 variations | 235B)
+node_modules/expo-router/assets/react-navigation/elements/search-icon.png (3 variations | 582B)
+node_modules/expo-router/assets/sitemap.png (465B)
+node_modules/expo-router/assets/unmatched.png (4.8KB)
+
+› ios bundles (1):
+_expo/static/js/ios/expo-router-ba40da5583cf623a1e53a026a21b2ef5.hbc (2.4MB)
+
+› Files (1):
+metadata.json (1.6KB)
+
+Exported: dist

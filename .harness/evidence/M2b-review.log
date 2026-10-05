@@ -1,0 +1,404 @@
+M1 end-to-end tailnet proof  (2026-09-25 21:28:27 BST)
+repo commit: 13f48ba074a988d1ef8ab2ad90f03e05fa95f055
+tailnet server URL: https://ryans-mac-studio.tailc3648a.ts.net:8443
+
+==== Preconditions: token file, LaunchAgents, Tailscale Serve ====
+  PASS  token file mode is 600 (got 600)
+  PASS  LaunchAgent com.harness.server loaded and running (state: running)
+  PASS  LaunchAgent com.harness.bundle-host loaded and running (state: running)
+  tailscale serve status:
+        https://ryans-mac-studio.tailc3648a.ts.net (tailnet only)
+        |-- /    proxy http://127.0.0.1:7787
+        |-- /app proxy http://127.0.0.1:7788
+        
+        https://ryans-mac-studio.tailc3648a.ts.net:8443 (tailnet only)
+        |-- / proxy http://127.0.0.1:7789
+        
+  PASS  existing Serve mapping :443 / -> http://127.0.0.1:7787 unchanged
+  PASS  existing Serve mapping :443 /app -> http://127.0.0.1:7788 unchanged
+  PASS  Serve maps tailnet HTTPS :8443 -> http://127.0.0.1:7789 (only)
+  PASS  Tailscale Funnel is not enabled (tailnet only)
+
+==== M1-AC1: live token streaming through the tailnet URL ====
+        resident model (from Ollama /api/ps): devstral:24b
+        first 6 SSE events (elapsed seconds, as received over the tailnet):
+            11.525 event: content
+            11.525 data: {"text":"1"}
+            11.629 event: content
+            11.629 data: {"text":" "}
+            11.729 event: content
+            11.729 data: {"text":"2"}
+            11.804 event: content
+            11.804 data: {"text":" "}
+            11.887 event: content
+            11.887 data: {"text":"3"}
+            11.999 event: content
+            11.999 data: {"text":" "}
+        ...
+        last SSE events:
+            17.599 event: content
+            17.599 data: {"text":"0"}
+            17.637 event: done
+            17.637 data: {"status":"complete","model":"devstral:24b","eval_count":81,"tokens_per_second":13.253667338840314}
+        content events: 80, first at 11.525s, last at 17.599s, terminal event: done {"status":"complete","model":"devstral:24b","eval_count":81,"tokens_per_second":13.253667338840314}
+  PASS  multiple content (token) events arrived (got 80, need >= 5)
+  PASS  tokens arrived over time, not in one burst (spread 11.525s..17.599s)
+  PASS  stream ended with a terminal done event, status complete
+
+==== M1-AC2: every route rejects missing and wrong tokens (via tailnet) ====
+  PASS  GET /v1/state: no token -> 401, wrong token -> 401 (expect 401/401)
+  PASS  POST /v1/models/load: no token -> 401, wrong token -> 401 (expect 401/401)
+  PASS  POST /v1/models/unload: no token -> 401, wrong token -> 401 (expect 401/401)
+  PASS  POST /v1/chat: no token -> 401, wrong token -> 401 (expect 401/401)
+  PASS  GET /v1/generations/00000000-0000-0000-0000-000000000000/events: no token -> 401, wrong token -> 401 (expect 401/401)
+  PASS  POST /v1/generations/00000000-0000-0000-0000-000000000000/cancel: no token -> 401, wrong token -> 401 (expect 401/401)
+  PASS  GET /v1/no-such-route: no token -> 401, wrong token -> 401 (expect 401/401)
+  PASS  control: GET /v1/state with the real token -> 200 (expect 200)
+        token command (ops/src/token.ts), run in a private temp dir:
+  PASS  token command creates a token (exit 0, mode 600, 64 chars; value not shown)
+        mode 644 -> exit 1: Error: Token file "/var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T/tmp.jwzCVaDXNx/unsafe-644" exists with group or world-readable permissions (mode must be 0600)
+  PASS  token command refuses a mode-644 token file and leaves it untouched
+        mode 640 -> exit 1: Error: Token file "/var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T/tmp.jwzCVaDXNx/unsafe-640" exists with group or world-readable permissions (mode must be 0600)
+  PASS  token command refuses a mode-640 token file and leaves it untouched
+        mode 604 -> exit 1: Error: Token file "/var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T/tmp.jwzCVaDXNx/unsafe-604" exists with group or world-readable permissions (mode must be 0600)
+  PASS  token command refuses a mode-604 token file and leaves it untouched
+
+==== M1-AC3: cancel stops generation in Ollama ====
+        Ollama serve pid 75302, runner pid 20793, Ollama log /private/tmp/ollama.log
+        long generation started: id 72432c55-971c-441a-8fbf-f333b69f3b43, 26 tokens so far
+        cancel sent at 21:28:51 via tailnet after 52 tokens; response: {"status":"cancelled"}
+        stream: 52 content events total (0 in flight after cancel), terminal: done {"status":"cancelled","model":"devstral:24b","eval_count":52,"tokens_per_second":0}
+        server event log replay, last event: data: {"status":"cancelled","model":"devstral:24b","eval_count":52,"tokens_per_second":0}
+        Ollama runner CPU seconds per 2s window: while generating 2.17, after cancel 0.01
+        Ollama's own log since this test started:
+          [GIN] 2026/09/25 - 21:28:51 | 200 |   4.71642875s |       127.0.0.1 | POST     "/api/chat"
+          srv          stop: cancel task, id_task = 84
+  PASS  cancel endpoint answered {"status":"cancelled"}
+  PASS  the SSE stream ended by itself after cancel
+  PASS  terminal event is done with status cancelled
+  PASS  no further bytes arrived after the terminal event (6390 -> 6390 bytes over 3s)
+  PASS  server reports no active generation afterwards (generation: null)
+  PASS  Ollama logged the /api/chat request as finished after the cancel (connection closed)
+  PASS  Ollama runner went idle: CPU after cancel (0.01 s) < half of CPU while generating (2.17 s)
+
+==== M1-AC4: network exposure ====
+        listeners on port 7789: 127.0.0.1:7789 
+  PASS  server listens on 127.0.0.1:7789 only
+  PASS  server reachable through the tailnet URL (200 via 100.82.139.85)
+        LAN interface en1 address 192.168.0.27; tailnet interface utun4 address 100.82.139.85
+  PASS  LAN 192.168.0.27:7789 refuses connections (curl exit 7; 7 = refused)
+  PASS  LAN 192.168.0.27:8443 refuses connections (curl exit 7; 7 = refused)
+        bundle manifest: 200 application/expo+json; launchAsset: http://ryans-mac-studio.tailc3648a.ts.net:8081/expo-router.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=src%2Fapp&unstable_transformProfile=hermes-stable
+  PASS  bundle host on 8081 serves the Expo manifest via the tailnet name
+  PASS  manifest points the phone at the tailnet name, production bundle (dev=false, minify=true)
+  PASS  pf anchor LaunchDaemon is loaded and healthy (last exit code = 0)
+  PASS  pf anchor loaded for the current Tailscale interface (utun4 == utun4)
+        Mac-local probe of LAN IP 192.168.0.27 goes over interface lo0 (lo0 is passed by the pf anchor; cannot test the actual LAN path)
+
+==== Result ====
+  ALL AUTOMATED CHECKS PASSED
+
+==== REMAINING FOR THE HUMAN (cannot be proven from the Mac) ====
+1. On the iPhone (on the tailnet), open Expo Go and enter: exp://ryans-mac-studio.tailc3648a.ts.net:8081
+   - the app loads (production bundle, no dev menu);
+   - in Settings, paste the bearer token (on the Mac: pbcopy < ~/.phone-models/token,
+     or read it with: cat ~/.phone-models/token) and save;
+   - send a prompt: the reply renders token by token, not all at once;
+   - send a long prompt and tap Stop: output halts within a moment and does not resume.
+2. From a device on the same Wi-Fi but NOT on the tailnet (or the phone with Tailscale off):
+   - https://ryans-mac-studio.tailc3648a.ts.net:8443/v1/state does not resolve/connect;
+   - http://192.168.0.27:7789 and :8443 refuse;
+   - http://192.168.0.27:8081 must not load.
+bun test v1.4.0 (1381054db)
+
+ 76 pass
+ 0 fail
+ 232 expect() calls
+Ran 76 tests across 4 files. [534.00ms]
+$ tsc --noEmit
+Entry smoke: starting server on 127.0.0.1:56689
+PASS: server started and is listening on http://127.0.0.1:56689
+PASS: listens on 127.0.0.1 only (127.0.0.1:56689)
+PASS: no token -> 401
+PASS: wrong token -> 401
+PASS: correct token -> 200 (not 401)
+PASS: 0644 token file -> exits non-zero (1)
+PASS: missing token file -> exits non-zero (1)
+Entry smoke: all checks passed
+bun test v1.4.0 (1381054db)
+
+src/token.test.ts:
+ef49f0cfa57ef94104399c00ccdc4d713b373f4f4a40dc0cb94a6b90eb833236
+Verifying ops installation scripts...
+Verifying LaunchAgent plist files...
+Verifying LaunchAgent plist contents...
+Verifying Tailscale Serve script...
+Verifying token command integration...
+Verifying pf anchor configuration...
+pf anchor safety check (no sudo)
+  ok    anchor name 'com.apple/harness.bundle-host' is under com.apple/ (evaluated by the stock pf.conf 'anchor "com.apple/*"')
+  ok    [utun4] renderer exits 0
+  ok    [utun4] exactly 3 rule lines (got 3)
+  ok    [utun4] rule 0 contains 'port 8081': pass in quick on lo0 proto tcp from any to any port 8081
+  ok    [utun4] rule 0 is an inbound quick rule (no out, no bare pass/block)
+  ok    [utun4] rule 0 has no out/all/table/scrub/nat/rdr/anchor keywords
+  ok    [utun4] rule 1 contains 'port 8081': pass in quick on utun4 proto tcp from any to any port 8081
+  ok    [utun4] rule 1 is an inbound quick rule (no out, no bare pass/block)
+  ok    [utun4] rule 1 has no out/all/table/scrub/nat/rdr/anchor keywords
+  ok    [utun4] rule 2 contains 'port 8081': block drop in quick proto tcp from any to any port 8081
+  ok    [utun4] rule 2 is an inbound quick rule (no out, no bare pass/block)
+  ok    [utun4] rule 2 has no out/all/table/scrub/nat/rdr/anchor keywords
+  ok    [utun4] no 'block all' anywhere in the rendered text
+  ok    [utun4] lo0 pass rule present
+  ok    [utun4] utun4 pass rule present
+  ok    [utun4] 8081 block rule present
+  ok    [utun4] lo0 (0) and utun4 (1) pass rules precede the block (2)
+  ok    [utun4] pfctl -n parses the rendered rules
+  ok    [utun12] renderer exits 0
+  ok    [utun12] exactly 3 rule lines (got 3)
+  ok    [utun12] rule 0 contains 'port 8081': pass in quick on lo0 proto tcp from any to any port 8081
+  ok    [utun12] rule 0 is an inbound quick rule (no out, no bare pass/block)
+  ok    [utun12] rule 0 has no out/all/table/scrub/nat/rdr/anchor keywords
+  ok    [utun12] rule 1 contains 'port 8081': pass in quick on utun12 proto tcp from any to any port 8081
+  ok    [utun12] rule 1 is an inbound quick rule (no out, no bare pass/block)
+  ok    [utun12] rule 1 has no out/all/table/scrub/nat/rdr/anchor keywords
+  ok    [utun12] rule 2 contains 'port 8081': block drop in quick proto tcp from any to any port 8081
+  ok    [utun12] rule 2 is an inbound quick rule (no out, no bare pass/block)
+  ok    [utun12] rule 2 has no out/all/table/scrub/nat/rdr/anchor keywords
+  ok    [utun12] no 'block all' anywhere in the rendered text
+  ok    [utun12] lo0 pass rule present
+  ok    [utun12] utun12 pass rule present
+  ok    [utun12] 8081 block rule present
+  ok    [utun12] lo0 (0) and utun12 (1) pass rules precede the block (2)
+  ok    [utun12] pfctl -n parses the rendered rules
+  ok    renderer refuses interface '''' (exit 1, no output)
+  ok    renderer refuses interface 'en0' (exit 1, no output)
+  ok    renderer refuses interface 'lo0' (exit 1, no output)
+  ok    renderer refuses interface 'utun' (exit 1, no output)
+  ok    renderer refuses interface 'utun4\ ' (exit 1, no output)
+  ok    renderer refuses interface 'utun4\;\ block\ all' (exit 1, no output)
+  ok    renderer refuses interface '$'utun4\nblock all'' (exit 1, no output)
+  ok    renderer refuses interface 'any' (exit 1, no output)
+  ok    resolver finds the utun carrying the tailnet IP (got 'utun7', want utun7)
+  ok    resolver refuses a non-utun interface (the LAN IP on en1)
+  ok    resolver fails when no interface carries the IP
+  ok    resolver fails on an empty IP
+  ok    pf-bundle-host-load.sh refuses to run without root (exit 1)
+  ok    install-pf-anchor.sh refuses to run without root (exit 1)
+  ok    uninstall-pf-anchor.sh refuses to run without root (exit 1)
+  ok    pf-bundle-host-load.sh never disables pf (no 'pfctl -d')
+  ok    pf-bundle-host-load.sh only flushes with an explicit anchor (-F only alongside -a "$ANCHOR")
+  ok    pf-bundle-host-load.sh loads rules only into the anchor (every 'pfctl ... -f' has -a "$ANCHOR" or -n)
+  ok    pf-bundle-host-load.sh never writes the system pf.conf or pf.anchors
+  ok    install-pf-anchor.sh never disables pf (no 'pfctl -d')
+  ok    install-pf-anchor.sh only flushes with an explicit anchor (-F only alongside -a "$ANCHOR")
+  ok    install-pf-anchor.sh loads rules only into the anchor (every 'pfctl ... -f' has -a "$ANCHOR" or -n)
+  ok    install-pf-anchor.sh never writes the system pf.conf or pf.anchors
+  ok    uninstall-pf-anchor.sh never disables pf (no 'pfctl -d')
+  ok    uninstall-pf-anchor.sh only flushes with an explicit anchor (-F only alongside -a "$ANCHOR")
+  ok    uninstall-pf-anchor.sh loads rules only into the anchor (every 'pfctl ... -f' has -a "$ANCHOR" or -n)
+  ok    uninstall-pf-anchor.sh never writes the system pf.conf or pf.anchors
+  ok    no file in ops/scripts carries 'block all' or refers to editing /etc/pf.conf
+  ok    unsafe legacy file com.harness.pf.anchor is gone
+  ok    unsafe legacy file create-pf-anchor.sh is gone
+/Users/ryankenny/Projects/CodingHarnessv2/ops/scripts/com.harness.pf-bundle-host.plist: OK
+  ok    LaunchDaemon plist passes plutil -lint
+  ok    plist Label is com.harness.pf-bundle-host
+  ok    plist RunAtLoad is true
+  ok    plist runs /bin/bash
+  ok    plist runs the root-owned installed loader (/Library/Application Support/com.harness.pf-bundle-host/pf-bundle-host-load.sh), not the repo copy
+  ok    install script installs the loader to the path the plist runs
+pf anchor safety check: all passed
+All verification checks passed!
+$ tsc --noEmit
+bun test v1.4.0 (1381054db)
+
+ 60 pass
+ 0 fail
+ 151 expect() calls
+Ran 60 tests across 11 files. [40.00ms]
+$ eslint src --max-warnings 0
+$ scripts/runtime-smoke.sh
+=== token present ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.XVU0cZ/dist/_expo/static/js/ios/expo-router-4b06e5febb03e15d1dfc39c4c9a17f28.js
+stored token: present; expected first screen: Chat
+rendered text: ["Chat","Models","Settings","Send"]
+native stack headers: [{"title":"Chat","hidden":true}]
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 4
+RESULT: PASS (app launched, Chat rendered, no JS exception)
+=== token absent ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.XVU0cZ/dist/_expo/static/js/ios/expo-router-4b06e5febb03e15d1dfc39c4c9a17f28.js
+stored token: absent; expected first screen: Setup
+rendered text: ["Enter Bearer Token","Paste the token from your server","Continue"]
+native stack headers: [{"title":"Setup","hidden":false}]
+drive Setup -> Chat: {"ok":true,"chatMounted":true,"backOnSetup":false,"singleTopBar":true,"rendered_text":["Chat","Models","Settings","Send"],"native_stack_headers":[{"title":"Chat","hidden":true}]}
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 8
+RESULT: PASS (app launched, Setup rendered, no JS exception, Setup -> Chat drive reached Chat with one top bar)
+=== token wrong ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.XVU0cZ/dist/_expo/static/js/ios/expo-router-4b06e5febb03e15d1dfc39c4c9a17f28.js
+stored token: wrong; expected first screen: Chat
+rendered text: ["Chat","Models","Settings","Send"]
+native stack headers: [{"title":"Chat","hidden":true}]
+drive Chat 401 -> Settings: {"ok":true,"wrongAlertShown":true,"errorAlertShown":false,"settingsMounted":true,"alerts":[{"title":"Password wrong or changed","message":"The password on this phone no longer matches the Mac. Paste the current one from the Mac (pbcopy < ~/.phone-models/token)."}],"rendered_text":["Chat","Models","Settings","hello","Send","Bearer Token","Cancel","Save","Logout"]}
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 8
+RESULT: PASS (app launched, Chat rendered, no JS exception, Chat 401 drive reached Settings with the token form open)
+=== Model List Proof ===
+
+Restarting LaunchAgents...
+Waiting for server to be ready...
+Server is up and enforcing auth
+
+--- Initial state check ---
+A model is already resident, skipping load/unload cycle
+
+--- Run 1: Current state ---
+PASS (a): model names match Ollama /api/tags (count=5)
+PASS (b): all model sizes match Ollama /api/tags
+PASS (c): resident label matches Ollama /api/ps: "Loaded: devstral:24b"
+
+Models: [nemotron3:33b, qwen3.8:27b, devstral:24b, qwen3-coder:30b, qwen3.6:27b]
+Sizes:  [nemotron3:33b=27.6 GB, qwen3.8:27b=17.7 GB, devstral:24b=14.3 GB, qwen3-coder:30b=18.6 GB, qwen3.6:27b=17.4 GB]
+
+
+--- Hardcoded name check ---
+PASS: no hardcoded model names found in source
+
+[0;32mAll proof checks passed![0m
+=== Model Swap/Unload Live Proof ===
+IDLE_SECONDS=600
+
+Restarting LaunchAgents...
+Waiting for server to be ready...
+Server is up and enforcing auth
+
+--- Recording original Ollama state (before proof) ---
+Before: {"models":[{"name":"devstral:24b","model":"devstral:24b","size":35816011202,"digest":"9bd74193e93935e9d8564d88607b220a9d341c4a36b748cffcbd9ad4f47a9ca9","details":{"parent_model":"","format":"gguf","family":"llama","families":["llama"],"parameter_size":"23.6B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-05T20:16:08.601046807Z","size_vram":35816011202,"context_length":131072}]}
+Originally resident: devstral:24b
+
+--- Running proof (mobile/scripts/model-swap-proof.ts) ---
+Derived from /api/tags (two smallest by size): A=devstral:24b, B=qwen3.6:27b
+
+--- Step 1: load A (devstral:24b) via app client, wait idle ---
+  residentLabel: "Loaded: devstral:24b"
+  resident.loaded_by_server: true
+  /api/ps: ["devstral:24b"]
+PASS: Step 1 (load A): /api/ps lists exactly ["devstral:24b"]
+PASS: Step 1: residentLabel is "Loaded: devstral:24b"
+PASS: Step 1: resident.loaded_by_server is true
+
+--- Step 2: load B (qwen3.6:27b) via app client, wait idle (swap out A) ---
+  residentLabel: "Loaded: qwen3.6:27b"
+  /api/ps: ["qwen3.6:27b"]
+PASS: Step 2 (load B, swap): /api/ps lists exactly ["qwen3.6:27b"]
+PASS: Step 2: residentLabel is "Loaded: qwen3.6:27b" (M2-AC2 swap)
+
+--- Step 3: chat with B (qwen3.6:27b) via app client, wait for terminal done ---
+  done event: status=complete, model=qwen3.6:27b
+PASS: Step 3: chat completed with a terminal done event
+  /api/ps: ["qwen3.6:27b"]
+PASS: Step 3 (after chat reply): /api/ps lists exactly ["qwen3.6:27b"]
+  expires_at: 2319-01-05T20:17:19.154804807Z (year 2319)
+PASS: Step 3: expires_at is far in the future (year 2319); keep_alive -1 held (M2-AC3, after a chat reply)
+
+--- Step 4: idle 600s, no requests to Ollama in between ---
+  /api/ps: ["nemotron3:33b"]
+FAIL: Step 4 (after 600s idle): expected /api/ps to list exactly ["qwen3.6:27b"], got ["nemotron3:33b"]
+
+--- Cleanup: restoring original Ollama state ---
+Before cleanup: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":27838853937,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-05T20:27:19.119576807Z","size_vram":27838853937,"context_length":131072}]}
+Restoring devstral:24b (keep_alive -1)...
+After cleanup: {"models":[{"name":"devstral:24b","model":"devstral:24b","size":35816011202,"digest":"9bd74193e93935e9d8564d88607b220a9d341c4a36b748cffcbd9ad4f47a9ca9","details":{"parent_model":"","format":"gguf","family":"llama","families":["llama"],"parameter_size":"23.6B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-05T20:27:26.234137807Z","size_vram":35816011202,"context_length":131072}]}
+[0;31m=== Proof FAILED (exit 1) ===[0m
+EXIT_CODE=1
+=== Model Failed-Load Live Proof (M2-AC5) ===
+date: Fri 25 Sep 2026 20:42:55 UTC
+
+Restarting LaunchAgents...
+Waiting for server to be ready...
+Server is up and enforcing auth
+
+--- Recording original Ollama state ---
+Before: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":27838853937,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-05T20:28:55.383416807Z","size_vram":27838853937,"context_length":131072}]}
+Originally resident: nemotron3:33b
+
+--- Creating probe m2b-failed-load-probe ---
+Base model (smallest in /api/tags): devstral:24b (architecture llama)
+Modelfile:
+FROM devstral:24b
+ADAPTER /private/tmp/m2b-failed-load-probe.G5jGpy/adapter.gguf
+Probe created
+
+--- Running proof (mobile/scripts/model-failed-load-proof.ts) ---
+PASS: probe listed in /v1/state models as m2b-failed-load-probe:latest
+Resident before load (server view): nemotron3:33b
+Load finished after 3029 ms (4 polls)
+Final operation: {"kind":"idle","model":"m2b-failed-load-probe:latest","error":"Load failed: llama-server process has terminated: exit status 1"}
+Final resident: null
+PASS: operation.kind is "idle"
+PASS: operation.error is non-empty: Load failed: llama-server process has terminated: exit status 1
+PASS: operation.model is m2b-failed-load-probe:latest
+PASS: state.resident is null
+Ollama /api/ps after failed load: {"models":[]}
+PASS: Ollama /api/ps is empty
+PASS: view residentLabel is "Nothing loaded"
+PASS: view busyLabel is null
+Ollama direct load: HTTP 500 {"error":"llama-server process has terminated: exit status 1"}
+PASS: Ollama itself rejects the load: llama-server process has terminated: exit status 1
+App view failureMessage: Load failed: llama-server process has terminated: exit status 1
+PASS: view failureMessage is non-empty
+PASS: view failureMessage contains Ollama's reason
+PASS: Ollama /api/ps still empty after the direct attempt
+
+All failed-load assertions passed
+
+--- Cleanup: removing probe and restoring original Ollama state ---
+[?25l[?2026h[?25l[1G[K[?25h[?2026l[2K[1G[?25hdeleted 'm2b-failed-load-probe'
+Restoring nemotron3:33b (keep_alive -1)...
+After cleanup: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":27838853937,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-05T20:30:21.541856807Z","size_vram":27838853937,"context_length":131072}]}
+[0;32m=== Proof PASSED, Mac restored to its original state ===[0m
+
+==== Reviewer note: live-environment contamination during the M2b-cycle2 review run ====
+The full milestone Validation command (run once, in background, as required) exited 1: the
+model-swap-proof.sh Step 4 (persistence after 600s idle) reported /api/ps == ["nemotron3:33b"]
+instead of the expected ["qwen3.6:27b"]. Steps 1-3 (swap A->B, chat reply, keep_alive -1 after
+the reply) all PASSED. ops/scripts/e2e-tailnet-proof.sh, server bun test/typecheck/entry-smoke,
+ops bun test/verify-ops-install, and the mobile typecheck/unit tests/lint/smoke:runtime/
+model-list-proof all PASSED before this point. Because model-swap-proof.sh failed, the `&&` chain
+stopped there: model-failed-load-proof.sh and the expo export never ran as part of that single
+command.
+
+Investigation (server/src/models/manager.ts's `ollama serve` stdout, /private/tmp/ollama.log,
+found via `lsof -a -p <ollama pid> -d 1 -Fn`): during the 600s idle window the log shows repeated
+POST /api/chat and /api/generate calls (e.g. 21:30:02, 21:38:17, 21:38:51, 21:39:23) that the
+swap-proof script itself never issues in its idle loop (it only polls GET /api/ps). This traffic,
+and further /api/chat calls continuing after the run finished (21:40:46, 21:41:22, 21:41:38) with
+GET /api/tags and /api/ps every 10-20s in between, show a separate, still-active client using this
+Mac's Ollama directly (bypassing this server) throughout and after the review's live run, contrary
+to "run nothing else against the Mac while it runs." A direct check confirmed nemotron3:33b was
+still resident afterward even though the proof's own cleanup trap had restored devstral:24b
+moments earlier and the trap ran to completion.
+
+This is judged to be environmental contamination by an unrelated concurrent process, not a
+regression from the M2b-C1 correction under review: the correction only reorders when
+ModelManager.unload() claims `this.operation`, and touches nothing about OllamaClient.load's
+keep_alive value, runLoad, or residency/idle persistence. Steps 1-3 (using the corrected code)
+reproduced cycle 1's clean result before the external interference appeared.
+
+Re-ran mobile/scripts/model-failed-load-proof.sh alone afterward (fresh, live, ~40s): PASSED
+cleanly, independently reconfirming M2-AC5 against the corrected code (see log appended above,
+timestamped 20:42:55 UTC). Did not re-attempt the 600s swap-proof a second time given ongoing,
+still-observed unrelated Ollama traffic at the time (would likely be re-contaminated) and time
+budget; M2-AC2/AC3 are graded on Steps 1-3 of today's run, cycle 1's full clean live proof of the
+same steps (M2b-T3a-verifier.log, unaffected by this cycle's diff), and this cycle's new unit
+tests, which directly assert that a completed unload() sweep still leaves `state.resident` null.
+
+Mac restored by hand afterward to only devstral:24b resident, keep_alive -1 (unloaded
+nemotron3:33b with keep_alive:0, then loaded devstral:24b with keep_alive:-1 via /api/generate,
+confirmed via /api/ps). This may not hold if the unrelated external process continues to use the
+Mac's Ollama after this review ends.

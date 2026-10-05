@@ -1,0 +1,49 @@
+M5a restart proof (M5-AC2 / FR15)  (2026-09-26 14:01:36)
+repo commit: 296b9e5b87b04a92fcac5ad92df442366f636454
+
+==== com.harness.server: precondition ====
+  PASS  com.harness.server loaded and running (state: running)
+  PASS  com.harness.server healthy before kill
+        unauth /v1/models -> 401, auth /v1/state -> 200
+
+==== com.harness.server: kill launchd-tracked pid, prove restart ====
+        launchd-tracked pid: 87686
+        2026-09-26 14:01:36  sending SIGKILL to pid 87686
+        2026-09-26 14:01:37  new pid 88260, healthy after 1s (unauth /v1/models -> 401, auth /v1/state -> 200)
+  PASS  com.harness.server restarted with a new pid (87686 -> 88260) and is healthy within 60s (took 1s)
+
+==== com.harness.bundle-host: precondition ====
+  PASS  com.harness.bundle-host loaded and running (state: running)
+  PASS  com.harness.bundle-host healthy before kill
+        /status -> 'packager-status:running', manifest -> 200, launchAsset.url -> http://ryans-mac-studio.tailc3648a.ts.net:8081/expo-router.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=src%2Fapp&unstable_transformProfile=hermes-stable
+  PASS  exactly one listener on 8081 before kill (got 1)
+
+==== com.harness.bundle-host: kill launchd-tracked pid, prove restart ====
+        launchd-tracked pid: 87887; TCP 8081 listener pid: 87887
+        launchd's tracked pid IS the TCP 8081 listener (bun x expo execs into node, same pid)
+        2026-09-26 14:01:38  sending SIGKILL to pid 87887
+        2026-09-26 14:01:41  new pid 88307, healthy after 3s (/status -> 'packager-status:running', manifest -> 200, launchAsset.url -> http://ryans-mac-studio.tailc3648a.ts.net:8081/expo-router.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=src%2Fapp&unstable_transformProfile=hermes-stable)
+  PASS  com.harness.bundle-host restarted with a new pid (87887 -> 88307) and is healthy within 60s (took 3s)
+  PASS  exactly one listener on 8081 after restart A (got 1)
+
+==== com.harness.bundle-host: kill whichever process is actually listening on TCP 8081, prove restart ====
+        launchd-tracked pid now: 88307; TCP 8081 listener pid now: 88307
+        listener pid matches launchd's tracked pid on this run; killing it is still an independent proof via lsof discovery
+        2026-09-26 14:01:41  sending SIGKILL to TCP 8081 listener pid 88307
+        2026-09-26 14:01:51  new pid 88461, healthy after 10s (/status -> 'packager-status:running', manifest -> 200, launchAsset.url -> http://ryans-mac-studio.tailc3648a.ts.net:8081/expo-router.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=src%2Fapp&unstable_transformProfile=hermes-stable)
+  PASS  com.harness.bundle-host restarted with a new pid (88307 -> 88461) and is healthy within 60s after killing the TCP 8081 listener (took 10s)
+  PASS  exactly one listener on 8081 after restart B, no orphan from the previous instance (got 1)
+
+==== Final: both services running and healthy ====
+  PASS  com.harness.server state running
+  PASS  com.harness.server healthy
+        unauth /v1/models -> 401, auth /v1/state -> 200
+  PASS  com.harness.bundle-host state running
+  PASS  com.harness.bundle-host healthy
+        /status -> 'packager-status:running', manifest -> 200, launchAsset.url -> http://ryans-mac-studio.tailc3648a.ts.net:8081/expo-router.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=src%2Fapp&unstable_transformProfile=hermes-stable
+  PASS  exactly one listener on 8081 at the end (got 1)
+
+==== Result ====
+  PASS: ALL CHECKS PASSED
+
+exit status: 0

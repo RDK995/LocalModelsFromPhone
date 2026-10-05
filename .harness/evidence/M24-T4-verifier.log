@@ -1,0 +1,51 @@
+=== M24-T4 Verification Report ===
+
+Date: 2026-10-05
+Task: Assemble markdown summary file from five existing result/stream/fr41/sources-text files
+
+TESTS RUN:
+
+(1) Five --check-only commands (ww2, q1, q2, q3, heat):
+  Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M24-T3-<ID>-stream.txt --log ../.harness/evidence/M24-T3-<ID>-fr41.log --sources-text ../.harness/evidence/M24-T3-<ID>-sources-text.json
+  
+  Exit Status: All 5 ran successfully (exit 0)
+  
+  Results vs Summary Table:
+  - ww2: notes_kept=14(✓), notes_dropped=8(✓), drop_reasons=quote_not_found:8(✓), cited_read_pages=4(✓), sources_checked=6(✓), pass=yes(✓), ac37_pass=yes(✓)
+  - q1: notes_kept=19(✓), notes_dropped=8(✓), drop_reasons=quote_not_found:8(✓), cited_read_pages=5(✓), sources_checked=5(✓), pass=yes(✓), ac37_pass=yes(✓)
+  - q2: notes_kept=12(✓), notes_dropped=13(✓), drop_reasons=quote_not_found:13(✓), cited_read_pages=3(✓), sources_checked=6(✓), pass=yes(✓), ac37_pass=yes(✓)
+  - q3: notes_kept=17(✓), notes_dropped=13(✓), drop_reasons=quote_not_found:13(✓), cited_read_pages=5(✓), sources_checked=6(✓), pass=yes(✓), ac37_pass=yes(✓)
+  - heat: notes_kept=18(✓), notes_dropped=5(✓), drop_reasons=quote_not_found:5(✓), cited_read_pages=4(✓), sources_checked=5(✓), pass=yes(✓), ac37_pass=yes(✓)
+
+(2) Report text verification:
+  Command: Python script to extract concatenated `content` event text from stream and compare with summary
+  Exit Status: All 5 runs match exactly
+  Result: ✓ ww2, ✓ q1, ✓ q2, ✓ q3, ✓ heat
+
+(3) Completeness checks:
+  - Dropped note counts vs fr41.log: 8, 8, 13, 13, 5 (expected and actual match)
+  - Dropped note format verification (SPOT CHECK ONLY): 
+    * ww2 Quote 1 from fr41.log: "Lebensraum was a leading motivation of Nazi Germany to initiate World War II"
+    * ww2 Quote 1 in summary: ""Lebensraum was a leading motivation of Nazi Germany to initiate World War II""
+    * DISCREPANCY: Summary has extra surrounding quotes - NOT VERBATIM from fr41.log
+    * This pattern appears consistently in spot-checked entries across all runs
+
+(4) Per-run order: VISUALLY INSPECTED - appears correct (question, dropped notes, sources, report)
+
+(5) Final line: "All five runs met every bar." (✓ CORRECT - matches all ac37_pass: true)
+
+(6) Git status: Only .harness/evidence/M24-T4-summary.md and .harness/evidence/M24-T4-worker.log appear as new files (plus pre-existing owner files reports/ and research_notes/)
+
+CRITICAL ISSUE:
+The dropped note quotes are NOT verbatim from the fr41.log. The fr41.log stores quotes with quotes like:
+  "Lebensraum was a leading motivation..."
+  
+But the summary displays them as:
+  ""Lebensraum was a leading motivation...""
+  
+The task requirement states quotes should be "verbatim, from the fr41 log". The extra surrounding quotes in the summary represent a failure of this requirement.
+
+CHECKS NOT COMPLETED:
+- Detailed verification that ALL dropped notes (not just spot-checked) match fr41.log exactly
+- Individual source FR47 result verification (though sources_check counts all match)
+- Complete per-run section order validation beyond visual inspection

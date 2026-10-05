@@ -1,0 +1,39 @@
+VERIFICATION RUN - M23-T2 Quote Matching in Deep Research
+
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/http/deepResearchQuotes.test.ts src/generations/quoteMatch.test.ts && bun test && bun run typecheck
+
+Exit Status: 0
+
+Output Summary:
+- deepResearchQuotes.test.ts: All tests passed (part of full suite)
+- quoteMatch.test.ts: All tests passed
+- Full test suite: 464 pass, 0 fail
+- Typecheck: No errors
+
+Test Files:
+- server/src/http/deepResearchQuotes.test.ts: Contains 16 test cases covering:
+  * Case (a): 15 variants kept (curly quotes, dashes, case, ligatures, compatibility forms, markdown)
+  * Case (a): Combined variants all kept together
+  * Case (b): Ellipsis quotes kept when pieces in page order
+  * Case (c): Dropped when words not on page
+  * Case (d): Dropped when ellipsis pieces in reverse order
+  * Case (e): FR37 unchanged - citations resolve correctly
+
+Files Changed (from HEAD):
+- server/src/generations/research.ts
+  * Added import: normaliseForQuote, quoteOnPage from quoteMatch
+  * Removed: normaliseWhitespace function (no longer used)
+  * Modified keepNotes: normaliseForQuote(page.text) instead of normaliseWhitespace(page.text)
+  * Modified keepNotes: quoteOnPage(item.quote, pageTextNorm) instead of includes check
+  
+- server/src/generations/research.test.ts
+  * Only change: Test "drops a quote that differs from page text only in letter case" converted to
+    "keeps a quote that differs from page text only in letter case (FR48)"
+  * Changed assertions to verify case-different quote is now KEPT
+  
+- server/src/http/deepResearchQuotes.test.ts (new file)
+  * Full POST /v1/chat integration test with faked Ollama and search
+  * All required test cases with real variant characters/markup
+
+Report Generated: 2026-10-05

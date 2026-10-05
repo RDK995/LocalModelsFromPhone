@@ -1,0 +1,16 @@
+Commit:
+1d5e4387d87aa67f6a22941507dbe7fb37615008
+
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint
+
+Output:
+$ tsc --noEmit
+bun test v1.4.0 (1381054db)
+
+ 246 pass
+ 0 fail
+ 514 expect() calls
+Ran 246 tests across 20 files. [93.00ms]
+$ eslint src --max-warnings 0
+
+Exit status: 0

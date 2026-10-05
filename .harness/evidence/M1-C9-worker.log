@@ -1,0 +1,192 @@
+M1-C9 worker evidence log
+Commit at time of validation: 811f5bed6d9a1d5eeccbcd842624f77fd8d5a9ba (mobile screen changes + new test are uncommitted working-tree edits on top of this commit)
+Date: 2026-09-25
+
+=====================================================================
+1. RED: failing-first run of mobile/src/app-routing/keyboardHandling.test.ts
+   against the pre-fix setup.tsx / settings.tsx / chat.tsx
+   (cd mobile && bun test src/app-routing/keyboardHandling.test.ts)
+=====================================================================
+(fail) keyboard handling on Setup, Settings and Chat > setup.tsx uses KeyboardAvoidingView, has a dismiss mechanism, and a single-line token field with onSubmitEditing [0.31ms]
+(fail) keyboard handling on Setup, Settings and Chat > settings.tsx uses KeyboardAvoidingView, has a dismiss mechanism, and a single-line token field with onSubmitEditing [0.15ms]
+(fail) keyboard handling on Setup, Settings and Chat > chat.tsx uses KeyboardAvoidingView and has a dismiss mechanism for the message list [0.21ms]
+ 0 pass
+ 3 fail
+Ran 3 tests across 1 file. [16.00ms]
+
+(Full assertion diffs omitted here for brevity; all three failures were
+`expect(source).toMatch(/KeyboardAvoidingView/)` failing because none of
+setup.tsx, settings.tsx or chat.tsx contained KeyboardAvoidingView before
+the fix.)
+
+=====================================================================
+2. GREEN: same test after implementing the fix
+   (cd mobile && bun test src/app-routing/keyboardHandling.test.ts)
+=====================================================================
+bun test v1.4.0 (1381054db)
+
+ 3 pass
+ 0 fail
+ 10 expect() calls
+Ran 3 tests across 1 file. [17.00ms]
+
+=====================================================================
+3. Full focused validation command
+   cd mobile && bun run typecheck && bun test src/api src/ui src/chat src/app-routing && bun run lint && npx expo export --platform ios && rm -rf dist
+=====================================================================
+
+--- bun run typecheck ---
+$ tsc --noEmit
+
+--- bun test src/api src/ui src/chat src/app-routing ---
+bun test v1.4.0 (1381054db)
+
+ 30 pass
+ 0 fail
+ 78 expect() calls
+Ran 30 tests across 8 files. [37.00ms]
+
+--- bun run lint ---
+$ eslint src --max-warnings 0
+(no output = 0 warnings, 0 errors, exit 0)
+
+--- npx expo export --platform ios ---
+Using src/app as the root directory for Expo Router.
+Starting Metro Bundler
+
+iOS Bundled 3392ms expo-router.js (1116 modules)
+
+› Assets (23):
+node_modules/expo-router/assets/arrow_down.png (9.5KB)
+node_modules/expo-router/assets/error.png (469B)
+node_modules/expo-router/assets/file.png (138B)
+node_modules/expo-router/assets/forward.png (188B)
+node_modules/expo-router/assets/pkg.png (364B)
+node_modules/expo-router/assets/react-navigation/elements/back-icon-mask.png (653B)
+node_modules/expo-router/assets/react-navigation/elements/back-icon.png (4 variations | 566B)
+node_modules/expo-router/assets/react-navigation/elements/clear-icon.png (4 variations | 425B)
+node_modules/expo-router/assets/react-navigation/elements/close-icon.png (4 variations | 235B)
+node_modules/expo-router/assets/react-navigation/elements/search-icon.png (3 variations | 582B)
+node_modules/expo-router/assets/sitemap.png (465B)
+node_modules/expo-router/assets/unmatched.png (4.8KB)
+
+› ios bundles (1):
+_expo/static/js/ios/expo-router-c4efadbfa0a557518c1883edca399509.hbc (2.4MB)
+
+› Files (1):
+metadata.json (1.6KB)
+
+Exported: dist
+
+dist/ removed after export (rm -rf dist).
+
+=====================================================================
+4. (Continuation 1) Item 6: restart the user-level bundle host and confirm
+   over the tailnet that the phone would receive the new code.
+=====================================================================
+
+--- restart (no sudo) ---
+$ launchctl kickstart -k gui/$(id -u)/com.harness.bundle-host
+kickstart exit: 0
+
+--- (a) manifest fetch ---
+$ curl -s --max-time 20 -o manifest.json -w '%{http_code}\n' \
+    -H 'expo-platform: ios' -H 'accept: application/expo+json,application/json' \
+    http://ryans-mac-studio.tailc3648a.ts.net:8081/
+200
+
+manifest.json (truncated to the relevant fields):
+{"id":"dda5f9c2-f363-4829-894c-da383b2686b8","createdAt":"2026-09-25T12:24:53.059Z","runtimeVersion":"exposdk:57.0.0","launchAsset":{"key":"bundle","contentType":"application/javascript","url":"http://ryans-mac-studio.tailc3648a.ts.net:8081/expo-router.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=src%2Fapp&unstable_transformProfile=hermes-stable"}, ...}
+
+--- (b) bundle fetch, cold then warm ---
+$ curl -s --max-time 60 -o bundle.js -w '%{http_code} %{size_download} %{time_total}\n' "<launchAsset.url above>"
+cold: 200 3701470 1.356204
+$ curl -s --max-time 60 -o bundle-warm.js -w '%{http_code} %{size_download} %{time_total}\n' "<launchAsset.url above>"
+warm: 200 3701470 0.365913
+
+--- (c) grep the downloaded bundle for evidence the new code is served ---
+Raw counts (these also match generic RN library code, e.g. ScrollView.js
+itself defines the keyboardShouldPersistTaps prop, so counts alone are not
+proof; the targeted excerpt below is):
+$ grep -c "keyboardShouldPersistTaps" bundle.js   -> 11
+$ grep -c "keyboardDismissMode" bundle.js         -> 4
+$ grep -c "KeyboardAvoidingView" bundle.js        -> 7
+
+Targeted excerpt: the compiled setup.tsx screen (located via the unique
+string "Paste the token from your server") shows the exact new tree —
+KeyboardAvoidingView -> ScrollView (keyboardShouldPersistTaps: "handled",
+keyboardDismissMode: "on-drag") -> TouchableWithoutFeedback(onPress:
+Keyboard.dismiss) -> ... -> TextInput with the new single-line props and no
+`multiline`:
+
+  (0, _reactJsxRuntime.jsx)(_reactNative.KeyboardAvoidingView, {
+    style: styles.flex,
+    behavior: "padding",
+    children: (0, _reactJsxRuntime.jsx)(_reactNative.ScrollView, {
+      contentContainerStyle: styles.scrollContent,
+      keyboardShouldPersistTaps: "handled",
+      keyboardDismissMode: "on-drag",
+      children: (0, _reactJsxRuntime.jsx)(_reactNative.TouchableWithoutFeedback, {
+        onPress: _reactNative.Keyboard.dismiss,
+        children: (0, _reactJsxRuntime.jsxs)(_reactNative.View, {
+          style: styles.container,
+          children: [ ... Text "Enter Bearer Token" ..., Text "Paste the
+          token from your server" ..., TextInput {
+            style: styles.input,
+            placeholder: "Bearer token",
+            value: token,
+            onChangeText: setToken,
+            editable: !isLoading,
+            secureTextEntry: true,
+            placeholderTextColor: "#999",
+            returnKeyType: "done",
+            onSubmitEditing: handleTokenSubmit,
+            autoCapitalize: "none",
+            autoCorrect: false
+          }, TouchableOpacity ("Continue") ... ] }) }) })
+
+This tree has no `multiline` prop on the token TextInput and includes
+onSubmitEditing/autoCapitalize/autoCorrect, which only exist in the fixed
+source (mobile/src/app/setup.tsx) — confirming the running bundle-host is
+serving the new code, not the pre-fix version.
+
+=====================================================================
+5. (Continuation 1) Final re-run of the packet's Tests command
+   cd mobile && bun run typecheck && bun test src/api src/ui src/chat src/app-routing && bun run lint && npx expo export --platform ios && rm -rf dist
+=====================================================================
+$ tsc --noEmit
+bun test v1.4.0 (1381054db)
+
+ 30 pass
+ 0 fail
+ 78 expect() calls
+Ran 30 tests across 8 files. [32.00ms]
+$ eslint src --max-warnings 0
+Using src/app as the root directory for Expo Router.
+Starting Metro Bundler
+
+iOS Bundled 2948ms expo-router.js (1116 modules)
+
+› Assets (23):
+node_modules/expo-router/assets/arrow_down.png (9.5KB)
+node_modules/expo-router/assets/error.png (469B)
+node_modules/expo-router/assets/file.png (138B)
+node_modules/expo-router/assets/forward.png (188B)
+node_modules/expo-router/assets/pkg.png (364B)
+node_modules/expo-router/assets/react-navigation/elements/back-icon-mask.png (653B)
+node_modules/expo-router/assets/react-navigation/elements/back-icon.png (4 variations | 566B)
+node_modules/expo-router/assets/react-navigation/elements/clear-icon.png (4 variations | 425B)
+node_modules/expo-router/assets/react-navigation/elements/close-icon.png (4 variations | 235B)
+node_modules/expo-router/assets/react-navigation/elements/search-icon.png (3 variations | 582B)
+node_modules/expo-router/assets/sitemap.png (465B)
+node_modules/expo-router/assets/unmatched.png (4.8KB)
+
+› ios bundles (1):
+_expo/static/js/ios/expo-router-c4efadbfa0a557518c1883edca399509.hbc (2.4MB)
+
+› Files (1):
+metadata.json (1.6KB)
+
+Exported: dist
+FINAL_EXIT_STATUS: 0
+dist/ removed after export (rm -rf dist) — confirmed absent.

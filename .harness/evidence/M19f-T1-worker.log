@@ -1,0 +1,25 @@
+bun test v1.4.0 (1381054db)
+
+ 97 pass
+ 0 fail
+ 307 expect() calls
+Ran 97 tests across 2 files. [116.00ms]
+bun test v1.4.0 (1381054db)
+
+ 497 pass
+ 0 fail
+ 12245 expect() calls
+Ran 497 tests across 32 files. [267.00ms]
+$ eslint src --max-warnings 0
+
+/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/chat/webQuietSession.test.ts
+  255:9   error  Strings must use doublequote  quotes
+  258:9   error  Strings must use doublequote  quotes
+  261:9   error  Strings must use doublequote  quotes
+  264:9   error  Strings must use doublequote  quotes
+  333:15  error  Strings must use doublequote  quotes
+
+✖ 5 problems (5 errors, 0 warnings)
+  5 errors and 0 warnings potentially fixable with the `--fix` option.
+
+error: script "lint" exited with code 1

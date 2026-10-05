@@ -1,0 +1,24 @@
+VERIFIER RUN: M10c1-T3
+
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2 && bash server/scripts/icon-route-proof.sh
+
+Exit Status: 0
+
+Output:
+PASS: AC1 isolation: search on 127.0.0.1:53625 (temp cache dir), server on http://127.0.0.1:53626 (random 0600 token file, not printed); production 7789/7790 untouched
+Using github.com as the public site with an icon
+PASS: AC2: github.com -> 200, content-type image/png, 958 bytes with matching image magic, exactly one 'icon fetch host=github.com result=ok' in the search log
+PASS: AC3: second request -> 200, byte-identical body, still exactly one 'icon fetch' line for github.com (served from cache); 1 cache file(s) in the temp cache dir
+PASS: AC4: local name (bare) (localhost) -> 404 no_icon, search log shows result=blocked
+PASS: AC4: local name (dotted, resolves to 127.0.0.1) (app.localhost) -> 404 no_icon, search log shows result=blocked
+SKIP: AC4: public DNS name resolving to loopback 127.0.0.1 (localtest.me) - wildcard-DNS name did not resolve here (got HTTP 404)
+SKIP: AC4: LAN address 10.0.0.1 via wildcard DNS (10.0.0.1.nip.io) - wildcard-DNS name did not resolve here (got HTTP 404)
+PASS: AC4: tailnet CGNAT address 100.100.100.100 via wildcard DNS (100.100.100.100.nip.io) -> 404 no_icon, search log shows result=blocked
+NOTE: redirect-to-local is proven by the search unit tests, the redirect cases in search/src/http/server.test.ts (run: cd search && bun test src/http/server.test.ts); no public URL whose root redirects to a private address is known, so none is faked here.
+Using example.com as the site with no icon: home page has 1 icon <link> tag(s); /favicon.ico returns HTTP 404 (example.com declares only an empty <link rel=icon href=data:,>, so there is no usable icon)
+PASS: AC5: example.com -> 404 {"error":"no_icon"}, search log shows result=none
+PASS: AC6: no token -> 401, wrong token -> 401
+PASS: AC7: no third-party favicon/logo service referenced in search/src or server/src (tests excluded)
+
+All M10c1-T3 live proofs passed
+

@@ -1,0 +1,828 @@
+bun test v1.4.0 (1381054db)
+
+src/ui/markdown.test.ts:
+ 9 | const link = (url: string, ...children: Inline[]): Inline => ({ type: "link", url, children });
+10 | const para = (...children: Inline[]): Block => ({ type: "paragraph", children });
+11 | 
+12 | describe("blocks", () => {
+13 |   test("headings levels 1-6, trailing hashes stripped", () => {
+14 |     expect(parseMarkdown("# One")).toEqual([{ type: "heading", level: 1, children: [t("One")] }]);
+                                        ^
+error: expect(received).toEqual(expected)
+
+- [
+-   {
+-     "children": [
+-       {
+-         "text": "One",
+-         "type": "text",
+-       },
+-     ],
+-     "level": 1,
+-     "type": "heading",
+-   },
+- ]
++ []
+
+- Expected  - 12
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:14:36)
+(fail) blocks > headings levels 1-6, trailing hashes stripped [0.22ms]
+15 |     expect(parseMarkdown("###### Six")).toEqual([{ type: "heading", level: 6, children: [t("Six")] }]);
+16 |     expect(parseMarkdown("## Two ##")).toEqual([{ type: "heading", level: 2, children: [t("Two")] }]);
+17 |   });
+18 | 
+19 |   test("paragraphs join consecutive lines and split on blank lines", () => {
+20 |     expect(parseMarkdown("a\nb\n\nc")).toEqual([para(t("a\nb")), para(t("c"))]);
+                                            ^
+error: expect(received).toEqual(expected)
+
+- [
+-   {
+-     "children": [
+-       {
+-         "text": 
+- "a
+- b"
+- ,
+-         "type": "text",
+-       },
+-     ],
+-     "type": "paragraph",
+-   },
+-   {
+-     "children": [
+-       {
+-         "text": "c",
+-         "type": "text",
+-       },
+-     ],
+-     "type": "paragraph",
+-   },
+- ]
++ []
+
+- Expected  - 23
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:20:40)
+(fail) blocks > paragraphs join consecutive lines and split on blank lines [0.07ms]
+20 |     expect(parseMarkdown("a\nb\n\nc")).toEqual([para(t("a\nb")), para(t("c"))]);
+21 |   });
+22 | 
+23 |   test("unordered list with -, * and +", () => {
+24 |     for (const m of ["-", "*", "+"]) {
+25 |       expect(parseMarkdown(`${m} a\n${m} b`)).toEqual([
+                                                   ^
+error: expect(received).toEqual(expected)
+
+- [
+-   {
+-     "items": [
+-       {
+-         "children": [
+-           {
+-             "text": "a",
+-             "type": "text",
+-           },
+-         ],
+-         "depth": 0,
+-       },
+-       {
+-         "children": [
+-           {
+-             "text": "b",
+-             "type": "text",
+-           },
+-         ],
+-         "depth": 0,
+-       },
+-     ],
+-     "ordered": false,
+-     "start": 1,
+-     "type": "list",
+-   },
+- ]
++ []
+
+- Expected  - 27
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:25:47)
+(fail) blocks > unordered list with -, * and + [0.12ms]
+35 |       ]);
+36 |     }
+37 |   });
+38 | 
+39 |   test("ordered list with . and ) and a start number", () => {
+40 |     expect(parseMarkdown("3. a\n4. b")).toEqual([
+                                             ^
+error: expect(received).toEqual(expected)
+
+- [
+-   {
+-     "items": [
+-       {
+-         "children": [
+-           {
+-             "text": "a",
+-             "type": "text",
+-           },
+-         ],
+-         "depth": 0,
+-       },
+-       {
+-         "children": [
+-           {
+-             "text": "b",
+-             "type": "text",
+-           },
+-         ],
+-         "depth": 0,
+-       },
+-     ],
+-     "ordered": true,
+-     "start": 3,
+-     "type": "list",
+-   },
+- ]
++ []
+
+- Expected  - 27
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:40:41)
+(fail) blocks > ordered list with . and ) and a start number [0.07ms]
+52 |     expect(b[0]).toMatchObject({ type: "list", ordered: true, start: 1 });
+53 |   });
+54 | 
+55 |   test("list depth from indentation and separate lists per ordered-ness", () => {
+56 |     const b = parseMarkdown("- a\n  - b\n\t- c\n1. d");
+57 |     expect(b).toEqual([
+                   ^
+error: expect(received).toEqual(expected)
+
+- [
+-   {
+-     "items": [
+-       {
+-         "children": [
+-           {
+-             "text": "a",
+-             "type": "text",
+-           },
+-         ],
+-         "depth": 0,
+-       },
+-       {
+-         "children": [
+-           {
+-             "text": "b",
+-             "type": "text",
+-           },
+-         ],
+-         "depth": 1,
+-       },
+-       {
+-         "children": [
+-           {
+-             "text": "c",
+-             "type": "text",
+-           },
+-         ],
+-         "depth": 1,
+-       },
+-     ],
+-     "ordered": false,
+-     "start": 1,
+-     "type": "list",
+-   },
+-   {
+-     "items": [
+-       {
+-         "children": [
+-           {
+-             "text": "d",
+-             "type": "text",
+-           },
+-         ],
+-         "depth": 0,
+-       },
+-     ],
+-     "ordered": true,
+-     "start": 1,
+-     "type": "list",
+-   },
+- ]
++ []
+
+- Expected  - 52
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:57:15)
+(fail) blocks > list depth from indentation and separate lists per ordered-ness [0.09ms]
+68 |       { type: "list", ordered: true, start: 1, items: [{ depth: 0, children: [t("d")] }] },
+69 |     ]);
+70 |   });
+71 | 
+72 |   test("fenced code block with language, verbatim content, ~~~ fence", () => {
+73 |     expect(parseMarkdown("```ts\nconst **a** = 1;\n\nx\n```")).toEqual([
+                                                                    ^
+error: expect(received).toEqual(expected)
+
+- [
+-   {
+-     "language": "ts",
+-     "text": 
+- "const **a** = 1;
+- 
+- x"
+- ,
+-     "type": "codeBlock",
+-   },
+- ]
++ []
+
+- Expected  - 11
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:73:64)
+(fail) blocks > fenced code block with language, verbatim content, ~~~ fence [0.08ms]
+75 |     ]);
+76 |     expect(parseMarkdown("~~~\nq\n~~~")).toEqual([{ type: "codeBlock", language: null, text: "q" }]);
+77 |   });
+78 | 
+79 |   test("unclosed fence swallows the rest", () => {
+80 |     expect(parseMarkdown("```ts\nconst a = 1")).toEqual([
+                                                     ^
+error: expect(received).toEqual(expected)
+
+- [
+-   {
+-     "language": "ts",
+-     "text": "const a = 1",
+-     "type": "codeBlock",
+-   },
+- ]
++ []
+
+- Expected  - 7
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:80:49)
+(fail) blocks > unclosed fence swallows the rest [0.06ms]
+84 |       { type: "codeBlock", language: null, text: "a\n\n# b" },
+85 |     ]);
+86 |   });
+87 | 
+88 |   test("quote strips the marker", () => {
+89 |     expect(parseMarkdown("> hi\n> there")).toEqual([{ type: "quote", children: [t("hi\nthere")] }]);
+                                                ^
+error: expect(received).toEqual(expected)
+
+- [
+-   {
+-     "children": [
+-       {
+-         "text": 
+- "hi
+- there"
+- ,
+-         "type": "text",
+-       },
+-     ],
+-     "type": "quote",
+-   },
+- ]
++ []
+
+- Expected  - 14
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:89:44)
+(fail) blocks > quote strips the marker [0.05ms]
+88 |   test("quote strips the marker", () => {
+89 |     expect(parseMarkdown("> hi\n> there")).toEqual([{ type: "quote", children: [t("hi\nthere")] }]);
+90 |   });
+91 | 
+92 |   test("rules", () => {
+93 |     for (const r of ["---", "***", "___"]) expect(parseMarkdown(r)).toEqual([{ type: "rule" }]);
+                                                                         ^
+error: expect(received).toEqual(expected)
+
+- [
+-   {
+-     "type": "rule",
+-   },
+- ]
++ []
+
+- Expected  - 5
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:93:69)
+(fail) blocks > rules [0.07ms]
+93 |     for (const r of ["---", "***", "___"]) expect(parseMarkdown(r)).toEqual([{ type: "rule" }]);
+94 |     expect(parseMarkdown("para\n---")).toEqual([para(t("para")), { type: "rule" }]);
+95 |   });
+96 | 
+97 |   test("pipe table drops the separator and trims cells", () => {
+98 |     expect(parseMarkdown("| A | B |\n|---|---|\n| **x** | y |")).toEqual([
+                                                                      ^
+error: expect(received).toEqual(expected)
+
+- [
+-   {
+-     "rows": [
+-       [
+-         [
+-           {
+-             "text": "A",
+-             "type": "text",
+-           },
+-         ],
+-         [
+-           {
+-             "text": "B",
+-             "type": "text",
+-           },
+-         ],
+-       ],
+-       [
+-         [
+-           {
+-             "children": [
+-               {
+-                 "text": "x",
+-                 "type": "text",
+-               },
+-             ],
+-             "type": "bold",
+-           },
+-         ],
+-         [
+-           {
+-             "text": "y",
+-             "type": "text",
+-           },
+-         ],
+-       ],
+-     ],
+-     "type": "table",
+-   },
+- ]
++ []
+
+- Expected  - 40
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:98:66)
+(fail) blocks > pipe table drops the separator and trims cells [0.08ms]
+102 |       { type: "table", rows: [[[t("A")], [t("B")]], [[t("1")], [t("2")]]] },
+103 |     ]);
+104 |   });
+105 | 
+106 |   test("table header without a separator yet is a paragraph", () => {
+107 |     expect(parseMarkdown("| A | B |")[0]?.type).toBe("paragraph");
+                                                      ^
+error: expect(received).toBe(expected)
+
+Expected: "paragraph"
+Received: undefined
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:107:49)
+(fail) blocks > table header without a separator yet is a paragraph [0.05ms]
+108 |   });
+109 | });
+110 | 
+111 | describe("inline", () => {
+112 |   test("bold and italic", () => {
+113 |     expect(parseInline("**x**")).toEqual([bold(t("x"))]);
+                                       ^
+error: expect(received).toEqual(expected)
+
+- [
+-   {
+-     "children": [
+-       {
+-         "text": "x",
+-         "type": "text",
+-       },
+-     ],
+-     "type": "bold",
+-   },
+- ]
++ []
+
+- Expected  - 11
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:113:34)
+(fail) inline > bold and italic [0.06ms]
+116 |     expect(parseInline("_x_")).toEqual([italic(t("x"))]);
+117 |     expect(parseInline("a **b** c")).toEqual([t("a "), bold(t("b")), t(" c")]);
+118 |   });
+119 | 
+120 |   test("triple emphasis nests bold and italic", () => {
+121 |     expect(parseInline("***x***")).toEqual([bold(italic(t("x")))]);
+                                         ^
+error: expect(received).toEqual(expected)
+
+- [
+-   {
+-     "children": [
+-       {
+-         "children": [
+-           {
+-             "text": "x",
+-             "type": "text",
+-           },
+-         ],
+-         "type": "italic",
+-       },
+-     ],
+-     "type": "bold",
+-   },
+- ]
++ []
+
+- Expected  - 16
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:121:36)
+(fail) inline > triple emphasis nests bold and italic [0.05ms]
+120 |   test("triple emphasis nests bold and italic", () => {
+121 |     expect(parseInline("***x***")).toEqual([bold(italic(t("x")))]);
+122 |   });
+123 | 
+124 |   test("italic inside bold and bold inside italic", () => {
+125 |     expect(parseInline("**a *b* c**")).toEqual([bold(t("a "), italic(t("b")), t(" c"))]);
+                                             ^
+error: expect(received).toEqual(expected)
+
+- [
+-   {
+-     "children": [
+-       {
+-         "text": "a ",
+-         "type": "text",
+-       },
+-       {
+-         "children": [
+-           {
+-             "text": "b",
+-             "type": "text",
+-           },
+-         ],
+-         "type": "italic",
+-       },
+-       {
+-         "text": " c",
+-         "type": "text",
+-       },
+-     ],
+-     "type": "bold",
+-   },
+- ]
++ []
+
+- Expected  - 24
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:125:40)
+(fail) inline > italic inside bold and bold inside italic [0.05ms]
+125 |     expect(parseInline("**a *b* c**")).toEqual([bold(t("a "), italic(t("b")), t(" c"))]);
+126 |     expect(parseInline("*a **b** c*")).toEqual([italic(t("a "), bold(t("b")), t(" c"))]);
+127 |   });
+128 | 
+129 |   test("inline code, verbatim and double-backtick", () => {
+130 |     expect(parseInline("`a **b**`")).toEqual([code("a **b**")]);
+                                           ^
+error: expect(received).toEqual(expected)
+
+- [
+-   {
+-     "text": "a **b**",
+-     "type": "code",
+-   },
+- ]
++ []
+
+- Expected  - 6
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:130:38)
+(fail) inline > inline code, verbatim and double-backtick [0.04ms]
+130 |     expect(parseInline("`a **b**`")).toEqual([code("a **b**")]);
+131 |     expect(parseInline("`` a`b ``")).toEqual([code("a`b")]);
+132 |   });
+133 | 
+134 |   test("links and autolinks", () => {
+135 |     expect(parseInline("[the **docs**](https://e.com/x)")).toEqual([
+                                                                 ^
+error: expect(received).toEqual(expected)
+
+- [
+-   {
+-     "children": [
+-       {
+-         "text": "the ",
+-         "type": "text",
+-       },
+-       {
+-         "children": [
+-           {
+-             "text": "docs",
+-             "type": "text",
+-           },
+-         ],
+-         "type": "bold",
+-       },
+-     ],
+-     "type": "link",
+-     "url": "https://e.com/x",
+-   },
+- ]
++ []
+
+- Expected  - 21
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:135:60)
+(fail) inline > links and autolinks [0.05ms]
+137 |     ]);
+138 |     expect(parseInline("<https://e.com>")).toEqual([link("https://e.com", t("https://e.com"))]);
+139 |   });
+140 | 
+141 |   test("backslash escapes", () => {
+142 |     expect(parseInline("\\*a\\* \\_ \\` \\# \\[ \\] \\\\")).toEqual([t("*a* _ ` # [ ] \\")]);
+                                                                  ^
+error: expect(received).toEqual(expected)
+
+- [
+-   {
+-     "text": "*a* _ ` # [ ] \",
+-     "type": "text",
+-   },
+- ]
++ []
+
+- Expected  - 6
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:142:61)
+(fail) inline > backslash escapes [0.04ms]
+143 |   });
+144 | });
+145 | 
+146 | describe("false-positive guards", () => {
+147 |   test("stay literal", () => {
+148 |     expect(parseInline("5 * 3 = 15")).toEqual([t("5 * 3 = 15")]);
+                                            ^
+error: expect(received).toEqual(expected)
+
+- [
+-   {
+-     "text": "5 * 3 = 15",
+-     "type": "text",
+-   },
+- ]
++ []
+
+- Expected  - 6
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:148:39)
+(fail) false-positive guards > stay literal [0.06ms]
+151 |     expect(parseMarkdown("#hashtag")).toEqual([para(t("#hashtag"))]);
+152 |     expect(parseInline("C:\\path")).toEqual([t("C:\\path")]);
+153 |   });
+154 | 
+155 |   test("an unmatched marker that is not at the end stays literal", () => {
+156 |     expect(parseMarkdown("a ** b\n\nnext")).toEqual([para(t("a ** b")), para(t("next"))]);
+                                                  ^
+error: expect(received).toEqual(expected)
+
+- [
+-   {
+-     "children": [
+-       {
+-         "text": "a ** b",
+-         "type": "text",
+-       },
+-     ],
+-     "type": "paragraph",
+-   },
+-   {
+-     "children": [
+-       {
+-         "text": "next",
+-         "type": "text",
+-       },
+-     ],
+-     "type": "paragraph",
+-   },
+- ]
++ []
+
+- Expected  - 20
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:156:45)
+(fail) false-positive guards > an unmatched marker that is not at the end stays literal [0.04ms]
+157 |   });
+158 | });
+159 | 
+160 | describe("streaming", () => {
+161 |   test("open bold", () => {
+162 |     expect(parseMarkdown("Hello **wor")).toEqual([para(t("Hello "), bold(t("wor")))]);
+                                               ^
+error: expect(received).toEqual(expected)
+
+- [
+-   {
+-     "children": [
+-       {
+-         "text": "Hello ",
+-         "type": "text",
+-       },
+-       {
+-         "children": [
+-           {
+-             "text": "wor",
+-             "type": "text",
+-           },
+-         ],
+-         "type": "bold",
+-       },
+-     ],
+-     "type": "paragraph",
+-   },
+- ]
++ []
+
+- Expected  - 20
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:162:42)
+(fail) streaming > open bold [0.06ms]
+160 | describe("streaming", () => {
+161 |   test("open bold", () => {
+162 |     expect(parseMarkdown("Hello **wor")).toEqual([para(t("Hello "), bold(t("wor")))]);
+163 |   });
+164 |   test("open link", () => {
+165 |     expect(parseMarkdown("See [the docs](https://exa")).toEqual([
+                                                              ^
+error: expect(received).toEqual(expected)
+
+- [
+-   {
+-     "children": [
+-       {
+-         "text": "See ",
+-         "type": "text",
+-       },
+-       {
+-         "children": [
+-           {
+-             "text": "the docs",
+-             "type": "text",
+-           },
+-         ],
+-         "type": "link",
+-         "url": "https://exa",
+-       },
+-     ],
+-     "type": "paragraph",
+-   },
+- ]
++ []
+
+- Expected  - 21
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:165:57)
+(fail) streaming > open link [0.06ms]
+167 |     ]);
+168 |     expect(parseInline("[text](")).toEqual([link("", t("text"))]);
+169 |     expect(parseInline("[text")).toEqual([t("text")]);
+170 |   });
+171 |   test("open code", () => {
+172 |     expect(parseMarkdown("Use `npm i")).toEqual([para(t("Use "), code("npm i"))]);
+                                              ^
+error: expect(received).toEqual(expected)
+
+- [
+-   {
+-     "children": [
+-       {
+-         "text": "Use ",
+-         "type": "text",
+-       },
+-       {
+-         "text": "npm i",
+-         "type": "code",
+-       },
+-     ],
+-     "type": "paragraph",
+-   },
+- ]
++ []
+
+- Expected  - 15
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:172:41)
+(fail) streaming > open code [0.06ms]
+170 |   });
+171 |   test("open code", () => {
+172 |     expect(parseMarkdown("Use `npm i")).toEqual([para(t("Use "), code("npm i"))]);
+173 |   });
+174 |   test("open fence", () => {
+175 |     expect(parseMarkdown("```ts\nconst a = 1")).toEqual([
+                                                      ^
+error: expect(received).toEqual(expected)
+
+- [
+-   {
+-     "language": "ts",
+-     "text": "const a = 1",
+-     "type": "codeBlock",
+-   },
+- ]
++ []
+
+- Expected  - 7
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:175:49)
+(fail) streaming > open fence [0.05ms]
+175 |     expect(parseMarkdown("```ts\nconst a = 1")).toEqual([
+176 |       { type: "codeBlock", language: "ts", text: "const a = 1" },
+177 |     ]);
+178 |   });
+179 |   test("marker with nothing after it renders nothing", () => {
+180 |     expect(parseInline("a **")).toEqual([t("a ")]);
+                                      ^
+error: expect(received).toEqual(expected)
+
+- [
+-   {
+-     "text": "a ",
+-     "type": "text",
+-   },
+- ]
++ []
+
+- Expected  - 6
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:180:33)
+(fail) streaming > marker with nothing after it renders nothing [0.04ms]
+189 | });
+190 | 
+191 | describe("visibleText", () => {
+192 |   test("shapes", () => {
+193 |     const src = "# H\n\np **b**\n\n- x\n  - y\n\n3. a\n4. b\n\n| A | B |\n|---|---|\n| 1 | 2 |\n\n> q\n\n---\n\n[l](http://u)";
+194 |     expect(visibleText(parseMarkdown(src))).toBe(
+                                                  ^
+error: expect(received).toBe(expected)
+
+- "H
+- p b
+- • x
+-   • y
+- 3. a
+- 4. b
+- A  B
+- 1  2
+- q
+- 
+- l"
++ ""
+
+- Expected  - 11
++ Received  + 1
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:194:45)
+(fail) visibleText > shapes [0.06ms]
+230 | 
+231 | describe("AC20 fixture", () => {
+232 |   test("no raw markdown visible", () => {
+233 |     const v = visibleText(parseMarkdown(FIXTURE1));
+234 |     for (const w of ["Heading", "bold", "italic", "first item", "1. one", "2. two", "code", "Example", "const total"]) {
+235 |       expect(v).toContain(w);
+                      ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "Heading"
+Received: ""
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdown.test.ts:235:17)
+(fail) AC20 fixture > no raw markdown visible [0.09ms]
+
+ 3 pass
+ 26 fail
+ 1360 expect() calls
+Ran 29 tests across 1 file. [8.00ms]

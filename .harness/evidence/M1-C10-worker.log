@@ -1,0 +1,134 @@
+=== M1-C10: Setup and Settings KeyboardAvoidingView offset must include Stack header ===
+
+## Phase 1: Red (Failing Tests - Before Implementation)
+
+Running tests to show the new assertions fail before the fix:
+
+$ cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun test src/app-routing
+
+Test output showed 2 failing tests:
+- "setup.tsx uses useHeaderHeight and passes keyboardVerticalOffset={headerHeight} to account for the Stack header"
+- "settings.tsx uses useHeaderHeight and passes keyboardVerticalOffset={headerHeight} to account for the Stack header"
+
+Both tests failed with:
+  error: expect(received).toMatch(expected)
+  Expected substring or pattern: /useHeaderHeight/
+
+---
+
+## Phase 2: Green (Implementation)
+
+Made the following changes:
+
+1. Updated mobile/src/app/setup.tsx:
+   - Added import: import { useHeaderHeight } from "expo-router/react-navigation";
+   - Added hook call: const headerHeight = useHeaderHeight();
+   - Added keyboardVerticalOffset prop: keyboardVerticalOffset={headerHeight}
+
+2. Updated mobile/src/app/settings.tsx:
+   - Added import: import { useHeaderHeight } from "expo-router/react-navigation";
+   - Added hook call: const headerHeight = useHeaderHeight();
+   - Added keyboardVerticalOffset prop: keyboardVerticalOffset={headerHeight}
+
+3. Updated mobile/src/app-routing/keyboardHandling.test.ts:
+   - Added test: "setup.tsx uses useHeaderHeight and passes keyboardVerticalOffset={headerHeight} to account for the Stack header"
+   - Added test: "settings.tsx uses useHeaderHeight and passes keyboardVerticalOffset={headerHeight} to account for the Stack header"
+
+---
+
+## Phase 3: Verification (Tests Passing)
+
+After implementation, all tests pass:
+
+$ cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun test src/app-routing
+bun test v1.4.0 (1381054db)
+ 8 pass
+ 0 fail
+ 18 expect() calls
+Ran 8 tests across 3 files. [17.00ms]
+
+---
+
+## Full Test Suite Results
+
+$ cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck
+$ tsc --noEmit
+(PASSED - no errors)
+
+$ bun test src/api src/ui src/chat src/app-routing
+bun test v1.4.0 (1381054db)
+ 32 pass
+ 0 fail
+ 82 expect() calls
+Ran 32 tests across 8 files. [32.00ms]
+
+$ bun run lint
+$ eslint src --max-warnings 0
+(PASSED - no linting errors)
+
+$ npx expo export --platform ios
+Using src/app as the root directory for Expo Router.
+Starting Metro Bundler
+iOS Bundled 3010ms expo-router.js (1118 modules)
+Exported: dist
+(PASSED - bundle generated successfully)
+
+---
+
+## Live Bundle Verification (Step 3)
+
+Bundle host restart: launchctl kickstart -k gui/$(id -u)/com.harness.bundle-host
+
+Manifest fetch from tailnet:
+$ curl -s -H 'expo-platform: ios' -H 'accept: application/expo+json,application/json' 'http://ryans-mac-studio.tailc3648a.ts.net:8081/'
+HTTP 200, Time: 0.066s, Size: ~11.6KB
+Response ID: fe5d4b7b-a350-42bf-a35a-e16527a709e5
+Runtime version: exposdk:57.0.0
+
+LaunchAsset URL: http://ryans-mac-studio.tailc3648a.ts.net:8081/expo-router.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=src%2Fapp&unstable_transformProfile=hermes-stable
+
+Bundle download: 3703050 bytes (3.7MB), Time: 2.447s
+
+Excerpt from downloaded bundle near "Paste the token from your server" (lines 102280-102310):
+```
+    return /*#__PURE__*/(0, _reactJsxRuntime.jsx)(_reactNative.KeyboardAvoidingView, {
+      style: styles.flex,
+      behavior: "padding",
+      keyboardVerticalOffset: headerHeight,
+      children: /*#__PURE__*/(0, _reactJsxRuntime.jsx)(_reactNative.ScrollView, {
+        contentContainerStyle: styles.scrollContent,
+        keyboardShouldPersistTaps: "handled",
+        keyboardDismissMode: "on-drag",
+        children: /*#__PURE__*/(0, _reactJsxRuntime.jsx)(_reactNative.TouchableWithoutFeedback, {
+          onPress: _reactNative.Keyboard.dismiss,
+          children: /*#__PURE__*/(0, _reactJsxRuntime.jsxs)(_reactNative.View, {
+            style: styles.container,
+            children: [/*#__PURE__*/(0, _reactJsxRuntime.jsx)(_reactNative.Text, {
+              style: styles.title,
+              children: "Enter Bearer Token"
+            }), /*#__PURE__*/(0, _reactJsxRuntime.jsx)(_reactNative.Text, {
+              style: styles.subtitle,
+              children: "Paste the token from your server"
+            }), 
+```
+
+CONFIRMED: The Setup screen's KeyboardAvoidingView now passes keyboardVerticalOffset: headerHeight
+
+---
+
+## Summary
+
+All requirements satisfied:
+✓ setup.tsx imports useHeaderHeight from "expo-router/react-navigation"
+✓ setup.tsx calls useHeaderHeight() hook
+✓ setup.tsx passes keyboardVerticalOffset={headerHeight} to KeyboardAvoidingView
+✓ settings.tsx imports useHeaderHeight from "expo-router/react-navigation"
+✓ settings.tsx calls useHeaderHeight() hook
+✓ settings.tsx passes keyboardVerticalOffset={headerHeight} to KeyboardAvoidingView
+✓ Test assertions added to verify the changes
+✓ All tests pass (typecheck, unit tests, lint)
+✓ Expo export successful
+✓ Live bundle verification confirms the fix is deployed
+✓ No new dependencies added
+✓ No changes to unrelated files (chat.tsx, _layout.tsx, server/, ops/ left untouched)
+✓ No destructive git operations performed

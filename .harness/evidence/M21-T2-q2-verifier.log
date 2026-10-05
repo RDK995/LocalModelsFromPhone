@@ -1,0 +1,143 @@
+VERIFIER LOG: M21-T2 q2
+=======================
+
+TASK: M21-T2 q2 (LFP vs NMC home battery chemistry trade-offs)
+VERIFIER RUN: 2026-10-03
+GIT COMMIT: 039c27d
+
+PRECONDITION CHECK:
+pgrep -fl ac29-live-run: no processes found (OK)
+
+RE-RUN CHECK COMMAND:
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M21-T2-q2-stream.txt --log ../.harness/evidence/M21-T2-q2-fr41.log
+Exit Status: 1
+
+CHECK VALUES (from re-run):
+- status_ok: true (final_status = "complete")
+- within_budget: true (total_wall_s: 173.516 <= limit_s: 540)
+- cited_read_pages_ok: FALSE (value: 2, requires >= 3)
+- no_unresolved_citations: true (value: [])
+- pass: false
+
+RUN LOG CONFIRMATION:
+File: /Users/ryankenny/Projects/CodingHarnessv2/.harness/evidence/M21-T2-q2-run.log
+Last line: "exit=1"
+Status: CONFIRMED
+
+STREAM ANALYSIS:
+File: /Users/ryankenny/Projects/CodingHarnessv2/.harness/evidence/M21-T2-q2-stream.txt
+
+Pages Read (distinct_pages_read = 4):
+1. https://solartodo.com/knowledge/lfp-vs-nmc-battery-cost-comparison-2026-cycle-life-safety-tco-data
+   - Status: done (line 57)
+   - Note kept: "Taking notes: solartodo.com" (line 61)
+   
+2. https://www.surgepv.com/blog/tesla-powerwall-vs-byd-vs-sonnen
+   - Status: done (line 181)
+   - Note kept: "Taking notes: surgepv.com" (line 185)
+   
+3. https://autoedgeview.com/battery-guides/nmc-vs-lfp-ev-battery-degradation-data
+   - Status: done (line 113)
+   - Note kept: "Taking notes: autoedgeview.com" (line 117)
+   
+4. https://agaicpower.com/blogs/news/are-home-batteries-safe-lifepo4-vs-nmc-fire-risk-the-real-data-1
+   - Status: done (line 169)
+   - Note kept: no separate note event (counted in notes_kept: 3 from sources list)
+
+Failed reads:
+- https://www.sciencedirect.com/science/article/pii/S2950264024000078 (status: failed, line 195)
+- https://www.sciencedirect.com/science/article/pii/S0378775325017501 (status: failed, line 199)
+
+Notes Kept: 3 (as reported by script from deep_research_run_end)
+
+Final Sources List (from sources event, line 223):
+[1] Tesla Powerwall vs BYD vs Sonnen 2026: Battery Comparison
+    URL: https://www.surgepv.com/blog/tesla-powerwall-vs-byd-vs-sonnen
+
+[2] LFP vs NMC Battery Cost Comparison 2026: Cycle Life,...
+    URL: https://solartodo.com/knowledge/lfp-vs-nmc-battery-cost-comparison-2026-cycle-life-safety-tco-data
+
+[3] EV Battery Degradation: NMC vs LFP Lifespan Data Analysis
+    URL: https://autoedgeview.com/battery-guides/nmc-vs-lfp-ev-battery-degradation-data
+
+[4] Are Home Batteries Safe? LiFePO4 vs NMC Fire Risk — The Real Data
+    URL: https://agaicpower.com/blogs/news/are-home-batteries-safe-lifepo4-vs-nmc-fire-risk-the-real-data
+    (NOTE: sources list URL ends without "-1" suffix)
+
+Actual Citations in Report Text (content event, line 218):
+[1] "...BYD offering rates between €500 and €700 per kWh [1]"
+[3] "...can potentially last the full 15-year lifespan of a home energy storage system [3]"
+[4] "...NMC batteries have a lower thermal runaway threshold around 210°C, indicating a higher fire risk [4]"
+
+Citation Resolution:
+[1] → Source [1] (surgepv.com) → URL read: yes (done)
+[3] → Source [3] (autoedgeview.com) → URL read: yes (done)
+[4] → Source [4] (agaicpower.com) → URL read: mismatch
+       Sources list has: https://agaicpower.com/blogs/news/are-home-batteries-safe-lifepo4-vs-nmc-fire-risk-the-real-data
+       Read URL was: https://agaicpower.com/blogs/news/are-home-batteries-safe-lifepo4-vs-nmc-fire-risk-the-real-data-1
+       (differ by trailing "-1")
+
+Unresolved Citations: [] (all source numbers exist in sources list)
+
+Cited Read Pages Calculation:
+Script counts: distinct URLs that are both (a) cited via [n] and (b) exist in sources AND (c) were read with status done
+- Source [1]: cited [1] → URL https://www.surgepv.com/blog/tesla-powerwall-vs-byd-vs-sonnen → read: yes ✓
+- Source [3]: cited [3] → URL https://autoedgeview.com/battery-guides/nmc-vs-lfp-ev-battery-degradation-data → read: yes ✓
+- Source [4]: cited [4] → URL https://agaicpower.com/blogs/news/are-home-batteries-safe-lifepo4-vs-nmc-fire-risk-the-real-data → read: no
+             (read URL has -1 suffix; exact match fails)
+- Source [2]: NOT cited in report text
+
+Result: 2 cited_read_pages (pass bar requires >= 3)
+
+FILES CHANGED CHECK:
+git status --porcelain output:
+?? .harness/evidence/M21-T2-q2-fr41.log (allowed)
+?? .harness/evidence/M21-T2-q2-result.json (allowed)
+?? .harness/evidence/M21-T2-q2-run.log (allowed)
+?? .harness/evidence/M21-T2-q2-stream.txt (allowed)
+?? "reports/Fast local deep research redesign.md" (owner's untracked, excepted)
+?? "research_notes/Fast local deep research redesign/" (owner's untracked, excepted)
+
+No changes outside .harness/ (excluding allowed owner's reports).
+
+ACCEPTANCE CRITERION M21-AC1 EXERCISE CHECK:
+AC: "Live on the Mac with qwen3.5:35b-a3b resident: 3 real research-style questions 
+     plus the 2026-10-02 heat-pump question each end within the budget plus a small 
+     margin with status `complete` or `partial`, a report citing at least 3 distinct 
+     read pages, and no citation number that fails to resolve to a saved source"
+
+Exercised by:
+- Status criterion: final_status = "complete" (check: status_ok = true)
+- Budget criterion: total_wall_s 173.516 <= 540 (check: within_budget = true)
+- Citation count criterion: cited_read_pages = 2 (check: cited_read_pages_ok = FALSE) 
+  FAILS: needs >= 3, got 2
+- Unresolved citations: unresolved_citations = [] (check: no_unresolved_citations = true)
+
+TEST RESULTS SUMMARY:
+Test command ran successfully and confirmed all check values match worker's report:
+- Exit status: 1 (failure)
+- cited_read_pages: 2 (fails pass bar; needs >= 3)
+- All other checks exercised by the validation command
+
+WORKER CLAIM VERIFICATION:
+Worker reported: FAIL; exit 1; generation 3bf9e7a3-1888-4106-88e5-87209646543c;
+status complete; total_wall_s 173.522; distinct_pages_read 4; notes_kept 3;
+cited_read_pages 2 (check cited_read_pages_ok false, needs >= 3);
+unresolved_citations []
+
+Verifier confirms:
+✓ FAIL (exit 1)
+✓ generation ID matches
+✓ status complete
+✓ total_wall_s 173.516 (minor variance from 173.522 due to check-only mode using elapsed_ms)
+✓ distinct_pages_read 4
+✓ notes_kept 3
+✓ cited_read_pages 2
+✓ check cited_read_pages_ok false
+✓ unresolved_citations []
+
+CONCLUSION:
+The task FAILED the pass bar. The cited_read_pages check failed with value 2 
+(requires >= 3). The root cause is a URL mismatch in source [4]: the read URL 
+has a "-1" suffix that the sources list does not have, preventing that source 
+from being counted as a cited read page. All other checks passed.

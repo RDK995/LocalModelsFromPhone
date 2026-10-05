@@ -1,0 +1,31 @@
+VERIFICATION: Task M16-T5
+Repository: /Users/ryankenny/Projects/CodingHarnessv2
+Branch: m16-real-model-live-proof
+Commit: cc06b6845fd2f16f7e9f0c84274b0561e5e287cb
+
+TEST COMMAND: bun .harness/evidence/M16-T5-check.ts .harness/evidence/M16-T5-stream.txt
+
+EXECUTION:
+Command executed at: Fri  2 Oct 2026 07:35:50 BST
+{
+  "final_status": "complete",
+  "event_counts": {
+    "step": 30,
+    "content": 1,
+    "sources": 1,
+    "done": 1
+  },
+  "report_chars": 3010,
+  "source_count": 5,
+  "citation_numbers": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "unresolved_citations": [],
+  "cited_read_pages": 4,
+  "read_pages_total": 5
+}
+Exit Status: 0

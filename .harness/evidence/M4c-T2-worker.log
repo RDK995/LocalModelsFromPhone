@@ -1,0 +1,47 @@
+$ tsc --noEmit
+$ eslint src --max-warnings 0
+=== Background Live Proof ===
+
+Restarting LaunchAgents...
+Waiting for server to be ready...
+Server is up and enforcing auth
+
+--- Recording original Ollama state (before proof) ---
+Before: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":25617498110,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-06T11:25:55.335085807Z","size_vram":25617498110,"context_length":131072}]}
+Originally resident: nemotron3:33b
+
+--- Running proof (mobile/scripts/background-proof.ts) ---
+--- Check 1: Picking non-thinking model from Ollama ---
+N (non-thinking): devstral:24b
+
+--- Check 2: Loading and verifying model (devstral:24b) ---
+Loading devstral:24b...
+PASS: Check 2: devstral:24b is resident
+
+--- Scenario A: Background then foreground ---
+Scenario A: Waiting for stream to stall...
+Scenario A: Started generation e3ee21ac-440d-4ca3-a56c-5fc255956aaa
+[TIMING] chat start: t=2026-09-26T11:42:49.983Z elapsedSinceChatStart=0ms
+Scenario A: Received 5 content events, backgrounding...
+[TIMING] 5th content event (background trigger): t=2026-09-26T11:43:01.453Z elapsedSinceChatStart=11470ms
+Scenario A: Stream has stalled
+Scenario A: Waiting 8 seconds while backgrounded...
+Scenario A: Restoring to foreground...
+[TIMING] foreground call: t=2026-09-26T11:43:09.510Z elapsedSinceChatStart=19527ms
+[DIAG] resume GET sent: t=2026-09-26T11:43:25.219Z lastEventId=e3ee21ac-440d-4ca3-a56c-5fc255956aaa-4
+[DIAG] resume GET headers received: t=2026-09-26T11:43:25.223Z roundTrip=4ms status=200
+[TIMING] done event received (status=complete): t=2026-09-26T11:43:25.230Z elapsedSinceChatStart=35247ms
+Scenario A: onComplete called
+Scenario A: Send completed
+[TIMING] send completed (promiseA resolved): t=2026-09-26T11:43:25.230Z elapsedSinceChatStart=35247ms
+--- Scenario A Assertions ---
+PASS: Assertion A-a: received at least 5 content events before stall
+[TIMING] resume GET sent (Last-Event-ID=e3ee21ac-440d-4ca3-a56c-5fc255956aaa-4): t=2026-09-26T11:43:25.230Z elapsedSinceChatStart=35247ms
+FAIL: Assertion A-b: no resume request was made within 2s of the foreground call (offsets: 15709ms)
+
+--- Cleanup: restoring original Ollama state ---
+Before cleanup: {"models":[{"name":"devstral:24b","model":"devstral:24b","size":35816011202,"digest":"9bd74193e93935e9d8564d88607b220a9d341c4a36b748cffcbd9ad4f47a9ca9","details":{"parent_model":"","format":"gguf","family":"llama","families":["llama"],"parameter_size":"23.6B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-06T11:30:41.570938807Z","size_vram":35816011202,"context_length":131072}]}
+Restoring nemotron3:33b (keep_alive -1)...
+After cleanup: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":25617498110,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-06T11:30:51.293959807Z","size_vram":25617498110,"context_length":131072}]}
+[0;31m=== Proof FAILED (exit 1) ===[0m
+COMBINED_EXIT=1

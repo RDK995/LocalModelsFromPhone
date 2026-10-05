@@ -1,0 +1,110 @@
+=== TASK VERIFICATION FOR M10c2-T3 ===
+Date: 2026-09-30
+
+Baseline Commit:
+af84383 M10c2 T1: match an answer's link to the reply's saved sources (scheme, www., trailing slash tolerated)
+
+=== RUNNING TESTS COMMAND ===
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test && bun run lint
+
+=== TYPECHECK OUTPUT ===
+$ tsc --noEmit
+(No errors)
+
+=== TEST OUTPUT ===
+bun test v1.4.0 (1381054db)
+
+ 368 pass
+ 0 fail
+ 2070 expect() calls
+Ran 368 tests across 25 files. [191.00ms]
+
+=== LINT OUTPUT ===
+$ eslint src --max-warnings 0
+(No warnings or errors)
+
+Exit Status: 0
+
+=== VERIFICATION CHECKS ===
+
+=== FILES CHANGED ===
+Changed files outside .harness/ (checked against allowed list):
+- mobile/src/ui/inlineLink.ts (new) - ALLOWED
+- mobile/src/ui/inlineLink.test.ts (new) - ALLOWED
+- mobile/src/ui/SourceLogo.tsx (new) - ALLOWED
+- mobile/src/ui/MarkdownText.tsx (modified) - ALLOWED
+- mobile/src/ui/markdownText.test.ts (modified) - ALLOWED
+- mobile/src/app/chat.tsx (modified) - ALLOWED
+
+=== TESTS WEAKENED CHECK ===
+Critical test "links are not tappable" (markdownText.test.ts lines 46-50):
+- Still present: YES
+- Unchanged: YES
+- Assertions: expect(md).not.toContain("onPress"); expect(md).not.toContain("Linking"); expect(md).not.toContain("accessibilityRole");
+- Status: PASS
+
+MarkdownText.tsx verification:
+- Does NOT contain "onPress": PASS
+- Does NOT contain "Linking": PASS
+- Does NOT contain "accessibilityRole": PASS
+
+All other tests in markdownText.test.ts remain unchanged. New tests added for source logos are additional assertions, not weakened ones.
+
+=== ACCEPTANCE CRITERIA VERIFICATION ===
+
+Criterion 1: New pure module mobile/src/ui/inlineLink.ts exports presentLink and logoDisplay
+- inlineLink.ts exists: YES
+- presentLink function: YES (presentLink(url: string, sources: LinkSource[] | undefined): LinkPresentation)
+- logoDisplay function: YES (logoDisplay(cached: string | null | undefined): LogoDisplay)
+- No react-native imports: YES (only imports from sourceLinks and type defs)
+- Tests present: YES (inlineLink.test.ts tests all cases)
+- Test coverage: www/scheme/trailing-slash variants (PASS), URL not in sources (PASS), undefined sources (PASS), logoDisplay cases (PASS)
+
+Criterion 2: New mobile/src/ui/SourceLogo.tsx component
+- Component exists: YES
+- Props { host, url, iconCache, onOpen }: YES
+- Initial state from iconCache.peek(host): YES (line 25)
+- useEffect calls iconCache.get(host): YES (line 31)
+- Unmount cleanup (active flag): YES (lines 29, 33, 38)
+- Uses logoDisplay: YES (line 42)
+- Image 14x14 for data:image/: YES (lines 49-50, style 14x14)
+- Globe glyph U+1F310: YES (line 52 \u{1F310})
+- Text onPress/accessibilityRole/label: YES (lines 44-47)
+- No fetch() calls: YES
+- No http URL literals: YES
+
+Criterion 3: MarkdownText.tsx updated with optional props and logo rendering
+- New optional props sources, iconCache, onOpenSource: YES
+- Props documented in header: YES (lines 2-4 mention FR27)
+- Threaded to inline rendering: YES (ctx variable)
+- presentLink check: YES (line 52)
+- Renders link children + SourceLogo when matched: YES (lines 54-64)
+- Falls back to plain text: YES (line 66)
+- Link text NOT tappable: YES (no onPress in MarkdownText)
+- Only logo is tappable: YES (onPress only in SourceLogo.tsx)
+
+Criterion 4: chat.tsx icon cache and wiring
+- Creates iconCache with useRef: YES (lines 91-98)
+- Uses createIconCache: YES
+- fetchIcon gets token: YES (line 93)
+- Calls setToken before siteIcon: YES (lines 95-96)
+- Returns null without token: YES (line 94)
+- Passes sources={item.sources} to MarkdownText: YES (line 418)
+- Passes iconCache={iconCacheRef.current} to MarkdownText: YES (line 419)
+- Passes onOpenSource={handleOpenSource} to MarkdownText: YES (line 420)
+- Sources block unchanged: YES (verified by diff - no sources-related changes)
+- User/thinking messages unchanged: YES (not modified in diff)
+
+Criterion 5: Static wiring and fetch() constraints
+- chat.tsx passes sources/iconCache/onOpenSource: VERIFIED in test (lines 57-61)
+- MarkdownText imports presentLink: VERIFIED in test (line 64)
+- MarkdownText imports SourceLogo: VERIFIED in test (line 65)
+- SourceLogo uses logoDisplay: VERIFIED in test (line 68)
+- SourceLogo uses iconCache.get: VERIFIED in test (line 69)
+- SourceLogo uses iconCache.peek: VERIFIED in test (line 70)
+- SourceLogo contains no fetch(): VERIFIED in test (line 71)
+- SourceLogo contains no http: VERIFIED in test (line 72)
+- No fetch() in ui/app files: VERIFIED in test (lines 74-82)
+- Baseline had no fetch(): CONFIRMED (git grep found none)
+

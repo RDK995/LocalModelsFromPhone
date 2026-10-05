@@ -1,0 +1,17 @@
+=== Git Commit ===
+fe8b088 M3 T1: phone conversation store persisted in AsyncStorage, one key per conversation plus an index
+
+=== Command ===
+bun run typecheck && bun test src/store src/api src/ui src/chat src/app-routing
+
+=== Output ===
+$ tsc --noEmit
+bun test v1.4.0 (1381054db)
+
+ 102 pass
+ 0 fail
+ 234 expect() calls
+Ran 102 tests across 15 files. [52.00ms]
+
+=== Exit Status ===
+0

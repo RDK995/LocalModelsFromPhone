@@ -1,0 +1,18 @@
+=== Command ===
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/http/webReplyInProgress.test.ts && bun test && bun run typecheck
+
+=== Output ===
+bun test v1.4.0 (1381054db)
+
+ 1 pass
+ 0 fail
+ 19 expect() calls
+Ran 1 test across 1 file. [14.00ms]
+bun test v1.4.0 (1381054db)
+
+ 172 pass
+ 0 fail
+ 764 expect() calls
+Ran 172 tests across 7 files. [2.13s]
+$ tsc --noEmit
+Exit Status: 0

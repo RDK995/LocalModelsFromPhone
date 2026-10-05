@@ -1,0 +1,36 @@
+bun test v1.4.0 (1381054db)
+
+src/http/webStop.test.ts:
+138 |         expect(cancel.status).toBe(200);
+139 |         expect(await cancel.json()).toEqual({ status: "cancelled" });
+140 |         const cancelledAt = Date.now();
+141 | 
+142 |         // The search-service request is aborted well within the bound.
+143 |         expect(await waitFor(() => aborted, 2000)).toBe(true);
+                                                         ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/webStop.test.ts:143:52)
+(fail) Stop during an in-flight web tool call (M12 FR23) > aborts the search-service request and ends the reply (web_search) [2023.62ms]
+138 |         expect(cancel.status).toBe(200);
+139 |         expect(await cancel.json()).toEqual({ status: "cancelled" });
+140 |         const cancelledAt = Date.now();
+141 | 
+142 |         // The search-service request is aborted well within the bound.
+143 |         expect(await waitFor(() => aborted, 2000)).toBe(true);
+                                                         ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/webStop.test.ts:143:52)
+(fail) Stop during an in-flight web tool call (M12 FR23) > aborts the search-service request and ends the reply (read_page) [2035.07ms]
+
+ 0 pass
+ 2 fail
+ 12 expect() calls
+Ran 2 tests across 1 file. [4.07s]

@@ -1,0 +1,93 @@
+=== VERIFICATION RUN FOR M24-T3 q3 ===
+
+Date: 2026-10-05
+Task: M24-T3 q3 (WebAssembly component model question)
+
+PRECONDITION CHECK:
+Command: pgrep -fl ac29-live-run
+Result: No process running (exit 1)
+
+PRIMARY VALIDATION COMMAND:
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M24-T3-q3-stream.txt --log ../.harness/evidence/M24-T3-q3-fr41.log --sources-text ../.harness/evidence/M24-T3-q3-sources-text.json
+
+Exit Status: 0
+
+Output (key fields):
+- pass: true
+- ac37_pass: true
+- final_status: "complete"
+- total_wall_s: 217.089 (within budget 480s + margin 60s = 540s)
+- cited_read_pages: 5 (meets minimum of 3)
+- unresolved_citations: []
+- notes_kept: 17
+- notes_dropped: 13
+- drop_reasons: {"quote_not_found": 13}
+- sources_check.ok: true
+- sources_check.unreadable_sources: []
+
+COMPARISON WITH ORIGINAL RUN:
+- Original total_wall_s: 217.097
+- Check-only total_wall_s: 217.089
+- Difference: 0.008s (within floating-point precision)
+- All other values match exactly
+
+RESULT.JSON VERIFICATION:
+File: /Users/ryankenny/Projects/CodingHarnessv2/.harness/evidence/M24-T3-q3-result.json
+Exists: YES
+generation_id: "1dfd519e-5fcc-46fe-82c1-ed65648827eb"
+final_status: "complete"
+total_wall_s: 217.097
+budget_s: 480
+distinct_pages_read: 6
+cited_read_pages: 5
+unresolved_citations: []
+notes_kept: 17
+notes_dropped: 13
+drop_reasons: {"quote_not_found": 13}
+sources_check: {"sources_checked": 6, "unreadable_sources": [], "unchecked_sources": [], "ok": true}
+pass: true
+ac37_pass: true
+
+RUN LOG VERIFICATION:
+File: /Users/ryankenny/Projects/CodingHarnessv2/.harness/evidence/M24-T3-q3-run.log
+Exists: YES
+Ends with: exit=0
+
+FILES CHANGED VERIFICATION:
+Command: git diff HEAD 48c151d --name-only
+Result: No tracked file changes
+
+Untracked files (git status --porcelain):
+- .harness/evidence/M24-T3-q3-fr41.log (ALLOWED)
+- .harness/evidence/M24-T3-q3-result.json (ALLOWED)
+- .harness/evidence/M24-T3-q3-run.log (ALLOWED)
+- .harness/evidence/M24-T3-q3-sources-text.json (ALLOWED)
+- .harness/evidence/M24-T3-q3-stream.txt (ALLOWED)
+- reports/Fast local deep research redesign.md (EXCLUDED - not task output)
+- research_notes/Fast local deep research redesign/ (EXCLUDED - not task output)
+
+ACCEPTANCE CRITERIA VERIFICATION:
+
+M24-AC2: Live run through server API
+- Run executed (generation_id present): YES
+- Status is complete or partial: complete ✓
+- Within budget + margin (480s + 60s): 217.097s ✓
+- At least 3 distinct cited read pages: 6 distinct pages read ✓
+- No unresolved citations: [] ✓
+- --check-only exit 0: Exit 0 confirmed ✓
+
+M24-AC3: Readability and note recording
+- No unreadable sources: unreadable_sources = [] ✓
+- notes_kept recorded: 17 ✓
+- notes_dropped recorded: 13 ✓
+- drop_reasons recorded: {"quote_not_found": 13} ✓
+
+All acceptance criteria exercised and met.
+
+SUMMARY:
+- check-only command exited 0
+- All pass-bar values (pass, ac37_pass, final_status, etc.) reproduced correctly
+- Result.json exists with all required fields
+- Run log ends with exit=0
+- No changes outside .harness/evidence/M24-T3-q3-*
+- All acceptance criteria are demonstrated and satisfied

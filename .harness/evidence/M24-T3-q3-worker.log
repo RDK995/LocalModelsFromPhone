@@ -1,0 +1,49 @@
+TASK: M24-T3 q3 - Run live q3 question through server API
+
+PRECONDITION CHECK:
+pgrep -fl ac29-live-run: No process found (exit 1) ✓
+
+RUN COMMAND:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --id q3 --out-dir ../.harness/evidence --prefix M24-T3 > ../.harness/evidence/M24-T3-q3-run.log 2>&1; echo "exit=$?" >> ../.harness/evidence/M24-T3-q3-run.log
+
+RUN RESULT:
+exit=0
+
+VERIFICATION TEST:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M24-T3-q3-stream.txt --log ../.harness/evidence/M24-T3-q3-fr41.log --sources-text ../.harness/evidence/M24-T3-q3-sources-text.json
+Exit status: 0 ✓
+All checks passed ✓
+
+FILES CREATED:
+✓ M24-T3-q3-stream.txt (17K)
+✓ M24-T3-q3-fr41.log (7.8K)
+✓ M24-T3-q3-sources-text.json (103K)
+✓ M24-T3-q3-result.json (1.4K)
+✓ M24-T3-q3-run.log (1.4K)
+
+RESULT JSON FIELDS (verbatim from M24-T3-q3-result.json):
+- generation_id: "1dfd519e-5fcc-46fe-82c1-ed65648827eb"
+- final_status: "complete"
+- total_wall_s: 217.097
+- budget_s: 480
+- distinct_pages_read: 6
+- cited_read_pages: 5
+- unresolved_citations: []
+- notes_kept: 17
+- notes_dropped: 13
+- drop_reasons: {"quote_not_found": 13}
+- sources_check: {"sources_checked": 6, "unreadable_sources": [], "unchecked_sources": [], "ok": true}
+- pass: true
+- ac37_pass: true
+
+RUN TIMING:
+- started_at: 2026-10-05T09:27:13.303Z
+- ended_at: 2026-10-05T09:30:50.400Z
+- Wall time: 217.097 seconds (3 minutes 37 seconds)
+- Within budget: 217.097 seconds / 540 seconds ✓
+
+ACCEPTANCE CRITERIA:
+- M24-AC2: Run ended with status "complete", 5 cited read pages (≥ 3 ✓), no unresolved citations ✓
+- M24-AC3: 6 sources checked, 0 unreadable sources ✓, check-only test passed ✓
+
+RESULT: PASS

@@ -1,0 +1,257 @@
+VERIFICATION LOG: M8-T2 — Search Service HTTP API Documentation
+
+COMMAND RUN:
+cd /Users/ryankenny/Projects/CodingHarnessv2 && test -s search/API.md && grep -q '/v1/health' search/API.md && grep -q '/v1/search' search/API.md && grep -q '/v1/read' search/API.md && grep -q '127.0.0.1:7790' search/API.md && (cd search && bun test)
+
+EXIT STATUS: 0
+
+OUTPUT:
+bun test v1.4.0 (1381054db)
+
+ 131 pass
+ 0 fail
+ 290 expect() calls
+Ran 131 tests across 6 files. [2.96s]
+
+VERIFICATION OF ERROR CODES IN search/src:
+=== bad_request ===
+search/src/http/server.ts:32:    return json(400, { error: "bad_request" });
+search/src/http/server.ts:45:    return json(400, { error: "bad_request" });
+
+=== bad_url ===
+search/src/fetch/fetchPage.ts:107:  if (!startUrl) throw new FetchPageError("bad_url", "URL must be an absolute http(s) URL");
+search/src/http/server.ts:71:      return json(400, { error: "bad_url" });
+
+=== blocked_destination ===
+search/src/fetch/fetchPage.ts:140:        throw new FetchPageError("blocked_destination", `redirect to ${next.protocol} refused`);
+search/src/fetch/fetchPage.ts:203:    return Promise.reject(new FetchPageError("blocked_destination", "destination address is not public"));
+search/src/fetch/fetchPage.ts:225:            blocked = new FetchPageError("blocked_destination", "destination resolves to a non-public address");
+search/src/http/server.ts (mapped via server.ts:94)
+
+=== unsupported_content ===
+search/src/fetch/fetchPage.ts:154:        throw new FetchPageError("unsupported_content", `content type ${contentType || "(none)"} not supported`);
+search/src/http/server.ts (mapped via server.ts:94)
+
+=== fetch_failed ===
+search/src/fetch/fetchPage.ts:130:        if (!location) throw new FetchPageError("fetch_failed", "redirect without Location", status);
+search/src/fetch/fetchPage.ts:131:        if (hop >= maxRedirects) throw new FetchPageError("fetch_failed", "too many redirects", status);
+search/src/fetch/fetchPage.ts:136:          throw new FetchPageError("fetch_failed", "invalid redirect Location", status);
+search/src/fetch/fetchPage.ts:148:        throw new FetchPageError("fetch_failed", `upstream status ${status}`, status);
+search/src/fetch/fetchPage.ts:171:    throw new FetchPageError("fetch_failed", err instanceof Error ? err.message : String(err));
+search/src/http/server.ts (mapped via server.ts:94)
+
+=== timeout ===
+search/src/fetch/fetchPage.ts:169:    if (timedOut) throw new FetchPageError("timeout", `no complete response within ${timeoutMs} ms`);
+search/src/http/server.ts:48:  if (!outcome.ok && outcome.timeout) return json(504, { error: "timeout" });
+search/src/search/runHelper.ts:88:        ? { ok: false, detail: "helper timed out", timeout: true }
+search/src/search/runHelper.ts:97:      return { ok: false, detail: "helper timed out", timeout: true };
+
+=== search_unavailable ===
+search/src/http/server.ts:49:  if (!outcome.ok) return json(503, { error: "search_unavailable", detail: outcome.detail });
+
+=== method_not_allowed ===
+search/src/http/server.ts:57:      if (req.method !== "GET") return json(405, { error: "method_not_allowed" });
+search/src/http/server.ts:61:      if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
+search/src/http/server.ts:65:    if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
+
+=== not_found ===
+search/src/http/server.ts:64:    if (path !== "/v1/read") return json(404, { error: "not_found" });
+
+DETAILED CLAIM VERIFICATION:
+
+1. Base URL and Network Binding
+   Claim: http://127.0.0.1:7790
+   Evidence: search/src/http/server.ts:104 "hostname: "127.0.0.1""
+   Evidence: search/src/http/server.ts:102-110 startServer() binds to 127.0.0.1:port
+   Evidence: search/src/index.ts:8 "const DEFAULT_PORT = 7790"
+   Status: VERIFIED ✓
+
+2. Loopback Only (IPv4)
+   Claim: Not exposed via Tailscale, LAN, or network interfaces other than loopback
+   Evidence: search/src/http/server.ts:104 hardcodes "hostname: "127.0.0.1""
+   Evidence: This is not overridable; only port can be overridden via SEARCH_PORT
+   Status: VERIFIED ✓
+
+3. No Authentication
+   Claim: No token, key, or authentication header required
+   Evidence: search/src/http/server.ts creates handler with no auth checks
+   Status: VERIFIED ✓
+
+4. LaunchAgent
+   Claim: Runs under com.harness.search
+   Evidence: search/API.md states this; not verifiable in search/src (LaunchAgent is ops concern)
+   Status: DOCUMENTED (operations config, not code)
+
+5. GET /v1/health Route
+   Claim: Returns 200 {"ok": true}
+   Evidence: search/src/http/server.ts:56-59:
+     if (path === "/v1/health") {
+       if (req.method !== "GET") return json(405, { error: "method_not_allowed" });
+       return json(200, { ok: true });
+     }
+   Status: VERIFIED ✓
+
+6. GET /v1/health - Wrong Method
+   Claim: 405 method_not_allowed for non-GET
+   Evidence: search/src/http/server.ts:57
+   Status: VERIFIED ✓
+
+7. POST /v1/search - Request Validation
+   Claim: query required, string, 1-500 chars (trimmed), max_results optional, 1-10, default 5
+   Evidence: search/src/http/server.ts:24 "const MAX_QUERY_LENGTH = 500"
+   Evidence: search/src/http/server.ts:25 "const DEFAULT_MAX_RESULTS = 5"
+   Evidence: search/src/http/server.ts:35 "const max = body?.max_results ?? DEFAULT_MAX_RESULTS"
+   Evidence: search/src/http/server.ts:36-43:
+     if (
+       typeof query !== "string" ||
+       query.trim() === "" ||
+       query.length > MAX_QUERY_LENGTH ||
+       typeof max !== "number" ||
+       !Number.isInteger(max) ||
+       max < 1 ||
+       max > 10
+     ) {
+       return json(400, { error: "bad_request" });
+     }
+   Status: VERIFIED ✓
+
+8. POST /v1/search - Response Format
+   Claim: results array, backend field
+   Evidence: search/src/http/server.ts:50 "return json(200, { results: outcome.results, backend: outcome.backend })"
+   Evidence: search/src/search/runHelper.ts:10-14 SearchResult interface: title, url, snippet
+   Evidence: search/src/search/runHelper.ts:129 returns { ok: true, results, backend }
+   Status: VERIFIED ✓
+
+9. POST /v1/search - Error Codes
+   Claim: 400 bad_request, 503 search_unavailable, 504 timeout, 405 method_not_allowed
+   Evidence: search/src/http/server.ts:45 (bad_request), :48 (timeout), :49 (search_unavailable), :61 (method_not_allowed)
+   Status: VERIFIED ✓
+
+10. POST /v1/read - Request
+    Claim: url required, string, http:// or https://
+    Evidence: search/src/http/server.ts:69-73:
+      url = ((await req.json()) as { url?: unknown } | null)?.url;
+    } catch {
+      return json(400, { error: "bad_url" });
+    }
+    if (typeof url !== "string") return json(400, { error: "bad_url" });
+    
+    Evidence: search/src/fetch/fetchPage.ts:106-107 validates http(s) protocol
+    Status: VERIFIED ✓
+
+11. POST /v1/read - Success Response
+    Claim: url, final_url, title, markdown, truncated
+    Evidence: search/src/http/server.ts:83-89:
+      return json(200, {
+        url: page.url,
+        final_url: page.finalUrl,
+        title: extracted.title,
+        markdown: extracted.markdown,
+        truncated: extracted.truncated,
+      });
+    Status: VERIFIED ✓
+
+12. POST /v1/read - Error Codes
+    Claim: 400 bad_url, 400 blocked_destination, 415 unsupported_content, 502 fetch_failed, 504 timeout, 499 abort, 405 method_not_allowed
+    Evidence: search/src/http/server.ts:10-16 STATUS_BY_CODE maps errors to statuses
+    Evidence: search/src/http/server.ts:91-98 exception handling and 499 for AbortError
+    Evidence: search/src/http/server.ts:65 method_not_allowed check
+    Status: VERIFIED ✓
+
+13. POST /v1/read - Fetch Deadline
+    Claim: 15 seconds default
+    Evidence: search/src/fetch/fetchPage.ts:88 "const DEFAULT_TIMEOUT_MS = 15_000"
+    Evidence: search/src/fetch/fetchPage.ts:102 "const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS"
+    Status: VERIFIED ✓
+
+14. POST /v1/read - Markdown Truncation
+    Claim: 40,000 characters
+    Evidence: search/src/extract/extract.ts:8 "export const MAX_MARKDOWN_CHARS = 40_000"
+    Evidence: search/src/extract/extract.ts:44-48 truncates and adds marker
+    Status: VERIFIED ✓
+
+15. POST /v1/read - Body Byte Limit
+    Claim: 5 MiB
+    Evidence: search/src/fetch/fetchPage.ts:89 "const DEFAULT_MAX_BYTES = 5 * 1024 * 1024"
+    Status: VERIFIED ✓
+
+16. POST /v1/read - Max Redirects
+    Claim: 5
+    Evidence: search/src/fetch/fetchPage.ts:90 "const DEFAULT_MAX_REDIRECTS = 5"
+    Evidence: search/src/fetch/fetchPage.ts:131 "if (hop >= maxRedirects)"
+    Status: VERIFIED ✓
+
+17. POST /v1/read - Content Types
+    Claim: text/html, text/plain, application/xhtml+xml
+    Evidence: search/src/fetch/fetchPage.ts:91 "const ALLOWED_TYPES = new Set(["text/html", "text/plain", "application/xhtml+xml"])"
+    Evidence: search/src/fetch/fetchPage.ts:151-155 checks content type
+    Status: VERIFIED ✓
+
+18. Unknown Route
+    Claim: 404 not_found
+    Evidence: search/src/http/server.ts:64 "if (path !== "/v1/read") return json(404, { error: "not_found" })"
+    Status: VERIFIED ✓
+
+19. Timeout Behavior
+    Claim: Search timeout 25 seconds default, helper killed
+    Evidence: search/src/search/runHelper.ts:27 "export const DEFAULT_TIMEOUT_MS = 25_000"
+    Evidence: search/src/search/runHelper.ts:42-43 "detached: true" creates process group
+    Evidence: search/src/search/runHelper.ts:51 "process.kill(-pid, "SIGKILL")"
+    Status: VERIFIED ✓
+
+20. SSRF Guard
+    Claim: Blocks loopback, RFC 1918, link-local, CGNAT, redirects
+    Evidence: search/src/fetch/addressPolicy.ts blocks:
+      - 0.0.0.0/8 (unspecified)
+      - 10.0.0.0/8 (RFC 1918) ✓
+      - 100.64.0.0/10 (CGNAT/Tailscale) ✓
+      - 127.0.0.0/8 (loopback) ✓
+      - 169.254.0.0/16 (link-local including 169.254.169.254) ✓
+      - 172.16.0.0/12 (RFC 1918) ✓
+      - 192.168.0.0/16 (RFC 1918) ✓
+    Evidence: search/src/fetch/fetchPage.ts:200-204 checks IP literals
+    Evidence: search/src/fetch/fetchPage.ts:210-241 custom DNS lookup with policy checks
+    Evidence: search/src/fetch/fetchPage.ts:127-143 follows redirects with checks
+    Status: VERIFIED ✓
+
+21. Environment Variables - SEARCH_PORT
+    Claim: Test-only override for listen port
+    Evidence: search/src/index.ts:9 "const port = process.env.SEARCH_PORT ? Number(process.env.SEARCH_PORT) : DEFAULT_PORT"
+    Status: VERIFIED ✓
+
+22. Environment Variables - SEARCH_TIMEOUT_MS
+    Claim: Test-only override for search timeout
+    Evidence: search/src/index.ts:11-12 "const envTimeout = Number(process.env.SEARCH_TIMEOUT_MS); const timeoutMs = Number.isInteger(envTimeout) && envTimeout > 0 ? envTimeout : undefined"
+    Status: VERIFIED ✓
+
+23. Environment Variables - SEARCH_HELPER_FORCE_DDGS and SEARCH_HELPER_FORCE_BROWSER
+    Claim: "Test-only hook to force... browser failures"
+    Evidence: NOT FOUND in search/src/
+    Note: These environment variables are used in search/helper/search.py (Python helper), not in search/src (TypeScript service code)
+    Status: NOT TRACEABLE TO search/src (acceptance criteria violation)
+
+ASSESSMENT OF TRACEABILITY:
+
+According to acceptance criterion (line 13 of task packet):
+"Every statement is traceable to search/src (server.ts, fetch/, extract/, search/runHelper.ts, index.ts) or its tests."
+
+Issue Found:
+- SEARCH_HELPER_FORCE_DDGS and SEARCH_HELPER_FORCE_BROWSER are documented in the API.md
+  (lines 309-310) as environment variables, but they do not appear in search/src
+- These variables only exist in the Python helper code (search/helper/search.py)
+- The API.md is supposed to document the HTTP service API, not the helper subprocess behavior
+- While it's acceptable to note that the backend choice is subject to helper behavior,
+  documenting specific environment variables that control helper behavior goes beyond
+  the scope of the HTTP API documentation for the search service itself
+
+All other claims in the API.md are traceable to search/src or its behavior.
+
+CONCLUSION:
+The validation command passes (exit 0, 131 tests pass).
+The file search/API.md exists and contains all required routes.
+All documented error codes are present in search/src.
+All documented request/response shapes are accurate.
+All documented limits and defaults are correct.
+
+Minor issue: SEARCH_HELPER_FORCE_* environment variables are documented but not traceable
+to search/src per the acceptance criteria. These belong to the helper, not the service API.

@@ -1,0 +1,131 @@
+## M1-C10 Verification Evidence Log
+
+### Test Command
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun run typecheck && bun test src/api src/ui src/chat src/app-routing && bun run lint && npx expo export --platform ios && rm -rf dist
+
+### Test Results
+
+#### TypeCheck
+$ tsc --noEmit
+[No errors]
+
+#### Tests
+bun test v1.4.0 (1381054db)
+ 32 pass
+ 0 fail
+ 82 expect() calls
+Ran 32 tests across 8 files. [36.00ms]
+
+#### Lint
+$ eslint src --max-warnings 0
+[No errors]
+
+#### Expo Export
+Using src/app as the root directory for Expo Router.
+Starting Metro Bundler
+iOS Bundled 2927ms expo-router.js (1118 modules)
+Exported: dist
+
+Exit Status: 0
+
+### Failing-First Verification (Tests Would Fail Against HEAD)
+
+Checked patterns against HEAD's files using git show:
+
+HEAD's setup.tsx:
+- Pattern /useHeaderHeight/: NOT FOUND (test would FAIL) ✓
+- Pattern /keyboardVerticalOffset={headerHeight}/: NOT FOUND (test would FAIL) ✓
+
+HEAD's settings.tsx:
+- Pattern /useHeaderHeight/: NOT FOUND (test would FAIL) ✓
+- Pattern /keyboardVerticalOffset={headerHeight}/: NOT FOUND (test would FAIL) ✓
+
+### Current Implementation Verification
+
+Current setup.tsx:
+- Pattern /useHeaderHeight/: FOUND (test would PASS) ✓
+- Pattern /keyboardVerticalOffset={headerHeight}/: FOUND (test would PASS) ✓
+
+Current settings.tsx:
+- Pattern /useHeaderHeight/: FOUND (test would PASS) ✓
+- Pattern /keyboardVerticalOffset={headerHeight}/: FOUND (test would PASS) ✓
+
+### Implementation Details
+
+setup.tsx:
+- Line 21: import { useHeaderHeight } from "expo-router/react-navigation"; ✓
+- Line 28: const headerHeight = useHeaderHeight(); (called unconditionally at top of component, 4 lines into function) ✓
+- Line 55: keyboardVerticalOffset={headerHeight} ✓
+- No keyboardVerticalOffset=0 found ✓
+
+settings.tsx:
+- Line 22: import { useHeaderHeight } from "expo-router/react-navigation"; ✓
+- Line 30: const headerHeight = useHeaderHeight(); (called unconditionally at top of component, 5 lines into function) ✓
+- Line 76: keyboardVerticalOffset={headerHeight} ✓
+- No keyboardVerticalOffset=0 found ✓
+
+### Test Changes Verification
+
+git diff HEAD mobile/src/app-routing/keyboardHandling.test.ts:
+- Added test: "setup.tsx uses useHeaderHeight and passes keyboardVerticalOffset={headerHeight} to account for the Stack header"
+- Added test: "settings.tsx uses useHeaderHeight and passes keyboardVerticalOffset={headerHeight} to account for the Stack header"
+- No existing tests removed
+- No existing tests weakened ✓
+
+### File Constraints Verification
+
+- chat.tsx: NOT MODIFIED ✓
+- _layout.tsx: NOT MODIFIED ✓
+
+### Bundle Verification
+
+Manifest fetched from: http://ryans-mac-studio.tailc3648a.ts.net:8081/
+- Status: 200 OK
+- Content-Type: application/expo+json
+
+LaunchAsset URL: http://ryans-mac-studio.tailc3648a.ts.net:8081/expo-router.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=src%2Fapp&unstable_transformProfile=hermes-stable
+- Downloaded successfully
+- Size: 3,703,050 bytes
+
+Bundle content verification:
+- ✓ "Paste the token from your server" found in bundle (Setup screen text)
+- ✓ "keyboardVerticalOffset" found in bundle
+- ✓ Pattern "keyboardVerticalOffset[^a-zA-Z]*headerHeight" found in bundle (minified form)
+- ✓ "headerHeight" found in bundle
+
+Evidence from bundle (strings output near Setup screen):
+```
+children: [/*#__PURE__*/(0, _reactJsxRuntime.jsx)(_reactNative.Text, {
+  style: styles.title,
+  children: "Enter Bearer Token"
+}), /*#__PURE__*/(0, _reactJsxRuntime.jsx)(_reactNative.Text, {
+  style: styles.subtitle,
+  children: "Paste the token from your server"
+})
+```
+
+### Acceptance Criteria Coverage
+
+Task packet requires M1-AC1, M1-AC2, M1-AC3 to be exercised by this task.
+
+The implementation:
+1. Adds keyboardVerticalOffset={headerHeight} to Setup screen's KeyboardAvoidingView
+2. Adds keyboardVerticalOffset={headerHeight} to Settings screen's KeyboardAvoidingView
+3. Imports and calls useHeaderHeight() in both components
+4. Adds test assertions verifying these changes
+5. Verifies the compiled bundle includes these changes
+
+This directly addresses the keyboard overlap issue that was blocking on-phone checks for M1-AC1, M1-AC2, M1-AC3.
+
+### Summary
+
+All task requirements verified:
+- Tests pass: 32 pass, 0 fail ✓
+- Files changed are within allowed list ✓
+- No existing tests weakened ✓
+- New assertions fail on HEAD, pass now ✓
+- useHeaderHeight called correctly (rules of hooks) ✓
+- No keyboardVerticalOffset=0 remains ✓
+- chat.tsx and _layout.tsx untouched ✓
+- Bundle compiled and deployed to tailnet ✓
+- Bundle contains the changes ✓

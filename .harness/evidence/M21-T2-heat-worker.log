@@ -1,0 +1,49 @@
+TASK: M21-T2 heat question run via ac29-live-run.ts
+ID: heat
+STARTED: 2026-10-03T16:02:01.278Z
+ENDED: 2026-10-03T16:05:41.517Z
+
+RESULT JSON:
+{
+  "id": "heat",
+  "question": "How do heat pumps compare with gas boilers for heating a typical UK home in 2026? Cover running costs, installation costs, grants available and how well they work in cold weather.",
+  "generation_id": "29feea53-c764-4bd6-91cf-63884e023650",
+  "started_at": "2026-10-03T16:02:01.278Z",
+  "ended_at": "2026-10-03T16:05:41.517Z",
+  "budget_s": 480,
+  "total_wall_s": 220.239,
+  "planning_s": 32.833,
+  "research_phase_calls": 12,
+  "routine_calls": 13,
+  "routine_p50_s": 6.358,
+  "routine_p95_s": 12.989,
+  "distinct_pages_read": 6,
+  "notes_kept": 13,
+  "final_status": "complete",
+  "cited_read_pages": 5,
+  "unresolved_citations": [],
+  "pass": true
+}
+
+EXIT CODE: 0
+
+CHECK-ONLY VALIDATION RESULT:
+{
+  "stream_file": "../.harness/evidence/M21-T2-heat-stream.txt",
+  "budget_s": 480,
+  "total_wall_s": 220.234,
+  "planning_s": 32.833,
+  "research_phase_calls": 12,
+  "routine_calls": 13,
+  "routine_p50_s": 6.358,
+  "routine_p95_s": 12.989,
+  "fr41_lines": 17,
+  "distinct_pages_read": 6,
+  "notes_kept": 13,
+  "final_status": "complete",
+  "cited_read_pages": 5,
+  "unresolved_citations": [],
+  "pass": true
+}
+
+VALIDATION: PASS

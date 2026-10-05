@@ -1,0 +1,170 @@
+$ eslint src --max-warnings 0
+
+/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/markdownText.test.ts
+  159:36  error  Strings must use doublequote  quotes
+  159:63  error  Strings must use doublequote  quotes
+
+✖ 2 problems (2 errors, 0 warnings)
+  2 errors and 0 warnings potentially fixable with the `--fix` option.
+
+error: script "lint" exited with code 1
+
+================================================================
+VERIFICATION REPORT - M10d-T1
+================================================================
+
+1. BASELINE LINT ERRORS
+   Verified pre-existing: git show 9f17cef:mobile/src/ui/markdownText.test.ts
+   Line 159 contains identical single quotes at positions 36 and 63 in baseline.
+   markdownText.test.ts has NO changes in diff (git diff 9f17cef shows no output).
+   Lint errors are PRE-EXISTING and UNRELATED to this task.
+
+2. FILES CHANGED
+   From git diff 9f17cef --name-only:
+   - mobile/src/app/chat.tsx (modified)
+   
+   From git status --porcelain (excluding .harness/):
+   - mobile/src/ui/SourceList.tsx (new, untracked)
+   - mobile/src/ui/sourceListModel.ts (new, untracked)
+   - mobile/src/ui/sourceListModel.test.ts (new, untracked)
+   
+   Naming: sourceListModel.ts/.test.ts used instead of sourceList.ts/.test.ts
+   Reason: filesystem case-sensitivity (worker explanation).
+   Treated as: equivalents of sourceList.ts/sourceList.test.ts (allowed).
+
+3. NEW TEST FAILS AGAINST BASELINE
+   Copied new files to baseline worktree at commit 9f17cef.
+   Test run: cd /private/tmp/claude-501/baseline/mobile && bun test src/ui/sourceListModel.test.ts
+   Result: FAILS with expect(chat).toMatch(/import.*SourceList.*from.*@\/ui\/SourceList/)
+   Reason: baseline chat.tsx does not import or render SourceList yet.
+   RED state confirmed: new tests fail on baseline, pass on current working tree.
+
+4. FILES ALLOWED TO CHANGE (Task Packet)
+   - mobile/src/ui/sourceList.ts (new) → USED AS sourceListModel.ts ✓
+   - mobile/src/ui/sourceList.test.ts (new) → USED AS sourceListModel.test.ts ✓
+   - mobile/src/ui/SourceList.tsx (new) → PRESENT ✓
+   - mobile/src/app/chat.tsx → MODIFIED ✓
+   - mobile/src/ui/SourceLogo.tsx (optional) → UNCHANGED (no changes needed) ✓
+   - mobile/src/ui/chatItems.ts (optional) → UNCHANGED (sourceLabel not modified) ✓
+   
+   All files present are in allowed list or are .harness/ orchestrator files.
+   NO violations.
+
+5. TESTS WEAKENED
+   Checked git diff 9f17cef against '**/*.test.ts' and '**/*.test.tsx'
+   Result: no output, meaning NO existing test files were modified.
+   The new sourceListModel.test.ts does not weaken any existing tests.
+   Tests added: ~27 new assertions (per the test file).
+   RESULT: NO tests weakened.
+
+6. ACCEPTANCE CRITERIA EXERCISED
+   
+   Criterion: "Sources start collapsed as 'Sources (n)', expand/collapse on tap"
+   - Test evidence: sourceListModel.test.ts lines 33-38
+     - initialSourcesExpanded is false
+     - toggleSourcesExpanded(false) returns true
+     - toggleSourcesExpanded(true) returns false
+   - Component evidence: SourceList.tsx line 29 useState(initialSourcesExpanded)
+   - Test evidence: sourceListModel.test.ts line 84 "useState(initialSourcesExpanded)"
+   EXERCISED: ✓
+
+   Criterion: "Each source is its own tappable entry (logo + title) opening in Safari"
+   - View model evidence: sourceListModel.ts lines 31-41 sourceListEntries()
+     - returns Array<{ key, title, url, host }>
+     - line 35: one entry per source via map()
+     - line 39: host derived for logo (FR27)
+   - Component evidence: SourceList.tsx lines 44-65
+     - line 44: sourceListEntries(sources).map((entry) =>
+     - line 45: <TouchableOpacity key={entry.key}
+     - line 48: onPress={() => onOpenSource(entry.url)}
+     - lines 51-63: logo (SourceLogo or globe) + title, separate row
+   - Test evidence: sourceListModel.test.ts
+     - lines 43-45: "one entry per source, in order, with its own url"
+     - line 95: "key={entry.key}"
+     - line 97: "onOpenSource(entry.url)"
+     - lines 98-99: "<SourceLogo" and "flexDirection: \"row\""
+   EXERCISED: ✓
+
+   Criterion: "Including a source set shaped like 2026-09-30 phone screenshot"
+   - Test fixture: sourceListModel.test.ts lines 19-26
+     - 6 sources: two on wsj.com, one empty title, one with newline/long,
+       one with long URL, one duplicate URL
+   - Test cases:
+     - lines 52-55: same host pair has same logo host
+     - lines 56-58: empty title falls back to host
+     - lines 59-62: titles with newlines/spaces are one line
+     - lines 47-51: identical URLs get distinct keys
+   - Component evidence: SourceList.tsx lines 44-65 handles map of entries
+   EXERCISED: ✓
+
+   Criterion: "Never merged/deduplicated"
+   - View model evidence: sourceListModel.ts line 35-36
+     - sources.map((source, index) => ({
+     - key: `${index}:${source.url}`
+     - No deduplication logic; each source maps to one entry
+   - Test evidence: sourceListModel.test.ts
+     - lines 43-45: "exactly one entry per source"
+     - lines 47-51: "even for identical urls" they get distinct keys
+   EXERCISED: ✓
+
+   Criterion: "Pure view model (no React imports), initial state not persisted"
+   - View model evidence: sourceListModel.ts
+     - line 1-4: comment explicitly says "No react-native imports"
+     - lines 6-7: only imports sourceLabel, siteHost (pure functions)
+     - no AsyncStorage/storage imports
+   - Component evidence: SourceList.tsx
+     - line 29: useState(false) for local component state only
+     - line 86: no AsyncStorage/conversationStore imports in test check
+   - Test evidence: sourceListModel.test.ts lines 82-87
+     - "uses the view-model header and local non-persisted state"
+     - line 86: "not.toMatch(/AsyncStorage|...)"
+   EXERCISED: ✓
+
+   Criterion: "FR27 SourceLogo unchanged"
+   - Evidence: git diff 9f17cef -- mobile/src/ui/SourceLogo.tsx
+     Result: no output, file unchanged ✓
+   - Component usage: SourceList.tsx lines 52-57
+     - passes host, url, iconCache, onOpen (same signature as FR27)
+   - Test evidence: sourceListModel.test.ts line 98 checks "<SourceLogo"
+   EXERCISED: ✓
+
+   Criterion: "chat.tsx renders SourceList and no longer maps sources itself"
+   - Integration evidence: chat.tsx diff
+     - lines 428-433: replaced old item.sources.map block with <SourceList />
+     - removed sourceLabel from imports (line 65 of diff)
+   - Test evidence: sourceListModel.test.ts
+     - lines 109-112: expects SourceList import and render
+     - lines 114-116: expects no item.sources.map or sourceLabel
+   EXERCISED: ✓
+
+================================================================
+SUMMARY
+================================================================
+
+Exit Status: typecheck=0, bun test=0, lint=1 (pre-existing errors)
+
+Files Changed: 4 (1 modified, 3 new untracked)
+- All within allowed list ✓
+- No files outside allowed list ✓
+- Case-sensitivity handling (sourceListModel vs sourceList) acceptable ✓
+
+Tests Weakened: NO ✓
+
+Acceptance Criteria:
+- M10d-AC1 (all parts): FULLY EXERCISED ✓
+  - Header format ✓
+  - Collapse/expand state ✓
+  - Each source separate ✓
+  - Logo + title ✓
+  - Opens URL ✓
+  - Screenshot-shaped fixture ✓
+  - Never merged ✓
+
+Implementation Details Verified:
+- sourceListModel.ts: pure, no React, correct header/entries/toggle ✓
+- SourceList.tsx: correct state, accessibility, row layout, logo+title ✓
+- sourceListModel.test.ts: comprehensive, covers edge cases ✓
+- chat.tsx: integrated, cleanup done, old mapping removed ✓
+- SourceLogo.tsx: unchanged, FR27 preserved ✓
+
+END REPORT

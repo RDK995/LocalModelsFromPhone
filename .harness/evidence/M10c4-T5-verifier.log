@@ -1,0 +1,53 @@
+$ tsc --noEmit
+
+=== VERIFIER CHECKS ===
+
+1. Files Changed Analysis (against allowed list):
+   - mobile/src/api/client.test.ts (ALLOWED)
+   - mobile/src/api/client.ts (ALLOWED)
+   - mobile/src/store/conversationStore.test.ts (ALLOWED)
+   - mobile/src/ui/MarkdownText.tsx (ALLOWED)
+   - mobile/src/ui/inlineLink.test.ts (ALLOWED)
+   - mobile/src/ui/inlineLink.ts (ALLOWED)
+   - mobile/src/ui/markdown.test.ts (ALLOWED)
+   - mobile/src/ui/markdown.ts (ALLOWED)
+   - mobile/src/ui/markdownText.test.ts (ALLOWED)
+   - mobile/src/ui/sourceLinks.test.ts (ALLOWED)
+   - mobile/src/ui/sourceLinks.ts (ALLOWED)
+   - mobile/src/ui/streamReducer.test.ts (ALLOWED)
+
+2. RED Test (Fresh worktree at HEAD 1f8281c with current test files):
+   Expected failures: 6 tests, 2 errors
+   - markdown.test.ts: "numbered citations" tests fail (no cite parser at HEAD)
+   - inlineLink.test.ts: presentCitation export missing at HEAD
+   - sourceLinks.test.ts: sourceByNumber export missing at HEAD  
+   - markdownText.test.ts: presentCitation not imported at HEAD
+   - client.test.ts: n not kept on sources at HEAD
+   This confirms tests exercise new functionality.
+
+3. Half-Streamed [2 Behavior:
+   - parseInline('see [2') returns [t("see "), t("2")]
+   - The "[" is lost (pre-existing behavior identical at HEAD 1f8281c)
+   - Test passes: "a half-streamed [2 parses without throwing and shows as text"
+
+4. Test Weakening Check:
+   - Changed assertion in markdown.test.ts line 238: [1] -> [a] (necessary, not weakening)
+   - Reason: [1] now parses as citation per FR31
+   - No test functions deleted
+   - No assertions deleted except the one replaced
+   - All other changes are test additions
+
+5. AC4 Criteria Coverage:
+   - [n], [1][3], [1, 3], 【n】 forms parse: markdown.test.ts "parses [n], adjacent marks..."
+   - Render as logo with mark not shown: markdownText.test.ts "renders SourceLogo..."
+   - Unknown number plain: inlineLink.test.ts presentCitation(9, numbered) -> plain
+   - Old reply plain: inlineLink.test.ts presentCitation with old sources -> plain
+   - Inline code stays text: markdown.test.ts "`[2]`" test
+   - Code block stays text: markdown.test.ts "```\n[2]\n```" test
+   - Half-streamed [2 no error: markdown.test.ts test (passes)
+   - Reopened reply keeps n: conversationStore.test.ts "reopened reply keeps each source's n"
+   - FR27 link logos unchanged: existing link tests still in file
+
+6. Test Count:
+   - Total tests: 411 pass, 0 fail (as claimed)
+   - Type checking: clean (tsc --noEmit)

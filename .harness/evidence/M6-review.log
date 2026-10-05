@@ -1,0 +1,61 @@
+bun install v1.4.0 (1381054db)
+
+Checked 33 installs across 32 packages (no changes) [4.00ms]
+bun test v1.4.0 (1381054db)
+
+ 115 pass
+ 0 fail
+ 227 expect() calls
+Ran 115 tests across 4 files. [1.74s]
+$ tsc --noEmit
+
+==== service ====
+      started search service (pid 23873)
+PASS: service health -> 200
+
+==== M6-AC1: read a real article; oversize is truncated ====
+      url: https://en.wikipedia.org/wiki/Ada_Lovelace_Day  status=200  markdown_length=7725  truncated=false  elapsed=0.243701s
+      first 300 chars of markdown:
+        | ![Frosted cake featuring iconic portrait of Ada Lovelace and text Ada Lovelace Day 2013.](https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3d/Cake_from_Ada_Lovelace_Day_2013_Editathon_Oxford.JPG/250px-Cake_from_Ada_Lovelace_Day_2013_Editathon_Oxford.JPG?utm_source=en.wikipedia.org&utm_campaign=
+PASS: AC1 normal article -> 200, truncated false
+PASS: AC1 markdown contains article body sentence
+PASS: AC1 boilerplate removed: 'Privacy policy' (present in raw HTML, absent from markdown)
+PASS: AC1 boilerplate removed: 'Toggle the table of contents' (present in raw HTML, absent from markdown)
+PASS: AC1 boilerplate removed: 'Contact Wikipedia' (present in raw HTML, absent from markdown)
+      url: https://en.wikipedia.org/wiki/World_War_II  status=200  markdown_length=40047  truncated=true
+PASS: AC1 oversized page -> 200, truncated true, ends with truncation marker
+
+==== M6-AC2: blocked destinations -> 400 blocked_destination ====
+PASS: AC2 loopback 127.0.0.1:7789 -> 400 blocked_destination
+PASS: AC2 localhost -> 400 blocked_destination
+PASS: AC2 tailnet 100.100.100.100 -> 400 blocked_destination
+PASS: AC2 this Mac's tailnet IP 100.82.139.85 -> 400 blocked_destination
+PASS: AC2 private 192.168.1.1 -> 400 blocked_destination
+PASS: AC2 IPv6 loopback [::1] -> 400 blocked_destination
+      public loopback-DNS names, as seen by the system resolver vs public resolvers:
+        localtest.me: system=[unresolved] @1.1.1.1=[127.0.0.1 ]
+        127.0.0.1.nip.io: system=[unresolved] @1.1.1.1=[127.0.0.1 ]
+        foo.localhost: system=[127.0.0.1 ::1] @1.1.1.1=[]
+PASS: AC2 hostname resolving to 127.0.0.1 (foo.localhost) -> 400 blocked_destination
+      sentinel listener on 127.0.0.1:52062 (would log any request that reaches it)
+PASS: AC2 hostname->loopback with live listener (foo.localhost:52062) -> 400 blocked_destination
+PASS: AC2 literal loopback with live listener (127.0.0.1:52062) -> 400 blocked_destination
+PASS: AC2 sentinel received zero requests (check made before connecting)
+PASS: AC2 sentinel control (direct request is recorded, so zero above is meaningful)
+
+==== M6-AC3: redirects re-checked; non-http scheme -> bad_url ====
+      redirector first hop (direct curl, no follow): 302 http://127.0.0.1:7789/
+PASS: AC3 public redirect -> http://127.0.0.1:7789/ -> 400 blocked_destination
+      redirector first hop (direct curl, no follow): 302 http://100.100.100.100/
+PASS: AC3 public redirect -> http://100.100.100.100/ -> 400 blocked_destination
+PASS: AC3 file:///etc/passwd -> 400 bad_url
+PASS: AC3 ftp://example.com/ -> 400 bad_url
+
+==== M6-AC4: non-text -> 415; slow fetch -> 504 (not a hang) ====
+PASS: AC4 non-text image/png -> 415 unsupported_content
+      url: https://httpbin.org/drip?duration=1&delay=20&numbytes=1&code=200  status=504  error=timeout  service answered in 15.006438s (curl --max-time 30)
+PASS: AC4 slow fetch -> 504 timeout in 15.006438s (<20s)
+
+==== result ====
+ALL CASES PASSED
+EXIT=0

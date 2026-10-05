@@ -1,0 +1,82 @@
+: connected
+
+id: 34b0b39e-d9bc-4a41-af08-7c94d8ba9c13-0
+event: step
+data: {"step_id":"plan","kind":"plan","status":"started"}
+
+id: 34b0b39e-d9bc-4a41-af08-7c94d8ba9c13-1
+event: step
+data: {"step_id":"plan","kind":"plan","status":"done"}
+
+id: 34b0b39e-d9bc-4a41-af08-7c94d8ba9c13-2
+event: step
+data: {"step_id":"7f3e7211-7532-4175-b841-41b580f1e04d","kind":"search","status":"started","query":"Raft vs Paxos architectural differences"}
+
+id: 34b0b39e-d9bc-4a41-af08-7c94d8ba9c13-3
+event: step
+data: {"step_id":"7f3e7211-7532-4175-b841-41b580f1e04d","kind":"search","status":"done","query":"Raft vs Paxos architectural differences"}
+
+id: 34b0b39e-d9bc-4a41-af08-7c94d8ba9c13-4
+event: step
+data: {"step_id":"ab6a3b6f-95b2-4616-82f5-f2d02cca9d67","kind":"search","status":"started","query":"Paxos vs Raft operational workflow comparison"}
+
+id: 34b0b39e-d9bc-4a41-af08-7c94d8ba9c13-5
+event: step
+data: {"step_id":"ab6a3b6f-95b2-4616-82f5-f2d02cca9d67","kind":"search","status":"done","query":"Paxos vs Raft operational workflow comparison"}
+
+id: 34b0b39e-d9bc-4a41-af08-7c94d8ba9c13-6
+event: step
+data: {"step_id":"6fffd0cd-afdb-4e18-8144-a5c30541af04","kind":"search","status":"started","query":"Raft vs Paxos fundamental design differences leader election log replication"}
+
+id: 34b0b39e-d9bc-4a41-af08-7c94d8ba9c13-7
+event: step
+data: {"step_id":"6fffd0cd-afdb-4e18-8144-a5c30541af04","kind":"search","status":"done","query":"Raft vs Paxos fundamental design differences leader election log replication"}
+
+id: 34b0b39e-d9bc-4a41-af08-7c94d8ba9c13-8
+event: step
+data: {"step_id":"34c18e66-db63-464d-8208-4267e30bb9df","kind":"read","status":"started","url":"https://www.geeksforgeeks.org/system-design/paxos-vs-raft-algorithm-in-distributed-systems/"}
+
+id: 34b0b39e-d9bc-4a41-af08-7c94d8ba9c13-9
+event: step
+data: {"step_id":"34c18e66-db63-464d-8208-4267e30bb9df","kind":"read","status":"done","url":"https://www.geeksforgeeks.org/system-design/paxos-vs-raft-algorithm-in-distributed-systems/"}
+
+id: 34b0b39e-d9bc-4a41-af08-7c94d8ba9c13-10
+event: step
+data: {"step_id":"5f529a13-712f-4a57-b03c-be602158da55","kind":"read","status":"started","url":"https://systeminternals.dev/paxos-vs-raft/"}
+
+id: 34b0b39e-d9bc-4a41-af08-7c94d8ba9c13-11
+event: step
+data: {"step_id":"5f529a13-712f-4a57-b03c-be602158da55","kind":"read","status":"done","url":"https://systeminternals.dev/paxos-vs-raft/"}
+
+id: 34b0b39e-d9bc-4a41-af08-7c94d8ba9c13-12
+event: step
+data: {"step_id":"06a1c604-06f4-4efa-b08e-92f68698ee6c","kind":"search","status":"started","query":"Raft vs Paxos performance comparison latency throughput"}
+
+id: 34b0b39e-d9bc-4a41-af08-7c94d8ba9c13-13
+event: step
+data: {"step_id":"06a1c604-06f4-4efa-b08e-92f68698ee6c","kind":"search","status":"done","query":"Raft vs Paxos performance comparison latency throughput"}
+
+id: 34b0b39e-d9bc-4a41-af08-7c94d8ba9c13-14
+event: step
+data: {"step_id":"f0fd2506-beeb-47b7-b8a2-b5157f69d194","kind":"search","status":"started","query":"Paxos implementation complexity compared to Raft"}
+
+id: 34b0b39e-d9bc-4a41-af08-7c94d8ba9c13-15
+event: step
+data: {"step_id":"f0fd2506-beeb-47b7-b8a2-b5157f69d194","kind":"search","status":"done","query":"Paxos implementation complexity compared to Raft"}
+
+id: 34b0b39e-d9bc-4a41-af08-7c94d8ba9c13-16
+event: step
+data: {"step_id":"4f0a3b0e-9c7f-456e-819c-90a1643f4f36","kind":"read","status":"started","url":"https://www.diva-portal.org/smash/get/diva2:1471222/FULLTEXT01.pdf"}
+
+id: 34b0b39e-d9bc-4a41-af08-7c94d8ba9c13-17
+event: step
+data: {"step_id":"4f0a3b0e-9c7f-456e-819c-90a1643f4f36","kind":"read","status":"failed","url":"https://www.diva-portal.org/smash/get/diva2:1471222/FULLTEXT01.pdf","detail":"unsupported_content"}
+
+id: 34b0b39e-d9bc-4a41-af08-7c94d8ba9c13-18
+event: step
+data: {"step_id":"d67eff07-e41e-4554-a6b5-7f59491e4fb0","kind":"read","status":"started","url":"https://codelit.io/blog/distributed-systems-consensus-comparison"}
+
+id: 34b0b39e-d9bc-4a41-af08-7c94d8ba9c13-19
+event: step
+data: {"step_id":"d67eff07-e41e-4554-a6b5-7f59491e4fb0","kind":"read","status":"done","url":"https://codelit.io/blog/distributed-systems-consensus-comparison"}
+

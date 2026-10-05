@@ -1,0 +1,37 @@
+commit: a8ca44edc55243a9c1ccbe0de9ff33b52d0f9d6b (uncommitted working tree changes)
+date: Fri 25 Sep 2026 08:23:31 BST
+$ (cd server && bun test && bun run typecheck && bash scripts/entry-smoke.sh) && (cd ops && bun test src/token) && for f in ops/scripts/*.sh server/scripts/*.sh; do bash -n "$f" || exit 1; done && plutil -lint ops/scripts/*.plist
+bun test v1.4.0 (1381054db)
+
+ 25 pass
+ 0 fail
+ 40 expect() calls
+Ran 25 tests across 3 files. [28.00ms]
+$ tsc --noEmit
+Entry smoke: starting server on 127.0.0.1:56868
+PASS: server started and is listening on http://127.0.0.1:56868
+PASS: listens on 127.0.0.1 only (127.0.0.1:56868)
+PASS: no token -> 401
+PASS: wrong token -> 401
+PASS: correct token -> 200 (not 401)
+PASS: 0644 token file -> exits non-zero (1)
+PASS: missing token file -> exits non-zero (1)
+Entry smoke: all checks passed
+bun test v1.4.0 (1381054db)
+
+ 14 pass
+ 0 fail
+ 20 expect() calls
+Ran 14 tests across 1 file. [27.00ms]
+ops/scripts/com.harness.bundle-host.plist: OK
+ops/scripts/com.harness.server.plist: OK
+EXIT: 0
+$ bash ops/scripts/verify-ops-install.sh
+Verifying ops installation scripts...
+Verifying LaunchAgent plist files...
+Verifying LaunchAgent plist contents...
+Verifying Tailscale Serve script...
+Verifying token command integration...
+Verifying pf anchor configuration...
+All verification checks passed!
+EXIT: 0

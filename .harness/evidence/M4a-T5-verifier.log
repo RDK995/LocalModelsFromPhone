@@ -1,0 +1,53 @@
+=== Thinking Live Proof ===
+
+Restarting LaunchAgents...
+Waiting for server to be ready...
+Server is up and enforcing auth
+
+--- Recording original Ollama state (before proof) ---
+Before: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":25617498110,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-06T06:49:54.153375807Z","size_vram":25617498110,"context_length":131072}]}
+Originally resident: nemotron3:33b
+
+--- Running proof (mobile/scripts/thinking-proof.ts) ---
+--- Check 1: Picking models from Ollama ---
+T (thinking-capable): qwen3.6:27b
+N (non-thinking): devstral:24b
+
+--- Check 2: Testing thinking model (qwen3.6:27b) ---
+Loading qwen3.6:27b...
+PASS: Check 2: qwen3.6:27b is resident
+PASS: Check 2 (M4-AC1): at least one thinking event with non-empty text
+PASS: Check 2 (M4-AC1): at least one content event
+PASS: Check 2 (M4-AC1): first thinking event arrives before first content event
+PASS: Check 2 (M4-AC1): terminal done with status complete
+PASS: Check 2 (M4-AC1): stored message has non-empty thinking field
+PASS: Check 2 (M4-AC1): stored message has non-empty content field
+PASS: Check 2 (M4-AC1): content contains "42"
+PASS: Check 2 (M4-AC1): content does not contain the full thinking text (stored separately)
+  Thinking (first 200 chars): Here's a thinking process:
+
+1.  **Analyze User Input:**
+   - Question: "What is 17 + 25?"
+   - Constraint: "Answer with just the number."
+
+2.  **Perform Calculation:**
+   - 17 + 25 = 42
+
+3.  **Check C
+  Content (first 200 chars): 42
+
+--- Check 3: Testing non-thinking model (devstral:24b) ---
+Loading devstral:24b...
+PASS: Check 3: devstral:24b is resident
+PASS: Check 3: zero thinking events
+PASS: Check 3: non-empty content
+PASS: Check 3: done status complete
+PASS: Check 3: stored message has no thinking field
+
+All thinking proof checks passed.
+
+--- Cleanup: restoring original Ollama state ---
+Before cleanup: {"models":[{"name":"devstral:24b","model":"devstral:24b","size":35816011202,"digest":"9bd74193e93935e9d8564d88607b220a9d341c4a36b748cffcbd9ad4f47a9ca9","details":{"parent_model":"","format":"gguf","family":"llama","families":["llama"],"parameter_size":"23.6B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-06T06:51:52.745968807Z","size_vram":35816011202,"context_length":131072}]}
+Restoring nemotron3:33b (keep_alive -1)...
+After cleanup: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":25617498110,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-06T06:52:01.727754807Z","size_vram":25617498110,"context_length":131072}]}
+[0;32m=== Proof PASSED, Mac restored to its original state ===[0m

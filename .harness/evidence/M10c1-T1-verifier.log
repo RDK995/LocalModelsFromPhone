@@ -1,0 +1,50 @@
+VERIFICATION RUN FOR TASK M10c1-T1
+==================================
+
+Task: Icon fetch implementation with SSRF guard reuse
+Date: 2026-09-30
+Diff Range: d0f5954 (M10c1-T2 commit) .. HEAD (working tree)
+
+COMMAND EXECUTED:
+cd /Users/ryankenny/Projects/CodingHarnessv2/search && bun test && bun run typecheck
+
+=== TEST OUTPUT ===
+bun test v1.4.0 (1381054db)
+
+src/http/server.test.ts:
+icon fetch host=a1.test result=ok
+icon fetch host=a2.test result=ok
+icon fetch host=a3.test result=ok
+icon fetch host=b1.test result=ok
+icon fetch host=b2.test result=ok
+icon fetch host=c1.test result=none
+icon fetch host=c2.test result=none
+icon fetch host=c3.test result=none
+icon fetch host=c4.test result=ok
+icon fetch host=c5.test result=none
+icon fetch host=d1.test result=ok
+icon fetch host=d2.test result=none
+icon fetch host=d3.test result=ok
+icon fetch host=d4.test result=none
+icon fetch host=d4.test result=none
+icon fetch host=d3.test result=ok
+icon fetch host=d5.test result=ok
+icon fetch host=d5.test result=ok
+icon fetch host=localhost result=blocked
+icon fetch host=e1.test result=blocked
+icon fetch host=e1.test result=blocked
+icon fetch host=e2.test result=blocked
+icon fetch host=e3.test result=blocked
+icon fetch host=f1.test result=timeout
+icon fetch host=f1.test result=ok
+
+ 159 pass
+ 0 fail
+ 430 expect() calls
+Ran 159 tests across 7 files. [3.44s]
+
+$ tsc --noEmit
+(no output; exit 0)
+
+=== EXIT STATUS ===
+Exit code: 0 (success)

@@ -1,0 +1,149 @@
+=== VERIFIER RUN: M6-C1 ===
+Date: 2026-09-29
+Task: M6-C1 — page extraction must make no network requests of its own
+Repository: /Users/ryankenny/Projects/CodingHarnessv2
+Branch: m6-search-read-page
+Commit at start: ca8dc77
+
+=== STEP 1: RUN VALIDATION COMMAND ===
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/search && bun install && bun test && bun run typecheck
+
+Output:
+bun install v1.4.0 (1381054db)
+Checked 33 installs across 32 packages (no changes) [4.00ms]
+bun test v1.4.0 (1381054db)
+
+ 118 pass
+ 0 fail
+ 233 expect() calls
+Ran 118 tests across 4 files. [1.74s]
+$ tsc --noEmit
+
+Exit Status: 0
+
+=== STEP 2: CHECK FILES AGAINST ALLOWED LIST ===
+Modified files (git diff HEAD):
+- search/src/extract/extract.test.ts (allowed)
+- search/src/extract/extract.ts (allowed)
+
+Untracked files:
+- .harness/evidence/M6-C1-worker.log (allowed - new evidence file)
+
+All files are within the Files Allowed To Change list.
+
+=== STEP 3: CHECK FOR WEAKENED TESTS ===
+Examined git diff of search/src/extract/extract.test.ts:
+
+Changes:
+- Import statement: added afterEach from "bun:test"
+- New describe block "offline extraction" with 3 new tests
+- No existing tests modified, deleted, or weakened
+- No skip/xfail/ignore markers added
+- No assertions removed or loosened
+
+Result: NO TESTS WEAKENED
+
+=== STEP 4: CONFIRM DEFUDDLE OPTION NAMES ===
+Verified in search/node_modules/defuddle/dist/types.d.ts:
+
+1. useAsync?: boolean (line 81)
+   - Comment: "Allow async extractors to fetch content from third-party APIs"
+   - Type: boolean
+   - CONFIRMED: Option exists and is correctly named
+
+2. fetch?: typeof globalThis.fetch (line 135)
+   - Comment: "Custom fetch function override. Used for all HTTP requests made during extraction"
+   - Type: typeof globalThis.fetch
+   - CONFIRMED: Option exists and is correctly named
+
+=== STEP 5: INDEPENDENTLY CONFIRM RED STATE ===
+Command: Run bun test against pre-change extract.ts (from commit ca8dc77)
+
+Procedure:
+1. Saved current extract.ts (with changes)
+2. Restored extract.ts from ca8dc77
+3. Ran bun test
+4. Restored current extract.ts
+
+Red Output (3 tests failing):
+
+Test 1: makes no network request of its own for https://www.dropbox.com/s/abc/status/123
+Error: expect(received).toBe(expected)
+Expected: 0
+Received: 2
+Stack: extractOembed (/Users/ryankenny/Projects/CodingHarnessv2/search/node_modules/defuddle/dist/extractors/x-oembed.js:47:37)
+
+Test 2: makes no network request of its own for https://x.com/someone/status/123
+Error: expect(received).toBe(expected)
+Expected: 0
+Received: 2
+Stack: extractOembed (/Users/ryankenny/Projects/CodingHarnessv2/search/node_modules/defuddle/dist/extractors/x-oembed.js:47:37)
+
+Test 3: makes no network request of its own for https://www.reddit.com/r/x/comments/abc/title/
+Error: expect(received).toBe(expected)
+Expected: 0
+Received: 2
+Stack: send (/Users/ryankenny/Projects/CodingHarnessv2/search/node_modules/defuddle/dist/extractors/reddit.js:150:37)
+
+Result: 115 pass, 3 fail
+Status: CONFIRMED - Tests fail without the fix
+
+=== STEP 6: CONFIRM GREEN STATE ===
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/search && bun test
+(with current extract.ts including the fix)
+
+Output:
+ 118 pass
+ 0 fail
+ 233 expect() calls
+Ran 118 tests across 4 files. [1.75s]
+
+Status: CONFIRMED - All tests pass with the fix
+
+=== STEP 7: VERIFY CHANGES IN EXTRACT.TS ===
+
+Key additions:
+1. Line 24: Comment referencing I18 architecture requirement
+2. Lines 25: noNetworkFetch function definition
+   - Rejects with "network access disabled during extraction"
+   - Typed as typeof globalThis.fetch
+
+3. Lines 36-37 in Defuddle call:
+   - useAsync: false (prevents async extractors from running)
+   - fetch: noNetworkFetch (provides non-network fetch alternative)
+
+Existing behavior preserved:
+- markdown: true option kept
+- All other extraction logic unchanged
+- 40,000 char truncation unchanged
+- text/plain passthrough unchanged
+
+=== STEP 8: VERIFY NEW TESTS ===
+
+Test structure:
+- describe("offline extraction") block with afterEach cleanup
+- Replaces globalThis.fetch with recorder function
+- Restores realFetch in afterEach
+- Tests 3 URLs:
+  1. https://www.dropbox.com/s/abc/status/123 (triggers X extractor via domain matching)
+  2. https://x.com/someone/status/123 (triggers X oEmbed extractor)
+  3. https://www.reddit.com/r/x/comments/abc/title/ (triggers Reddit extractor)
+
+Assertions per test:
+1. expect(calls.length).toBe(0) - Confirms zero fetch calls
+2. expect(r.markdown).toContain("Widgets are small reusable components") - Confirms extraction still works
+
+All three tests pass, demonstrating:
+- Offline extraction works correctly
+- No network requests are made
+- Content extraction still functions with local HTML only
+
+=== SUMMARY ===
+Validation Command: PASS (Exit 0, 118 pass / 0 fail, typecheck clean)
+Files Changed: PASS (All within allowed list)
+Tests Weakened: PASS (No weakening detected)
+Acceptance Criteria: PASS (All criteria exercised)
+Red → Green Confirmation: PASS (Independently verified)
+Defuddle Options: PASS (Both options confirmed in node_modules)
+
+All verification steps passed.

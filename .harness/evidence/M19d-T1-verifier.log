@@ -1,0 +1,167 @@
+TASK VERIFICATION: M19d-T1
+Date: 2026-10-02
+Verifier: Claude Haiku 4.5
+
+===============================================================================
+COMMIT BASELINE
+===============================================================================
+8bf351b M19d: open milestone on its branch; archive settled M19b detail; T1 packet
+
+===============================================================================
+TEST 1: Focused tests
+===============================================================================
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/http/deepResearchPartialNotes.test.ts src/generations/research.test.ts
+
+Exit Status: 0
+
+Output:
+ 51 pass
+ 0 fail
+ 460 expect() calls
+Ran 51 tests across 2 files. [5.46s]
+
+===============================================================================
+TEST 2: Full suite and typecheck
+===============================================================================
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bunx tsc --noEmit
+
+Exit Status: 0
+
+Output (bun test):
+ 329 pass
+ 0 fail
+ 2195 expect() calls
+Ran 329 tests across 20 files. [13.88s]
+
+Output (bunx tsc --noEmit):
+(no output - clean)
+
+===============================================================================
+FILES CHANGED
+===============================================================================
+Git diff --name-only against HEAD 8bf351b:
+- server/src/generations/research.ts
+- server/src/generations/research.test.ts
+
+Untracked (new file):
+- server/src/http/deepResearchPartialNotes.test.ts
+
+All files are in the Files Allowed To Change list.
+
+===============================================================================
+TESTS WEAKENED
+===============================================================================
+No existing tests were removed or weakened. The research.test.ts diff shows:
+- Only one import line extended (added completeNotesFromPartial)
+- Only one new describe block appended at end (after line 1120)
+
+All 6 unit tests in the new describe block test the completeNotesFromPartial function.
+
+===============================================================================
+ACCEPTANCE CRITERIA EXERCISED
+===============================================================================
+
+AC3a (complete notes with verified quote reach write; bad quote and incomplete note do not):
+  TEST: server/src/http/deepResearchPartialNotes.test.ts, line 167-194
+  TEST NAME: "AC3a: complete notes with a verified quote reach the write; bad quote and incomplete note do not"
+  ASSERTIONS:
+    - expect(writeText).toContain("VALIDCLAIM cats sleep");
+    - expect(writeText).not.toContain("BADQUOTECLAIM");
+    - expect(writeText).not.toContain("INCOMPLETECLAIM");
+    - expect(content).toContain("[1]");
+    - expect(done.status).toBe("complete");
+    - expect(done.research.status).toBe("partial");
+
+AC3b (deadline before any note kept ends failed with RAN_OUT_OF_TIME_NOTE):
+  TEST: server/src/http/deepResearchPartialNotes.test.ts, line 196-215
+  TEST NAME: "AC3b: research time running out before any note is kept ends failed with the ran-out-of-time sentence"
+  ASSERTIONS:
+    - expect(done.research.status).toBe("failed");
+    - expect(content).toBe(RAN_OUT_OF_TIME_NOTE);
+    - expect(content).toBe("The research ran out of time before it could take notes.");
+    - expect(content).not.toContain(COULD_NOT_READ_NOTE);
+
+AC3c regression (pages read without deadline but no surviving note ends failed with COULD_NOT_READ_NOTE):
+  TEST: server/src/http/deepResearchPartialNotes.test.ts, line 217-226
+  TEST NAME: "AC3c: pages read without the deadline but no surviving note still ends failed with the could-not-read sentence"
+  ASSERTIONS:
+    - expect(done.research.status).toBe("failed");
+    - expect(content).toBe(COULD_NOT_READ_NOTE);
+
+AC3c regression (every search failing gets COULD_NOT_SEARCH_NOTE):
+  TEST: server/src/http/deepResearchPartialNotes.test.ts, line 228-237
+  TEST NAME: "AC3c: every search failing still gets the could-not-search sentence"
+  ASSERTIONS:
+    - expect(done.research.status).toBe("failed");
+    - expect(content).toBe(COULD_NOT_SEARCH_NOTE);
+
+Unit tests for completeNotesFromPartial (6 tests):
+  TEST: server/src/generations/research.test.ts, lines 1124-1160
+  TEST NAMES:
+    - "returns [] for empty, whitespace and non-JSON input"
+    - "returns [] when the notes array has just opened"
+    - "keeps a complete element and ignores a truncated one"
+    - "handles an escaped quote and braces/brackets inside strings"
+    - "returns every note of a complete reply in order"
+    - "ignores an element missing its claim or quote"
+
+===============================================================================
+IMPLEMENTATION VERIFICATION
+===============================================================================
+
+Required exports verified:
+✓ export const RAN_OUT_OF_TIME_NOTE = "The research ran out of time before it could take notes."
+  Location: research.ts line 180
+✓ export function completeNotesFromPartial(partial: string): ...
+  Location: research.ts line 197
+
+PhaseTimeUp enhancement verified:
+✓ class PhaseTimeUp now has optional partial?: string field
+  Location: research.ts line 187
+✓ PhaseTimeUp(name === "notes" ? content : undefined) at deadline
+  Location: research.ts line 572 (only notes step salvages)
+✓ PhaseTimeUp() with no partial for other steps
+  Location: research.ts line 433
+
+Salvage logic verified:
+✓ if (error instanceof PhaseTimeUp && error.partial) keepNotes(completeNotesFromPartial(error.partial));
+  Location: research.ts line 753
+
+Report choice logic verified (line 838):
+✓ failureNote = searchesWithResults === 0 ? COULD_NOT_SEARCH_NOTE : researchCutShort ? RAN_OUT_OF_TIME_NOTE : COULD_NOT_READ_NOTE
+  - COULD_NOT_SEARCH_NOTE when no searches had results
+  - RAN_OUT_OF_TIME_NOTE when research was cut short
+  - COULD_NOT_READ_NOTE otherwise
+
+===============================================================================
+BASELINE TESTS
+===============================================================================
+Worker claim: 319 pass, 0 fail at baseline
+Packet requirement: 319 pass, 0 fail at baseline
+Observed full suite: 329 pass, 0 fail
+New tests added: 10 (51 focused - 41 from new file = 10 in research.test.ts)
+  - 4 tests in deepResearchPartialNotes.test.ts for AC3a, AC3b, AC3c
+  - 6 unit tests for completeNotesFromPartial in research.test.ts
+
+===============================================================================
+RESULT: PASS
+===============================================================================
+
+===============================================================================
+DESIGN CHOICE (from task section B)
+===============================================================================
+Question: Should a first Stop also salvage complete notes?
+Task guidance: "salvaging complete notes in that case too is acceptable and consistent"
+Implementation choice: YES - both deadline and first Stop salvage notes
+
+Evidence:
+- When PhaseTimeUp is thrown with error.partial set (line 753):
+  "if (error instanceof PhaseTimeUp && error.partial) keepNotes(...)"
+- sendAttempt throws with partial for both deadline and first Stop (line 572):
+  "if (error instanceof PhaseTimeUp || phaseOver()) ... throw new PhaseTimeUp(name === "notes" ? content : undefined);"
+- Comment at line 502-504 confirms:
+  "A cut-off notes call hands its streamed reply on so complete notes survive (also on a first Stop: FR38 writes from the notes so far; a hard cancel never gets here)."
+
+This is consistent with FR38 which allows partial reports from notes so far.

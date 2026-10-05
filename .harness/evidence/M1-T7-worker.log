@@ -1,0 +1,77 @@
+=== commit: 4675abeb426261eeb213f29b98325697d1c5aa02 (working tree has uncommitted M1-T7 changes) ===
+
+=== bun test ===
+bun test v1.4.0 (1381054db)
+
+ 29 pass
+ 0 fail
+ 73 expect() calls
+Ran 29 tests across 3 files. [61.00ms]
+
+=== bun run typecheck ===
+$ tsc --noEmit
+
+=== bash scripts/entry-smoke.sh ===
+Entry smoke: starting server on 127.0.0.1:57567
+PASS: server started and is listening on http://127.0.0.1:57567
+PASS: listens on 127.0.0.1 only (127.0.0.1:57567)
+PASS: no token -> 401
+PASS: wrong token -> 401
+PASS: correct token -> 200 (not 401)
+PASS: 0644 token file -> exits non-zero (1)
+PASS: missing token file -> exits non-zero (1)
+Entry smoke: all checks passed
+
+=== live-loopback proof (packet step 5) ===
+Ollama GET /api/ps at start: {"models":[]}  (no model resident)
+Ollama GET /api/tags at start: 5 models on disk (nemotron3:33b, qwen3.8:27b, devstral:24b, qwen3-coder:30b, qwen3.6:27b), none loaded.
+Per packet instruction, did not load a model; proof run uses the script's placeholder "test-model" (no residency required).
+
+Command: PHONE_MODELS_PORT=57498 PHONE_MODELS_TOKEN_FILE=<temp 0600 file> bun src/index.ts  (background)
+Server listened on http://127.0.0.1:57498
+
+Command: SERVER_URL=http://127.0.0.1:57498 PHONE_MODELS_TOKEN_FILE=<same> bash scripts/curl-chat-stream-proof.sh
+Exit status: 0
+Output:
+Testing SSE chat streaming infrastructure against http://127.0.0.1:57498...
+Server is running
+Test 1: Chat endpoint returns SSE stream
+[OK] Chat endpoint returns 200
+[OK] Response has correct content-type: text/event-stream
+[OK] Response has x-generation-id header: 349fe97c-52d4-4ab7-8ff6-62056ac90a36
+Test 2: Events endpoint accessibility
+[OK] Events endpoint is accessible (code: 404)
+Test 3: Cancel endpoint accessibility
+[OK] Cancel endpoint is accessible (code: 404)
+Test 4: Authentication enforcement
+[OK] Chat endpoint requires authentication
+All streaming tests passed!
+
+Additional manual HTTP request against the same live server/Ollama pair, to see
+the actual SSE wire lines end to end (model "test-model" does not exist on
+disk, so real Ollama returns 404, which the manager correctly turns into a
+terminal SSE error event -- no token content to redact):
+
+  POST http://127.0.0.1:57498/v1/chat
+  Authorization: Bearer <token>
+  Content-Type: application/json
+  body: {"model":"test-model","messages":[{"role":"user","content":"hi"}]}
+
+  Response:
+  HTTP/1.1 200 OK
+  Content-Type: text/event-stream
+  x-generation-id: ba5025e8-b240-41d5-94b1-97c874715691
+
+  id: ba5025e8-b240-41d5-94b1-97c874715691-0
+  event: error
+  data: {"code":"generation_error","message":"Ollama /api/chat failed: 404"}
+
+  GET /v1/state (same server, same live Ollama):
+  {"models":[{"name":"nemotron3:33b","size_bytes":27638631632},{"name":"qwen3.8:27b","size_bytes":17741872154},{"name":"devstral:24b","size_bytes":14333928046},{"name":"qwen3-coder:30b","size_bytes":18556700761},{"name":"qwen3.6:27b","size_bytes":17420432739}],"resident":null,"operation":{"kind":"idle"},"generation":null}
+
+  This confirms /v1/state pulls real model/resident data from the live Ollama
+  (5 real models from tags, resident:null matching ps's empty result), and
+  /v1/chat's error path reaches real Ollama end to end.
+
+Server killed after the proof (SIGTERM, background task exited 143); port 57498
+confirmed free afterward (no listener found).

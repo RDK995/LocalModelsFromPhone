@@ -1,0 +1,22 @@
+=== Web Stop Live Proof (M12-T3) ===
+Restarting LaunchAgents...
+Server is up and enforcing auth
+Before: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":27038329075,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-11T06:32:55.970254807Z","size_vram":27038329075,"context_length":131072}]}
+Using resident model: nemotron3:33b
+
+--- Attempt 1 of 5 ---
+Helper alive before cancel: pids [40984 ] ; helper + process-group members [40984 ] ; generation 56cc6f9c-52a0-468b-a65a-1f613950f031
+Cancel response: {"status":"cancelled"}
+[0;32mPASS[0m: check 1: helper and its process group are gone 61 ms after cancel (pids before [40984 ], still alive after [none], helper processes now [none])
+  terminal event: done {"status":"cancelled","model":"nemotron3:33b","eval_count":0,"tokens_per_second":0} ; last event: done ; events after cancel:    1 done;
+[0;32mPASS[0m: check 2: stream ended with done status=cancelled and no content/sources events arrived after the cancel
+  GET /v1/state -> 200 ; new chat admission -> HTTP 200 (generation ce7c68f6-b760-4857-82e5-43f253a147aa); probe cancelled
+[0;32mPASS[0m: check 3: state endpoint healthy and a new chat was admitted (no generation left running)
+
+[0;32mAll M12 stop checks passed[0m
+
+--- Cleanup: restoring original Ollama state ---
+Before cleanup: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":27038329075,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-11T08:40:24.419226807Z","size_vram":27038329075,"context_length":131072}]}
+nemotron3:33b is already resident, nothing to restore
+After cleanup: {"models":[{"name":"nemotron3:33b","model":"nemotron3:33b","size":27038329075,"digest":"f6d8b7ff496ccc53429cc480ad53971d522b443ee4a5aa58a6da49e57acf42cf","details":{"parent_model":"","format":"gguf","family":"nemotron_h_omni","families":["nemotron_h_omni"],"parameter_size":"33.0B","quantization_level":"Q4_K_M"},"expires_at":"2319-01-11T08:40:24.419226807Z","size_vram":27038329075,"context_length":131072}]}
+[0;32m=== Proof PASSED, Mac restored to its original state ===[0m

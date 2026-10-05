@@ -1,0 +1,48 @@
+Commit: 5c77841 (M19b T1: every deep research model call attempt writes one structured log line)
+Current HEAD: (working tree changes)
+
+Test Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck
+
+Exit Status: 0
+
+Output Summary:
+283 pass
+0 fail
+1979 expect() calls
+Ran 283 tests across 17 files. [11.75s]
+$ tsc --noEmit
+[typecheck passed with no errors]
+
+Key evidence from test logs:
+- Deep research model call logs show per-step think values:
+  - brief: think: false
+  - plan: think: true
+  - queries: think: false
+  - pages: think: false
+  - notes: think: false
+  - gap: think: false
+  - write: think: true
+  
+- thinking_detected field present in all logs (examples):
+  - Log where think: false with thinking_chars: 16 shows thinking_detected: true
+  - Log where think: true shows thinking_detected: false (as expected)
+
+Test cases verified through deepResearchModelCalls.test.ts:
+1. Test "thinking-off steps send think:false, the num_predict cap and non-thinking sampling; plan and write think with only num_ctx" ✓
+   - Verifies brief/queries/pages/notes/gap have think: false, num_predict (200/800), sampling options
+   - Verifies plan/write have think: true, no num_predict
+   - All 7 steps: brief, gap, notes, pages, plan, queries, write
+
+2. Test "routineNumPredict and notesNumPredict are settings" ✓
+   - Tests with custom values 123 and 456
+
+3. Test "a thinking-off reply that also carries thinking text is detected, logged and still used when its content is valid" ✓
+   - Verifies thinking_detected: true when think: false but reply has thinking text
+   - Verifies outcome: "ok" and run uses the result
+
+4. Test "a thinking-off reply with the JSON only in thinking is not used: invalid, thinking detected, step retried" ✓
+   - Verifies outcome: "invalid" when content is invalid
+   - Verifies step retries (attempt: 2)
+
+All acceptance criteria exercises identified in test output.

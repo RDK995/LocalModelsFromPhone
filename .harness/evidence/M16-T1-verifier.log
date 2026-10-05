@@ -1,0 +1,161 @@
+# M16-T1 Verification Log
+# Verifier: Claude Haiku 4.5
+# Date: 2026-10-02
+# Task: Verify qwen3.5:35b-a3b download and server endpoints
+
+## Part 1: Test Command Execution
+
+Command: ollama list | grep 'qwen3.5:35b-a3b' && ollama ps
+Exit Status: 0
+
+Output:
+qwen3.5:35b-a3b    3460ffeede54    23 GB    About a minute ago    
+NAME               ID              SIZE     PROCESSOR    CONTEXT    UNTIL   
+qwen3.5:35b-a3b    3460ffeede54    22 GB    100% GPU     32768      Forever
+
+Result: PASS - Test command executes successfully and model is listed as resident
+
+## Part 2: Server Route Analysis (from server/src/http/server.ts)
+
+Routes registered in the server (lines 416-640):
+
+1. GET /v1/icon - Icon lookup
+2. GET /v1/state - Model state query (handler at lines 452-463)
+3. POST /v1/models/load - Model swap-load (handler at lines 467-499)
+4. POST /v1/models/unload - Model unload (handler at lines 502-527)
+5. POST /v1/chat - Chat endpoint (handler at lines 530-610)
+6. GET /v1/generations/{id}/events - Generation event stream (handler at lines 613-622)
+7. POST /v1/generations/{id}/cancel - Cancel generation (handler at lines 625-638)
+
+Key finding: NO GET /v1/models route exists. The packet requests verification of GET /v1/models, but this endpoint is not registered in the server code.
+
+## Part 3: Independent Server Query Verification
+
+Bearer token file location: ~/.phone-models/token (confirmed from server/src/index.ts line 28)
+File permissions: 0600 (proper security)
+Server port: 7789 (confirmed from server/src/http/server.ts line 30)
+
+Query 1: GET /v1/state
+Command: curl -s http://localhost:7789/v1/state -H "Authorization: Bearer [TOKEN]"
+Exit Status: 0
+
+Response:
+{
+  "models": [
+    {"name": "qwen3.5:35b-a3b", "size_bytes": 23869191742, "tools": true},
+    {"name": "nemotron3:33b", "size_bytes": 27638631632, "tools": true},
+    {"name": "qwen3.8:27b", "size_bytes": 17741872154, "tools": true},
+    {"name": "devstral:24b", "size_bytes": 14333928046, "tools": true},
+    {"name": "qwen3-coder:30b", "size_bytes": 18556700761, "tools": true},
+    {"name": "qwen3.6:27b", "size_bytes": 17420432739, "tools": true}
+  ],
+  "resident": {
+    "name": "qwen3.5:35b-a3b",
+    "loaded_by_server": true
+  },
+  "operation": {"kind": "idle"},
+  "generation": null
+}
+
+Verification: qwen3.5:35b-a3b appears in models array AND is marked as resident with loaded_by_server=true. PASS
+
+Query 2: GET /v1/models (testing packet requirement)
+Command: curl -s http://localhost:7789/v1/models -H "Authorization: Bearer [TOKEN]"
+Exit Status: 0
+Response: "Not Found" (404 HTTP status)
+
+Verification: This endpoint does NOT exist. The packet requirement asking to verify "GET /v1/models" cannot be satisfied as this route is not registered in the server.
+
+## Part 4: Evidence File Inspection
+
+File: .harness/evidence/M16-T1-live.log
+Status: EXISTS and CONTAINS required data
+
+Contents verified:
+- AC1: ollama pull exit status documented as 0 (SUCCESS)
+- AC1: ollama list output shown with qwen3.5:35b-a3b
+- AC2: GET /v1/state called with [REDACTED] token
+- AC2: Response body included
+- AC3: POST /v1/models/load called with [REDACTED] token
+- AC3: Response body {"operation":{"kind":"loading","model":"qwen3.5:35b-a3b"}} documented
+- AC3b: ollama ps output showing model resident at 100% GPU
+- AC4: All commands and exit statuses documented
+
+Token security: All bearer token values are redacted as [REDACTED] throughout the evidence file. No actual token values are present in the file. ✓
+
+## Part 5: Acceptance Criteria Verification
+
+AC1: `ollama pull qwen3.5:35b-a3b` exits 0 and `ollama list` shows `qwen3.5:35b-a3b`
+Evidence: 
+  - Evidence file documents successful pull (exit 0)
+  - ollama list output in evidence file shows the model
+  - Verifier test command confirms model in list
+  Result: PASS
+
+AC2: Server's endpoint returns list containing `qwen3.5:35b-a3b`
+Note: Packet says "GET /v1/models" but this endpoint does not exist
+Evidence:
+  - GET /v1/state endpoint EXISTS and returns models list (line 452 in server.ts)
+  - Response includes qwen3.5:35b-a3b in models array
+  - Evidence file correctly documents GET /v1/state query
+  Result: PASS (implemented route is GET /v1/state, not GET /v1/models as packet assumed)
+
+AC3: swap-load route for `qwen3.5:35b-a3b` succeeds, resident afterwards
+Evidence:
+  - POST /v1/models/load exists (line 467 in server.ts)
+  - Evidence file shows successful POST with 202 response containing {"operation":{"kind":"loading",...}}
+  - ollama ps output in evidence file shows model resident at 100% GPU
+  - Verifier's GET /v1/state query shows resident.name = "qwen3.5:35b-a3b" with loaded_by_server=true
+  Result: PASS
+
+AC4: All commands and responses saved to evidence file
+Evidence:
+  - File exists at .harness/evidence/M16-T1-live.log
+  - Contains all relevant commands, exit statuses, and response bodies
+  - Token properly redacted
+  Result: PASS
+
+## Part 6: Files Changed Verification
+
+Changed files (git status --porcelain):
+?? .harness/evidence/M16-T1-live.log
+
+Allowed per Files Allowed To Change: Yes, .harness/evidence/M16-T1-live.log is explicitly allowed
+
+No source files changed (verified via git diff HEAD): Confirmed
+
+Result: PASS - Only allowed files changed
+
+## Part 7: Test Weakness Check
+
+Test command: ollama list | grep 'qwen3.5:35b-a3b' && ollama ps
+
+This test:
+- Verifies model is downloaded and listed
+- Verifies model is resident (shown in ollama ps output)
+- Cannot be weakened to pass without the model being present
+
+No test weakening detected: PASS
+
+## Summary
+
+Task Verification Result: PASS
+
+All acceptance criteria demonstrated:
+✓ AC1: Model download and list verification
+✓ AC2: Server model list endpoint contains model (via GET /v1/state)
+✓ AC3: Swap-load succeeds and model is resident  
+✓ AC4: Evidence file exists with all commands and responses redacted
+
+Key findings:
+- Worker correctly identified that GET /v1/state serves the model list (not GET /v1/models as packet assumed)
+- Worker correctly identified POST /v1/models/load as the swap-load route
+- Server responds to state queries showing model is resident with loaded_by_server=true
+- Bearer token properly redacted in evidence file
+- Only allowed files changed (.harness/evidence/M16-T1-live.log)
+- Test command passes with exit status 0
+
+Minor discrepancy with packet requirements:
+- Packet assumed GET /v1/models exists; actual endpoint is GET /v1/state
+- This discrepancy was correctly identified and handled by worker
+- The actual implementation fulfills the intent of AC2 (model list returns the model)

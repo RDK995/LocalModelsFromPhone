@@ -1,0 +1,28 @@
+=== Web Failure Live Proof (M13-T3) ===
+Resident model with tools: qwen3.5:35b-a3b
+
+==== Check 1: both search backends forced to fail ====
+[unavailable] own search service on port 53226, own server on port 53227
+--- [unavailable] attempt 1 of 4 ---
+[unavailable] model searched on attempt 1; steps: [{"step_id":"41a368e5-95a5-4728-bf44-477435f601d2","kind":"search","status":"started","query":"today's top news headlines October 2026","t":3.9},{"step_id":"41a368e5-95a5-4728-bf44-477435f601d2","kind":"search","status":"unavailable","query":"today's top news headlines October 2026","detail":"search_unavailable","t":3.9}]
+[unavailable] answer (first 200 chars): The web search tool was unavailable, so I cannot provide today's top news headlines. Please try again later or use an alternative source for current news. 
+[unavailable] done: {"status":"complete","model":"qwen3.5:35b-a3b","eval_count":33,"tokens_per_second":53.01562515061258,"t":5.1} ; reply elapsed 5.1 s
+[0;32mPASS[0m: [unavailable] stream has a search step with status=unavailable
+[0;32mPASS[0m: [unavailable] the reply then streamed non-empty answer content
+[0;32mPASS[0m: [unavailable] ended done status=complete (not error, not cancelled)
+[0;32mPASS[0m: [unavailable] reply completed in 5.1 s, under the 240 s bound (search step reported at 3.9 s)
+[0;32mPASS[0m: [unavailable] no new search helper process left running afterwards
+
+==== Check 2: search exceeds its time limit (8000 ms) ====
+[timeout] own search service on port 53252, own server on port 53253
+--- [timeout] attempt 1 of 4 ---
+[timeout] model searched on attempt 1; steps: [{"step_id":"96a6b0d2-e0fe-4204-86cd-924407096699","kind":"search","status":"started","query":"top news headlines today October 2026","t":10.2},{"step_id":"96a6b0d2-e0fe-4204-86cd-924407096699","kind":"search","status":"failed","query":"top news headlines today October 2026","detail":"timeout","t":10.2}]
+[timeout] answer (first 200 chars): The web search tool timed out and failed to retrieve today's top news headlines. 
+[timeout] done: {"status":"complete","model":"qwen3.5:35b-a3b","eval_count":19,"tokens_per_second":54.89504933331407,"t":11.1} ; reply elapsed 11.1 s
+[0;32mPASS[0m: [timeout] stream has a search step with status=failed detail=timeout
+[0;32mPASS[0m: [timeout] the reply then streamed non-empty answer content
+[0;32mPASS[0m: [timeout] ended done status=complete (not error, not cancelled)
+[0;32mPASS[0m: [timeout] reply completed in 11.1 s, under the 240 s bound (search step reported at 10.2 s)
+[0;32mPASS[0m: [timeout] no new search helper process left running afterwards
+
+[0;32mAll M13 web failure checks passed[0m

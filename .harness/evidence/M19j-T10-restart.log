@@ -1,0 +1,76 @@
+=== M19j-T10: Restart com.harness.server ===
+Task started at: Sat  3 Oct 2026 07:25:06 BST
+
+--- BEFORE: Check for running ac29-live-run ---
+Command: pgrep -fl ac29-live-run
+Exit status: 1
+Result: (no process found)
+
+--- BEFORE: Check launchctl list ---
+Command: launchctl list | grep com.harness.server
+Result: 29953	-15	com.harness.server
+Old PID: 29953
+
+--- BEFORE: Get old pid start time ---
+Command: ps -o pid,lstart,command -p 29953
+Result:
+PID STARTED                      COMMAND
+29953 Sat  3 Oct 06:39:40 2026     /opt/homebrew/bin/bun src/index.ts
+
+--- BEFORE: Current git HEAD ---
+Command: git rev-parse HEAD
+Result: 02c13225ef4c7f0e04fba9bcf226b092f2380a66
+
+--- BEFORE: Last server/src commit time ---
+Command: git log -1 --format='%H %cI' -- server/src
+Result: da9ef0fe776a35463864a989abe73e2b4f0e345f 2026-10-03T07:23:31+01:00
+Last server/src commit time: 2026-10-03T07:23:31+01:00
+
+--- RESTART: Running launchctl kickstart ---
+Command: launchctl kickstart -k gui/501/com.harness.server
+Exit status: 0
+
+--- READINESS: Health check ---
+Command: curl --max-time 10 -s -o /dev/null -w '%{http_code}' http://127.0.0.1:7789/health
+Health code: 401
+Status: SUCCESS - Server is responding with expected code 401
+
+--- AFTER: launchctl list for com.harness.server ---
+Command: launchctl list | grep com.harness.server
+Result: 39257	-15	com.harness.server
+New PID: 39257
+
+--- AFTER: New pid start time ---
+Command: ps -o pid,lstart -p 39257
+Result:
+PID STARTED
+39257 Sat  3 Oct 07:25:16 2026
+
+--- AFTER: ollama ps (check for qwen3.5:35b-a3b) ---
+Command: ollama ps
+Result:
+NAME               ID              SIZE     PROCESSOR    CONTEXT    UNTIL
+qwen3.5:35b-a3b    3460ffeede54    23 GB    100% GPU     32768      Forever
+
+--- AFTER: Check for running ac29-live-run ---
+Command: pgrep -fl ac29-live-run
+Exit status: 1
+Result: (no process found)
+
+--- VERIFICATION ---
+New start time: Sat 3 Oct 07:25:16 2026 BST = 2026-10-03T07:25:16+01:00
+Last server/src commit: 2026-10-03T07:23:31+01:00
+Verification: 2026-10-03T07:25:16+01:00 is AFTER 2026-10-03T07:23:31+01:00 ✓
+
+--- SUMMARY ---
+Old PID: 29953
+New PID: 39257
+PID Changed: YES ✓
+Last server/src commit time: 2026-10-03T07:23:31+01:00
+New start time: Sat 3 Oct 07:25:16 2026 (after commit time) ✓
+Health code: 401 ✓
+qwen3.5:35b-a3b model: RESIDENT ✓
+ac29-live-run (before): NOT RUNNING ✓
+ac29-live-run (after): NOT RUNNING ✓
+
+=== TASK COMPLETE ===

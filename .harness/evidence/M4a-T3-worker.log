@@ -1,0 +1,48 @@
+=== git rev-parse HEAD ===
+0694ddfa2e5b40066492f6930ccf1b2aca821a28
+=== typecheck ===
+$ tsc --noEmit
+EXIT:0
+=== unit tests ===
+bun test v1.4.0 (1381054db)
+
+ 123 pass
+ 0 fail
+ 277 expect() calls
+Ran 123 tests across 16 files. [70.00ms]
+EXIT:0
+=== lint ===
+$ eslint src --max-warnings 0
+EXIT:0
+=== smoke:runtime ===
+$ scripts/runtime-smoke.sh
+=== token present ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.gW3QDu/dist/_expo/static/js/ios/expo-router-8feca5c1b813ad16cf0463929b12f01a.js
+stored token: present; expected first screen: Conversations
+rendered text: ["Conversations","Models","Settings","New chat","No conversations yet. Tap \"New chat\" to start one."]
+native stack headers: [{"title":"Conversations","hidden":true}]
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 5
+RESULT: PASS (app launched, Conversations rendered, no JS exception)
+=== token absent ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.gW3QDu/dist/_expo/static/js/ios/expo-router-8feca5c1b813ad16cf0463929b12f01a.js
+stored token: absent; expected first screen: Setup
+rendered text: ["Enter Bearer Token","Paste the token from your server","Continue"]
+native stack headers: [{"title":"Setup","hidden":false}]
+drive Setup -> Conversations: {"ok":true,"conversationsMounted":true,"backOnSetup":false,"singleTopBar":true,"rendered_text":["Conversations","Models","Settings","New chat","No conversations yet. Tap \"New chat\" to start one."],"native_stack_headers":[{"title":"Conversations","hidden":true}]}
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 9
+RESULT: PASS (app launched, Setup rendered, no JS exception, Setup -> Conversations drive reached Conversations with one top bar)
+=== token wrong ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.gW3QDu/dist/_expo/static/js/ios/expo-router-8feca5c1b813ad16cf0463929b12f01a.js
+stored token: wrong; expected first screen: Conversations
+rendered text: ["Conversations","Models","Settings","New chat","No conversations yet. Tap \"New chat\" to start one."]
+native stack headers: [{"title":"Conversations","hidden":true}]
+drive Conversations -> Chat -> 401 -> Settings: {"ok":true,"wrongAlertShown":true,"errorAlertShown":false,"settingsMounted":true,"alerts":[{"title":"Password wrong or changed","message":"The password on this phone no longer matches the Mac. Paste the current one from the Mac (pbcopy < ~/.phone-models/token)."}],"rendered_text":["Conversations","Models","Settings","New chat","No conversations yet. Tap \"New chat\" to start one.","Chat","hello","Send","Bearer Token","Cancel","Save","Logout"]}
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 11
+RESULT: PASS (app launched, Conversations rendered, no JS exception, Conversations -> Chat -> 401 drive reached Settings with the token form open)
+EXIT:0

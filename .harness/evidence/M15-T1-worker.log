@@ -1,0 +1,48 @@
+M15-T1 Implementation Evidence Log
+
+Task: Extend Ollama client to support optional chat request fields
+- format?: Record<string, unknown> | "json"
+- options?: { num_ctx?: number; [k: string]: unknown }
+- think?: boolean
+- keep_alive?: number | string
+
+Commit at start: b48673499df9aa0d846bad7bbefe1548d57cb272
+
+Test Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/ollama && bun run typecheck
+
+Test Output:
+
+=== BUN TEST ===
+bun test v1.4.0 (1381054db)
+
+ 23 pass
+ 0 fail
+ 37 expect() calls
+Ran 23 tests across 1 file. [21.00ms]
+
+=== TYPESCRIPT TYPECHECK ===
+$ tsc --noEmit
+
+(no errors)
+
+Test Result: PASS
+
+Changes Made:
+1. Updated OllamaChatRequest interface with optional fields:
+   - format?: Record<string, unknown> | "json"
+   - options?: { num_ctx?: number; [k: string]: unknown }
+   - think?: boolean
+   - keep_alive?: number | string
+
+2. Updated chat() method to:
+   - Pass through format if provided
+   - Pass through options if provided
+   - Allow request.think to override auto-detected thinking support
+   - Allow request.keep_alive to override the -1 default
+
+3. Added two comprehensive tests:
+   - Test with all four fields set verifies they appear in the POST body
+   - Test with none of them set verifies backward compatibility (byte-for-byte matching existing behavior)
+
+All existing tests continue to pass, confirming no unrelated behavior was changed.

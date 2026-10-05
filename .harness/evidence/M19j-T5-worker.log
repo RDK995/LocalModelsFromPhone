@@ -1,0 +1,16 @@
+commit 4884fd1cb36d2e115bd69839c1169daaf255cbcc
+$ node extract.mjs check
+r1-heat content_events 1 chars 194 byte-equal true
+r2-heat content_events 1 chars 2323 byte-equal true
+r3-heat content_events 1 chars 2919 byte-equal true
+r4-ev content_events 1 chars 1310 byte-equal true
+exit=0
+/Users/ryankenny/Projects/CodingHarnessv2/.harness/evidence/M19j-T5-judgement.md
+/Users/ryankenny/Projects/CodingHarnessv2/.harness/evidence/M19j-T5-r1-heat-report.md
+/Users/ryankenny/Projects/CodingHarnessv2/.harness/evidence/M19j-T5-r2-heat-report.md
+/Users/ryankenny/Projects/CodingHarnessv2/.harness/evidence/M19j-T5-r3-heat-report.md
+/Users/ryankenny/Projects/CodingHarnessv2/.harness/evidence/M19j-T5-r4-ev-report.md
+/Users/ryankenny/Projects/CodingHarnessv2/.harness/evidence/M19j-T5-worker.log
+4
+192:**AC2: 2 of 4** (needs at least 3 — M19j-AC2 is not met on these four reports).
+194:**AC3: 4 of 4 pass** (literal reading; three borderline calls listed above).

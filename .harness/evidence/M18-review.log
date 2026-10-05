@@ -1,0 +1,24 @@
+bun test v1.4.0 (1381054db)
+
+ 258 pass
+ 0 fail
+ 1524 expect() calls
+Ran 258 tests across 14 files. [10.53s]
+$ tsc --noEmit
+bun test v1.4.0 (1381054db)
+
+ 488 pass
+ 0 fail
+ 12191 expect() calls
+Ran 488 tests across 32 files. [228.00ms]
+$ tsc --noEmit
+  255:9   error  Strings must use doublequote  quotes
+  258:9   error  Strings must use doublequote  quotes
+  261:9   error  Strings must use doublequote  quotes
+  264:9   error  Strings must use doublequote  quotes
+  333:15  error  Strings must use doublequote  quotes
+
+✖ 5 problems (5 errors, 0 warnings)
+  5 errors and 0 warnings potentially fixable with the `--fix` option.
+
+error: script "lint" exited with code 1

@@ -1,0 +1,115 @@
+=== M10c4-T3 Verifier Report ===
+
+## Unit Tests and Typecheck
+
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck
+
+Exit Status: 0
+
+Output:
+bun test v1.4.0 (1381054db)
+
+ 162 pass
+ 0 fail
+ 723 expect() calls
+Ran 162 tests across 5 files. [2.14s]
+$ tsc --noEmit
+
+(typecheck passed with no output)
+
+## Files Changed
+
+Modified (git diff HEAD):
+- server/src/web/tools.ts (systemNote text only)
+- server/src/web/tools.test.ts (13 new assertions added)
+
+Untracked (git status --porcelain, excluding .harness/):
+- server/scripts/source-diversity-proof.sh (from T2)
+
+## Test Assertions Check
+
+Existing FR30 assertions in "systemNote carries the FR30 guidance" test (lines 64-85):
+All 19 assertions present and unchanged:
+✓ "broad or open-ended"
+✓ "more than one"
+✓ "exact date"
+✓ "three different websites"
+✓ "markdown link"
+✓ "copied exactly"
+✓ "tables"
+✓ "narrow"
+✓ "at least two web_search calls" (added)
+✓ "read_page on results from at least three different websites" (added)
+✓ "never a link found inside page text" (added)
+✓ "every subdomain" (added)
+✓ "at least three different sources" (added)
+✓ "one link per source" (added)
+✓ "letter for letter" (added)
+✓ "call read_page on it first" (added)
+✓ "always write the answer" (added)
+✓ "never 【】" (added)
+✓ "no spaces" (added)
+
+All assertions are present in the updated systemNote text.
+
+## Independent Verification of Proof Script Counting Logic
+
+Using the normaliseLinkUrl function from mobile/src/ui/sourceLinks.ts, verified each run's link matching independently:
+
+### T3-Run1 Analysis:
+Prompt 1 (What are today's news trends):
+- Saved sources: 10 URLs (normalized)
+- Links extracted from reply: 4 markdown links
+- Matching:
+  * https://www.dailymail.com/news/article-16171731/... → NOT a saved source (saved is .../news/index.html)
+  * https://www.dailymail.com/news/article-16172385/... → NOT a saved source
+  * https://trenddigest.com/gb/trends/gta-6-... → NOT a saved source (saved is /gb only)
+  * https://www.bbc.co.uk/news → MATCHES (exact saved source)
+- Result: 1 matched distinct source, 3 unmatched links
+- Link pass: NO (need >=3 distinct matched AND 0 unmatched; got 1 distinct and 3 unmatched)
+
+Prompt 2 (What are the latest developments in artificial intelligence?):
+- Saved sources: 5 URLs (normalized)
+- Links extracted from reply: 3 markdown links
+- Matching:
+  * https://kersai.com/ai-breakthroughs-2026/ → NOT a saved source (saved has trailing /)
+  * https://aitrendsmag.com/the-biggest-ai-breakthroughs-2026-2026-so-far/ → NOT a saved source (text says "2026-so-far" but saved says "of-2026-so-far")
+  * https://www.aiapps.com/blog/august-2026-ai-mega-update-major-breakthroughs-launches/ → MATCHES
+- Result: 1 matched distinct source, 2 unmatched links
+- Link pass: NO (need >=3 distinct matched AND 0 unmatched; got 1 distinct and 2 unmatched)
+
+Prompt 3 (What is happening in the world economy right now?):
+- Saved sources: 5 URLs
+- Links extracted from reply: 0 markdown links (reply is empty string)
+- Result: 0 matched distinct sources, 0 unmatched links
+- Link pass: NO (need >=3 distinct matched AND 0 unmatched; got 0 distinct)
+
+Diversity: 3/3 ✓ (all prompts have >=3 distinct hosts)
+Link passes: 0/3 ✗ (need >=2)
+Script exit status: 1 (FAIL)
+
+Verified against proof log: MATCHES (0/3 link passes, 3/3 diversity passes)
+
+### T3-Run2:
+Diversity: 3/3 ✓
+Link passes: 0/3 ✗
+Script exit status: 1 (FAIL)
+
+Verified against proof log: MATCHES (0/3 link passes, 3/3 diversity passes)
+
+### T3-Run3:
+Diversity: 3/3 ✓
+Link passes: 0/3 ✗
+Script exit status: 1 (FAIL)
+
+Verified against proof log: MATCHES (0/3 link passes, 3/3 diversity passes)
+
+## Summary
+
+All three live runs exited with status 1 (FAIL):
+- Run 1: diversity 3/3 (PASS), links 0/3 (FAIL) - Exit 1
+- Run 2: diversity 3/3 (PASS), links 0/3 (FAIL) - Exit 1
+- Run 3: diversity 3/3 (PASS), links 0/3 (FAIL) - Exit 1
+
+The counting logic was verified independently and all counts are accurate. The issue is that the model is not linking enough saved sources (need >=3 distinct, got max 1 or 2) and is producing unmatched links (need 0, got 2-3).
+

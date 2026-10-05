@@ -1,0 +1,110 @@
+VERIFIER: M19j-T11 Validation
+
+TASK: Re-run the four AC35 live deep research runs plus owner's extra non-price question through the server API. Validate with --check-only commands.
+
+COMMAND EXECUTED (check-only validation):
+For each of five runs (r1 heat, r2 heat, r3 heat, r4 ev, r5 gfc2008):
+  cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --check-only <stream> --log <fr41>
+
+EXIT STATUSES:
+  r1 heat: exit 0
+  r2 heat: exit 0
+  r3 heat: exit 0
+  r4 ev: exit 0
+  r5 gfc2008: exit 0
+
+RESULT FILES VALIDATION:
+
+r1 heat (06:27:57Z - 06:31:15Z):
+  Result file: .harness/evidence/M19j-T11-r1-heat-result.json
+  pass: true
+  final_status: "complete"
+  cited_read_pages: 4
+  distinct_pages_read: 6
+  unresolved_citations: []
+  total_wall_s: 198.174
+  Run log exit: exit=0
+  Check-only pass: true
+
+r2 heat (06:31:21Z - 06:35:20Z):
+  Result file: .harness/evidence/M19j-T11-r2-heat-result.json
+  pass: true
+  final_status: "complete"
+  cited_read_pages: 6
+  distinct_pages_read: 6
+  unresolved_citations: []
+  total_wall_s: 239.368
+  Run log exit: exit=0
+  Check-only pass: true
+
+r3 heat (06:35:24Z - 06:39:08Z):
+  Result file: .harness/evidence/M19j-T11-r3-heat-result.json
+  pass: true
+  final_status: "complete"
+  cited_read_pages: 4
+  distinct_pages_read: 6
+  unresolved_citations: []
+  total_wall_s: 224.038
+  Run log exit: exit=0
+  Check-only pass: true
+
+r4 ev (06:39:11Z - 06:42:26Z):
+  Result file: .harness/evidence/M19j-T11-r4-ev-result.json
+  pass: true
+  final_status: "complete"
+  cited_read_pages: 4
+  distinct_pages_read: 4
+  unresolved_citations: []
+  total_wall_s: 194.795
+  Run log exit: exit=0
+  Check-only pass: true
+
+r5 gfc2008 (06:42:30Z - 06:45:40Z):
+  Result file: .harness/evidence/M19j-T11-r5-gfc2008-result.json
+  pass: true
+  final_status: "complete"
+  cited_read_pages: 4
+  distinct_pages_read: 5
+  unresolved_citations: []
+  total_wall_s: 190.268
+  Run log exit: exit=0
+  Check-only pass: true
+
+TIME WINDOWS (non-overlapping check):
+  r1: 2026-10-03T06:27:57Z - 2026-10-03T06:31:15Z (198.174s)
+  r2: 2026-10-03T06:31:21Z - 2026-10-03T06:35:20Z (239.368s)  [gap: 6s after r1]
+  r3: 2026-10-03T06:35:24Z - 2026-10-03T06:39:08Z (224.038s)  [gap: 4s after r2]
+  r4: 2026-10-03T06:39:11Z - 2026-10-03T06:42:26Z (194.795s)  [gap: 3s after r3]
+  r5: 2026-10-03T06:42:30Z - 2026-10-03T06:45:40Z (190.268s)  [gap: 4s after r4]
+  RESULT: All windows non-overlapping
+
+FILES CHANGED CHECK:
+  git diff 64a2d77..HEAD: No changes to tracked files
+  git status: Pre-existing untracked files only (reports/, research_notes/)
+  New evidence files: .harness/evidence/M19j-T11-* (allowed per task)
+  RESULT: No unauthorized file changes
+
+ACCEPTANCE CRITERIA M19j-AC1 VERIFICATION:
+  Criterion: "Live on Mac with qwen3.5:35b-a3b resident and com.harness.server restarted 
+  onto M19i code: 2026-10-02 heat-pump question run 3 times and electric car question once,
+  one at a time, through server API; each run ends within budget plus margin with status 
+  complete or partial; report with >=3 distinct read pages; no unresolved citations."
+
+  Evidence:
+    - r1 heat: final_status=complete, distinct_pages=6, cited_pages=4, unresolved=[], within_budget (198.174/540s)
+    - r2 heat: final_status=complete, distinct_pages=6, cited_pages=6, unresolved=[], within_budget (239.368/540s)
+    - r3 heat: final_status=complete, distinct_pages=6, cited_pages=4, unresolved=[], within_budget (224.038/540s)
+    - r4 ev: final_status=complete, distinct_pages=4, cited_pages=4, unresolved=[], within_budget (194.795/540s)
+    - All runs completed one at a time with non-overlapping time windows
+    - All pass=true in result JSON
+    - All --check-only commands exit 0
+
+SUMMARY:
+  All five runs passed validation
+  All result files exist with pass=true
+  All run logs end with exit=0
+  All --check-only verification commands exit 0
+  No test files weakened
+  No unauthorized files changed
+  All windows non-overlapping
+  AC1 criteria satisfied by all runs

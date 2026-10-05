@@ -1,0 +1,132 @@
+TASK VERIFICATION: M21-T6 for ID=heat
+
+VERIFICATION STARTED: 2026-10-03
+
+==== COMMAND 1: Check-only Test ====
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M21-T6-heat-stream.txt --log ../.harness/evidence/M21-T6-heat-fr41.log
+
+Exit Status: 0
+
+Output (from stdout):
+{
+  "stream_file": "../.harness/evidence/M21-T6-heat-stream.txt",
+  "note": "check-only: total_wall_s taken from done.research.elapsed_ms (0 when absent)",
+  "budget_s": 480,
+  "total_wall_s": 215.144,
+  "planning_s": 33.012,
+  "research_phase_calls": 12,
+  "routine_calls": 13,
+  "routine_p50_s": 7.263,
+  "routine_p95_s": 13.166,
+  "fr41_lines": 17,
+  "distinct_pages_read": 6,
+  "notes_kept": 15,
+  "final_status": "complete",
+  "cited_read_pages": 6,
+  "unresolved_citations": [],
+  "checks": {
+    "status_ok": {
+      "ok": true,
+      "value": "complete"
+    },
+    "within_budget": {
+      "ok": true,
+      "value": {
+        "total_wall_s": 215.144,
+        "limit_s": 540
+      }
+    },
+    "cited_read_pages_ok": {
+      "ok": true,
+      "value": 6
+    },
+    "no_unresolved_citations": {
+      "ok": true,
+      "value": []
+    }
+  },
+  "pass": true
+}
+
+==== Test 1: Result JSON and Run Log ====
+- .harness/evidence/M21-T6-heat-result.json exists: YES
+- pass is true in result.json: YES
+- run log ends with exit=0: YES (verified: line 45 of run log)
+
+Result JSON excerpt:
+{
+  "generation_id": "51ae9df5-784f-472c-b675-ce5e6c63e391",
+  "started_at": "2026-10-03T16:41:36.068Z",
+  "ended_at": "2026-10-03T16:45:11.219Z",
+  "final_status": "complete",
+  "total_wall_s": 215.151,
+  "planning_s": 33.012,
+  "research_phase_calls": 12,
+  "routine_calls": 13,
+  "routine_p50_s": 7.263,
+  "routine_p95_s": 13.166,
+  "budget_s": 480,
+  "distinct_pages_read": 6,
+  "notes_kept": 15,
+  "cited_read_pages": 6,
+  "unresolved_citations": [],
+  "pass": true
+}
+
+==== Test 2: Check-only Test ====
+Command executed: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M21-T6-heat-stream.txt --log ../.harness/evidence/M21-T6-heat-fr41.log
+Exit Status: 0
+Check Result: PASS (all pass-bar checks returned ok=true)
+Values reproduced successfully
+
+==== URL Mapping Check (stream to sources) ====
+Read step done URLs from stream file:
+1. https://heatpumphq.co.uk/blog/heat-pump-cost-uk-2026/ (line 59)
+2. https://www.energyplus.co.uk/price-cap/ofgem-price-cap-october-2026-unit-rates-confirmed (line 115)
+3. https://heatpumpvsboiler.uk/heat-pump-vs-boiler-which-is-better-uk (line 171)
+4. https://domestic-heating.co.uk/how-much-does-a-new-boiler-cost/ (line 183)
+5. https://octopus.energy/blog/energy-prices-from-october-2026-and-what-they-mean-for-you/ (line 197)
+6. https://www.alfalaval.co.uk/products/heat-transfer/heat-exchangers/?utm_source=bing&utm_medium=cpc&utm_campaign=neu_uk_ed_gph_a_plateheatexchangers-Pmax&utm_term=www.alfalaval.co.uk&utm_source=bing&utm_medium=cpc&utm_campaign=&utm_content=&utm_term=&msclkid=efedb2fe74f21d155997d83f44532199 (line 211)
+
+Final sources event (lines 244-245) contains all 6 URLs: YES
+All URLs match: 100% (6/6)
+
+==== Files Changed ====
+Git diff 9aa7b16..HEAD: No committed changes
+Git status --porcelain (excluding .harness/evidence, reports/, research_notes/): No uncommitted changes outside allowed areas
+
+Untracked files in .harness/evidence (all allowed):
+?? .harness/evidence/M21-T6-heat-check.log
+?? .harness/evidence/M21-T6-heat-fr41.log
+?? .harness/evidence/M21-T6-heat-result.json
+?? .harness/evidence/M21-T6-heat-run.log
+?? .harness/evidence/M21-T6-heat-stream.txt
+?? .harness/evidence/M21-T6-heat-worker.log
+
+==== Tests Weakened ====
+No test files were modified (git diff shows no changes to *.test.ts files).
+NO tests were weakened.
+
+==== Acceptance Criteria M21-AC1 Coverage ====
+Criterion: "Live on the Mac with `qwen3.5:35b-a3b` resident: 3 real research-style questions plus the 2026-10-02 heat-pump question each end within the budget plus a small margin with status `complete` or `partial`, a report citing at least 3 distinct read pages, and no citation number that fails to resolve to a saved source; the owner's opinion of report quality is recorded in the evidence (not a gate)."
+
+Sub-criteria:
+1. Heat pump question ran live: DEMONSTRATED by generation_id 51ae9df5-784f-472c-b675-ce5e6c63e391 in result.json and stream.txt
+2. Status complete or partial: DEMONSTRATED - final_status = "complete" in result.json
+3. Within budget (480s) + small margin (540s): DEMONSTRATED - total_wall_s = 215.151s (well within 540s limit)
+4. Report citing >= 3 distinct read pages: DEMONSTRATED - cited_read_pages = 6 in result.json
+5. No unresolved citations: DEMONSTRATED - unresolved_citations = [] in result.json
+6. Owner's opinion recorded: Found in .harness/evidence/M21-T6-heat-worker.log (not tested by verification)
+
+All acceptance criteria have evidence of being exercised.
+
+==== VERIFICATION COMPLETE ====
+Result: PASS
+
+All checks passed:
+- Test 1 (result.json and run log): PASS
+- Test 2 (check-only reproducibility): PASS
+- Files changed validation: PASS (all in allowed list)
+- Tests weakened: NO
+- Acceptance criteria coverage: COMPLETE

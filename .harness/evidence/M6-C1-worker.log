@@ -1,0 +1,116 @@
+== RED (before change) ==
+bun test v1.4.0 (1381054db)
+
+src/extract/extract.test.ts:
+Defuddle Error in async extraction: 63 |     for (const finalUrl of urls) {
+64 |       it(`makes no network request of its own for ${finalUrl}`, async () => {
+65 |         const calls: unknown[] = [];
+66 |         globalThis.fetch = ((...args: unknown[]) => {
+67 |           calls.push(args);
+68 |           return Promise.reject(new Error("recorded, not forwarded"));
+                                         ^
+error: recorded, not forwarded
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/extract/extract.test.ts:68:37)
+      at extractOembed (/Users/ryankenny/Projects/CodingHarnessv2/search/node_modules/defuddle/dist/extractors/x-oembed.js:47:37)
+      at async tryAsyncExtractor (/Users/ryankenny/Projects/CodingHarnessv2/search/node_modules/defuddle/dist/defuddle.js:704:51)
+      at async parseAsync (/Users/ryankenny/Projects/CodingHarnessv2/search/node_modules/defuddle/dist/defuddle.js:663:44)
+      at async Defuddle (/Users/ryankenny/Projects/CodingHarnessv2/search/node_modules/defuddle/dist/node.js:71:35)
+      at async extractPage (/Users/ryankenny/Projects/CodingHarnessv2/search/src/extract/extract.ts:31:26)
+      at async <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/extract/extract.test.ts:70:25)
+
+66 |         globalThis.fetch = ((...args: unknown[]) => {
+67 |           calls.push(args);
+68 |           return Promise.reject(new Error("recorded, not forwarded"));
+69 |         }) as unknown as typeof globalThis.fetch;
+70 |         const r = await extractPage({ body: ARTICLE_HTML, contentType: "text/html", finalUrl, bodyTruncated: false });
+71 |         expect(calls.length).toBe(0);
+                                  ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 2
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/extract/extract.test.ts:71:30)
+(fail) extractPage > offline extraction > makes no network request of its own for https://www.dropbox.com/s/abc/status/123 [9.81ms]
+Defuddle Error in async extraction: 63 |     for (const finalUrl of urls) {
+64 |       it(`makes no network request of its own for ${finalUrl}`, async () => {
+65 |         const calls: unknown[] = [];
+66 |         globalThis.fetch = ((...args: unknown[]) => {
+67 |           calls.push(args);
+68 |           return Promise.reject(new Error("recorded, not forwarded"));
+                                         ^
+error: recorded, not forwarded
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/extract/extract.test.ts:68:37)
+      at extractOembed (/Users/ryankenny/Projects/CodingHarnessv2/search/node_modules/defuddle/dist/extractors/x-oembed.js:47:37)
+      at async tryAsyncExtractor (/Users/ryankenny/Projects/CodingHarnessv2/search/node_modules/defuddle/dist/defuddle.js:704:51)
+      at async parseAsync (/Users/ryankenny/Projects/CodingHarnessv2/search/node_modules/defuddle/dist/defuddle.js:663:44)
+      at async Defuddle (/Users/ryankenny/Projects/CodingHarnessv2/search/node_modules/defuddle/dist/node.js:71:35)
+      at async extractPage (/Users/ryankenny/Projects/CodingHarnessv2/search/src/extract/extract.ts:31:26)
+      at async <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/extract/extract.test.ts:70:25)
+
+66 |         globalThis.fetch = ((...args: unknown[]) => {
+67 |           calls.push(args);
+68 |           return Promise.reject(new Error("recorded, not forwarded"));
+69 |         }) as unknown as typeof globalThis.fetch;
+70 |         const r = await extractPage({ body: ARTICLE_HTML, contentType: "text/html", finalUrl, bodyTruncated: false });
+71 |         expect(calls.length).toBe(0);
+                                  ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 2
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/extract/extract.test.ts:71:30)
+(fail) extractPage > offline extraction > makes no network request of its own for https://x.com/someone/status/123 [6.76ms]
+Defuddle Error in async extraction: 63 |     for (const finalUrl of urls) {
+64 |       it(`makes no network request of its own for ${finalUrl}`, async () => {
+65 |         const calls: unknown[] = [];
+66 |         globalThis.fetch = ((...args: unknown[]) => {
+67 |           calls.push(args);
+68 |           return Promise.reject(new Error("recorded, not forwarded"));
+                                         ^
+error: recorded, not forwarded
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/extract/extract.test.ts:68:37)
+      at send (/Users/ryankenny/Projects/CodingHarnessv2/search/node_modules/defuddle/dist/extractors/reddit.js:150:37)
+      at request (/Users/ryankenny/Projects/CodingHarnessv2/search/node_modules/defuddle/dist/extractors/reddit.js:138:27)
+      at extractFromFeed (/Users/ryankenny/Projects/CodingHarnessv2/search/node_modules/defuddle/dist/extractors/reddit.js:109:37)
+      at async tryAsyncExtractor (/Users/ryankenny/Projects/CodingHarnessv2/search/node_modules/defuddle/dist/defuddle.js:704:51)
+      at async parseAsync (/Users/ryankenny/Projects/CodingHarnessv2/search/node_modules/defuddle/dist/defuddle.js:663:44)
+      at async Defuddle (/Users/ryankenny/Projects/CodingHarnessv2/search/node_modules/defuddle/dist/node.js:71:35)
+      at async extractPage (/Users/ryankenny/Projects/CodingHarnessv2/search/src/extract/extract.ts:31:26)
+      at async <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/extract/extract.test.ts:70:25)
+
+66 |         globalThis.fetch = ((...args: unknown[]) => {
+67 |           calls.push(args);
+68 |           return Promise.reject(new Error("recorded, not forwarded"));
+69 |         }) as unknown as typeof globalThis.fetch;
+70 |         const r = await extractPage({ body: ARTICLE_HTML, contentType: "text/html", finalUrl, bodyTruncated: false });
+71 |         expect(calls.length).toBe(0);
+                                  ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 2
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/search/src/extract/extract.test.ts:71:30)
+(fail) extractPage > offline extraction > makes no network request of its own for https://www.reddit.com/r/x/comments/abc/title/ [6.73ms]
+
+ 4 pass
+ 3 fail
+ 20 expect() calls
+Ran 7 tests across 1 file. [137.00ms]
+
+== GREEN / full ==
+bun install v1.4.0 (1381054db)
+
+Checked 33 installs across 32 packages (no changes) [4.00ms]
+bun test v1.4.0 (1381054db)
+
+ 118 pass
+ 0 fail
+ 233 expect() calls
+Ran 118 tests across 4 files. [1.74s]
+test exit 0
+$ tsc --noEmit
+typecheck exit 0
+ca8dc77adb0c31159fdf0c28bbc38ba3e204bb53

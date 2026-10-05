@@ -1,0 +1,24 @@
+=== Current commit ===
+b8bcae32221cc3941ccef8702cfd6b066de6db93
+
+=== Test command: bun test ===
+bun test v1.4.0 (1381054db)
+
+ 76 pass
+ 0 fail
+ 232 expect() calls
+Ran 76 tests across 4 files. [540.00ms]
+
+=== Test command: bun run typecheck ===
+$ tsc --noEmit
+
+=== Test command: bash scripts/entry-smoke.sh ===
+Entry smoke: starting server on 127.0.0.1:55991
+PASS: server started and is listening on http://127.0.0.1:55991
+PASS: listens on 127.0.0.1 only (127.0.0.1:55991)
+PASS: no token -> 401
+PASS: wrong token -> 401
+PASS: correct token -> 200 (not 401)
+PASS: 0644 token file -> exits non-zero (1)
+PASS: missing token file -> exits non-zero (1)
+Entry smoke: all checks passed

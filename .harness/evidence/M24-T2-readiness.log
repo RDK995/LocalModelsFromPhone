@@ -1,0 +1,121 @@
+=== M24-T2 Readiness Check ===
+Start time: 2026-10-05T09:06:38Z
+
+Step 0: Check ac29-live-run is not running
+PASS: ac29-live-run not running (pgrep exit status: 1)
+
+Step 1: Record pids before restart
+Before restart:
+71661	-15	com.harness.server
+61417	-15	com.harness.search
+64430	0	com.harness.bundle-host
+
+Running kickstarts...
+
+Restarting com.harness.search...
+Exit status: 0
+
+Restarting com.harness.server...
+Exit status: 0
+
+After restart:
+76646	-15	com.harness.server
+76643	-15	com.harness.search
+64430	0	com.harness.bundle-host
+
+Step 2: Git checks
+Current HEAD:
+c984e0efe50433f31122e5e53b32094ee6e8826e
+
+Git status (expecting empty for server search shared mobile):
+
+Last commit in server/ (excluding scripts/):
+8d6e9a82d2b06dcf6240f6b116024bb97084128f 2026-10-05T07:58:21+01:00
+
+Last commit in search/:
+46ead91fb63d9f68d818d0f2a34a005442a45084 2026-10-04T21:47:56+01:00
+
+Last commit in shared/:
+5e38195861dc22708dc61f5f19ca7fd9c062cfe3 2026-10-04T21:38:07+01:00
+
+M23's last commit:
+M23 SHA: 1bc598b1e2754d13e1e6e42b06cbbfa24f9e7ba8
+1bc598b1e2754d13e1e6e42b06cbbfa24f9e7ba8 2026-10-05T08:01:42+01:00 M23 DONE: deep research keeps notes whose quotes differ from the page only by quote marks, dashes, spacing, case, Unicode forms or markdown link/emphasis syntax, matches ellipsis pieces in order, and logs every dropped note with its reason plus a notes_dropped count at run end
+
+Check if M23 is ancestor of HEAD:
+Exit status: 0
+
+Step 3: Process start times
+Process info for server (pid 76646):
+  PID STARTED                      COMMAND
+76646 Mon  5 Oct 10:06:38 2026     /opt/homebrew/bin/bun src/index.ts
+
+Process info for search (pid 76643):
+  PID STARTED                      COMMAND
+76643 Mon  5 Oct 10:06:38 2026     /opt/homebrew/bin/bun src/index.ts
+
+Commit times for comparison:
+  Server/ last commit: 2026-10-05T07:58:21+01:00
+  Shared/ last commit: 2026-10-04T21:38:07+01:00
+  Search/ last commit: 2026-10-04T21:47:56+01:00
+
+Note: Server start time must be after the later of server/ and shared/ commits
+Note: Search start time must be after the later of search/ and shared/ commits
+
+Step 4: Health checks
+Attempting server health check (max 5 tries)...
+  Try 1: curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:7789/health
+  Result: 401
+  Server listening (HTTP 401)
+
+Attempting search health check (max 5 tries)...
+  Try 1: curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:7790/health
+  Result: 404
+  Search listening (HTTP 404)
+
+Step 5: Check Ollama models
+NAME               ID              SIZE     PROCESSOR    CONTEXT    UNTIL   
+qwen3.5:35b-a3b    3460ffeede54    23 GB    100% GPU     32768      Forever    
+
+Step 6: Boot readiness check
+Boot readiness check (2026-10-05 10:06:49)
+repo commit: c984e0efe50433f31122e5e53b32094ee6e8826e
+
+==== Boot time and LaunchAgents started by launchd since this boot ====
+  system booted at: Tue 29 Sep 2026 20:43:58 BST (epoch 1790711038)
+2026-10-05 10:06:49 PASS  LaunchAgent com.harness.server loaded and running (state: running)
+        com.harness.server launchd-tracked pid: 76646
+2026-10-05 10:06:49 PASS  com.harness.server pid 76646 has parent pid 1 (launchd), i.e. not started from a shell (ppid: 1)
+        com.harness.server process start time: Mon Oct  5 10:06:38 2026 (epoch 1791191198)
+2026-10-05 10:06:49 PASS  com.harness.server process started after this boot (start epoch 1791191198 > boot epoch 1790711038)
+2026-10-05 10:06:49 PASS  LaunchAgent com.harness.bundle-host loaded and running (state: running)
+        com.harness.bundle-host launchd-tracked pid: 64430
+2026-10-05 10:06:49 PASS  com.harness.bundle-host pid 64430 has parent pid 1 (launchd), i.e. not started from a shell (ppid: 1)
+        com.harness.bundle-host process start time: Fri Oct  2 15:28:23 2026 (epoch 1790951303)
+2026-10-05 10:06:49 PASS  com.harness.bundle-host process started after this boot (start epoch 1790951303 > boot epoch 1790711038)
+        com.harness.bundle-host process tree (agent pid + descendants): 64430 
+        TCP 8081 listener pid: 64430
+2026-10-05 10:06:49 PASS  TCP 8081 listener (pid 64430) is com.harness.bundle-host's launchd pid (64430) or a descendant of it
+
+==== Server reachable (unauthenticated rejected, authenticated works over the tailnet) ====
+2026-10-05 10:06:49 PASS  unauthenticated GET http://127.0.0.1:7789/v1/models -> 401 (got 401)
+2026-10-05 10:06:50 PASS  authenticated GET https://ryans-mac-studio.tailc3648a.ts.net:8443/v1/state -> 200 (got 200)
+
+==== Bundle host reachable over the tailnet (status, iOS manifest, bundle fetch) ====
+2026-10-05 10:06:50 PASS  GET http://ryans-mac-studio.tailc3648a.ts.net:8081/status -> packager-status:running (got 'packager-status:running')
+        iOS manifest fetch: 200; launchAsset.url: http://ryans-mac-studio.tailc3648a.ts.net:8081/expo-router.bundle?platform=ios&dev=false&hot=false&lazy=true&minify=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=src%2Fapp&unstable_transformProfile=hermes-stable
+2026-10-05 10:06:50 PASS  iOS manifest fetch -> 200 JSON (got 200)
+2026-10-05 10:06:50 PASS  manifest's bundle/launch-asset URL names the tailnet host (http://ryans-mac-studio.tailc3648a.ts.net:8081/...)
+        bundle fetch: 200, 3879014 bytes
+2026-10-05 10:06:50 PASS  fetching the bundle URL -> 200 with a non-trivial body (got 200, 3879014 bytes)
+
+==== pf: LaunchDaemon loaded, anchor interface matches the current tailnet interface ====
+2026-10-05 10:06:50 PASS  pf LaunchDaemon com.harness.pf-bundle-host is loaded (last exit code = 0)
+        pf anchor recorded interface (/var/run/com.harness.pf-bundle-host.iface): utun5
+        current tailnet IP (100.82.139.85) resolves to interface: utun5
+2026-10-05 10:06:50 PASS  pf anchor interface (utun5) matches the current tailnet interface for IP 100.82.139.85
+
+==== Result ====
+  PASS: ALL CHECKS PASSED
+
+Boot readiness check exit status: 0

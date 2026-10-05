@@ -1,0 +1,250 @@
+: connected
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-0
+event: step
+data: {"step_id":"plan","kind":"plan","status":"started","elapsed_ms":0,"budget_ms":480000}
+
+: keep-alive
+
+: keep-alive
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-1
+event: step
+data: {"step_id":"plan","kind":"plan","status":"done","elapsed_ms":34060,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-2
+event: step
+data: {"step_id":"0f0ec1f0-ac3c-4cca-a600-7fa722645885","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":34060,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-3
+event: step
+data: {"step_id":"0f0ec1f0-ac3c-4cca-a600-7fa722645885","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":36914,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-4
+event: step
+data: {"step_id":"707fb85a-0d51-474a-8225-230dfd04e0c1","kind":"search","status":"started","query":"UK energy price cap October 2026 electricity gas per kWh","elapsed_ms":36914,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-5
+event: step
+data: {"step_id":"707fb85a-0d51-474a-8225-230dfd04e0c1","kind":"search","status":"done","query":"UK energy price cap October 2026 electricity gas per kWh","elapsed_ms":39411,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-6
+event: step
+data: {"step_id":"fc07bc23-f50f-4938-860e-4af77a066e8c","kind":"search","status":"started","query":"average annual running costs air source heat pump vs gas boiler UK 2026","elapsed_ms":39412,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-7
+event: step
+data: {"step_id":"fc07bc23-f50f-4938-860e-4af77a066e8c","kind":"search","status":"done","query":"average annual running costs air source heat pump vs gas boiler UK 2026","elapsed_ms":41226,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-8
+event: step
+data: {"step_id":"5c33b32a-8f55-44e7-a3f3-42d0feb87d33","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":41227,"budget_ms":480000}
+
+: keep-alive
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-9
+event: step
+data: {"step_id":"5c33b32a-8f55-44e7-a3f3-42d0feb87d33","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":48055,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-10
+event: step
+data: {"step_id":"5befaba7-06c9-4fba-8bd3-8fcf03db1b42","kind":"read","status":"started","url":"https://www.ofgem.gov.uk/your-energy-supply/your-energy-bill/energy-price-cap-unit-rates-and-standing-charges","elapsed_ms":48055,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-11
+event: step
+data: {"step_id":"7e775572-6006-4c94-b7b6-4621ee574b1f","kind":"read","status":"started","url":"https://ukcalculator.com/heat-pump-running-cost-calculator.html","elapsed_ms":48055,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-12
+event: step
+data: {"step_id":"5befaba7-06c9-4fba-8bd3-8fcf03db1b42","kind":"read","status":"done","url":"https://www.ofgem.gov.uk/your-energy-supply/your-energy-bill/energy-price-cap-unit-rates-and-standing-charges","elapsed_ms":48260,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-13
+event: step
+data: {"step_id":"972625be-ac6b-4c76-895f-d79dd0dcc333","kind":"model","status":"started","detail":"Taking notes: ofgem.gov.uk","elapsed_ms":48277,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-14
+event: step
+data: {"step_id":"972625be-ac6b-4c76-895f-d79dd0dcc333","kind":"model","status":"done","detail":"Taking notes: ofgem.gov.uk","elapsed_ms":57877,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-15
+event: step
+data: {"step_id":"c90d5b17-bf13-476d-9e83-2f47c3188640","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":57878,"budget_ms":480000}
+
+: keep-alive
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-16
+event: step
+data: {"step_id":"c90d5b17-bf13-476d-9e83-2f47c3188640","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":60748,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-17
+event: step
+data: {"step_id":"224ce3b2-4602-4bfa-bb29-4a8a53e68604","kind":"search","status":"started","query":"UK air source heat pump installation cost average 2026","elapsed_ms":60748,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-18
+event: step
+data: {"step_id":"224ce3b2-4602-4bfa-bb29-4a8a53e68604","kind":"search","status":"done","query":"UK air source heat pump installation cost average 2026","elapsed_ms":62196,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-19
+event: step
+data: {"step_id":"a4576258-ff6d-487b-8a69-87dcfd3b22b8","kind":"search","status":"started","query":"Boiler Upgrade Scheme grant amount October 2026 UK","elapsed_ms":62197,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-20
+event: step
+data: {"step_id":"a4576258-ff6d-487b-8a69-87dcfd3b22b8","kind":"search","status":"done","query":"Boiler Upgrade Scheme grant amount October 2026 UK","elapsed_ms":64138,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-21
+event: step
+data: {"step_id":"edcddeeb-388c-4774-b087-4f4da8977567","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":64139,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-22
+event: step
+data: {"step_id":"edcddeeb-388c-4774-b087-4f4da8977567","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":70923,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-23
+event: step
+data: {"step_id":"f4010088-7179-4936-b15a-6f7a7db81332","kind":"read","status":"started","url":"https://heatpumpcalcs.co.uk/blog/boiler-upgrade-scheme-2026/","elapsed_ms":70923,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-24
+event: step
+data: {"step_id":"c93a9767-3013-4b4b-ba68-b0fd2fbbbc7c","kind":"read","status":"started","url":"https://greenhatrenewables.co.uk/blog/boiler-upgrade-scheme-2026-guide/","elapsed_ms":70923,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-25
+event: step
+data: {"step_id":"f4010088-7179-4936-b15a-6f7a7db81332","kind":"read","status":"done","url":"https://heatpumpcalcs.co.uk/blog/boiler-upgrade-scheme-2026/","elapsed_ms":71363,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-26
+event: step
+data: {"step_id":"c4e96738-463f-4fdb-90f5-c11d80fcf7de","kind":"model","status":"started","detail":"Taking notes: heatpumpcalcs.co.uk","elapsed_ms":71401,"budget_ms":480000}
+
+: keep-alive
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-27
+event: step
+data: {"step_id":"c4e96738-463f-4fdb-90f5-c11d80fcf7de","kind":"model","status":"done","detail":"Taking notes: heatpumpcalcs.co.uk","elapsed_ms":79436,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-28
+event: step
+data: {"step_id":"26b3ba68-1a15-4efb-b02d-d7066c1024a2","kind":"model","status":"started","detail":"Choosing searches","elapsed_ms":79437,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-29
+event: step
+data: {"step_id":"26b3ba68-1a15-4efb-b02d-d7066c1024a2","kind":"model","status":"done","detail":"Choosing searches","elapsed_ms":82713,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-30
+event: step
+data: {"step_id":"e353f476-82d6-4ae8-9e49-bd79e7234fb8","kind":"search","status":"started","query":"UK air source heat pump performance efficiency at low temperatures 2026","elapsed_ms":82713,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-31
+event: step
+data: {"step_id":"e353f476-82d6-4ae8-9e49-bd79e7234fb8","kind":"search","status":"done","query":"UK air source heat pump performance efficiency at low temperatures 2026","elapsed_ms":84215,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-32
+event: step
+data: {"step_id":"bd2cb112-ce5a-4f19-8f5d-b67066256437","kind":"search","status":"started","query":"gas boiler vs heat pump heating capacity cold weather UK winter conditions","elapsed_ms":84215,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-33
+event: step
+data: {"step_id":"bd2cb112-ce5a-4f19-8f5d-b67066256437","kind":"search","status":"done","query":"gas boiler vs heat pump heating capacity cold weather UK winter conditions","elapsed_ms":87563,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-34
+event: step
+data: {"step_id":"23c52c4c-a4cd-469b-9c81-a952ac7a7faf","kind":"model","status":"started","detail":"Choosing pages","elapsed_ms":87563,"budget_ms":480000}
+
+: keep-alive
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-35
+event: step
+data: {"step_id":"23c52c4c-a4cd-469b-9c81-a952ac7a7faf","kind":"model","status":"done","detail":"Choosing pages","elapsed_ms":94332,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-36
+event: step
+data: {"step_id":"ad99062c-4093-4bca-9a2c-84d082ed26c4","kind":"read","status":"started","url":"https://homeheatpumpguide.co.uk/blog/heat-pump-vs-gas-boiler-full-uk-comparison","elapsed_ms":94332,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-37
+event: step
+data: {"step_id":"30f064b0-a5c4-47ca-b4ad-1f2f020ae121","kind":"read","status":"started","url":"https://heatable.co.uk/boiler-advice/heat-pumps-vs-gas-boilers","elapsed_ms":94333,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-38
+event: step
+data: {"step_id":"ad99062c-4093-4bca-9a2c-84d082ed26c4","kind":"read","status":"done","url":"https://homeheatpumpguide.co.uk/blog/heat-pump-vs-gas-boiler-full-uk-comparison","elapsed_ms":94749,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-39
+event: step
+data: {"step_id":"eca06f2b-b964-4e7d-bf87-863cb5c7f19e","kind":"model","status":"started","detail":"Taking notes: homeheatpumpguide.co.uk","elapsed_ms":94880,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-40
+event: step
+data: {"step_id":"eca06f2b-b964-4e7d-bf87-863cb5c7f19e","kind":"model","status":"done","detail":"Taking notes: homeheatpumpguide.co.uk","elapsed_ms":104481,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-41
+event: step
+data: {"step_id":"7e775572-6006-4c94-b7b6-4621ee574b1f","kind":"read","status":"done","url":"https://ukcalculator.com/heat-pump-running-cost-calculator.html","elapsed_ms":104482,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-42
+event: step
+data: {"step_id":"16d617cd-88fd-4e96-98ac-2f15b382ca72","kind":"model","status":"started","detail":"Taking notes: ukcalculator.com","elapsed_ms":104518,"budget_ms":480000}
+
+: keep-alive
+
+: keep-alive
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-43
+event: step
+data: {"step_id":"16d617cd-88fd-4e96-98ac-2f15b382ca72","kind":"model","status":"done","detail":"Taking notes: ukcalculator.com","elapsed_ms":122684,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-44
+event: step
+data: {"step_id":"c93a9767-3013-4b4b-ba68-b0fd2fbbbc7c","kind":"read","status":"done","url":"https://greenhatrenewables.co.uk/blog/boiler-upgrade-scheme-2026-guide/","elapsed_ms":122685,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-45
+event: step
+data: {"step_id":"88e9976b-6e81-4c65-bb34-f0bb832743ed","kind":"model","status":"started","detail":"Taking notes: greenhatrenewables.co.uk","elapsed_ms":122688,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-46
+event: step
+data: {"step_id":"88e9976b-6e81-4c65-bb34-f0bb832743ed","kind":"model","status":"done","detail":"Taking notes: greenhatrenewables.co.uk","elapsed_ms":131067,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-47
+event: step
+data: {"step_id":"30f064b0-a5c4-47ca-b4ad-1f2f020ae121","kind":"read","status":"done","url":"https://heatable.co.uk/boiler-advice/heat-pumps-vs-gas-boilers","elapsed_ms":131068,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-48
+event: step
+data: {"step_id":"ec2dce6b-f137-49a7-bb97-756b7679d15e","kind":"model","status":"started","detail":"Taking notes: heatable.co.uk","elapsed_ms":131324,"budget_ms":480000}
+
+: keep-alive
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-49
+event: step
+data: {"step_id":"ec2dce6b-f137-49a7-bb97-756b7679d15e","kind":"model","status":"done","detail":"Taking notes: heatable.co.uk","elapsed_ms":142368,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-50
+event: step
+data: {"step_id":"write","kind":"write","status":"started","elapsed_ms":142369,"budget_ms":480000}
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+: keep-alive
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-51
+event: step
+data: {"step_id":"write","kind":"write","status":"done","elapsed_ms":217696,"budget_ms":480000}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-52
+event: content
+data: {"text":"Based on the provided research notes, here is the comparison of heat pumps and gas boilers for heating typical UK homes in 2026.\n\n**Running Costs and Energy Bills**\nThe projected running costs for a typical UK home vary based on annual heating demand, which ranges from 8,000 to 18,000 kWh [2]. For the July–September 2026 period, the electricity unit rate is set at 26.11p per kWh, while the gas unit rate is 7.33p per kWh [2].\n\nA modern condensing gas boiler operates at approximately 90% efficiency in real-world use [2]. Consequently, to meet a heating demand of 8,000–18,000 kWh, the actual gas consumed would be higher than the output due to this efficiency factor. In contrast, air source heat pumps routinely achieve efficiencies between 250% and 350% (a Coefficient of Performance of 2.5–3.5) because they move existing heat rather than generating it [6]. Well-designed heat pumps maintain a COP above 2.0 even on the coldest UK winter days [6].\n\nIt is noted that gas unit prices include 5% VAT, whereas electricity unit prices exclude VAT during the period from October 1, 2026, to March 31, 2027 [1]. The figures cited represent a 4% increase over the previous quarter's rates [1]. While specific total annual bill amounts are not calculated in the notes, the data confirms that electricity unit rates (26.11p) are significantly higher than gas unit rates (7.33p), though the superior efficiency of heat pumps offsets this difference in fuel consumption requirements.\n\n**Installation Expenses and Grants**\nThe total installation cost for replacing a gas boiler with an air source heat pump is reduced by the Boiler Upgrade Scheme, which remains active and funded in 2026 [4]. The scheme provides a specific grant of £7,500 for air source heat pump installations [3].\n\nThis grant is applied as a direct deduction from the total installation cost by the MCS-certified installer, meaning the homeowner handles no paperwork and does not receive the money directly [3]. The installer applies for the grant on the homeowner's behalf [3]. The scheme budget was doubled to £295 million for 2025/26 and extended through at least 2028 [4]. While the base installation cost before the grant is not explicitly stated in the notes, the net expense to the homeowner is reduced by the full £7,500 amount [4].\n\n**Performance in Cold Weather Conditions**\nAir source heat pumps perform effectively during typical cold UK winter conditions. A well-designed system retains sufficient heating capacity and efficiency, maintaining a Coefficient of Performance above 2.0 even on the coldest days [6]. This stands in contrast to gas boilers, which have a fundamental physical limit on efficiency capped near 100%, with the best condensing boilers achieving only 92–94% in real-world conditions [6]. The ability of heat pumps to move existing heat allows them to maintain significantly higher efficiency ratings than gas boilers [6]."}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-53
+event: sources
+data: {"items":[{"title":"Energy price cap unit rates and standing charges","url":"https://www.ofgem.gov.uk/your-energy-supply/your-energy-bill/energy-price-cap-unit-rates-and-standing-charges","n":1},{"title":"Heat Pump Running Cost Calculator 2026 UK","url":"https://ukcalculator.com/heat-pump-running-cost-calculator.html","n":2},{"title":"Boiler Upgrade Scheme 2026 — £7,500 Grant Complete Guide","url":"https://heatpumpcalcs.co.uk/blog/boiler-upgrade-scheme-2026/","n":3},{"title":"Boiler Upgrade Scheme 2026: How to Get Your £7,500 Grant","url":"https://greenhatrenewables.co.uk/blog/boiler-upgrade-scheme-2026-guide/","n":4},{"title":"Heat Pumps vs Gas Boilers Comparison (UK 2026)","url":"https://heatable.co.uk/boiler-advice/heat-pumps-vs-gas-boilers","n":5},{"title":"Heat Pump vs Gas Boiler: Full UK Comparison (2026)","url":"https://homeheatpumpguide.co.uk/blog/heat-pump-vs-gas-boiler-full-uk-comparison","n":6}]}
+
+id: 80786cbb-ee7a-4a71-a8a8-03a0fc522737-54
+event: done
+data: {"status":"complete","model":"qwen3.5:35b-a3b","eval_count":3363,"tokens_per_second":46.90112627552968,"research":{"status":"complete","elapsed_ms":217697,"budget_ms":480000}}
+

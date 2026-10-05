@@ -1,0 +1,170 @@
+VERIFICATION LOG FOR M19-T3
+==============================================================================
+Task: The phone saves a deep research reply like any answer, keeps a stopped run's steps and sources, and resumes it after backgrounding
+
+Run Date: 2026-10-02
+Verifier: Claude Haiku 4.5
+
+==============================================================================
+COMMAND EXECUTED
+==============================================================================
+
+Command as run (full test suite):
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun test && bun run typecheck && npx eslint --max-warnings 0 src/api/client.test.ts src/chat/conversationSession.test.ts src/ui/chatItems.test.ts
+
+Exit Status: 0
+
+==============================================================================
+TEST OUTPUT
+==============================================================================
+
+bun test v1.4.0 (1381054db)
+
+ 493 pass
+ 0 fail
+ 12228 expect() calls
+Ran 493 tests across 32 files. [234.00ms]
+
+Typecheck:
+$ tsc --noEmit
+(no output = clean)
+
+ESLint:
+(no output = clean, --max-warnings 0 enforced)
+
+==============================================================================
+FILES CHANGED (vs HEAD 63d14e4)
+==============================================================================
+
+Git diff --name-only HEAD:
+- mobile/src/api/client.test.ts (allowed)
+- mobile/src/chat/conversationSession.test.ts (allowed)
+- mobile/src/ui/chatItems.test.ts (allowed)
+
+All changes are test files. No production code changes detected. All files are in the "Files Allowed To Change" list.
+
+==============================================================================
+TESTS WEAKENED CHECK
+==============================================================================
+
+Reviewed diffs for all three changed test files:
+- conversationSession.test.ts: New describe block "sendInConversation: deep research saving and stop (M19)" added after existing tests. No existing tests modified or weakened.
+- chatItems.test.ts: New test "AC3.3: a reopened deep research message..." added to existing describe block. No existing tests modified or weakened.
+- client.test.ts: New test "(m) AC3.4: a drop mid deep research resumes..." added to existing describe block. No existing tests modified or weakened.
+
+Result: NO TESTS WEAKENED
+
+==============================================================================
+ACCEPTANCE CRITERIA EXERCISED
+==============================================================================
+
+Criterion 1 (Save deep research reply with report, steps, sources, research status; no page text/notes):
+  File: mobile/src/chat/conversationSession.test.ts
+  Test: "AC3.1: saves a deep research reply with report as content, steps, sources and research status; no page text or notes" (lines 964-1021)
+  
+  Exercised by:
+  - Creates a full deep research event stream (plan/search/read/write steps with elapsed_ms and budget_ms)
+  - Includes sources event with n field
+  - Includes content event (report)
+  - Includes done event with research status "partial"
+  - Asserts reply.content is the report text
+  - Asserts reply.steps contains all steps with elapsed_ms
+  - Asserts reply.sources contains items with n field
+  - Asserts reply.research has correct status and timings
+  - Asserts reply.status is "complete"
+  - Verifies only valid Message fields are stored (no page text/notes) via allowed set check
+  - Verifies reopening from fresh store returns identical data
+  
+  Criterion is EXERCISED: The test validates all required fields are persisted correctly and unwanted fields are excluded.
+
+Criterion 2 (Next send includes report with sources appended per FR23):
+  File: mobile/src/chat/conversationSession.test.ts
+  Test: "AC3.2: the next send includes the report with sources appended, following FR23 history rule" (lines 1023-1066)
+  
+  Exercised by:
+  - First send: deep research creates conversation with report and sources
+  - Second send: plain message prompted
+  - Asserts the second send's request messages body includes:
+    - User prompt: "research x"
+    - Assistant turn with report and sources formatted as "Report [1] and [2].\n\nSources:\n[1] X — https://x.test/a\n[2] Y — https://y.test/b"
+    - User follow-up: "follow-up"
+  - No steps/sources text appear separately; only the sources list is appended per FR23
+  
+  Criterion is EXERCISED: The test validates exact message format sent to the server, demonstrating that the report carries through with sources formatted correctly.
+
+Criterion 3a (Second-Stop stream saved with status stopped, empty content, steps/sources; reopens from fresh store):
+  File: mobile/src/chat/conversationSession.test.ts
+  Test: "AC3.3: a second-Stop stream is saved with status stopped, empty content, steps and sources; reopens from fresh store" (lines 1068-1112)
+  
+  Exercised by:
+  - Sends a deep research stream with steps and sources but no content
+  - done event has status "cancelled" (no research field)
+  - Asserts reply.status is "stopped"
+  - Asserts reply.content is "" (empty string)
+  - Asserts reply.steps contains the plan and search steps
+  - Asserts reply.sources contains items with n field
+  - Asserts no "research" field is present (because done event lacks research field)
+  - Verifies reopening from fresh store returns identical data
+  
+  Criterion is EXERCISED: The test validates a cancelled/stopped run is persisted correctly and survives reopening.
+
+Criterion 3b (Reopened deep research message with empty content builds chat items with steps and "Sources (n)":
+  File: mobile/src/ui/chatItems.test.ts
+  Test: "AC3.3: a reopened deep research message with empty content builds items with steps and 'Sources (n)' without throwing" (lines 548-562)
+  
+  Exercised by:
+  - Creates a stopped deep research message (empty content, has steps and sources)
+  - Calls buildChatItems to render the message
+  - Asserts no exception is thrown
+  - Asserts item.steps equals the input steps (plan/search/read/write with elapsed_ms)
+  - Asserts item.sources equals the input sources with n field
+  - Asserts item.content is ""
+  - Asserts sourceListHeader(sources) returns "Sources (2)" (source count header)
+  - Asserts item.streaming is false
+  
+  Criterion is EXERCISED: The test validates the UI can render a stopped research run without crashing and displays step/source information correctly.
+
+Criterion 4 (Deep research drop/resume delivers every step with elapsed_ms and report exactly once, no gaps/duplicates):
+  File: mobile/src/api/client.test.ts
+  Test: "(m) AC3.4: a drop mid deep research resumes and delivers every step (with elapsed_ms) and the report exactly once, no gaps or duplicates, ending with research status" (lines 1670-1837)
+  
+  Exercised by:
+  - Creates initial stream with plan step (id gen-dr-1, gen-dr-2) and search step (id gen-dr-3) with elapsed_ms and budget_ms
+  - Drops the stream mid-reply
+  - Resumes with Last-Event-ID header set to "gen-dr-3" (last seen event)
+  - Resumed stream re-sends gen-dr-3 and continues with new events: read, write steps, content, sources, done
+  - Asserts all events delivered exactly once (9 events: 6 steps, content, sources, done)
+  - Asserts steps map contains exactly 4 entries (plan, search, read, write) with correct elapsed_ms:
+    ["p", "plan", "done", 1000]
+    ["s1", "search", "done", 2000]
+    ["r1", "read", "done", 3000]
+    ["w", "write", "done", 400000]
+  - Asserts content equals "Research report [1]."
+  - Asserts sources contains correct item with n field
+  - Asserts research status is "partial" with elapsed_ms and budget_ms
+  - No gaps: all events received and deduplicated
+  - No duplicates: only one onComplete call
+  
+  Criterion is EXERCISED: The test validates the resume mechanism delivers all steps with elapsed times, avoids gaps/duplicates, and includes the final report and research status.
+
+==============================================================================
+SUMMARY
+==============================================================================
+
+Command Exit Status: 0
+Tests Passed: 493
+Tests Failed: 0
+Typecheck: CLEAN
+ESLint: CLEAN (--max-warnings 0)
+
+Files Changed: 3 test files (all allowed)
+Files Weakened: 0
+Criteria Exercised: 4/4 (all criteria have tests that exercise them)
+
+Result: PASS
+
+The task has been successfully verified. All acceptance criteria are exercised by specific tests that:
+1. Verify deep research replies are persisted with report, steps, sources, and research status, excluding transient data
+2. Confirm the next send includes the report with sources formatted per FR23 history rule
+3. Ensure stopped runs persist and reopen correctly, and UI renders them without error
+4. Validate drop/resume during deep research avoids gaps and duplicates while preserving all steps and the report

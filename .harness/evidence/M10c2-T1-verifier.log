@@ -1,0 +1,13 @@
+cd /Users/ryankenny/Projects/CodingHarnessv2/mobile && bun test src/ui/sourceLinks.test.ts && bun run typecheck && bun run lint
+
+Exit Status: 0
+
+Output:
+bun test v1.4.0 (1381054db)
+
+ 51 pass
+ 0 fail
+ 53 expect() calls
+Ran 51 tests across 1 file. [4.00ms]
+$ tsc --noEmit
+$ eslint src --max-warnings 0

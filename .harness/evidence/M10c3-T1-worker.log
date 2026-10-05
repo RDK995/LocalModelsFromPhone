@@ -1,0 +1,11 @@
+commit: f8bae28cc055bf31d2df57bbaf0f29e5bb080db7 (+ uncommitted M10c3-T1 changes to src/ui/markdown.ts, src/ui/markdown.test.ts)
+$ bun test src/ui/markdown.test.ts && bun run typecheck && bun run lint
+bun test v1.4.0 (1381054db)
+
+ 34 pass
+ 0 fail
+ 1955 expect() calls
+Ran 34 tests across 1 file. [99.00ms]
+$ tsc --noEmit
+$ eslint src --max-warnings 0
+exit: 0

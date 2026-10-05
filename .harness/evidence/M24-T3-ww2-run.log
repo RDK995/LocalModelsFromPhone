@@ -1,0 +1,57 @@
+{
+  "id": "ww2",
+  "question": "What was the cause of World War Two from German perspective",
+  "generation_id": "5898f9f5-eb0b-45e7-aa91-ed7372053176",
+  "started_at": "2026-10-05T09:10:53.569Z",
+  "ended_at": "2026-10-05T09:14:10.136Z",
+  "fr41_selection": "server.log bytes written between just before the POST and after done (lines carry no run id)",
+  "saw_done": true,
+  "budget_s": 480,
+  "total_wall_s": 196.567,
+  "planning_s": 31.871,
+  "research_phase_calls": 12,
+  "routine_calls": 13,
+  "routine_p50_s": 2.893,
+  "routine_p95_s": 14.155,
+  "fr41_lines": 17,
+  "distinct_pages_read": 6,
+  "notes_kept": 14,
+  "notes_dropped": 8,
+  "drop_reasons": {
+    "quote_not_found": 8
+  },
+  "note_drop_lines": 8,
+  "final_status": "complete",
+  "cited_read_pages": 4,
+  "unresolved_citations": [],
+  "checks": {
+    "status_ok": {
+      "ok": true,
+      "value": "complete"
+    },
+    "within_budget": {
+      "ok": true,
+      "value": {
+        "total_wall_s": 196.567,
+        "limit_s": 540
+      }
+    },
+    "cited_read_pages_ok": {
+      "ok": true,
+      "value": 4
+    },
+    "no_unresolved_citations": {
+      "ok": true,
+      "value": []
+    }
+  },
+  "pass": true,
+  "sources_check": {
+    "sources_checked": 6,
+    "unreadable_sources": [],
+    "unchecked_sources": [],
+    "ok": true
+  },
+  "ac37_pass": true
+}
+exit=0

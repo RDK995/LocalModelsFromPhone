@@ -1,0 +1,17 @@
+bun test v1.4.0 (1381054db)
+
+ 171 pass
+ 0 fail
+ 744 expect() calls
+Ran 171 tests across 6 files. [2.14s]
+$ tsc --noEmit
+ok   mark in backticks ignored -> resolved=1 unresolved=[]
+ok   FR27 link to unnumbered source -> resolved=2 unresolved=[]
+SELF-TEST PASS
+bun test v1.4.0 (1381054db)
+
+ 411 pass
+ 0 fail
+ 11906 expect() calls
+Ran 411 tests across 26 files. [222.00ms]
+$ tsc --noEmit

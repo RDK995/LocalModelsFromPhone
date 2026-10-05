@@ -1,0 +1,101 @@
+bun test v1.4.0 (1381054db)
+
+src/ui/streamReducer.test.ts:
+14 |   data: { step_id, kind: "search" as const, status, ...extra },
+15 | });
+16 | 
+17 | describe("applyStreamEvent web steps and sources", () => {
+18 |   it("starts with empty steps and sources", () => {
+19 |     expect(initialStreamAccumulator.steps).toEqual([]);
+                                                ^
+error: expect(received).toEqual(expected)
+
+Expected: []
+Received: undefined
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/streamReducer.test.ts:19:44)
+(fail) applyStreamEvent web steps and sources > starts with empty steps and sources [0.12ms]
+23 |   it("upserts a step by id: started then done leaves one done entry", () => {
+24 |     const acc = [step("a", "started"), step("a", "done")].reduce(
+25 |       applyStreamEvent,
+26 |       initialStreamAccumulator
+27 |     );
+28 |     expect(acc.steps).toEqual([step("a", "done").data]);
+                ^
+TypeError: undefined is not an object (evaluating 'acc.steps')
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/streamReducer.test.ts:28:12)
+(fail) applyStreamEvent web steps and sources > upserts a step by id: started then done leaves one done entry [0.06ms]
+31 |   it("does not add a second entry for a replayed duplicate", () => {
+32 |     const acc = [step("a", "started"), step("a", "started")].reduce(
+33 |       applyStreamEvent,
+34 |       initialStreamAccumulator
+35 |     );
+36 |     expect(acc.steps).toHaveLength(1);
+                ^
+TypeError: undefined is not an object (evaluating 'acc.steps')
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/streamReducer.test.ts:36:12)
+(fail) applyStreamEvent web steps and sources > does not add a second entry for a replayed duplicate [0.04ms]
+39 |   it("keeps two steps in arrival order, replacing in place", () => {
+40 |     const acc = [step("a", "started"), step("b", "started"), step("a", "done")].reduce(
+41 |       applyStreamEvent,
+42 |       initialStreamAccumulator
+43 |     );
+44 |     expect(acc.steps.map((s) => [s.step_id, s.status])).toEqual([
+                ^
+TypeError: undefined is not an object (evaluating 'acc.steps')
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/streamReducer.test.ts:44:12)
+(fail) applyStreamEvent web steps and sources > keeps two steps in arrival order, replacing in place [0.04ms]
+54 |     });
+55 |     const two = applyStreamEvent(one, {
+56 |       type: "sources",
+57 |       data: { items: [{ title: "B", url: "https://b" }] },
+58 |     });
+59 |     expect(two.sources).toEqual([{ title: "B", url: "https://b" }]);
+                ^
+TypeError: undefined is not an object (evaluating 'two.sources')
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/ui/streamReducer.test.ts:59:12)
+(fail) applyStreamEvent web steps and sources > replaces sources with the latest event's items [0.04ms]
+
+src/chat/chatController.test.ts:
+175 |         ...(web === undefined ? {} : { web }),
+176 |       });
+177 |       return JSON.parse(body);
+178 |     }
+179 | 
+180 |     expect((await bodyFor(true)).web).toBe(true);
+                                            ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: undefined
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/chat/chatController.test.ts:180:39)
+(fail) sendMessage (F2: model attribution) > sends web:true only when callbacks.web is true, else no web key [0.21ms]
+
+src/api/client.test.ts:
+540 |         doneChunk,
+541 |       ],
+542 |       req
+543 |     );
+544 |     expect(errored).toBeNull();
+545 |     expect(events.map((e) => e.type)).toEqual(["step", "step", "sources", "done"]);
+                                            ^
+error: expect(received).toEqual(expected)
+
+@@ -1,5 +1,2 @@
+  [
+-   "step",
+-   "step",
+-   "sources",
+    "done",
+
+- Expected  - 3
++ Received  + 0
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/api/client.test.ts:545:39)
+(fail) APIClient step and sources events > delivers step, step, sources, done in order with parsed data [0.22ms]
+
+ 151 pass
+ 7 fail
+ 364 expect() calls
+Ran 158 tests across 14 files. [84.00ms]

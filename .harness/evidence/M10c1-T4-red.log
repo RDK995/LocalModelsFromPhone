@@ -1,0 +1,22 @@
+bun test v1.4.0 (1381054db)
+
+src/http/server.test.ts:
+1734 |       hosts.push(host);
+1735 |       return { kind: "none" };
+1736 |     });
+1737 |     try {
+1738 |       const res = await get(server.port, "localhost");
+1739 |       expect(res.status).toBe(404);
+                                ^
+error: expect(received).toBe(expected)
+
+Expected: 404
+Received: 400
+
+      at <anonymous> (/Users/ryankenny/Projects/CodingHarnessv2/server/src/http/server.test.ts:1739:26)
+(fail) GET /v1/icon > 404 no_icon for single-label hostname like localhost when icon returns {kind:none} [2.30ms]
+
+ 160 pass
+ 1 fail
+ 703 expect() calls
+Ran 161 tests across 5 files. [2.15s]

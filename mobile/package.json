@@ -1,0 +1,44 @@
+{
+  "name": "phone-models-app",
+  "version": "0.1.0",
+  "main": "expo-router.js",
+  "type": "module",
+  "scripts": {
+    "start": "expo start",
+    "dev": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "lint": "eslint src --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "smoke:runtime": "scripts/runtime-smoke.sh"
+  },
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "expo": "^57.0.0",
+    "expo-constants": "~57.0.19",
+    "expo-linking": "~57.0.11",
+    "expo-router": "~57.0.23",
+    "expo-secure-store": "~57.0.4",
+    "react": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.0",
+    "typescript": "~6.0.3"
+  },
+  "devDependencies": {
+    "@react-native/typescript-config": "^0.86.3",
+    "@types/jest": "29.5.14",
+    "@types/react": "~19.2.4",
+    "@typescript-eslint/eslint-plugin": "^8.70.1",
+    "@typescript-eslint/parser": "^8.70.1",
+    "bun-types": "latest",
+    "eslint": "^8.53.0",
+    "eslint-plugin-react-native": "^5.0.0",
+    "prettier": "^3.1.0",
+    "yoga-layout": "^3.2.1"
+  }
+}

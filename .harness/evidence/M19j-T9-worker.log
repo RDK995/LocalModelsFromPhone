@@ -1,0 +1,39 @@
+==== Test 1: JSON validation with bun ====
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun -e 'const q=require("./scripts/ac29-questions.json"); if(q.gfc2008!=="What caused the 2008 financial crisis?")process.exit(1); console.log(Object.keys(q).join(","))'
+
+Output:
+q1,q2,q3,heat,ev,gfc2008
+
+Exit status: 0
+
+==== Test 2: Full test suite ====
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test
+
+Output summary:
+ 379 pass
+ 0 fail
+ 3280 expect() calls
+Ran 379 tests across 27 files. [18.51s]
+
+Exit status: 0
+
+==== Test 3: TypeCheck ====
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run typecheck
+
+Output:
+(no output - no TypeScript errors)
+
+Exit status: 0
+
+==== Final JSON file content ====
+{
+  "q1": "What are the main differences between the Raft and Paxos consensus algorithms, and when would you choose one over the other?",
+  "q2": "What are the trade-offs between LFP and NMC lithium battery chemistries for home battery storage, including cost, lifespan, safety and cold-weather performance?",
+  "q3": "What is the WebAssembly component model, how does it differ from core WebAssembly modules, and how widely is it supported by runtimes and languages today?",
+  "heat": "How do heat pumps compare with gas boilers for heating a typical UK home in 2026? Cover running costs, installation costs, grants available and how well they work in cold weather.",
+  "ev": "What does it cost to run an electric car compared with a petrol car in the UK in 2026? Cover charging and fuel costs per year for typical mileage.",
+  "gfc2008": "What caused the 2008 financial crisis?"
+}

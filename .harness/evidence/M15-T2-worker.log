@@ -1,0 +1,10 @@
+commit: f885e347c223ac717331addb634b674ac737b09f (uncommitted worker changes on top)
+$ bun test && bun run typecheck
+bun test v1.4.0 (1381054db)
+
+ 207 pass
+ 0 fail
+ 1128 expect() calls
+Ran 207 tests across 11 files. [3.50s]
+$ tsc --noEmit
+exit: 0

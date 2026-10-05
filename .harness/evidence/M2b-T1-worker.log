@@ -1,0 +1,22 @@
+=== bun test ===
+bun test v1.4.0 (1381054db)
+
+ 73 pass
+ 0 fail
+ 219 expect() calls
+Ran 73 tests across 4 files. [341.00ms]
+EXIT_TEST=0
+=== bun run typecheck ===
+$ tsc --noEmit
+EXIT_TYPECHECK=0
+=== entry-smoke.sh ===
+Entry smoke: starting server on 127.0.0.1:49823
+PASS: server started and is listening on http://127.0.0.1:49823
+PASS: listens on 127.0.0.1 only (127.0.0.1:49823)
+PASS: no token -> 401
+PASS: wrong token -> 401
+PASS: correct token -> 200 (not 401)
+PASS: 0644 token file -> exits non-zero (1)
+PASS: missing token file -> exits non-zero (1)
+Entry smoke: all checks passed
+EXIT_SMOKE=0

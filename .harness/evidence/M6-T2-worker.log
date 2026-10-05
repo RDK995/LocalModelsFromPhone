@@ -1,0 +1,10 @@
+bun install v1.4.0 (1381054db)
+
+Checked 33 installs across 32 packages (no changes) [4.00ms]
+bun test v1.4.0 (1381054db)
+
+ 115 pass
+ 0 fail
+ 227 expect() calls
+Ran 115 tests across 4 files. [1.74s]
+$ tsc --noEmit

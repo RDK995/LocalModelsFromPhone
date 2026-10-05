@@ -1,0 +1,108 @@
+TASK VERIFICATION: M7c-T1
+========================
+
+COMMAND RUN:
+cd /Users/ryankenny/Projects/CodingHarnessv2/search && bun test && bun run typecheck
+
+WORKING DIRECTORY:
+/Users/ryankenny/Projects/CodingHarnessv2/search
+
+CURRENT COMMIT (baseline):
+06aade1 harness: baseline for M7c (archive settled M7a detail)
+
+TEST OUTPUT:
+============
+
+bun test v1.4.0 (1381054db)
+
+ 131 pass
+ 0 fail
+ 290 expect() calls
+Ran 131 tests across 6 files. [3.03s]
+$ tsc --noEmit
+
+EXIT STATUS: 0
+
+VERIFICATION CHECKS:
+====================
+
+1. FILES CHANGED (outside .harness/ and search/helper/):
+   - search/src/http/server.ts (allowed)
+   - search/src/index.ts (allowed)
+   - search/src/search/runHelper.ts (allowed)
+   - search/src/search/timeout.test.ts (new, allowed)
+
+2. EXISTING TESTS WEAKENED:
+   No diff in search/src/search/search.test.ts
+   No diff in search/src/http/server.test.ts
+   Total: 131 tests passing (includes existing tests + 4 new timeout tests)
+
+3. LEFTOVER PROCESSES:
+   pgrep -fl 'sleep 60': No sleep 60 processes found
+
+4. ACCEPTANCE CRITERIA VERIFICATION:
+
+   AC1: Time limit (default 25000 ms, configurable)
+   ✓ DEFAULT_TIMEOUT_MS = 25_000 at line 27 of runHelper.ts
+   ✓ HelperOptions.timeoutMs parameter (lines 20-25 of runHelper.ts)
+   ✓ SEARCH_TIMEOUT_MS env var read in index.ts lines 11-12
+   ✓ Validation: Number.isInteger(envTimeout) && envTimeout > 0
+   ✓ Documentation in index.ts header comment lines 3-4
+
+   AC2: Response exactly 504 {"error":"timeout"} with application/json content-type
+   ✓ server.ts line 48: if (!outcome.ok && outcome.timeout) return json(504, { error: "timeout" });
+   ✓ json() function sets content-type: application/json (line 19)
+   ✓ Test verification (timeout.test.ts lines 97-99):
+     - res.status === 504
+     - res.headers.get("content-type") === "application/json"
+     - await res.json() === { error: "timeout" }
+
+   AC3: Process-tree kill with spawn(detached:true) and process.kill(-pid, SIGKILL)
+   ✓ spawn detached:true at line 43 of runHelper.ts
+   ✓ argv array (never shell string) at line 43
+   ✓ stdin ignored: stdio: "ignore" (line 43)
+   ✓ stderr ignored: stdio: "ignore" (line 43)
+   ✓ stdout parsed: lines 60-61
+   ✓ killGroup() function uses process.kill(-pid, "SIGKILL") at line 51
+   ✓ killGroup() called on timeout at line 86
+   ✓ killGroup() called on abort at line 86
+   ✓ killGroup() called after normal exit at line 92
+   ✓ ESRCH errors handled in try/catch (lines 50-54)
+
+   AC4a: Helper timeout with grandchild killed
+   ✓ timeout.test.ts lines 87-101
+   ✓ Fake helper writes its pid, spawns sleep 60 grandchild, hangs
+   ✓ Server timeout: 500ms
+   ✓ Response: 504 within 3s
+   ✓ Both pids gone after expectAllGone()
+
+   AC4b: Client abort kills helper and descendants
+   ✓ timeout.test.ts lines 103-113
+   ✓ AbortController.abort() before timeout
+   ✓ Both pids verified alive before abort
+   ✓ Both pids gone after expectAllGone()
+
+   AC4c: Normal completion within limit succeeds
+   ✓ timeout.test.ts lines 115-125
+   ✓ Helper sleeps 200ms then returns results
+   ✓ Timeout: 2000ms
+   ✓ Response: 200 OK with results
+
+   AC4 (additional): Helper exits normally but leaves descendant
+   ✓ timeout.test.ts lines 127-144
+   ✓ Helper spawns grandchild with unref(), exits normally
+   ✓ Grandchild pid verified initially alive
+   ✓ Grandchild pid killed after expectAllGone()
+
+   AC5: Tests pass and typecheck clean
+   ✓ bun test: 131 pass, 0 fail
+   ✓ bun run typecheck: clean output (tsc --noEmit)
+
+RED TEST EVIDENCE (baseline failure):
+=====================================
+From .harness/evidence/M7c-T1-red.log:
+- 3 fail before implementation
+- Failure 1 (line 5): "helper over the limit" test timed out - server didn't return 504
+- Failure 2 (line 70): "client abort" test - helper pid still alive - abort not implemented
+- Failure 3 (line 85): "leaves descendant behind" test - grandchild still alive
+

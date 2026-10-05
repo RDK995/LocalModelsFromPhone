@@ -1,0 +1,12 @@
+commit 5ccf32573581424ec7c0a5a3a5969a248333edfd (uncommitted test additions)
+bun test v1.4.0 (1381054db)
+
+ 390 pass
+ 0 fail
+ 11848 expect() calls
+Ran 390 tests across 26 files. [217.00ms]
+bun test exit 0
+$ tsc --noEmit
+typecheck exit 0
+$ eslint src --max-warnings 0
+lint exit 0

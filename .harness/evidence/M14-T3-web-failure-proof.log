@@ -1,0 +1,28 @@
+=== Web Failure Live Proof (M13-T3) ===
+Resident model with tools: nemotron3:33b
+
+==== Check 1: both search backends forced to fail ====
+[unavailable] own search service on port 49306, own server on port 49307
+--- [unavailable] attempt 1 of 4 ---
+[unavailable] model searched on attempt 1; steps: [{"step_id":"7ec9caa8-e34b-4a44-ac28-e256306090c0","kind":"search","status":"started","query":"top news headlines","t":14.0},{"step_id":"7ec9caa8-e34b-4a44-ac28-e256306090c0","kind":"search","status":"unavailable","query":"top news headlines","detail":"search_unavailable","t":14.0}]
+[unavailable] answer (first 200 chars): The web search tool is currently unavailable, so I cannot retrieve today’s top news headlines. Consequently, I’m unable to provide a current summary. 
+[unavailable] done: {"status":"complete","model":"nemotron3:33b","eval_count":200,"tokens_per_second":57.780322679990036,"t":18.0} ; reply elapsed 18.0 s
+[0;32mPASS[0m: [unavailable] stream has a search step with status=unavailable
+[0;32mPASS[0m: [unavailable] the reply then streamed non-empty answer content
+[0;32mPASS[0m: [unavailable] ended done status=complete (not error, not cancelled)
+[0;32mPASS[0m: [unavailable] reply completed in 18.0 s, under the 240 s bound (search step reported at 14.0 s)
+[0;32mPASS[0m: [unavailable] no new search helper process left running afterwards
+
+==== Check 2: search exceeds its time limit (8000 ms) ====
+[timeout] own search service on port 49333, own server on port 49334
+--- [timeout] attempt 1 of 4 ---
+[timeout] model searched on attempt 1; steps: [{"step_id":"4593fdc9-0bc0-4465-a17f-2b36d986a74b","kind":"search","status":"started","query":"top news headlines","t":12.3},{"step_id":"4593fdc9-0bc0-4465-a17f-2b36d986a74b","kind":"search","status":"failed","query":"top news headlines","detail":"timeout","t":12.3}]
+[timeout] answer (first 200 chars): The web search for today's top news headlines failed due to a timeout. I am unable to provide current headlines. 
+[timeout] done: {"status":"complete","model":"nemotron3:33b","eval_count":249,"tokens_per_second":57.80557501109101,"t":17.2} ; reply elapsed 17.2 s
+[0;32mPASS[0m: [timeout] stream has a search step with status=failed detail=timeout
+[0;32mPASS[0m: [timeout] the reply then streamed non-empty answer content
+[0;32mPASS[0m: [timeout] ended done status=complete (not error, not cancelled)
+[0;32mPASS[0m: [timeout] reply completed in 17.2 s, under the 240 s bound (search step reported at 12.3 s)
+[0;32mPASS[0m: [timeout] no new search helper process left running afterwards
+
+[0;32mAll M13 web failure checks passed[0m

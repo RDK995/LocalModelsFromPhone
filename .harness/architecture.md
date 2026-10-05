@@ -13,6 +13,12 @@ Ollama: it owns the "one model resident, one reply at a time" rules, the confirm
 an in-memory event log per reply so a dropped stream can resume. The Expo dev server (C8) hands the
 JS bundle to Expo Go; Mac-side tooling (C9) installs, supervises and exposes both over Tailscale.
 
+Web search (FR18–FR25, added 2026-09-29): when a conversation's switch is on, C6 runs an Ollama
+tool-calling loop and hands each tool call to C12, which calls a separate loopback-only Bun search
+service (C13). C13 reads pages itself (SSRF-guarded) and runs a short-lived Python helper (C14)
+per search: `ddgs` first, a headless browser as fallback. C13 is its own process so OpenCode can
+share it later; nothing new is exposed to the tailnet.
+
 ## Diagram
 
 ```mermaid
@@ -28,6 +34,10 @@ flowchart TD
   C9["C9 — Mac ops tooling"]
   C10["C10 — Tailscale Serve (existing)"]
   C11["C11 — Ollama (existing)"]
+  C12["C12 — Web tools"]
+  C13["C13 — Search service"]
+  C14["C14 — Search helper (Python)"]
+  C15["C15 — Public web (external)"]
 
   C1 -->|"I1: typed API calls, reply event stream"| C2
   C1 -->|"I2: conversations, token read/write"| C3
@@ -43,6 +53,13 @@ flowchart TD
   C9 -->|"I12: LaunchAgent, token file"| C4
   C9 -->|"I13: LaunchAgent, network exposure"| C8
   C9 -->|"I14: HTTPS port mapping, remove /app"| C10
+  C6 -->|"I15: tools for this round, execute one tool call"| C12
+  C12 -->|"I16: HTTP on 127.0.0.1:7790 search / read"| C13
+  C13 -->|"I17: one subprocess per search, JSON on stdout"| C14
+  C13 -->|"I18: SSRF-guarded page fetch"| C15
+  C14 -->|"I19: search-engine queries (ddgs, headless browser)"| C15
+  C9 -->|"I20: LaunchAgent"| C13
+  C9 -->|"I21: Python venv, ddgs, Playwright + Chromium install"| C14
 ```
 
 ## Components
@@ -50,10 +67,11 @@ flowchart TD
 ### C1 — Phone screens
 
 Responsibility: The Expo Go UI — model list with load/unload and confirmations, chat list, chat
-view with streaming, thinking and Stop, and the password settings screen.
+view with streaming, thinking and Stop, the per-chat web-search switch, live web steps and
+tappable sources, and the password settings screen.
 Location: `mobile/app/` (expo-router routes) and `mobile/src/ui/`
 Depends on: C2, C3, C8
-Realises: FR1, FR2, FR3, FR5, FR6, FR7, FR8, FR9, FR10, FR13, FR16
+Realises: FR1, FR2, FR3, FR5, FR6, FR7, FR8, FR9, FR10, FR13, FR16, FR18, FR20, FR22
 
 ### C2 — App server client
 
@@ -63,15 +81,16 @@ user-facing outcome.
 Location: `mobile/src/api/` (SSE reader, recovery policy and error wording ported from
 `phoneToLocalModel/web/src`)
 Depends on: C10
-Realises: FR9, FR11, FR13, FR16
+Realises: FR9, FR11, FR13, FR16, FR22, FR23
 
 ### C3 — Phone storage
 
 Responsibility: Persist conversations (including an in-flight reply's generation id and last
-seq) and the bearer token on the phone.
+seq, the web-search switch, and each reply's web steps and sources) and the bearer token on the
+phone.
 Location: `mobile/src/store/` (conversation store ported from `phoneToLocalModel`)
 Depends on: None
-Realises: FR7, FR8, FR11, FR13
+Realises: FR7, FR8, FR11, FR13, FR18, FR23
 
 ### C4 — Server HTTP layer
 
@@ -79,31 +98,34 @@ Responsibility: `Bun.serve` on `127.0.0.1:7789` — bearer auth wrapping all rou
 validation, routing, SSE writing.
 Location: `server/src/http/`
 Depends on: C5, C6
-Realises: FR12, FR13, FR14, FR16
+Realises: FR12, FR13, FR14, FR16, FR18
 
 ### C5 — Model manager
 
 Responsibility: Report installed and resident models, perform swap-load and unload with
-`keep_alive: -1`, track which model this server loaded, and enforce the confirmation rule.
+`keep_alive: -1`, track which model this server loaded, report each model's `tools` capability,
+and enforce the confirmation rule.
 Location: `server/src/models/`
 Depends on: C6, C7
-Realises: FR1, FR2, FR3, FR4, FR5, FR6
+Realises: FR1, FR2, FR3, FR4, FR5, FR6, FR18, FR23
 
 ### C6 — Generation manager
 
-Responsibility: Admit one reply at a time globally, run it against the resident model, keep a
+Responsibility: Admit one reply at a time globally, run it against the resident model (as a
+tool-calling loop when web search is on, offering tools only while under the 10-call cap), keep a
 seq-numbered event log for resume, and cancel on request.
 Location: `server/src/generations/`
-Depends on: C7
-Realises: FR4, FR8, FR9, FR10, FR11
+Depends on: C7, C12
+Realises: FR4, FR8, FR9, FR10, FR11, FR18, FR19, FR23
 
 ### C7 — Ollama client
 
 Responsibility: Thin typed wrapper over Ollama's `/api/tags`, `/api/ps`, `/api/generate`
-(load/unload) and streamed `/api/chat`.
+(load/unload), `/api/show` (capabilities) and streamed `/api/chat` (with optional `tools` and
+returned `tool_calls`).
 Location: `server/src/ollama/`
 Depends on: C11
-Realises: FR1, FR2, FR3, FR4, FR5, FR10, FR12
+Realises: FR1, FR2, FR3, FR4, FR5, FR10, FR12, FR18, FR19
 
 ### C8 — App bundle host
 
@@ -120,10 +142,11 @@ Responsibility: Mac-side commands — create and copy the token (refusing a grou
 file), install/uninstall the LaunchAgents for C4 and C8, apply the Tailscale Serve mapping for
 C4, install/uninstall a macOS packet-filter (pf) anchor that blocks inbound TCP 8081 on every
 interface except loopback and the Tailscale interface (one-time admin password, run by the human),
-and retire the PWA.
+retire the PWA, install/uninstall C13's LaunchAgent, and install C14's Python venv (`ddgs`,
+Playwright) and Chromium.
 Location: `ops/` (LaunchAgent and Serve installers ported from `phoneToLocalModel/src/host`)
-Depends on: C4, C8, C10
-Realises: FR13, FR14, FR15, FR17
+Depends on: C4, C8, C10, C13, C14
+Realises: FR13, FR14, FR15, FR17, FR20, FR25
 
 ### C10 — Tailscale Serve (existing)
 
@@ -137,6 +160,39 @@ Realises: FR14
 
 Responsibility: Model runtime on `127.0.0.1:11434`.
 Location: external — `/opt/homebrew/bin/ollama`
+Depends on: None
+Realises: —
+
+### C12 — Web tools
+
+Responsibility: Inside the server, define the `web_search`/`read_page` tools and the current-date
+note, execute one tool call against C13 (with a client timeout and the reply's abort signal), and
+turn the outcome into step and source events plus the tool result text given to the model.
+Location: `server/src/web/`
+Depends on: C13
+Realises: FR19, FR20, FR22, FR24
+
+### C13 — Search service
+
+Responsibility: A separate Bun process on `127.0.0.1:7790` answering search and page-read
+requests: search via C14 with a time limit; page read via an SSRF-guarded fetch, main-content
+extraction to markdown and truncation.
+Location: `search/`
+Depends on: C14, C15
+Realises: FR20, FR21, FR24, FR25
+
+### C14 — Search helper (Python)
+
+Responsibility: One short-lived process per search that tries `ddgs` (UK/English) and, on error
+or zero results, a headless Chromium search via Playwright, printing normalised results as JSON.
+Location: `search/helper/`
+Depends on: C15
+Realises: FR20
+
+### C15 — Public web (external)
+
+Responsibility: Search engines and web pages on the public internet.
+Location: external
 Depends on: None
 Realises: —
 
@@ -155,14 +211,23 @@ async iterator of reply events that transparently resumes across drops.
 
 | Route | Request | Success | Failures |
 | --- | --- | --- | --- |
-| `GET /v1/state` | — | `200 {models:[{name,size_bytes}], resident:{name,loaded_by_server}\|null, operation:{kind:"idle"\|"loading"\|"unloading", model?, error?}, generation:{id,model}\|null}` | `503 ollama_down` |
+| `GET /v1/state` | — | `200 {models:[{name,size_bytes,tools}], resident:{name,loaded_by_server}\|null, operation:{kind:"idle"\|"loading"\|"unloading", model?, error?}, generation:{id,model}\|null}` | `503 ollama_down` |
 | `POST /v1/models/load` | `{name, confirm?}` | `202 {operation}` | `404 unknown_model`, `409 confirmation_required {reasons:["reply_in_progress"\|"not_loaded_by_server"]}`, `409 operation_in_progress` |
 | `POST /v1/models/unload` | `{confirm?}` | `202 {operation}` | `409 confirmation_required`, `409 operation_in_progress` |
-| `POST /v1/chat` | `{model, messages:[{role:"user"\|"assistant", content}]}` | `200 text/event-stream`, header `x-generation-id` | `409 model_not_resident`, `409 generation_in_flight {generation_id}`, `409 operation_in_progress` |
+| `POST /v1/chat` | `{model, messages:[{role:"user"\|"assistant", content, sources?:[{title,url}]}], web?:boolean}` | `200 text/event-stream`, header `x-generation-id` | `409 model_not_resident`, `409 generation_in_flight {generation_id}`, `409 operation_in_progress` |
 | `GET /v1/generations/{id}/events` | `Last-Event-ID` header | `200 text/event-stream`: replay after seq, then live | `404 unknown_generation` |
 | `POST /v1/generations/{id}/cancel` | — | `200 {status}` | `404 unknown_generation` |
 
 SSE events, each with `id: <seq>`: `thinking {text}`, `content {text}`, `done {status:"complete"|"cancelled", model, eval_count, tokens_per_second}`, `error {code, message}`. `done`/`error` are terminal.
+
+Web additions (FR18–FR23): `tools` in `GET /v1/state` is true when `/api/show` lists the `tools`
+capability. `web:true` on `POST /v1/chat` is accepted only when the model has `tools` (else
+`409 tools_unsupported`). Assistant `sources` are rendered by the server into that turn's text
+for the model (a short "Sources:" list); page text is never sent by the phone. Extra SSE events:
+`step {step_id, kind:"search"|"read", status:"started"|"done"|"failed"|"unavailable", query?,
+url?, detail?}` (a step is emitted `started` then once more with its final status) and
+`sources {items:[{title,url}]}` (once, just before `done`, when the reply used the web). Both
+are logged and replayed by C6 like every other event.
 
 Load/unload are asynchronous: the app polls `GET /v1/state` while an operation is running.
 Confirmed load/unload cancels any in-flight reply first. `generation_in_flight` carries the
@@ -183,12 +248,51 @@ streamed `POST /api/chat {keep_alive:-1, think:true when supported}`.
 http://127.0.0.1:7789`; `tailscale serve --set-path=/app off` for PWA retirement; a pf anchor loaded at boot by a
 LaunchDaemon, passing TCP 8081 only on `lo0` and the Tailscale `utun` interface.
 
+**I10 (web) C6→C7** — `chat(model, messages, signal, tools?)` streams as before and additionally
+yields `tool_calls` from Ollama's streamed `/api/chat`; C6 appends the assistant tool-call message
+and each `role:"tool"` result, then calls `chat` again. `tools` is omitted once 10 calls have run.
+`show(name) → {capabilities}` backs the `tools` flag.
+
+**I15 C6→C12** — `tools() → OllamaTool[]`, `systemNote(now) → string` (current date),
+`execute(call, signal) → {toolResult: string, events: (step|source)[]}`. `execute` never throws
+for search/read failure: failure becomes a `failed`/`unavailable` step and a tool result telling
+the model so. It rejects only on abort (Stop).
+
+**I16 C12→C13** — HTTP on `127.0.0.1:7790`, no auth, JSON. The documented API that OpenCode may
+later wrap (FR25):
+
+| Route | Request | Success | Failures |
+| --- | --- | --- | --- |
+| `POST /v1/search` | `{query, max_results?≤10}` | `200 {results:[{title,url,snippet}], backend:"ddgs"\|"browser"}` | `503 {error:"search_unavailable", detail}`, `504 {error:"timeout"}` |
+| `POST /v1/read` | `{url}` | `200 {url, final_url, title, markdown, truncated}` | `400 {error:"blocked_destination"\|"bad_url"}`, `415 {error:"unsupported_content"}`, `502 {error:"fetch_failed", status?}`, `504 {error:"timeout"}` |
+| `GET /v1/health` | — | `200 {ok:true}` | — |
+
+Client disconnect aborts the work (subprocess killed, fetch aborted).
+
+**I17 C13→C14** — `helper/.venv/bin/python helper/search.py --query <q> --max <n>`; stdout one
+JSON object `{results:[{title,url,snippet}], backend}` or `{error, detail}`; exit 0 either way;
+killed by C13 on timeout or abort.
+
+**I18 C13→C15** — page fetch through `node:https`/`node:http` with a custom `lookup` that resolves
+every A/AAAA record and rejects if any is non-public (FR21 list); the socket connects to the
+checked address, so there is no rebinding gap. Redirects are followed manually (max 5), each hop
+re-checked. Caps: 5 MiB body, 15 s, `text/html`/`text/plain`/`application/xhtml+xml` only.
+Extraction: Defuddle over linkedom → markdown, truncated to 40 000 characters with a marker.
+
+**I19 C14→C15** — `ddgs` text search, region `uk-en`; fallback Playwright headless Chromium
+loading a search-engine results page and scraping result links.
+
+**I20–I21 C9→C13/C14** — LaunchAgent `com.harness.search` (restart-on-exit, like I12);
+`helper/.venv` created from Homebrew Python 3.14 with `ddgs` and `playwright`, then
+`playwright install chromium`.
+
 ## Data
 
 | Data | Owner | Where |
 | --- | --- | --- |
 | Bearer token | C9 creates; C4 reads | Mac: `~/.phone-models/token` (0600). Phone: `expo-secure-store` (C3). |
-| Conversations `{id, title, created_at, updated_at, messages:[{id, role, content, thinking?, model?, status:"complete"\|"stopped"\|"error"\|"streaming", generation_id?, last_seq?}]}` | C3 | Phone: AsyncStorage, one key per conversation plus an index. |
+| Conversations `{id, title, created_at, updated_at, web_search:boolean, messages:[{id, role, content, thinking?, model?, status:"complete"\|"stopped"\|"error"\|"streaming", generation_id?, last_seq?, steps?:[{kind, status, query?, url?}], sources?:[{title,url}]}]}` | C3 | Phone: AsyncStorage, one key per conversation plus an index. `web_search` defaults to false for existing conversations. Page text and full search results are never stored. |
+| Tool-call transcript for a web reply (assistant tool calls, tool results incl. page text) | C6 | Server memory only, for the life of the reply; dropped when it ends. |
 | Model loaded by this server, current load/unload operation | C5 | Server memory only; lost on restart (resident model then reports `loaded_by_server:false`). |
 | Active reply and per-reply event logs | C6 | Server memory only; logs kept 10 minutes after the terminal event. A server restart mid-reply surfaces as `unknown_generation` → "reply interrupted". |
 
@@ -204,6 +308,10 @@ LaunchDaemon, passing TCP 8081 only on `lo0` and the Tailscale `utun` interface.
 | Bundle delivery | Expo dev server in production mode under a LaunchAgent | The only way Expo Go loads a bundle without Expo's cloud | EAS Update (Expo account + cloud hosting); self-hosted updates server (not loadable by Expo Go); `--tunnel` (public ngrok URL, violates FR14) |
 | Server exposure | Loopback bind + Tailscale Serve HTTPS on its own port 8443 | Leaves the harness's `/` mapping untouched; no path-prefix rewriting | A path under the existing 443 origin |
 | Repo layout | One repo: `mobile/`, `server/`, `ops/`, `shared/` (API types, imported by both via Metro `watchFolders`) | One API type definition, no drift | Separate repos |
+| Search placement | Separate loopback Bun process (C13), own LaunchAgent | FR25: shareable with OpenCode later; isolates scraping/browser failures from the chat server | Inside C4–C7 (not shareable); exposing it on the tailnet (not needed) |
+| Search backend | `ddgs` per-search subprocess, Playwright headless Chromium fallback, both in one Python venv (C14) | Free, no account (FR20); both libraries are Python-first; no extra always-on process | `ddgs[api]` server (another daemon); SearXNG/degoog (heavier, same blocking; degoog ships no engines); Playwright under Bun (unproven); hosted APIs (FR20); whole service in Python (Constraints: Mac-side code targets Bun) |
+| Page reading | `node:http(s)` with custom `lookup` + Defuddle over linkedom → markdown | Checks the address actually connected to; Defuddle kept code blocks in the 2026-09-29 test (`.harness/research/`) | Bun `fetch` (no lookup hook → rebinding gap); trafilatura (flattened code, invented a date); Jina/Firecrawl/Crawl4AI (hosted, Docker or heavy) |
+| Tool calling | Ollama native `tools` on streamed `/api/chat` | All installed models report `tools`; no new runtime | OpenCode as the tool runner (not in the request path); prompt-parsed tool calls |
 
 ## Requirement Coverage
 
@@ -226,6 +334,14 @@ LaunchDaemon, passing TCP 8081 only on `lo0` and the Tailscale `utun` interface.
 | FR15 | C8, C9 |
 | FR16 | C1, C2, C4 |
 | FR17 | C9 |
+| FR18 | C1, C3, C4, C5, C6, C7 |
+| FR19 | C6, C7, C12 |
+| FR20 | C1, C9, C12, C13, C14 |
+| FR21 | C13 |
+| FR22 | C1, C2, C12 |
+| FR23 | C2, C3, C5, C6 |
+| FR24 | C12, C13 |
+| FR25 | C9, C13 |
 
 ## Risks
 
@@ -245,9 +361,270 @@ LaunchDaemon, passing TCP 8081 only on `lo0` and the Tailscale `utun` interface.
   can make two models resident. C5 reports the truth; it does not police other clients.
 - **R5 — Streaming through Tailscale Serve on iOS.** Proven for the PWA over the same proxy;
   `expo/fetch` on iOS is new here. First milestone should prove a token-by-token stream end to end.
+- **R6 — SSRF guard depends on Bun's `node:http(s)` honouring a custom `lookup`.** Unverified
+  (research 2026-09-29). The first web milestone must prove a hostname resolving to `127.0.0.1`
+  and a redirect to a tailnet address are both refused at connect time. If Bun ignores `lookup`,
+  move page fetching into C14 (Python, where resolver pinning is standard) — a Deviation, not a
+  silent workaround.
+- **R7 — `ddgs` on Python 3.14 and engine blocking.** Install on 3.14 is unverified, and engines
+  intermittently block a single home IP (empty results rather than errors). Trigger: install
+  fails → pin a compatible Python via Homebrew for the venv; blocking frequent → tune the
+  fallback engine in C14. Results are best-effort by requirement.
+- **R8 — Tool-calling quality varies by model.** Some models may ignore tools, call them badly,
+  or loop. The 10-call cap bounds loops; acceptance is proven on at least one installed model and
+  the others are observed, not guaranteed.
+- **R9 — Prompt injection from page text.** Tools are read-only and the server has no other
+  tools, so the impact is a misleading answer; page text is delimited as untrusted in the tool
+  result.
 
 ## Open Architecture Questions
 
 None
 
 ## Deviations
+
+### D-M5b-1 — `operation.error_code` on `GET /v1/state`
+
+Milestone: M5b
+Material: no
+Change: I5's `operation` object gains an optional `error_code` (`ollama_down` | `unknown_model` |
+`load_failed`), set by C5 alongside the existing `error` string when a load fails. C2 maps it to
+plain-language wording (FR16) instead of parsing the `error` string.
+Why: the load/unload failure reason is otherwise free text; a typed code lets C2 tell "model no
+longer installed" from "model failed to load" and "Ollama down" reliably. Additive field; no
+component boundary, technology or responsibility changes.
+
+### D-M7b-1 — Test-only `SEARCH_HELPER_FORCE_DDGS` hook on the search helper
+
+Milestone: M7b
+Material: no
+Change: C14 (`search/helper/search.py`) reads an optional environment variable
+`SEARCH_HELPER_FORCE_DDGS` (`fail` | `empty`) that makes only the ddgs step behave as if it raised
+or returned nothing, so the browser fallback (I19) can be proven live through C13's real
+`POST /v1/search` (the helper inherits C13's environment). Unset in normal operation. The browser
+fallback uses Bing's results page (`cc=GB`, `setlang=en-GB`, locale en-GB).
+Why: AC16 requires ddgs to be *forced* to fail or return nothing; an env hook is the smallest seam
+that exercises the real entry point. Test hook alongside the existing `SEARCH_PORT`; no component
+boundary, technology or responsibility changes.
+
+### D-M7c-1 — Search time limit value, process-group kill, and test-only forcing hooks
+
+Milestone: M7c
+Material: no
+Change: C13 enforces a 25 s default time limit on each helper run (FR24 names no value), overridable
+by the test-only env var `SEARCH_TIMEOUT_MS` read in `search/src/index.ts`. C13 spawns the C14 helper
+detached (its own process group) and SIGKILLs the whole group on timeout, client abort and after a
+normal exit, so Playwright's driver and Chromium die with the helper. C14 gains a test-only env var
+`SEARCH_HELPER_FORCE_BROWSER` (`fail` | `hang`) beside `SEARCH_HELPER_FORCE_DDGS`, so the 503 and
+504 paths can be proven through `POST /v1/search` without the public network.
+Why: I17 says the helper is "killed by C13 on timeout or abort"; killing only the helper PID leaves
+Chromium behind. The limit value and hooks are implementation detail; no component boundary,
+technology or responsibility changes. The later C12 client timeout (M9) must exceed 25 s.
+
+### D-M10c-1 — The phone fetches each website's own icon directly (new edge C1 -> C15)
+
+Milestone: M10c (planned 2026-09-30; FR26-FR28 split into M10b, M10c, M10d)
+Material: yes
+Status: WITHDRAWN (human, 2026-09-30) — the phone talks only to the Mac; superseded by D-M10c-2.
+Never implemented.
+Change: C1 gains a direct HTTPS request to the public web (C15) for a source site's own icon,
+outside the tailnet, and caches fetched icons on the phone (C3 or an equivalent on-device cache),
+falling back to a bundled globe icon. Until now the phone talked only to the Mac over the tailnet
+(Overview: "two halves joined only by the tailnet"). FR26-FR28 are also not yet in the
+Requirement Coverage table: FR26 -> C1; FR27 -> C1, C3, C15; FR28 -> C1.
+Why: FR27 requires "the site's own icon, fetched by the phone directly from that website (no
+third-party logo/favicon service)". Agreement: this is the human's own decision recorded in
+`.harness/requirements.md` Decisions ("Website's own logo, not a globe icon (human, 2026-09-30),
+fetched by the phone directly from the site; a third-party logo service (e.g. Google) was
+rejected"). Recorded at planning so it is not a silent departure; to be confirmed as accepted
+before M10c completes.
+
+### D-M10c-2 — The Mac fetches each website's own icon; the phone asks the Mac (supersedes D-M10c-1)
+
+Milestone: M10c (recorded 2026-09-30, before M10c started)
+Material: yes
+Change: no new edge to the public web. FR27 logos travel phone -> C2 -> C10 -> C4 -> C12 -> C13 ->
+C15, reusing existing edges I1/I4/I5/I15/I16/I18:
+- **C4 (I4)** gains `GET /v1/icon?host=<hostname>` (bearer auth like every route) ->
+  `200` image bytes with the upstream image `Content-Type` and a `Cache-Control` max-age, or
+  `404 {error:"no_icon"}` when the site has none, refuses, or is blocked; `400 bad_host` for a
+  malformed host; `502`/`504` pass through as `icon_unavailable`. C4 validates the host is a DNS
+  hostname (no scheme, path, port or IP literal) and delegates to C12.
+- **C12 (I15)** gains `icon(host, signal) -> {bytes, contentType} | null`, a thin client of C13.
+- **C13 (I16)** gains `GET /v1/icon?host=<hostname>` in its documented API (`search/API.md`):
+  `200` image bytes | `404 {error:"no_icon"}` | `400 {error:"blocked_destination"|"bad_url"}` |
+  `504 {error:"timeout"}`. It fetches `https://<host>/` through the I18 SSRF-guarded fetcher (same
+  address checks, every redirect re-checked, connected address checked), takes the first
+  `<link rel>` of `apple-touch-icon` / `icon` / `shortcut icon`, else `/favicon.ico`, and fetches
+  that through the same guard. Image content only (`image/png`, `image/jpeg`, `image/gif`,
+  `image/webp`, `image/x-icon`, `image/vnd.microsoft.icon`; SVG refused because React Native's
+  `Image` cannot render it without a native module), capped at 256 KiB and 10 s overall.
+  Results — including "no icon" — are cached by C13 on disk under its own cache directory keyed by
+  normalised host (lower-case, leading `www.` stripped), so a site is fetched once; entries expire
+  after 7 days (negative results after 1 day). No third-party favicon service is used.
+- **C2** gains `siteIcon(host) -> dataUri | null` (null on any error; never throws into the UI).
+- **C3** caches fetched icons on the phone (data URI per normalised host, including a "none"
+  marker) so a render does not re-ask the Mac.
+- **C1** renders the logo after a source-matched link text and in the source list, falling back to
+  a bundled globe icon while loading, when `siteIcon` returns null, or when the Mac is unreachable.
+  Icons are requested at display time, so replies saved before M10c get logos too.
+Requirement Coverage additions: FR26 -> C1; FR27 -> C1, C2, C3, C4, C12, C13; FR28 -> C1.
+The Overview's "two halves joined only by the tailnet" holds unchanged: the phone's only network
+peer remains the Mac.
+Why: the human decided on 2026-09-30 that the iPhone must talk only to the Mac, and chose "the Mac
+fetches logos" over "globe icon only" (`.harness/requirements.md` FR27 and Decisions). C13 is the
+only Mac component that already reaches arbitrary public sites under the FR21 guard, so icon
+fetching lives there rather than adding a second public-web client in C4-C7. Agreement: the human
+approved these architecture edits on 2026-09-30.
+
+### D-M10c2-1 — Globe fallback is the system globe glyph; phone "no logo" is remembered for the session only
+
+Milestone: M10c2
+Material: no
+Change: C1's fallback "bundled globe icon" (D-M10c-2) is rendered as the system globe glyph
+U+1F310 in a `<Text>` (`mobile/src/ui/SourceLogo.tsx`) rather than a bundled image asset. C3's icon
+cache (`mobile/src/store/iconCache.ts`) persists fetched logos per normalised host, but keeps a
+"none" result in memory only for the app session instead of persisting it, so a logo that failed
+because the Mac was briefly unreachable is retried on the next launch (the Mac's own negative cache
+still prevents re-fetching the site).
+Why: no new asset or dependency in Expo Go; `siteIcon` returns null for "no icon" and "Mac
+unreachable" alike, and persisting that would pin a globe permanently. No component boundary,
+technology or responsibility changes.
+
+### D-M10c3-1 — FR29 readable tables are realised by C1
+
+Milestone: M10c3 (planned 2026-09-30)
+Material: no
+Change: Requirement Coverage addition FR29 -> C1. Table cell alignment and the two-column grid /
+three-or-more-column card layout live in C1's markdown parser and renderer (`mobile/src/ui/`),
+alongside FR26.
+Why: FR29 was added after this architecture was agreed; it is a rendering change inside C1's
+existing responsibility (chat view). No component boundary, technology or responsibility changes.
+
+### D-M10c4-1 — FR30 source-diversity guidance is realised by C12
+
+Milestone: M10c4 (planned 2026-09-30)
+Material: no
+Change: Requirement Coverage addition FR30 -> C12. The FR30 guidance is added to the web
+instructions C12 already gives the model with the current-date note (`server/src/web/`); C6's
+tool loop and its 10-call cap are unchanged, and no server-side check or re-prompt is added.
+Why: FR30 was added after this architecture was agreed; C12 already owns the model-facing web
+instructions (FR19 date note). No component boundary, technology or responsibility changes.
+
+### D-M14-1 — FR33 quiet-round handling in C6 and two new web step kinds
+
+Milestone: M14 (planned 2026-10-01)
+Material: no
+Change: Requirement Coverage addition FR33 -> C6 (with C1/C2/C3 for display and storage). C6's
+web tool loop detects a quiet round (blank content, no tool call), prods the model with tools still
+offered (at most 2 per reply, not counted toward the 10-call cap), then runs one tools-withdrawn
+answer-now round, and if that is quiet emits the FR33 note as the reply's content. The SSE `step`
+event's `kind` gains `"continue"` (a prod) and `"answer_now"` (the tools-withdrawn round), each
+emitted `started` then `done` with no query/url; C2 accepts them, C3 stores them in `steps`, C1
+labels them "Asked the model to continue" / "Asked the model to answer now".
+Why: FR33 was added after this architecture was agreed; C6 already owns the tool-calling loop and
+the 10-call cap. Additive enum values on an existing event; no component boundary, technology or
+responsibility changes.
+
+### D-M15-1 — Deep research (FR34-FR40) realised inside existing components
+
+Milestone: M15 (planned 2026-10-01)
+Material: no
+Change: Requirement Coverage additions FR34 -> C1, C2, C3, C4, C5; FR35, FR36, FR37, FR38 -> C6
+(with C7 for `format`/`num_ctx`/`think`/`keep_alive` on chat requests and C12 for search/read
+execution and page numbering); FR39 -> C13, C14; FR40 -> C6, C12, C13. The server-driven research
+loop is a module of C6 (`server/src/generations/research.ts`), selected by an optional
+`deep_research` boolean on POST /v1/chat; the SSE `step` event's `kind` gains `"plan"` and
+`"write"`. Search-backend circuit breakers and the 24 h cache live in C13 (search service).
+Why: FR34-FR40 were added after this architecture was agreed. C6 already owns running a reply
+against the resident model, its event log, resume and cancellation; a deep research run is a reply.
+No new component, boundary or technology (still Ollama, Bun, the existing search service).
+
+### D-M17-1 — Deep research time budget and run status carried on existing SSE events
+
+Milestone: M17 (implementation 2026-10-02)
+Material: no
+Change: FR36's budget is enforced inside C6's research module (`runResearch`): settings
+`budgetMs` (default 480000, server setting `PHONE_MODELS_RESEARCH_BUDGET_MS` read by the server
+entry point and passed through the generation manager) and `writeReserveFraction` (0.25). One
+run-owned cancellation signal per phase (research, then write) combines the user's Stop with the
+phase deadline and is passed to every C7 chat request and C12 search/read call; C12's FR24
+per-request limits are unchanged. Additive optional fields on existing SSE events: `step` gains
+`elapsed_ms` and `budget_ms`; `done` gains `research {status:"complete"|"partial"|"failed",
+elapsed_ms, budget_ms}`. A deep research reply's `done.status` stays `"complete"` (the reply ended
+with an answer); Stop stays `"cancelled"`. An unexpected failure inside the run ends with a plain
+content sentence and `research.status:"failed"` rather than an `error` event.
+Why: FR36 needs the run's status and elapsed time visible to the phone (M18) without a new event
+type or a change to `done.status` values that ordinary replies and the phone already parse.
+Additive optional fields; no component boundary, technology or responsibility changes. C13 is not
+changed by M17.
+
+### D-M18-1 — Deep-research model setting reported on `GET /v1/state` by the HTTP layer
+
+Milestone: M18 (implementation 2026-10-02)
+Material: no
+Change: I5's state response gains `deep_research_model` (FR34), the value of the Mac-side server
+setting `PHONE_MODELS_RESEARCH_MODEL` (default `qwen3.5:35b-a3b`, the one hardcoded copy, in
+`server/src/http/server.ts`), read by the server entry point and passed to `createServer`. C4's
+`GET /v1/state` handler adds it to C5's `state()` result rather than C5 reporting it, and C4's
+`POST /v1/chat` validation refuses `deep_research` with web off (400 `deep_research_needs_web`) or a
+model other than the configured one (409 `deep_research_model_not_loaded`). C2 gained parsing of
+the existing deep-research event fields (plan/write steps, `elapsed_ms`/`budget_ms`,
+`done.research`) and C3's stored message gained an optional `research` field.
+Why: the setting is server configuration, not model state, and C5's `state()` keeps its existing
+contract and tests; the refusals are request validation, which is C4's responsibility. Additive
+fields only; no component boundary, technology or responsibility ownership changes.
+
+### D-M19-1 — Two-stage Stop for a deep research run inside C6
+
+Milestone: M19 (implementation 2026-10-02)
+Material: no
+Change: FR38's two-stage Stop is realised in C6 with no new route or event. A deep research
+generation record carries a second "wrap up" controller; `POST /v1/generations/{id}/cancel`
+(response shape unchanged) aborts it on the first call and the hard controller on a later call.
+`runResearch` gains an optional `stopSignal` and the setting `stopWriteMs` (default 60000): the
+first Stop aborts the research-phase signal (every in-flight search, read and model request) and
+gives the write-up at most `stopWriteMs` (never past the final budget), ending `research.status:
+"partial"`; a hard abort ends `done {status:"cancelled"}` with no report and now emits the pages-read
+`sources` event before it. `cancelActive()` (a confirmed FR6 load/unload, C5) aborts both
+controllers so an unload never waits for a write-up. Ordinary and web replies keep one-stage Stop.
+Why: C6 already owns a reply's cancellation and the run-owned signals (D-M17-1); the cancel route
+and SSE events already carry everything the phone needs, so no component boundary, technology or
+responsibility ownership changes.
+
+### D-M19b-1 — Research model loaded at the research `num_ctx`; FR41/FR42 realised across C5, C6 and C7
+
+Milestone: M19b (implementation 2026-10-02; recorded at review cycle 1, finding M19b-R1-F1)
+Material: no
+Change: I9/I10's `load(name)` = `POST /api/generate {model, keep_alive:-1}` gains an optional
+`options: {num_ctx}`. C7's `load(name, options?)` forwards it; C5 (`ModelManager`) is constructed
+with the deep-research model name and C6's `researchNumCtx()`, and sends `{num_ctx}` only when
+loading that model, so the first research call does not rebuild the runner (FR41). Loading any
+other model sends no options, and no global Ollama context setting changes. FR41's per-call log
+line and FR42's per-step `think`, `num_predict`, sampling, routine wall-clock cap and plan/write
+thinking guard with a one-time `think:false` re-issue live in C6's research loop
+(`runResearch`), on top of C7's existing `chat` request.
+Why: C5 already owns loading and C6 already owns the research loop's requests (D-M15-1); passing
+one request field through the existing load path changes no component boundary, technology or
+responsibility ownership.
+
+### D-M19e-1 — Step kind `model` for deep research model-call steps
+
+Milestone: M19e
+Material: no
+Change: `StepEventData.kind` (shared/api.ts, I-stream step events) gains `"model"`; a deep research model-call step is `{step_id, kind: "model", status, detail: <label>}` with labels "Choosing searches", "Choosing pages", "Taking notes: <domain>", "Checking for gaps". Search and read steps in deep research carry the run's own step_id so the pre-await started step and the later outcome share one id.
+Why: FR45 needs a started step before every model call, and the existing kinds name only search, read, plan and write. Additive wire value inside C6's existing step events; no component boundary, technology or ownership change. C2 rendering of it is M19f.
+
+### D-M20-1 — Per-engine helper attempts, `x-cache` header, and in-memory breakers and cache in C13
+
+Milestone: M20
+Material: no
+Change: The search helper's (C14) output gains an additive per-engine `attempts` list (each `{backend, outcome}` with outcome `ok` | `empty` | `rate_limited` | `captcha` | `error`) and accepts `--backends <list>` / `--no-browser`; it now asks the allowed ddgs engines one at a time in a fixed order (default `duckduckgo,bing,brave,mojeek`, set by `SEARCH_DDGS_BACKENDS` in search/src/index.ts) instead of ddgs's combined "auto" mode. The search service (C13) keeps per-engine circuit breakers (search/src/search/breakers.ts: rate-limited 1 h, CAPTCHA 24 h) and a 24 h result cache (search/src/cache/resultCache.ts: searches by normalised query + max_results, page reads by final URL), both in process memory, and its `/v1/search` and `/v1/read` responses gain an `x-cache: hit|miss` header. A search with every engine and the browser resting returns the existing 503 `search_unavailable` (FR20).
+Why: FR39/FR40 need to know which engine blocked a search, which ddgs's combined mode hides. Additive fields and header inside existing interfaces; breakers and cache were already placed in C13 by D-M15-1. No component boundary, technology or ownership change. Side effects recorded for the human: Wikipedia is no longer asked first for ordinary web replies, and memory-only state empties when com.harness.search restarts.
+
+### D-M22-1 — One shared page readability check in `shared/readability.ts`
+
+Milestone: M22
+Material: no
+Change: `shared/` (until now message formats only) gains a small pure module, `shared/readability.ts` (`classifyPage`, `isBotChallenge`, `BOT_CHALLENGE_MARKERS` incl. "client challenge", `UNREADABLE_MIN_WORDS = 40`), imported by both the server (C6 via `server/src/generations/passages.ts`, C12 `read_page`) and the search service (C13 `/v1/read`, which no longer stores unreadable pages in its FR39 page cache). The FR43 markers and test moved there from passages.ts, which re-exports them.
+Why: FR47 needs the same "is this page readable?" rule in two programs; one copy in the folder both already import means they cannot disagree, whereas having only C13 judge pages would let a stale search service silently re-admit bot-check pages. Logic placement only; no component boundary, technology or responsibility change.

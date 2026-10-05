@@ -1,0 +1,14 @@
+bun test v1.4.0 (1381054db)
+
+src/chat/conversationSession.test.ts:
+
+# Unhandled error between tests
+-------------------------------
+SyntaxError: Export named 'historyContent' not found in module '/Users/ryankenny/Projects/CodingHarnessv2/mobile/src/chat/conversationSession.ts'.
+-------------------------------
+
+
+ 0 pass
+ 1 fail
+ 1 error
+Ran 1 test across 1 file. [7.00ms]

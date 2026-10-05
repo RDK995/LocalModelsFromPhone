@@ -1,0 +1,167 @@
+M1-C11 worker log — commit e40f26ac82d8a330c1cfe473d8643a6abf2db5cf (working-tree changes uncommitted), 2026-09-25T15:07:00Z
+
+== 1. DIAGNOSIS ==
+Crashing bundle fetched from the bundle host before any change:
+  manifest launchAsset.url = http://ryans-mac-studio.tailc3648a.ts.net:8081/expo-router.bundle?platform=ios&dev=false&...&transform.routerRoot=src%2Fapp
+  http 200, 3703050 bytes, 102925 lines (not minified despite minify=true; the line numbers match the phone's stack).
+Phone stack frames, located in that bundle:
+  :58345:55  = our RootLayout (src/app/_layout.tsx):  var [hasToken, setHasToken] = (0, _react.useState)(null);
+  :60047:56  = expo-router Stack component (build/layouts/Stack), its body `props => { ... useLinkPreviewContext() ...`
+               which, in a useMemo, calls stack_utils.mapProtectedScreen({guard:true, children: props.children}).
+The throwing expression (reproduced; Node stack "at bundle.js:96997:74 at Array.map at mapProtectedScreen at bundle.js:60079:86 at useMemo"):
+  expo-router mapProtectedScreen():
+    children: react_1.Children.toArray(props.children).map((child, index) => {
+      if (isChildOfType(child, StackScreen)) {...}
+      else if (isChildOfType(child, Protected)) {...}
+      else if (isChildOfType(child, StackHeaderComponent)) { return null; }
+      else {
+        if (react_1.default.isValidElement(child)) {
+          console.warn(`Unknown child element passed to Stack: ${child.type}`);   <-- line 96997 col 74
+Causal chain:
+  - RootLayout's token-present branch rendered <Stack>{hasToken ? (<> <Stack.Screen chat/> <Stack.Screen settings/> </>) : <Stack.Screen setup/>}</Stack>
+    Served bundle (old), RootLayout: children: hasToken ? (0, _reactJsxRuntime.jsxs)(_reactJsxRuntime.Fragment, {...
+  - React.Children.toArray flattens arrays but NOT Fragments, so Stack sees one child: the Fragment element.
+  - It is none of Stack.Screen / Stack.Protected / Stack.Header, so it hits the warn branch; the Fragment's
+    `type` is Symbol(react.fragment); a template literal on a Symbol throws
+    "TypeError: Cannot convert a Symbol value to a string" (Hermes: "Cannot convert Symbol to string").
+  - Thrown during render of Stack (inside RootLayout) -> fatal -> Expo Go "There was a problem running".
+  - Token-absent branch has a single <Stack.Screen setup/> child, no Fragment -> no crash.
+Regression question: NOT a cycle-3 regression. The Fragment dates from d87a597/a8ca44e. The same runtime
+check run against the pre-cycle-3 tree (git archive 811f5bed... mobile, same node_modules) fails identically
+with a stored token and passes without one:
+=== token present ===
+rendered text: []
+native stack headers: []
+JS EXCEPTION via RN$handleException(fatal=true): Cannot convert a Symbol value to a string
+RESULT: FAIL (exceptions=1, rendered=false, reached Chat=false)
+=== token absent ===
+rendered text: ["Enter Bearer Token","Paste the token from your server","Continue"]
+native stack headers: [{"title":"Setup","hidden":false}]
+RESULT: PASS (app launched, Setup rendered, no JS exception)
+  Most likely explanation of the phone history: the 15:51 run launched with no stored token (Setup), the token
+  was saved during that run (RootLayout's hasToken stays false for the session, so no crash), and the 15:53
+  force-close/reopen was the first launch WITH a stored token. The two-top-bars detail only identifies which
+  bundle was cached; the crash is triggered by the stored token, not by the cycle-3 code. (Inference about
+  the phone's state; the pre-cycle-3 RED above is the proof that the old code crashes too.)
+
+== 2. RUNTIME CHECK ==
+Command (from mobile/):  bun run smoke:runtime   (= scripts/runtime-smoke.sh [bundle-file|bundle-url])
+  - With no arg: `npx expo export --platform ios --no-bytecode` into a temp dir, then runs the bundle.
+  - With a URL/file: runs that bundle (used below against the bundle host's launchAsset).
+  - scripts/runtime-smoke.mjs executes the production iOS JS bundle in Node with fake Fabric UIManager,
+    TurboModules and Expo modules (SecureStore returns a token or null), starts it via
+    RN$AppRegistry.runApplication("main"), and fails on any fatal JS exception or if the expected first
+    screen (Chat with a token, Setup without) is not committed to the fake native view tree.
+  - Fix to the handed-over draft: the fake RNCSafeAreaProvider now fires topInsetsChange (the real native
+    view does after layout); without it safe-area-context rendered no children and nothing past the root mounted.
+Can prove: the bundled JS (our code + real expo-router, React, RN JS, react-native-screens JS) launches, RootLayout
+  renders and the first screen (Chat / Setup) commits without a JS exception; which native Stack headers are
+  shown/hidden and what text is on the first screen.
+Cannot prove: Hermes-specific engine behaviour (runs on V8), native layout/rendering, keyboard geometry,
+  the Expo Go version on the phone, networking/streaming to the server, anything after the first screen.
+iOS Simulator (option a) not used: option b reproduced the exact exception deterministically.
+
+-- RED (working tree before fix, fresh export) --
+=== token present ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.pb8hTb/dist/_expo/static/js/ios/expo-router-f82b3445f0a4603eb38c9a2523c72eff.js
+stored token: present; expected first screen: Chat
+rendered text: []
+native stack headers: []
+JS EXCEPTION via RN$handleException(fatal=true): Cannot convert a Symbol value to a string
+TypeError: Cannot convert a Symbol value to a string
+    at bundle.js:1108:1499
+    at Array.map (<anonymous>)
+    at t (bundle.js:1108:976)
+    at bundle.js:659:5183
+    at Object.useMemo (bundle.js:163:56383)
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 3
+RESULT: FAIL (exceptions=1, rendered=false, reached Chat=false)
+=== token absent ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.pb8hTb/dist/_expo/static/js/ios/expo-router-f82b3445f0a4603eb38c9a2523c72eff.js
+stored token: absent; expected first screen: Setup
+rendered text: ["Enter Bearer Token","Paste the token from your server","Continue"]
+native stack headers: [{"title":"Setup","hidden":false}]
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 5
+RESULT: PASS (app launched, Setup rendered, no JS exception)
+exit 1
+
+-- Static RED: bun test src/app-routing/stackChildren.test.ts -> 1 pass, 1 fail (Fragment found in <Stack> body) --
+
+== 3. FIX ==
+mobile/src/app/_layout.tsx: removed the Fragment; each Stack.Screen is now a direct conditional child
+  ({hasToken && <chat/>}{hasToken && <settings/>}{!hasToken && <setup/>}); `false` is dropped by
+  Children.toArray. Options unchanged (chat headerShown:false kept -> single top bar). No other file under src/app changed.
+Static test added: mobile/src/app-routing/stackChildren.test.ts (no Fragment inside <Stack>; chat/settings/setup still declared).
+
+-- GREEN (working tree after fix, fresh export) --
+=== token present ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.C2kpwn/dist/_expo/static/js/ios/expo-router-d783140ad72114fd5e2989b1b47baca3.js
+stored token: present; expected first screen: Chat
+rendered text: ["Chat","Settings","Send"]
+native stack headers: [{"title":"Chat","hidden":true}]
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 5
+RESULT: PASS (app launched, Chat rendered, no JS exception)
+=== token absent ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.C2kpwn/dist/_expo/static/js/ios/expo-router-d783140ad72114fd5e2989b1b47baca3.js
+stored token: absent; expected first screen: Setup
+rendered text: ["Enter Bearer Token","Paste the token from your server","Continue"]
+native stack headers: [{"title":"Setup","hidden":false}]
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 5
+RESULT: PASS (app launched, Setup rendered, no JS exception)
+exit 0
+Chat top bars: native Stack header for Chat hidden=true; Chat's own in-screen header text 'Chat' + 'Settings' rendered -> one top bar.
+
+-- Packet test command --
+cd mobile && bun run typecheck && bun test src/api src/ui src/chat src/app-routing && bun run lint && npx expo export --platform ios && rm -rf dist
+ 34 pass
+ 0 fail
+Ran 34 tests across 9 files. [32.00ms]
+Exported: dist
+exit 0
+
+== 5. LIVE BUNDLE HOST ==
+launchctl kickstart -k gui/$(id -u)/com.harness.bundle-host -> exit 0
+manifest (tailnet): http 200, 1906 bytes; launchAsset http 200, 3702944 bytes
+Served RootLayout now (no Fragment; old served bundle had `jsxs)(_reactJsxRuntime.Fragment` at RootLayout+18):
+      },
+      children: [hasToken && /*#__PURE__*/(0, _reactJsxRuntime.jsx)(_expoRouter.Stack.Screen, {
+        name: "chat",
+        options: {
+          title: "Chat",
+        }
+      }), hasToken && /*#__PURE__*/(0, _reactJsxRuntime.jsx)(_expoRouter.Stack.Screen, {
+        name: "settings",
+        }
+      }), !hasToken && /*#__PURE__*/(0, _reactJsxRuntime.jsx)(_expoRouter.Stack.Screen, {
+        name: "setup",
+grep -c Fragment in served RootLayout region (lines 58344..58400): 0
+
+-- runtime check against the served bundle: scripts/runtime-smoke.sh <launchAsset.url> --
+=== token present ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.ZOacHa/served.js
+stored token: present; expected first screen: Chat
+rendered text: ["Chat","Settings","Send"]
+native stack headers: [{"title":"Chat","hidden":true}]
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 5
+RESULT: PASS (app launched, Chat rendered, no JS exception)
+=== token absent ===
+bundle: /var/folders/xt/1dk4f7_93nz9dsz8f771nlyr0000gn/T//runtime-smoke.ZOacHa/served.js
+stored token: absent; expected first screen: Setup
+rendered text: ["Enter Bearer Token","Paste the token from your server","Continue"]
+native stack headers: [{"title":"Setup","hidden":false}]
+non-fatal (logged only): [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+console.error: [ReactNative Architecture][JS] 'getViewManagerConfig('RNCMaskedView')' is not available in the new React Native architecture. If 'RNCMaskedView' has a ViewManag
+root commits: 5
+RESULT: PASS (app launched, Setup rendered, no JS exception)
+exit 0
+Port 8081 listener after run: only the bundle host (node pid from the LaunchAgent).

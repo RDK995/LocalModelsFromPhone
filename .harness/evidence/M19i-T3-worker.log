@@ -1,0 +1,23 @@
+## M19i-T3 Test Run — Attempt 2
+
+### Test Command
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/http/deepResearchPrices.test.ts && bun test && bun run typecheck
+
+### Results
+- deepResearchPrices.test.ts: 7 pass, 0 fail (84 expect() calls)
+- Full test suite: 373 pass, 0 fail (2851 expect() calls)
+- Typecheck: PASS
+
+### Changes Made (Attempt 2)
+Fixed AC4 tests (tests 6 and 7) only:
+- Test 6 (ordinary web reply): Now asserts exactly 1 request, checks message structure is [{role:"system", content:"SYSTEM NOTE"}, {role:"user", content:"..."}], and verifies no rule constants appear
+- Test 7 (switch-off reply): Now asserts exactly 1 request, checks message structure is [{role:"user", content:"..."}] exactly, and verifies no rule constants appear
+- Both tests now use the imported constants (PLAN_PRICES_RULE, WRITE_DATE_RULE, WRITE_SUM_RULE, WRITE_NO_PRICE_RULE) to verify no FR46 text appears in any message role
+
+### Work Verified
+- Constants in research.ts are correct (lines 191-197): PLAN_PRICES_RULE, WRITE_DATE_RULE, WRITE_SUM_RULE, WRITE_NO_PRICE_RULE
+- Constants are correctly appended to plan task (line 969) and write task (line 1092)
+- All AC2, AC3, AC4 tests pass
+- Existing citation tests pass unchanged (FR37 preserved)
+- All 373 server tests pass
+- No TypeScript errors

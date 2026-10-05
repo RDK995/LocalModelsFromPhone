@@ -1,0 +1,100 @@
+=== VERIFICATION LOG FOR M19g-T2 ===
+
+Current commit: 8fcf6b9 (M19f DONE)
+Task: M19g-T2 — A live-run script that sends one deep research question through the server API, captures the stream, and records AC29's pass bar plus AC32's speed figures from the FR41 log
+
+TEST 1: bun test scripts/ac29-live-run.test.ts (exit 0)
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test scripts/ac29-live-run.test.ts
+Exit Status: 0
+Output:
+ 11 pass
+ 0 fail
+ 27 expect() calls
+Ran 11 tests across 1 file.
+
+TEST 2: bun test && bun run typecheck (exit 0)
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test
+Exit Status: 0
+Output (final lines):
+ 360 pass
+ 0 fail
+ 2493 expect() calls
+Ran 360 tests across 24 files. [18.28s]
+
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run typecheck
+Exit Status: 0
+Output: (no errors)
+
+TEST 3: bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M16-T5-stream.txt --log /dev/null
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M16-T5-stream.txt --log /dev/null
+Exit Status: 0 (pass true)
+Output (relevant fields):
+{
+  "cited_read_pages": 4,
+  "unresolved_citations": []
+}
+
+VERIFICATION CHECKS:
+✓ Test 1 (ac29-live-run.test.ts): PASS (11 tests, 27 expects)
+✓ Test 2 (full suite): PASS (360 tests, 2493 expects)
+✓ Test 2 (typecheck): PASS (no errors)
+✓ Test 3 (check-only): PASS (exit 0, output matches M16-T5-check.json)
+
+FILE CHANGES:
+✓ server/scripts/ac29-live-run.ts (new, allowed)
+✓ server/scripts/ac29-live-run.test.ts (new, allowed)
+✓ server/scripts/ac29-questions.json (new, allowed)
+✓ No changes to server/src, mobile/, search/, or shared/
+
+METRIC DEFINITIONS (from script header):
+✓ total_wall_s: POST sent -> done event received (client clock)
+✓ planning_s: sum of wall times of FR41 lines whose step is `plan` (all attempts, incl. think:false re-issue)
+✓ research_phase_calls: count of FR41 lines whose step is NOT brief, plan or write
+✓ routine p50/p95 (s): nearest-rank percentiles of wall times of FR41 lines sent with think=false whose step is not plan or write
+✓ distinct_pages_read: distinct urls of step events of kind read with status done
+✓ notes_kept: correctly returns null with reason "server exposes no notes count"
+✓ pass bar: status {complete,partial}, total_wall_s <= budget_s + 60, cited_read_pages >= 3, no unresolved_citations
+
+FR41 LOG LINE FORMAT (from research.ts line 106):
+{"event":"deep_research_model_call","step":"brief","think":false,"attempt":1,"wall_ms":0,"load_duration":0,"prompt_eval_count":0,"prompt_eval_duration":0,"eval_count":0,"eval_duration":0,"thinking_chars":0,"thinking_detected":false,"outcome":"ok"}
+
+FR41 SELECTION:
+- Lines carry NO run id (confirmed in script header comment and research.ts implementation)
+- Lines carry NO timestamp (confirmed in script header comment)
+- Selected by run time window: server.log byte offset taken just before POST up to end of log after done
+- Implementation: selectFr41Lines filters for "deep_research_model_call" event JSON lines
+
+BUDGET SETTING:
+- DEFAULT_BUDGET_S = 480 (server/scripts/ac29-live-run.ts line 78)
+- Source: research.ts line 106 has budgetMs: 480_000 (480 seconds)
+- Also read from done event budget_ms field if present (line 158-161 budgetFromEvents)
+- Margin for pass bar: 60 seconds (line 77 MARGIN_S = 60)
+
+PASS BAR REQUIREMENTS (verified in checkPassBar function, lines 92-118):
+✓ final status in {complete, partial}
+✓ total_wall_s <= budget_s + 60
+✓ cited_read_pages >= 3
+✓ unresolved_citations empty
+
+TOKEN HANDLING:
+✓ Token read from ~/.phone-models/token (line 232)
+✓ Token NEVER printed, logged, or written to files
+✓ Token only used in Authorization header (line 233)
+
+QUESTIONS.JSON VERIFICATION:
+✓ q1: "What are the main differences between the Raft and Paxos consensus algorithms, and when would you choose one over the other?"
+✓ q2: "What are the trade-offs between LFP and NMC lithium battery chemistries for home battery storage, including cost, lifespan, safety and cold-weather performance?"
+✓ q3: "What is the WebAssembly component model, how does it differ from core WebAssembly modules, and how widely is it supported by runtimes and languages today?"
+✓ heat: "How do heat pumps compare with gas boilers for heating a typical UK home in 2026? Cover running costs, installation costs, grants available and how well they work in cold weather."
+
+TESTS IMPLEMENTED:
+✓ SSE parsing (parseSse): ignores comment keep-alives, parses id/event/data, joins multi-line data
+✓ Resume handling (mergeEvents): drops duplicate seq without duplicating events
+✓ Pass-bar checks (checkPassBar): passing case + fail cases for status/budget/citation requirements
+✓ FR41 selection (selectFr41Lines): verbatim JSON line extraction
+✓ Metrics (computeMetrics): planning_s, research_phase_calls, routine_p50_s, routine_p95_s with nearest-rank percentiles
+
+RED FAILURE EXAMPLE (test "fails on status"):
+checkPassBar(events({ status: "failed" }), 300, 480)
+Result: pass = false, status_ok.ok = false (status was "failed" instead of "complete" or "partial")
+

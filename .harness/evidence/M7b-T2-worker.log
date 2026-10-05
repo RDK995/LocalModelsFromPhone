@@ -1,0 +1,64 @@
+commit: 8c0bd3e7dbd6410675a54ff68c960999f8819c91
+cmd: bash scripts/fallback-proof.sh && bash scripts/search-proof.sh
+
+==== M7b-AC1: setup ====
+      pre-existing headless Chromium pids (not ours): <none>
+
+==== M7b-AC1: SEARCH_HELPER_FORCE_DDGS=fail ====
+      started own service on http://127.0.0.1:7791 (pid 35778, mode fail)
+PASS: [fail] service health -> 200
+      status=200 verdict=ok 5
+      response (first 800 chars):
+        | {"results":[{"title":"Ada Lovelace - Wikipedia","url":"https://en.wikipedia.org/wiki/Ada_Lovelace","snippet":"Augusta Ada King, Countess of Lovelace (née Byron; 10 December 1815 – 27 November 1852), also known as Ada Lovelace, was …"},{"title":"Ada Lovelace | Biography, Computer, Day, & Facts | Britannica","url":"https://www.britannica.com/biography/Ada-Lovelace","snippet":"Ada Lovelace (born December 10, 1815, Piccadilly Terrace, Middlesex [now in London], England—died November 27, 1852, …"},{"title":"Ada Lovelace C of E High School","url":"https://adalovelace.org.uk/","snippet":"Headteacher’s Welcome \"We are a value centred school that is relentless in its approach to deliver the highest standards of …"},{"title":"Who was Ada Lovelace? - BBC Newsround","url":"https://www.bb
+PASS: [fail] HTTP 200
+PASS: [fail] backend browser, 5 results, each with title and external absolute http(s) url
+PASS: no new headless Chromium process after the [fail] request completed
+PASS: no new headless Chromium process after the [fail] service was stopped
+
+==== M7b-AC1: SEARCH_HELPER_FORCE_DDGS=empty ====
+      started own service on http://127.0.0.1:7791 (pid 35820, mode empty)
+PASS: [empty] service health -> 200
+      status=200 verdict=ok 5
+      response (first 800 chars):
+        | {"results":[{"title":"Ada Lovelace - Wikipedia","url":"https://en.wikipedia.org/wiki/Ada_Lovelace","snippet":"Augusta Ada King, Countess of Lovelace (née Byron; 10 December 1815 – 27 November 1852), also known as Ada Lovelace, was …"},{"title":"Ada Lovelace | Biography, Computer, Day, & Facts | Britannica","url":"https://www.britannica.com/biography/Ada-Lovelace","snippet":"Ada Lovelace (born December 10, 1815, Piccadilly Terrace, Middlesex [now in London], England—died November 27, 1852, …"},{"title":"Ada Lovelace C of E High School","url":"https://adalovelace.org.uk/","snippet":"Headteacher’s Welcome \"We are a value centred school that is relentless in its approach to deliver the highest standards of …"},{"title":"Who was Ada Lovelace? - BBC Newsround","url":"https://www.bb
+PASS: [empty] HTTP 200
+PASS: [empty] backend browser, 5 results, each with title and external absolute http(s) url
+PASS: no new headless Chromium process after the [empty] request completed
+PASS: no new headless Chromium process after the [empty] service was stopped
+
+==== result ====
+ALL CASES PASSED
+fallback-proof exit=0
+
+==== M7a-AC1: helper venv (Python, ddgs, Playwright, Chromium) ====
+PASS: venv python present (/Users/ryankenny/Projects/CodingHarnessv2/search/helper/.venv/bin/python)
+      python: 3.14.7
+PASS: venv imports ddgs and playwright (ddgs 9.16.0 playwright 1.63.0)
+PASS: Playwright Chromium executable exists (/Users/ryankenny/Library/Caches/ms-playwright/chromium-1243/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing)
+
+==== service (minimal environment) ====
+      started search service with env -i HOME PATH only (pid 35889)
+PASS: service health -> 200
+
+==== M7a-AC1: POST /v1/search returns real ddgs results ====
+      attempt 1 query='Ada Lovelace' status=200 verdict=ok 5
+PASS: search 'Ada Lovelace' -> 200, backend ddgs, 5 valid results (attempt 1 of 3)
+      response (first 800 chars):
+        | {"results":[{"title":"Ada Lovelace","url":"https://en.wikipedia.org/wiki/Ada_Lovelace","snippet":"Augusta Ada King, Countess of Lovelace (née Byron; 10 December 1815 – 27 November 1852), also known as Ada Lovelace, was an English mathematician and writer chiefly known for work on Charles Babbage's proposed mechanical general-purpose computer, the analytical engine. She was the first to recognise the machine had applications beyond pure calculation. Lovelace is often considered the first computer programmer.Lovelace was the only legitimate child of poet Lord Byron and reformer Anne Isabella Milbanke. Lord Byron separated from his wife a month after Ada was born, and died when she was eight. Although often ill in childhood, Lovelace pursued her studies assiduously. She married William Kin
+      attempt 1 query='Ada Lovelace' max_results=3 status=200 verdict=ok 3
+PASS: max_results=3 -> 3 results (<= 3) (attempt 1 of 3)
+PASS: bad body {} -> 400
+
+==== M7a-AC1: region UK/English ====
+PASS: helper requests region uk-en (REGION = "uk-en"; region=REGION)
+PASS: helper unit tests (fake DDGS receives region uk-en): Ran 26 tests in 0.120s  OK
+
+==== M7a-AC1: no account, API key or payment ====
+      env/key reads found:
+        | /Users/ryankenny/Projects/CodingHarnessv2/search/helper/search.py:149:    forced = os.environ.get("SEARCH_HELPER_FORCE_DDGS")
+        | /Users/ryankenny/Projects/CodingHarnessv2/search/src/index.ts:8:const port = process.env.SEARCH_PORT ? Number(process.env.SEARCH_PORT) : DEFAULT_PORT;
+PASS: no API key/token/env reads other than SEARCH_PORT and SEARCH_HELPER_FORCE_DDGS (test hook); service ran under env -i HOME PATH
+
+==== result ====
+ALL CASES PASSED
+search-proof exit=0

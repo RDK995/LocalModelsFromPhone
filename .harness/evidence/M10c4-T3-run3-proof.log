@@ -1,0 +1,23 @@
+Preflight ok: bun, Ollama, search service
+Resident model with tools: nemotron3:33b
+Proof server on http://127.0.0.1:59860
+Prompt 1: What are today's news trends (may take minutes)...
+Prompt 2: What are the latest developments in artificial intelligence? (may take minutes)...
+Prompt 3: What is happening in the world economy right now? (may take minutes)...
+
+Model: nemotron3:33b
+- Prompt: What are today's news trends
+    status=complete sources=10 distinct hosts=9 [news.google.com, bing.com, todayinpulse.com, apnews.com, cnn.com, news.sky.com, bbc.com, bbc.co.uk, the-world-now.com]
+    links=0 matched distinct saved sources=0 unmatched=0
+    diversity=PASS links=fail
+- Prompt: What are the latest developments in artificial intelligence?
+    status=complete sources=10 distinct hosts=10 [blog.google, intuitionlabs.ai, aidiscoverydigest.com, weforum.org, trenderai.com, deloitte.com, geeksforgeeks.org, sambanova.ai, pwc.com, forbes.com]
+    links=5 matched distinct saved sources=2 unmatched=1 ["https://www.deloitte.com/us/en/what-we-do/capabilities/applied-artificial-intelligence/blogs/pulse-check-series-latest-ai-developments/ai-adoption-challenges-ai-2025.html"]
+    diversity=PASS links=fail
+- Prompt: What is happening in the world economy right now?
+    status=complete sources=10 distinct hosts=9 [spglobal.com, oecd.org, weforum.org, desapublications.un.org, fitchratings.com, nomuraconnects.com, obr.uk, franklintempleton.co.uk, niesr.ac.uk]
+    links=0 matched distinct saved sources=0 unmatched=0
+    diversity=PASS links=fail
+Diversity passes: 3/3 (need >=2)
+Link passes: 0/3 (need >=2)
+RESULT: FAIL

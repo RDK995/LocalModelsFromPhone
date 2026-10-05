@@ -1,0 +1,13 @@
+{"execution": 1, "exit_code": 127, "inputs": {"command": ["bash", "-lc", "cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/http src/ollama && bun run typecheck"], "environment": {"cwd": ".", "dependencies": {}, "environment": {"LANG": "ed8e9a8e277e89e97fb391676cb629b3a326002a82296f2abbc38135c3a106c2"}, "executable_resolution": "/bin/bash", "platform": {"machine": "arm64", "python": "3.14", "system": "Darwin"}, "workspace": {"changed_files": ["server/package.json", "server/src/http/server.test.ts", "server/src/http/server.ts", "server/src/ollama/client.test.ts", "server/src/ollama/client.ts", "server/tsconfig.json", "shared/api.ts"], "sha256": "ff9d32d6906ec576cc9ffa54dd0a20d2cc01df84ceb2dd232183df230637cbaf"}}, "environment_fingerprint": "0e264a812c9943cda2e248a6a816e572235c37ebc830abb9fdedfa4e0bdeaa3e", "head": "04bb92b7be06984856c1dd1c34b52e2533f656e3", "purpose": "verifier"}, "key": "3688f656027265b5c56538c987fcdc57b0d27a60646de059da3af8320da1a9c5"}
+--- stdout ---
+bun test v1.4.0 (1381054db)
+
+--- stderr ---
+
+ 19 pass
+ 0 fail
+ 32 expect() calls
+Ran 19 tests across 2 files. [30.00ms]
+$ tsc --noEmit
+/bin/bash: tsc: command not found
+error: script "typecheck" exited with code 127

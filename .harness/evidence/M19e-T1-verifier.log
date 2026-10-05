@@ -1,0 +1,131 @@
+TASK M19e-T1 Verification - SSE Keep-Alive Comment Implementation
+Verifier: Claude Haiku 4.5 Verifier
+Date: 2026-10-02
+
+=== COMMIT CONTEXT ===
+Starting commit: 755fbc5594ddbb162ebb827b22c8be7f0661f6da
+Working tree state: uncommitted changes to server.ts and untracked streamKeepAlive.test.ts
+
+=== TEST RUN 1: streamKeepAlive.test.ts Run 1 ===
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/http/streamKeepAlive.test.ts
+Exit Status: 0
+Output:
+ 6 pass
+ 0 fail
+ 30 expect() calls
+Ran 6 tests across 1 file. [2.83s]
+
+=== TEST RUN 2: streamKeepAlive.test.ts Run 2 ===
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/http/streamKeepAlive.test.ts
+Exit Status: 0
+Output:
+ 6 pass
+ 0 fail
+ 30 expect() calls
+Ran 6 tests across 1 file. [2.84s]
+
+=== TEST RUN 3: streamKeepAlive.test.ts Run 3 ===
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/http/streamKeepAlive.test.ts
+Exit Status: 0
+Output:
+ 6 pass
+ 0 fail
+ 30 expect() calls
+Ran 6 tests across 1 file. [2.85s]
+
+NOTE: All three runs passed consistently, demonstrating no flakiness in M19e-T1's tests.
+
+=== TEST RUN 4: Full Suite ===
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test
+Exit Status: 1
+Output:
+ 348 pass
+ 1 fail
+ 2456 expect() calls
+Ran 349 tests across 23 files. [18.70s]
+
+FAILURE DETAIL:
+File: src/generations/research.test.ts
+Test: "runs brief -> plan -> searches -> reads -> notes -> gap -> write, streaming steps, sources and the report"
+Reason: Receiving unexpected "model" steps in the events stream (9 additional model steps in the sequence)
+
+NOTE: This failure is in src/generations/research.test.ts, which is being modified by concurrent task M19e-T2/T3. The M19e-T1 task only touches server/src/http/server.ts and server/src/http/streamKeepAlive.test.ts. Per task packet: "if the full suite fails ONLY in deep research step tests you did not touch, report that precisely rather than editing those files."
+
+=== TYPECHECK ===
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bunx tsc --noEmit
+Exit Status: 0
+Output: (no errors)
+
+=== FILES CHANGED ===
+Allowed to change:
+- server/src/http/server.ts - CONFIRMED MODIFIED
+- server/src/http/streamKeepAlive.test.ts - CONFIRMED NEW
+
+No unauthorized files modified for M19e-T1.
+
+=== ASSERTION VERIFICATION ===
+
+1. DEFAULT_KEEP_ALIVE_MS constant test:
+   Test: "default keep-alive interval is at most 15 s"
+   Assertions:
+   - expect(DEFAULT_KEEP_ALIVE_MS).toBeLessThanOrEqual(15000);
+   - expect(DEFAULT_KEEP_ALIVE_MS).toBeGreaterThan(0);
+   ✓ PASSES
+
+2. KA1: Deep research stream keep-alives
+   Test: "KA1: a deep research stream gets keep-alives while a call is held"
+   Assertions:
+   - expect(res.status).toBe(200);
+   - expect(keepAlives(text).length).toBeGreaterThanOrEqual(4);
+   - expect(maxGap).toBeLessThanOrEqual(KA + TOLERANCE);
+   - expect(parseSSE(text).some((e) => e.event === "done")).toBe(true);
+   ✓ PASSES
+
+3. KA2: Ordinary web stream keep-alives
+   Test: "KA2: an ordinary web stream gets keep-alives while a call is held"
+   Same assertions as KA1 with mode="web"
+   ✓ PASSES
+
+4. KA3: Switch-off stream keep-alives
+   Test: "KA3: a switch-off stream gets keep-alives while a call is held"
+   Same assertions as KA1 with mode="off"
+   ✓ PASSES
+
+5. KA4: Resume with keep-alives, no duplicate/gap sequencing
+   Test: "KA4: resume across keep-alives has every seq exactly once and keep-alives carry no id"
+   Assertions:
+   - expect(keepAlives(text).length).toBeGreaterThanOrEqual(1);
+   - expect(new Set(seqs).size).toBe(seqs.length);  // No duplicates
+   - expect(seqs).toEqual(seqs.map((_, i) => lo + i));  // No gaps, gapless sequence
+   - expect(resumed[0].id.endsWith(`-${lastSeq + 1}`)).toBe(true);  // Correct resume
+   - expect(block).not.toMatch(/(^|\n)(id|event|data):/);  // Keep-alives carry no id/event/data
+   ✓ PASSES
+
+6. KA5: Timer lifecycle (cleared on generation close and client cancel)
+   Test: "KA5: the timer is cleared when the stream closes and when the client cancels"
+   Assertions:
+   - Spies on setInterval/clearInterval to track live timers
+   - expect(live.size).toBeGreaterThanOrEqual(1);  // Timer is set
+   - After cancel: expect(live.size).toBe(0);  // Timer cleared on cancel
+   - After close: expect(live.size).toBe(0);  // Timer cleared on stream close
+   ✓ PASSES
+
+=== IMPLEMENTATION VERIFICATION ===
+
+server.ts changes implement:
+✓ NEW: DEFAULT_KEEP_ALIVE_MS constant (15000 ms default)
+✓ ADDED: keepAliveMs option to CreateServerOptions interface
+✓ ADDED: keepAliveMs parameter to sseResponse function
+✓ ADDED: setInterval in start() to enqueue ": keep-alive\n\n" comments
+✓ ADDED: closed flag and stopTimer() to guard against post-close operations
+✓ ADDED: try/catch around enqueue with stopTimer() on error
+✓ ADDED: stopTimer() calls in pull() (done path), cancel(), and error path
+✓ MODIFIED: Both sseResponse callers (POST /v1/chat and GET /v1/generations/{id}/events) to pass keepAliveMs
+✓ PRESERVED: Existing ": connected\n\n" comment, event framing, id format unchanged
+
+=== SUMMARY ===
+All M19e-T1 specific tests pass consistently (6 pass x 3 runs).
+No weakened assertions detected in streamKeepAlive.test.ts.
+TypeScript check passes.
+No unauthorized file changes for this task.
+Implementation matches design requirements.

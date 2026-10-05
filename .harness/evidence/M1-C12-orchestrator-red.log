@@ -1,0 +1,16 @@
+M1-C12 RED/GREEN re-check by the orchestrator (the verifier's RED step contradicted the worker's: its
+scratch run showed the M1-C11 Symbol crash on 6fec6a1, which already contains the C11 fix).
+Cause of the contradiction: copied trees sharing node_modules reuse a stale Metro transform cache,
+so `expo export` without --clear in a scratch copy can emit an old app's bundle (identical bundle
+hash a1f05c55... for two different _layout.tsx sources). Re-run with --clear:
+scratch = git archive 6fec6a1 mobile + working-tree mobile/scripts + stackChildren.test.ts, node_modules symlinked
+  npx expo export --platform ios --no-bytecode --clear --output-dir d ; node scripts/runtime-smoke.mjs <bundle> --token=present|absent
+## fixed (_layout.tsx from working tree) expo-router-e94f5f5075ae1c508e274996784e8a00.js
+RESULT: PASS (app launched, Chat rendered, no JS exception)
+drive Setup -> Chat: {"ok":true,"chatMounted":true,"backOnSetup":false,"singleTopBar":true,"rendered_text":["Chat","Settings","Send"],"native_stack_headers":[{"title":"Chat","hidden":true}]}
+RESULT: PASS (app launched, Setup rendered, no JS exception, Setup -> Chat drive reached Chat with one top bar)
+## pre (_layout.tsx from 6fec6a1) expo-router-8d77695c874cae5cdf57909f2fef12c8.js
+RESULT: PASS (app launched, Chat rendered, no JS exception)
+drive Setup -> Chat: {"ok":false,"chatMounted":true,"backOnSetup":false,"singleTopBar":false,"rendered_text":["Chat","Settings","Send"],"native_stack_headers":[{"title":"chat","hidden":false}]}
+RESULT: FAIL (exceptions=0, rendered=true, reached Setup=true, driveToChat.ok=false)
+Static: bun test src/app-routing/stackChildren.test.ts on pre -> 2 pass, 1 fail ("declares chat, settings and setup unconditionally").

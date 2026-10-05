@@ -1,0 +1,76 @@
+=== M22-T1 Verification ===
+Date: 2026-10-04
+Verifier: Claude Haiku 4.5
+
+Commit: a7e97a76e8b0e44c54e78b3289e1ae3965f4aa26
+
+Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/web/readability.test.ts src/generations/passages.test.ts && bun test && bun run typecheck
+
+Test Output Summary:
+
+First test run (readability.test.ts + passages.test.ts):
+  40 pass
+  0 fail
+  102 expect() calls
+
+Full test suite (bun test):
+  395 pass
+  0 fail
+  3323 expect() calls
+  18.58s elapsed
+
+Typecheck:
+  tsc --noEmit
+  (no errors)
+
+Exit Status: 0
+
+=== Files Verified ===
+
+shared/readability.ts:
+- Exports BOT_CHALLENGE_MARKERS (12 existing markers + "client challenge")
+- Exports UNREADABLE_MIN_WORDS = 40
+- Exports wordCount(text) function
+- Exports isBotChallenge(text) function
+- Exports Readability type
+- Exports classifyPage(page, minWords) function
+- classifyPage checks isBotChallenge(title + "\n" + text)
+- classifyPage returns { readable: false, reason: "blocked", detail: "..." } for bot challenges
+- classifyPage returns { readable: false, reason: "empty", detail: "..." } for short pages
+- classifyPage returns { readable: true } for readable pages
+
+server/src/web/readability.test.ts:
+- Tests "client challenge" marker detection -> blocked
+- Tests "verify you are human" marker detection -> blocked
+- Tests 39-word page -> empty
+- Tests 40-word page -> readable
+- Tests 500-word article with "captcha" mention -> readable
+- Tests empty text -> empty
+- Tests marker in title only -> blocked
+- Tests custom minWords parameter
+- Tests all BOT_CHALLENGE_MARKERS
+- Tests wordCount function
+
+server/src/generations/passages.ts:
+- Imports classifyPage from @shared/readability
+- Re-exports BOT_CHALLENGE_MARKERS from @shared/readability
+- Re-exports isBotChallenge from @shared/readability
+- buildNoteExcerpt calls classifyPageCore with page and finalSettings.noteMinWords
+- Returns { skip: classification.reason, reason: classification.detail } when not readable
+- Steps 3+ (passages, ranking, building excerpt) unchanged
+
+=== Acceptance Criteria Verification ===
+
+M22-AC1: "Client Challenge" page and near-empty page under 40 words are unreadable
+- Test: server/src/web/readability.test.ts line 54-63 ("classifies 'client challenge' page as blocked")
+- Test: server/src/web/readability.test.ts line 78-89 ("classifies a 39-word page as empty")
+- Behavior: Both correctly classified as unreadable (blocked and empty respectively)
+
+M22-AC3, M22-AC4: The same check is used by both callers
+- Implementation: classifyPage defined once in shared/readability.ts
+- Server usage: server/src/generations/passages.ts imports and uses classifyPageCore
+- Design re-exports BOT_CHALLENGE_MARKERS and isBotChallenge for backwards compatibility
+- Search service will import from the same shared module (T2 implementation)
+
+All tests passed: 40 readability tests + 395 full suite tests.

@@ -1,0 +1,44 @@
+=== VERIFICATION RUN FOR M19-T2 ===
+Commit: 2578e53db95e9d78ad9c71bc52de4403b6f59274
+Task: M19-T2 — Server tests: a deep research run survives a dropped connection, refuses a new message, and a confirmed unload ends it without hanging
+Command: cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck
+
+=== Running full test suite ===
+bun test v1.4.0 (1381054db)
+
+ 273 pass
+ 0 fail
+ 1657 expect() calls
+Ran 273 tests across 16 files. [11.73s]
+
+=== Running typecheck ===
+$ tsc --noEmit
+(no output = no errors)
+
+=== First isolated run of deepResearchResume.test.ts ===
+bun test v1.4.0 (1381054db)
+
+ 3 pass
+ 0 fail
+ 70 expect() calls
+Ran 3 tests across 1 file. [583.00ms]
+
+=== Second isolated run of deepResearchResume.test.ts ===
+bun test v1.4.0 (1381054db)
+
+ 3 pass
+ 0 fail
+ 70 expect() calls
+Ran 3 tests across 1 file. [609.00ms]
+
+=== Third isolated run of deepResearchResume.test.ts ===
+bun test v1.4.0 (1381054db)
+
+ 3 pass
+ 0 fail
+ 70 expect() calls
+Ran 3 tests across 1 file. [623.00ms]
+
+=== Verification complete ===
+All tests pass consistently across three runs
+Exit Status: 0
