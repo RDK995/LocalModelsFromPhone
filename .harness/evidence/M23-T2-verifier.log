@@ -1,193 +1,39 @@
-VERIFICATION LOG FOR M23-T2
-===========================
+VERIFICATION RUN - M23-T2 Quote Matching in Deep Research
 
-Task: Deep research's quote check uses the FR48 matcher, proven through POST /v1/chat
-
-Date: 2026-10-05
-Verifier: Claude Haiku 4.5
-
-COMMAND RUN
-===========
+Command:
 cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test src/http/deepResearchQuotes.test.ts src/generations/quoteMatch.test.ts && bun test && bun run typecheck
 
-EXIT STATUS
-===========
-0 (all passed)
+Exit Status: 0
 
-OUTPUT SUMMARY
-==============
-Deep Research Quotes Tests:
-- 10 tests in src/http/deepResearchQuotes.test.ts (plus setup, helpers)
-- All 10 tests PASSED
+Output Summary:
+- deepResearchQuotes.test.ts: All tests passed (part of full suite)
+- quoteMatch.test.ts: All tests passed
+- Full test suite: 464 pass, 0 fail
+- Typecheck: No errors
 
-Quote Match Tests:
-- Tests for normaliseForQuote and quoteOnPage functions
-- All tests PASSED
+Test Files:
+- server/src/http/deepResearchQuotes.test.ts: Contains 16 test cases covering:
+  * Case (a): 15 variants kept (curly quotes, dashes, case, ligatures, compatibility forms, markdown)
+  * Case (a): Combined variants all kept together
+  * Case (b): Ellipsis quotes kept when pieces in page order
+  * Case (c): Dropped when words not on page
+  * Case (d): Dropped when ellipsis pieces in reverse order
+  * Case (e): FR37 unchanged - citations resolve correctly
 
-Full Test Suite:
-- 450 pass
-- 0 fail
-- 3507 expect() calls
-- Ran 450 tests across 32 files
-- [19.78s-19.79s]
-
-Typecheck:
-- tsc --noEmit: PASSED (exit 0)
-
-FILES CHANGED
-=============
-Modified (from commit 160530a):
+Files Changed (from HEAD):
 - server/src/generations/research.ts
-  - Added import: normaliseForQuote, quoteOnPage from ./quoteMatch
-  - Changed keepNotes: replaced normaliseWhitespace with normaliseForQuote
-  - Changed keepNotes: replaced direct includes check with quoteOnPage call
-  - Removed normaliseWhitespace function (no longer used)
-  - Status: ALLOWED (within scope)
-
+  * Added import: normaliseForQuote, quoteOnPage from quoteMatch
+  * Removed: normaliseWhitespace function (no longer used)
+  * Modified keepNotes: normaliseForQuote(page.text) instead of normaliseWhitespace(page.text)
+  * Modified keepNotes: quoteOnPage(item.quote, pageTextNorm) instead of includes check
+  
 - server/src/generations/research.test.ts
-  - Converted ONE test: "drops a quote that differs from page text only in letter case"
-  - New test title: "keeps a quote that differs from page text only in letter case (FR48)"
-  - Changed: quote now is KEPT (not dropped) because FR48 normalizes case
-  - Changed assertions: expect case-normalized claim to be KEPT (was NOT.toContain)
-  - Status: ALLOWED (explicitly permitted conversion)
-
-New (untracked):
-- server/src/http/deepResearchQuotes.test.ts
-  - 10 test cases covering FR48 quote matching via POST /v1/chat
-  - Status: ALLOWED (new test file for this task)
-
-No other files modified outside .harness/ or user's reports/research_notes/ paths.
-
-TESTS WEAKENED
-==============
-NO
-
-The one change to research.test.ts is not a weakening:
-- Test was explicitly listed for conversion (FR37 vs FR48 behavior change)
-- Conversion asserts NEW FR48 behavior (case normalization)
-- Original assertions replaced with appropriate new ones
-- No assertion was removed or loosened; behavior change is intentional
-
-ACCEPTANCE CRITERIA EXERCISED
-==============================
-
-M23-AC1: "Server tests through POST /v1/chat with a faked search service and a 
-scripted fake Ollama: a note is kept when its quote differs from the page's stored 
-text only by curly vs straight quotes or apostrophes, dash variants, whitespace, 
-letter case, Unicode compatibility forms, or markdown link, image or emphasis 
-syntax; a quote containing "…" or "..." is kept when each piece, normalised, 
-appears on the page in order."
-
-Tests exercising M23-AC1:
-- AC1(a) curly vs straight quotes/apostrophes:
-  Line 184-205: "keeps notes for curly vs straight quotes/apostrophes"
-  Asserts both straight and curly quote versions are KEPT
+  * Only change: Test "drops a quote that differs from page text only in letter case" converted to
+    "keeps a quote that differs from page text only in letter case (FR48)"
+  * Changed assertions to verify case-different quote is now KEPT
   
-- AC1(a) dashes and whitespace:
-  Line 207-226: "keeps notes for dashes and whitespace variations"
-  Asserts en-dash and extra spaces are normalized and KEPT
-  
-- AC1(a) letter case:
-  Line 228-247: "keeps notes for case differences"
-  Asserts uppercase/lowercase variations are normalized and KEPT
-  
-- AC1(a) markdown link (Treaty of Versailles):
-  Line 249-268: "keeps notes for markdown link text"
-  Page text: "See the [Treaty of Versailles](https://en.wikipedia.org/wiki/Treaty_of_Versailles) for more information."
-  Quotes tested: "Treaty of Versailles" (plain) and "[Treaty of Versailles](...)" (with markdown)
-  Asserts both versions are KEPT (meets criterion exactly as specified)
-  
-- AC1(a) markdown image alt text:
-  Line 270-287: "keeps notes for markdown image alt text"
-  Asserts alt text extracted from ![Alternative text here](...) is KEPT
-  
-- AC1(a) markdown emphasis:
-  Line 289-312: "keeps notes for markdown emphasis (**bold** and _italic_)"
-  Asserts text with and without **bold** and _italic_ markers are all KEPT
-  
-- AC1(b) ellipsis from multiple paragraphs in order:
-  Line 314-333: "keeps notes with ellipsis from multiple paragraphs in order"
-  Tests quotes with "..." and "…" split across paragraphs in correct page order
-  Asserts both ellipsis variations KEPT when pieces appear in order
+- server/src/http/deepResearchQuotes.test.ts (new file)
+  * Full POST /v1/chat integration test with faked Ollama and search
+  * All required test cases with real variant characters/markup
 
-M23-AC2: "Server tests through POST /v1/chat: a note is still dropped when its 
-quote's words are not on the page, and when its ellipsis pieces appear on the page 
-only out of order; kept notes' citations behave as FR37 already requires."
-
-Tests exercising M23-AC2:
-- AC2(c) drops notes with words not on page:
-  Line 335-354: "drops notes whose words are not on the page"
-  Asserts "exact quote should be kept" IS IN report
-  Asserts "quote with wrong word should be dropped" is NOT IN report
-  Quote differs only by one word (zebra vs dog) - correctly DROPPED
-  
-- AC2(d) drops ellipsis pieces in reverse order:
-  Line 356-375: "drops notes with ellipsis pieces in reverse order"
-  Asserts "ellipsis in correct order kept" IS IN report
-  Asserts "ellipsis in reverse order dropped" is NOT IN report
-  Pieces appear on page but in reverse sequence - correctly DROPPED
-  
-- AC2(e) FR37 citations and source numbering:
-  Line 377-421: "sources are numbered 1..n in first-read order with kept and dropped notes"
-  Tests 5 pages with mixed kept/dropped notes
-  Asserts all 5 pages in sources (read, even with dropped notes)
-  Asserts sources numbered 1-5 in first-read order
-  Asserts only pages with kept notes cited [1], [3], [5]
-  FR37 citation rule unchanged: page is source if read, citations only if notes kept
-
-M23-AC4: "Ordinary web and switch-off replies are unchanged, and all existing 
-tests pass: cd server && bun test && bun run typecheck exit 0."
-
-Tests exercising M23-AC4:
-- Full test suite: 450 pass, 0 fail
-- Typecheck: exit 0
-- All existing tests still pass (no regressions)
-
-VERIFICATION OF DROPPED TEST BEHAVIOR
-======================================
-When quoteOnPage check was temporarily removed from research.ts:
-- AC2(c) test FAILED: incorrect quote was now kept (expected it to be dropped)
-- AC2(d) test FAILED: reverse-order ellipsis was now kept (expected it to be dropped)
-
-This proves the "dropped" tests actually depend on the quote check working correctly.
-After restoring the quote check, all tests PASS again.
-
-IMPLEMENTATION VERIFICATION
-============================
-
-1. research.ts changes (keepNotes closure):
-   - Correctly imports normaliseForQuote and quoteOnPage from quoteMatch
-   - Correctly changes: pageTextNorm = normaliseForQuote(page.text)
-   - Correctly changes: if (!quoteOnPage(item.quote, pageTextNorm)) continue;
-   - Stored note still uses original quote: item.quote.replace(/\s+/g, " ").trim()
-   - normaliseWhitespace function correctly deleted (no other uses)
-
-2. deepResearchQuotes.test.ts:
-   - Follows deepResearchPassages.test.ts pattern (setup, pageText callback, notes callback)
-   - Uses pageWithText helper to create readable pages (40+ words, no bot-check)
-   - Tests through POST /v1/chat with deep_research: true
-   - Uses faked search service and scripted fake Ollama
-   - Asserts on final notes used by write step (write request's notes block)
-   - Asserts on saved sources and [n] citations
-
-3. research.test.ts conversion:
-   - Only letter-case test converted
-   - Test title changed to reflect FR48 behavior
-   - Assertions changed: case-different quote now KEPT (not dropped)
-   - Comment updated to explain FR48 normalization
-
-RESULT
-======
-PASS
-
-All checks passed:
-✓ Command executed successfully with exit status 0
-✓ All 450 tests pass, 0 fail, typecheck passes
-✓ Files changed are within allowed list (3 files: 2 modified, 1 new)
-✓ Only 1 test modified (letter-case conversion, explicitly allowed)
-✓ No tests weakened (conversion is intentional behavior change)
-✓ All acceptance criteria have tests that exercise them
-✓ Dropped tests correctly fail when quote check is removed
-✓ Treaty of Versailles example present as specified
-✓ FR48 quote matching fully integrated and tested
-
+Report Generated: 2026-10-05

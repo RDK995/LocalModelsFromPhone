@@ -590,15 +590,15 @@ describe("runResearch", () => {
     expect(report).not.toContain("www.test.org");
   });
 
-  // Part C: quote matching with whitespace-only normalization tests
-  it("drops a quote that differs from page text only in letter case", async () => {
+  // Part C: quote matching with FR48 normalization tests (including case normalization)
+  it("keeps a quote that differs from page text only in letter case (FR48)", async () => {
     const fc = fakeClient({
       note: (req) => {
         const m = text(req).match(/Fact sentence for (\S+?)\./);
         const url = m ? m[1] : "none";
         return JSON.stringify({
           notes: [
-            { quote: `FACT SENTENCE FOR ${url}`, claim: `case-mismatch claim about ${url}` },
+            { quote: `FACT SENTENCE FOR ${url}`, claim: `case-normalized claim about ${url}` },
             { quote: `Fact sentence for ${url}`, claim: `correct claim about ${url}` },
           ],
         });
@@ -608,8 +608,9 @@ describe("runResearch", () => {
     const events = await collect(fc.client, web.tools, { subQuestionCount: 1, minSearches: 2, maxSearches: 2, pagesPerSubQuestion: 2 });
 
     const writeReq = text(fc.of("write")[0]!.req);
+    // FR48: both claims should be kept because case differences are normalized
+    expect(writeReq).toContain("case-normalized claim");
     expect(writeReq).toContain("correct claim");
-    expect(writeReq).not.toContain("case-mismatch claim");
   });
 
   it("keeps a quote that differs from page text only in whitespace", async () => {

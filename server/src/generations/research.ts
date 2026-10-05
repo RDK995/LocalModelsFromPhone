@@ -40,6 +40,7 @@ import { createPageNumberer, pageUrlKey } from "../web/pageNumbers";
 import type { ContentEvent, DoneEvent, SourcesEvent, StepEventData } from "@shared/api";
 import type { GenerationEvent, OllamaChatClient } from "./manager";
 import { buildNoteExcerpt, DEFAULT_PASSAGE_SETTINGS, type PassageSettings } from "./passages";
+import { normaliseForQuote, quoteOnPage } from "./quoteMatch";
 
 /** The structured web tools (C12) the research loop uses; satisfied by createWebTools(). */
 export interface ResearchWebTools {
@@ -337,11 +338,6 @@ export const VALIDATORS = {
 /** lowercase, trim, collapse whitespace (query repeats, quote matching). */
 export function normaliseText(s: string): string {
   return s.toLowerCase().replace(/\s+/g, " ").trim();
-}
-
-/** trim, collapse whitespace only (quote matching per FR35/FR37). */
-function normaliseWhitespace(s: string): string {
-  return s.replace(/\s+/g, " ").trim();
 }
 
 /** FR45: a page's domain for its note step label - the hostname without a leading "www.". */
@@ -949,10 +945,10 @@ export async function* runResearch(opts: ResearchRunOptions): AsyncGenerator<Res
       }
       // One path for a whole reply and for the complete notes of a cut-off one (FR37 quote check).
       const keepNotes = (items: unknown[]) => {
-        const pageTextNorm = normaliseWhitespace(page.text);
+        const pageTextNorm = normaliseForQuote(page.text);
         for (const item of items) {
           if (!isObj(item) || !nonEmpty(item.quote) || !nonEmpty(item.claim)) continue;
-          if (!pageTextNorm.includes(normaliseWhitespace(item.quote))) continue; // FR37: unverifiable quote dropped
+          if (!quoteOnPage(item.quote, pageTextNorm)) continue; // FR48: quote matching with normalisation
           notes.push({ n, quote: item.quote.replace(/\s+/g, " ").trim(), claim: item.claim.trim() });
         }
       };
