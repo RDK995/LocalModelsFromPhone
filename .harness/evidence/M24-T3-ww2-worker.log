@@ -1,0 +1,53 @@
+=== M24-T3 WW2 QUESTION RUN ===
+
+Run Command:
+cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun run scripts/ac29-live-run.ts --id ww2 --out-dir ../.harness/evidence --prefix M24-T3
+
+Start Time: 2026-10-05T09:10:53.569Z
+End Time: 2026-10-05T09:14:10.136Z
+
+Exit Status: 0
+
+Result JSON Fields:
+generation_id: "5898f9f5-eb0b-45e7-aa91-ed7372053176"
+final_status: "complete"
+total_wall_s: 196.567
+budget_s: 480
+distinct_pages_read: 6
+cited_read_pages: 4
+unresolved_citations: []
+notes_kept: 14
+notes_dropped: 8
+drop_reasons: {"quote_not_found": 8}
+sources_check: {"sources_checked": 6, "unreadable_sources": [], "unchecked_sources": [], "ok": true}
+pass: true
+ac37_pass: true
+
+Validation Test Results:
+1. Files exist: PASS
+   - M24-T3-ww2-run.log
+   - M24-T3-ww2-stream.txt
+   - M24-T3-ww2-fr41.log
+   - M24-T3-ww2-sources-text.json
+   - M24-T3-ww2-result.json
+
+2. --check-only validation: EXIT 0 (PASS)
+   - All pass-bar values confirmed
+   - All sources readable and checked
+   - No unresolved citations
+
+Acceptance Criteria Status:
+✓ M24-AC2: Live on Mac through server API
+  - WW2 question run once
+  - Status: complete
+  - Distinct pages read: 6
+  - Cited read pages: 4 (≥3 required)
+  - No unresolved citations
+  - --check-only exit 0: YES
+
+✓ M24-AC3: FR47 readability check
+  - All 6 saved sources readable
+  - Unreadable sources: []
+  - Notes kept: 14
+  - Notes dropped: 8
+  - Drop reasons recorded: {"quote_not_found": 8}
