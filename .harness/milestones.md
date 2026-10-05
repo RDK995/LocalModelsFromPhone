@@ -598,7 +598,7 @@ Cycle 1: PASS (tier Mid, model sonnet, reason MID_ROUTED_TASK_IN_DIFF; diff 7a37
 
 ## M24 — Real sources and kept notes proven live on the Mac with the owner's World War Two question
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -612,13 +612,13 @@ C4, C6, C7, C11, C12, C13
 
 ### As-Built
 
-Pending.
+`.harness/as-built/M24.md` — RECORDED - 3 of 5 files attributed; components C4, C6, C13, NEW-evaluation-tool; 4 edges; 4 claim mismatches (C7, C11, C12 claimed but not directly touched; NEW-evaluation-tool observed but not claimed)
 
 ### Acceptance Criteria
 
-- [ ] **M24-AC1**: Before any restart, the owner is asked and agrees to com.harness.server being restarted onto the M22-M23 code (their answer recorded verbatim in Evidence); a read-only readiness check then shows the server and search service running committed code at or after M23's last commit and `qwen3.5:35b-a3b` resident.
-- [ ] **M24-AC2**: Live on the Mac through the server API: "What was the cause of World War Two from German perspective" and the four AC29 questions (Raft vs Paxos, LFP vs NMC, WebAssembly components, the 2026-10-02 heat-pump question) are each run once, one at a time; every run ends within the budget plus a small margin with status `complete` or `partial`, at least 3 distinct cited read pages and no citation number that fails to resolve to a saved source (`server/scripts/ac29-live-run.ts --check-only` exit 0 per run).
-- [ ] **M24-AC3**: For each of the five runs, no saved source is a page the FR47 check classes as unreadable (checked by applying that check to each saved source's stored text), and the run's notes kept, notes dropped and drop reasons from its FR41 log are recorded in evidence. A run that misses any bar is recorded and brought to the owner, not re-run until it passes.
+- [x] **M24-AC1**: Before any restart, the owner is asked and agrees to com.harness.server being restarted onto the M22-M23 code (their answer recorded verbatim in Evidence); a read-only readiness check then shows the server and search service running committed code at or after M23's last commit and `qwen3.5:35b-a3b` resident.
+- [x] **M24-AC2**: Live on the Mac through the server API: "What was the cause of World War Two from German perspective" and the four AC29 questions (Raft vs Paxos, LFP vs NMC, WebAssembly components, the 2026-10-02 heat-pump question) are each run once, one at a time; every run ends within the budget plus a small margin with status `complete` or `partial`, at least 3 distinct cited read pages and no citation number that fails to resolve to a saved source (`server/scripts/ac29-live-run.ts --check-only` exit 0 per run).
+- [x] **M24-AC3**: For each of the five runs, no saved source is a page the FR47 check classes as unreadable (checked by applying that check to each saved source's stored text), and the run's notes kept, notes dropped and drop reasons from its FR41 log are recorded in evidence. A run that misses any bar is recorded and brought to the owner, not re-run until it passes.
 
 ### Plan
 `.harness/plans/M24.md` — AGREED
@@ -643,7 +643,7 @@ Pending.
 
 ### Review
 
-Pending.
+Cycle 1: PASS — reviewer tier Mid (sonnet; review floor, all tasks Cheap), diff 1bc598b..95f8d34, per-criterion M24-AC1=PASS, M24-AC2=PASS, M24-AC3=PASS; findings 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL; no report written. Reviewer re-ran all five --check-only --sources-text checks (exit 0), bun test 477 pass, typecheck clean — .harness/evidence/M24-review.log.
 
 ### Review Cycles
 
