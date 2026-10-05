@@ -1,0 +1,131 @@
+=== Validation Summary ===
+
+Task: M24-T4 — Assemble markdown file with five runs' results and reports
+
+Generated file: .harness/evidence/M24-T4-summary.md
+
+Files processed:
+- M24-T3-ww2-result.json
+- M24-T3-ww2-stream.txt
+- M24-T3-ww2-fr41.log
+- M24-T3-ww2-sources-text.json
+- M24-T3-q1-result.json
+- M24-T3-q1-stream.txt
+- M24-T3-q1-fr41.log
+- M24-T3-q1-sources-text.json
+- M24-T3-q2-result.json
+- M24-T3-q2-stream.txt
+- M24-T3-q2-fr41.log
+- M24-T3-q2-sources-text.json
+- M24-T3-q3-result.json
+- M24-T3-q3-stream.txt
+- M24-T3-q3-fr41.log
+- M24-T3-q3-sources-text.json
+- M24-T3-heat-result.json
+- M24-T3-heat-stream.txt
+- M24-T3-heat-fr41.log
+- M24-T3-heat-sources-text.json
+
+=== Test 1: Check output for each run ===
+
+Testing ww2:
+- total_wall_s: 196.525
+- budget_s: 480
+- cited_read_pages: 4
+- unresolved_citations: []
+- notes_kept: 14
+- notes_dropped: 8
+- drop_reasons: {quote_not_found: 8}
+- sources_checked: 6
+- unreadable_sources: 0
+- unchecked_sources: 0
+- pass: true
+- ac37_pass: true
+STATUS: PASS
+
+Testing q1:
+- total_wall_s: 216.389
+- budget_s: 480
+- cited_read_pages: 5
+- unresolved_citations: []
+- notes_kept: 19
+- notes_dropped: 8
+- drop_reasons: {quote_not_found: 8}
+- sources_checked: 5
+- unreadable_sources: 0
+- unchecked_sources: 0
+- pass: true
+- ac37_pass: true
+STATUS: PASS
+
+Testing q2:
+- total_wall_s: 199.556
+- budget_s: 480
+- cited_read_pages: 3
+- unresolved_citations: []
+- notes_kept: 12
+- notes_dropped: 13
+- drop_reasons: {quote_not_found: 13}
+- sources_checked: 6
+- unreadable_sources: 0
+- unchecked_sources: 0
+- pass: true
+- ac37_pass: true
+STATUS: PASS
+
+Testing q3:
+- total_wall_s: 217.089
+- budget_s: 480
+- cited_read_pages: 5
+- unresolved_citations: []
+- notes_kept: 17
+- notes_dropped: 13
+- drop_reasons: {quote_not_found: 13}
+- sources_checked: 6
+- unreadable_sources: 0
+- unchecked_sources: 0
+- pass: true
+- ac37_pass: true
+STATUS: PASS
+
+Testing heat:
+- total_wall_s: 211.644
+- budget_s: 480
+- cited_read_pages: 4
+- unresolved_citations: []
+- notes_kept: 18
+- notes_dropped: 5
+- drop_reasons: {quote_not_found: 5}
+- sources_checked: 5
+- unreadable_sources: 0
+- unchecked_sources: 0
+- pass: true
+- ac37_pass: true
+STATUS: PASS
+
+=== Test 2: Report text equality check ===
+
+✓ ww2: Report text matches exactly
+✓ q1: Report text matches exactly
+✓ q2: Report text matches exactly
+✓ q3: Report text matches exactly
+✓ heat: Report text matches exactly
+
+STATUS: PASS
+
+=== Test 3: Git status check ===
+
+Only new file in .harness/evidence/:
+- .harness/evidence/M24-T4-summary.md
+
+No changes to reports/ or research_notes/
+No other untracked files outside allowed locations
+
+STATUS: PASS
+
+=== Overall Result ===
+
+All validation checks PASS
+All five runs met every bar (ac37_pass: true for all)
+Report texts match exactly with stream content
+
