@@ -1,0 +1,110 @@
+=== M24-T2 Read-Only Verification ===
+Date: 2026-10-05
+Verifier: Claude Verification Agent
+
+COMMANDS RUN (Read-only verification only):
+
+1. launchctl list | grep com.harness
+Exit status: 0
+Output:
+76646	-15	com.harness.server
+76643	-15	com.harness.search
+64430	0	com.harness.bundle-host
+
+2. ps -o pid,lstart,command -p 76646,76643
+Exit status: 0
+Output:
+  PID STARTED                      COMMAND
+76643 Mon  5 Oct 10:06:38 2026     /opt/homebrew/bin/bun src/index.ts
+76646 Mon  5 Oct 10:06:38 2026     /opt/homebrew/bin/bun src/index.ts
+
+3. date
+Exit status: 0
+Output:
+Mon  5 Oct 2026 10:08:00 BST
+
+4. git rev-parse HEAD
+Exit status: 0
+Output:
+c984e0efe50433f31122e5e53b32094ee6e8826e
+
+5. git status --porcelain -- server search shared mobile
+Exit status: 0
+Output:
+(empty - no changes)
+
+6. git log -1 --format='%H %cI' -- server ':!server/scripts'
+Exit status: 0
+Output:
+8d6e9a82d2b06dcf6240f6b116024bb97084128f 2026-10-05T07:58:21+01:00
+
+7. git log -1 --format='%H %cI' -- search/
+Exit status: 0
+Output:
+46ead91fb63d9f68d818d0f2a34a005442a45084 2026-10-04T21:47:56+01:00
+
+8. git log -1 --format='%H %cI' -- shared/
+Exit status: 0
+Output:
+5e38195861dc22708dc61f5f19ca7fd9c062cfe3 2026-10-04T21:38:07+01:00
+
+9. git log -1 --format='%H %cI %s' --grep='^M23'
+Exit status: 0
+Output:
+1bc598b1e2754d13e1e6e42b06cbbfa24f9e7ba8 2026-10-05T08:01:42+01:00 M23 DONE: deep research keeps notes whose quotes differ from the page only by quote marks, dashes, spacing, case, Unicode forms or markdown link/emphasis syntax, matches ellipsis pieces in order, and logs every dropped note with its reason plus a notes_dropped count at run end
+
+10. git merge-base --is-ancestor 1bc598b1e2754d13e1e6e42b06cbbfa24f9e7ba8 HEAD; echo "Exit status: $?"
+Exit status: 0
+Output:
+Exit status: 0
+
+11. curl -s -o /dev/null -w '%{http_code}\n' --max-time 10 http://127.0.0.1:7789/health
+Exit status: 0
+Output:
+401
+
+12. curl -s -o /dev/null -w '%{http_code}\n' --max-time 10 http://127.0.0.1:7790/health
+Exit status: 0
+Output:
+404
+
+13. ollama ps
+Exit status: 0
+Output:
+NAME               ID              SIZE     PROCESSOR    CONTEXT    UNTIL   
+qwen3.5:35b-a3b    3460ffeede54    23 GB    100% GPU     32768      Forever
+
+14. bash ops/scripts/boot-readiness-check.sh 2>&1
+Exit status: 0
+Output (final lines):
+==== Result ====
+  PASS: ALL CHECKS PASSED
+
+VERIFICATION SUMMARY:
+
+✓ Kickstart PIDs match claimed values:
+  - Server: 76646 (claimed 76646)
+  - Search: 76643 (claimed 76643)
+
+✓ Process start times match claimed values:
+  - Both started Mon 5 Oct 10:06:38 2026 (claimed Mon 5 Oct 10:06:38 2026)
+
+✓ Start times after commit times:
+  - Server start 2026-10-05 10:06:38 is after server/ commit 2026-10-05T07:58:21+01:00 ✓
+  - Server start 2026-10-05 10:06:38 is after shared/ commit 2026-10-04T21:38:07+01:00 ✓
+  - Search start 2026-10-05 10:06:38 is after search/ commit 2026-10-04T21:47:56+01:00 ✓
+  - Search start 2026-10-05 10:06:38 is after shared/ commit 2026-10-04T21:38:07+01:00 ✓
+
+✓ M23 ancestor check: git merge-base --is-ancestor returned exit status 0
+
+✓ Git status: No changes in server, search, shared, mobile directories
+
+✓ Health checks:
+  - Server (7789): HTTP 401 (correct - unauthenticated rejection)
+  - Search (7790): HTTP 404 (correct - listening)
+
+✓ Ollama model: qwen3.5:35b-a3b is resident (100% GPU)
+
+✓ Boot readiness check: Exit status 0, final line "PASS: ALL CHECKS PASSED"
+
+All claimed conditions verified.

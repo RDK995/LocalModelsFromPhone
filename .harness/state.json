@@ -14254,7 +14254,8 @@
           "text": "Before any restart, the owner is asked and agrees to com.harness.server being restarted onto the M22-M23 code (their answer recorded verbatim in Evidence); a read-only readiness check then shows the server and search service running committed code at or after M23's last commit and `qwen3.5:35b-a3b` resident.",
           "status": "PENDING",
           "evidence": [
-            "Owner permission, asked and answered 2026-10-05 in this session, before any restart. Question asked: \"The last two fixes (skipping bot-check pages as sources, and keeping notes whose quotes differ only in small ways like curly quotes) are built, but the always-on server on your Mac is still running the old code. To test them for real, I need to restart the server and the search service so they pick up the new code. While they restart (a minute or so), the phone app won't be able to reach the Mac, and any reply in progress would be cut off. After that, I'll run your World War Two question plus the four usual test questions, one at a time — roughly 4 minutes each, about 20 minutes total. OK to restart?\" Owner's answer: \"Yes, restart now\" Authorises restarting com.harness.server and com.harness.search once for M24; covers nothing else."
+            "Owner permission, asked and answered 2026-10-05 in this session, before any restart. Question asked: \"The last two fixes (skipping bot-check pages as sources, and keeping notes whose quotes differ only in small ways like curly quotes) are built, but the always-on server on your Mac is still running the old code. To test them for real, I need to restart the server and the search service so they pick up the new code. While they restart (a minute or so), the phone app won't be able to reach the Mac, and any reply in progress would be cut off. After that, I'll run your World War Two question plus the four usual test questions, one at a time — roughly 4 minutes each, about 20 minutes total. OK to restart?\" Owner's answer: \"Yes, restart now\" Authorises restarting com.harness.server and com.harness.search once for M24; covers nothing else.",
+            "M24-T2 restart + read-only readiness (M24-AC1) — Cheap, attempt 1, PASS; verifier PASS (read-only re-check). Kickstarted once each under the owner's recorded yes: com.harness.search 61417->76643, com.harness.server 71661->76646, both started Mon 5 Oct 10:06:38 2026 (local, +01:00), after last server/ (excl. scripts) commit 8d6e9a8 2026-10-05T07:58:21+01:00, search/ 46ead91 2026-10-04T21:47:56+01:00, shared/ 5e38195 2026-10-04T21:38:07+01:00; M23 last commit 1bc598b ancestor of HEAD (exit 0); git status -- server search shared mobile empty; health 7789=401, 7790=404; ollama ps: qwen3.5:35b-a3b 100% GPU Forever; ops/scripts/boot-readiness-check.sh exit 0 'PASS: ALL CHECKS PASSED' — .harness/evidence/M24-T2-readiness.log, .harness/evidence/M24-T2-verifier.log."
           ]
         },
         {
@@ -14314,7 +14315,15 @@
             "reason_code": "BOUNDED_LOW_RISK",
             "detail": "two launchd kickstarts plus the existing readiness procedure (precedents M20-T4, M21-T6R); settled by pid/start-time evidence and the readiness script exit"
           },
-          "attempts": []
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "evidence": "M24-T2 restart + read-only readiness (M24-AC1) — Cheap, attempt 1, PASS; verifier PASS (read-only re-check). Kickstarted once each under the owner's recorded yes: com.harness.search 61417->76643, com.harness.server 71661->76646, both started Mon 5 Oct 10:06:38 2026 (local, +01:00), after last server/ (excl. scripts) commit 8d6e9a8 2026-10-05T07:58:21+01:00, search/ 46ead91 2026-10-04T21:47:56+01:00, shared/ 5e38195 2026-10-04T21:38:07+01:00; M23 last commit 1bc598b ancestor of HEAD (exit 0); git status -- server search shared mobile empty; health 7789=401, 7790=404; ollama ps: qwen3.5:35b-a3b 100% GPU Forever; ops/scripts/boot-readiness-check.sh exit 0 'PASS: ALL CHECKS PASSED' — .harness/evidence/M24-T2-readiness.log, .harness/evidence/M24-T2-verifier.log."
+            }
+          ]
         },
         {
           "id": "M24-T3",
@@ -14372,7 +14381,8 @@
       "planning_notes": [
         "Shape/size check 2026-10-04 (generation): 3 criteria, real entry point the server API on the live Mac; one signal IMPLEMENTATION_PLUS_LIVE_PROOF. Restarting com.harness.server is not covered by a standing permission for FR47-FR48 work (requirements Decisions 2026-10-04): the owner must be asked before any restart.",
         "Planning 2026-10-04: 3 criteria, one signal IMPLEMENTATION_PLUS_LIVE_PROOF (seam check: the script change only measures these runs; not split); 4 Cheap tasks; planned against M22/M23 DRAFT plans (classifyPage in shared/readability.ts; deep_research_note_dropped {run,n,reason,quote}; run-end notes_dropped). Recon: the server stores no page text after a run (sources event is title/url/n only), so AC3's 'stored text' is the search service's FR39 page cache via POST 127.0.0.1:7790/v1/read (x-cache hit|miss) - raised in plan risks. Both com.harness.search and com.harness.server must restart (both import shared/); owner asked for both before either. milestones.md ~800 lines: nothing further archivable (M21 most recently settled, M5a BLOCKED, M22-M24 TODO).",
-        "Pickup 2026-10-05: size/shape re-check passes (3 criteria; real entry point POST /v1/chat on the live Mac; one signal IMPLEMENTATION_PLUS_LIVE_PROOF, seam check as planned) - run, not split. milestones.md 768 lines: archived M22 (DONE) to .harness/archive/M22.md (768 -> 713 lines; 64-line section moved unchanged, 11-line stub left); M23 most recently settled, M5a BLOCKED, M24 active - nothing else archivable. Untracked reports/ and research_notes/ at baseline are the owner's, not committed."
+        "Pickup 2026-10-05: size/shape re-check passes (3 criteria; real entry point POST /v1/chat on the live Mac; one signal IMPLEMENTATION_PLUS_LIVE_PROOF, seam check as planned) - run, not split. milestones.md 768 lines: archived M22 (DONE) to .harness/archive/M22.md (768 -> 713 lines; 64-line section moved unchanged, 11-line stub left); M23 most recently settled, M5a BLOCKED, M24 active - nothing else archivable. Untracked reports/ and research_notes/ at baseline are the owner's, not committed.",
+        "Handoff 2026-10-05 (turn budget): accepted M24-T1 (c984e0e) and M24-T2 (restart done; do NOT restart again - the owner's permission was for one restart and it is spent). Remaining: M24-T3 five live runs, one fresh worker each, sequential, foreground, in order ww2, q1, q2, q3, heat (each verified before the next; a run that misses any bar is recorded, not re-run, and the milestone goes BLOCKED for owner decision after the set); then M24-T4 summary; then record milestone validation and set REVIEW."
       ]
     },
     "M5a": {
