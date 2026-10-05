@@ -509,84 +509,8 @@ The finished feature proven live: three real research-style questions plus the 2
 
 Owns: none owned. Traces to: AC29 (amended 2026-10-02: plus the heat-pump question), AC30.
 
-### Architecture
+Detail: `.harness/archive/M21.md`
 
-C1, C6, C11, C12, C13
-
-### As-Built
-
-`.harness/as-built/M21.md` — RECORDED - 2 of 2 files attributed; component C12; 4 claim mismatches: C1, C6, C11, C13 claimed but not in diff (M21 is a live proof; only the C12 read-step fix changed code)
-
-### Acceptance Criteria
-
-- [x] **M21-AC1**: Live on the Mac with `qwen3.5:35b-a3b` resident: 3 real research-style questions plus the 2026-10-02 heat-pump question each end within the budget plus a small margin with status `complete` or `partial`, a report citing at least 3 distinct read pages, and no citation number that fails to resolve to a saved source; the owner's opinion of report quality is recorded in the evidence (not a gate).
-- [x] **M21-AC2**: The owner's phone screenshot of a finished deep research reply showing its steps, its status, logo citations and "Sources (n)" is saved under .harness/evidence/.
-
-### Plan
-`.harness/plans/M21.md` — AGREED
-
-### Baseline
-
-6d89bfe98a3e3738c194926b432f77787f808c7b on m21-live-research-proof
-
-### Evidence
-
-- M21-T1 readiness (Cheap, BOUNDED_LOW_RISK) attempt 1 FAIL on a packet defect (server start-time test counted the scripts-only commit 64a2d77; test amended to exclude server/scripts/, see plan Changes during implementation, no ladder rung) -> verifier PASS on the amended packet: `bash ops/scripts/boot-readiness-check.sh` exit 0 "PASS: ALL CHECKS PASSED"; com.harness.server started 2026-10-03T07:25:16+01:00 after last non-scripts server/ commit da9ef0f 07:23:31+01:00 (LaunchAgent runs `bun src/index.ts`; server/src references no scripts/); com.harness.search started 15:54:11 after last search/ commit 15:53:08; `git status --porcelain -- server search mobile` empty; `ollama ps` lists qwen3.5:35b-a3b; no ac29-live-run in flight — .harness/evidence/M21-T1-readiness.log, .harness/evidence/M21-T1-verifier.log.
-
-- M21-T2 q1 Raft vs Paxos (Cheap, BOUNDED_LOW_RISK) attempt 1 PASS; verifier PASS: run log `exit=0`; generation 5486fcf9-9821-4182-b554-bc3e4093275a, final_status complete, total_wall_s 239.569 (limit 540), distinct_pages_read 5, cited_read_pages 4, unresolved_citations [], research_phase_calls 11, notes_kept 9; `bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M21-T2-q1-stream.txt --log ../.harness/evidence/M21-T2-q1-fr41.log` exit 0, pass true — .harness/evidence/M21-T2-q1-result.json, .harness/evidence/M21-T2-q1-verifier.log.
-
-- M21-T2 q2 LFP vs NMC (Cheap, BOUNDED_LOW_RISK) attempt 1 FAIL on the pass bar; verifier confirms (check-only exit 1): generation 3bf9e7a3-1888-4106-88e5-87209646543c, final_status complete, total_wall_s 173.522 (limit 540), distinct_pages_read 4, notes_kept 3, cited_read_pages 2 (cited_read_pages_ok false), unresolved_citations []. The report cites [1], [3], [4]; [4] was read and noted (stream line 169 read done `https://agaicpower.com/blogs/news/are-home-batteries-safe-lifepo4-vs-nmc-fire-risk-the-real-data-1`) but the final sources event lists it as `...-the-real-data` without `-1`, so the exact-URL match does not count it. Not re-run (plan: owner decides) — .harness/evidence/M21-T2-q2-result.json, .harness/evidence/M21-T2-q2-verifier.log.
-
-- M21-T2 q3 WebAssembly component model (Cheap, BOUNDED_LOW_RISK) attempt 1 PASS; verifier PASS: run log `exit=0`; generation 4c3505d2-a265-40fc-87ca-d0a6bd01ffb8, final_status complete, total_wall_s 205.117 (limit 540), distinct_pages_read 6, notes_kept 10, cited_read_pages 3, unresolved_citations []; check-only exit 0, pass true — .harness/evidence/M21-T2-q3-result.json, .harness/evidence/M21-T2-q3-verifier.log.
-
-- M21-T2 heat 2026-10-02 heat-pump question (Cheap, BOUNDED_LOW_RISK) attempt 1 PASS; verifier PASS: run log `exit=0`; generation 29feea53-c764-4bd6-91cf-63884e023650, final_status complete, total_wall_s 220.239 (limit 540), distinct_pages_read 6, notes_kept 13, cited_read_pages 5, unresolved_citations []; check-only exit 0, pass true — .harness/evidence/M21-T2-heat-result.json, .harness/evidence/M21-T2-heat-verifier.log.
-
-- M21-T3 owner reading file (Cheap, BOUNDED_LOW_RISK) attempt 1 PASS; verifier PASS: .harness/evidence/M21-T3-reports.md holds the four questions verbatim, each result.json metrics line, the report text reassembled from the stream (exact match: q1 2015, q2 1102, q3 1399, heat 3137 chars) and the full source lists (5, 4, 6, 6), no opinion added — .harness/evidence/M21-T3-verifier.log (worker notes .harness/evidence/M21-T3-worker.log). Owner's opinion: NOT YET RECORDED.
-- HANDOFF (orchestrator 1, CONTINUE, waiting on the owner): (1) q2 failed the bar (see q2 entry): owner to choose re-run q2 once / accept as substantively met with the URL note / stop and look into why; (2) owner's opinion of the four reports in M21-T3-reports.md, to be recorded word for word here; (3) owner's phone screenshot path(s) for M21-T4 (Mid, sonnet), which has not been dispatched. After those: record opinion, run M21-T4 + verifier, view the image, record ### Validation, set REVIEW.
-
-- OWNER DECISION 2026-10-03 on q2 (handoff item 1), selected option verbatim: "Fix the cause first" — i.e. option (c) as offered: "Stop and look into why the address changes. Probably a small fix, then all four questions are re-run (about 15–20 minutes plus the fix)." Carried inside M21 as a recorded change during implementation (see plan `.harness/plans/M21.md` Changes during implementation): M21-T5 diagnoses and fixes the URL mismatch (routed, verified), the server is restarted onto the fix, all four questions are re-run fresh as M21-T6 (prefix M21-T6), and the owner reading file is regenerated as M21-T7. The earlier M21-T2/T3 runs stay as history and are superseded for M21-AC1. Owner's opinion and phone screenshot (M21-T4) are not asked for until the re-runs are complete.
-
-- M21-T5 cause and fix (Top, AMBIGUOUS — unclear bug) attempt 4 PASS; verifier PASS: root cause server/src/web/tools.ts readPage — the read step's `done` event carried the requested URL while the `source` event and page.url carried the search service's post-redirect `final_url` (search/src/fetch/fetchPage.ts:212), which deep research saves as the source (server/src/generations/research.ts ~679, ~1152); q2's `...-real-data-1` redirected to `...-real-data`. Fix: done step now carries `url: finalUrl` (FR31: page identified by final URL after redirects); checker unchanged. New test "M21-T5: a redirected read's done step and its saved source name the same final URL" failed before, passes after; one existing expectation in "read() returns the numbered page text and the same events as read_page" moved from start.example to final.example (verifier: not weakened). `cd server && bun test` exit 0 (380 pass), `bun run typecheck` exit 0. Side effect: finished read steps for redirected pages (deep research and web chat) now show the landed-on address — .harness/evidence/M21-T5-worker.log, .harness/evidence/M21-T5-verifier.log.
-
-- HANDOFF (orchestrator 2, CONTINUE, 2026-10-03; supersedes handoff 1 item 1): fix committed 1034b0c. Remaining, in order: (1) M21-T6R (Cheap) — kickstart com.harness.server onto 1034b0c and repeat readiness to .harness/evidence/M21-T6-readiness.log, + verifier; (2) M21-T6 (Cheap) — q1, q2, q3, heat, one fresh worker each, sequential, prefix M21-T6, + verifier each; a run that fails the bar is recorded, not re-run, and goes to the owner; (3) M21-T7 (Cheap) — .harness/evidence/M21-T7-reports.md from the T6 streams, + verifier; (4) only then return to ask the owner for their opinion of M21-T7-reports.md (recorded verbatim) and the phone screenshot path(s) for M21-T4 (Mid; its packet reads M21-T2 timing — the screenshot must come after the T6 runs); (5) M21-T4 + verifier, record ### Validation, set REVIEW. Packets for T6R/T6/T7 are written under .harness/tasks/.
-
-- M21-T6R restart + readiness (Cheap, BOUNDED_LOW_RISK) attempt 1 PASS; verifier PASS: `launchctl kickstart -k gui/$(id -u)/com.harness.server` (pid 4781 -> 71661); server start 17:20:10+01:00 after last non-scripts server/ commit 1034b0c 2026-10-03T17:19:02+01:00; search pid 61417 start 15:54:11 after search/ commit cbd5566 15:53:08; health 401; `ollama ps` lists qwen3.5:35b-a3b; `pgrep -fl ac29-live-run` empty; `git status --porcelain -- server search mobile` empty; `bash ops/scripts/boot-readiness-check.sh` exit 0 "PASS: ALL CHECKS PASSED" — .harness/evidence/M21-T6-readiness.log, .harness/evidence/M21-T6R-verifier.log.
-
-- M21-T6 q1 Raft vs Paxos re-run (Cheap, BOUNDED_LOW_RISK) attempt 1 PASS; verifier PASS: run log `exit=0`; generation d438e975-04a9-45e5-8c32-f9094d14fcc8, final_status complete, total_wall_s 211.303 (limit 540), distinct_pages_read 6, notes_kept 14, cited_read_pages 6, unresolved_citations [], research_phase_calls 12; check-only exit 0, pass true — .harness/evidence/M21-T6-q1-result.json, .harness/evidence/M21-T6-q1-verifier.log.
-
-- M21-T6 q2 LFP vs NMC re-run (Cheap, BOUNDED_LOW_RISK) attempt 1 PASS; verifier PASS: run log `exit=0`; generation cb5db5c2-a80e-4b3f-ab32-1fdd95decca5, final_status complete, total_wall_s 196.086 (limit 540), distinct_pages_read 6, notes_kept 17, cited_read_pages 6, unresolved_citations [], research_phase_calls 12; check-only exit 0, pass true. Verifier checked every read step's done URL against the final sources event: all 6 match, including the agaicpower.com page that redirected from `...-real-data-1` to `...-real-data` (the M21-T2 failure) — the M21-T5 fix holds live. (Verifier's line "Owner Opinion Recorded: worker.log present" is wrong and disregarded: the owner's opinion is not yet recorded.) — .harness/evidence/M21-T6-q2-result.json, .harness/evidence/M21-T6-q2-verifier.log.
-
-- M21-T6 q3 WebAssembly component model re-run (Cheap, BOUNDED_LOW_RISK) attempt 1 PASS; verifier PASS: run log `exit=0`; generation a6c5a24e-5ebe-4f39-852d-19cb066ed006, final_status complete, total_wall_s 201.347 (limit 540), distinct_pages_read 6, notes_kept 22, cited_read_pages 6, unresolved_citations [], research_phase_calls 12; check-only exit 0, pass true; all 6 read done URLs found in the final sources event — .harness/evidence/M21-T6-q3-result.json, .harness/evidence/M21-T6-q3-verifier.log.
-
-- M21-T6 heat 2026-10-02 heat-pump question re-run (Cheap, BOUNDED_LOW_RISK) attempt 1 PASS; verifier PASS: run log `exit=0`; generation 51ae9df5-784f-472c-b675-ce5e6c63e391, final_status complete, total_wall_s 215.151 (limit 540), distinct_pages_read 6, notes_kept 15, cited_read_pages 6, unresolved_citations [], research_phase_calls 12; check-only exit 0, pass true; all 6 read done URLs found in the final sources event. Observation for the owner (not a gate): one of the six read pages is an alfalaval.co.uk plate-heat-exchanger product page reached via a Bing ad URL, off-topic for the question — .harness/evidence/M21-T6-heat-result.json, .harness/evidence/M21-T6-heat-verifier.log.
-- M21-T6 summary: all four re-runs on the fixed server meet the M21-AC1 bar (q1 211.3 s / 6 cited, q2 196.1 s / 6, q3 201.3 s / 6, heat 215.2 s / 6; all complete, no unresolved citations). These supersede the M21-T2 runs for M21-AC1.
-
-- M21-T7 owner reading file regenerated (Cheap, BOUNDED_LOW_RISK) attempt 1 PASS; verifier PASS: .harness/evidence/M21-T7-reports.md holds q1, q2, q3, heat with the questions verbatim, each result.json metrics line, the report text (verifier reassembled each report independently from M21-T6-<ID>-stream.txt: full text matches exactly, first/last 200 chars match) and the full source lists (6, 6, 6, 6, equal to each stream's final sources event); no opinion added; `git status --porcelain` clean outside the new file — .harness/evidence/M21-T7-verifier.log (worker notes .harness/evidence/M21-T7-worker.log). Owner's opinion: NOT YET RECORDED.
-
-- HANDOFF (orchestrator 3, CONTINUE, waiting on the owner; supersedes handoff 2): T6R, T6 (all four) and T7 accepted. The phone is free to use again — no live run is in flight. Remaining: (1) the owner's opinion of .harness/evidence/M21-T7-reports.md, recorded here word for word (M21-AC1 opinion part, not a gate); (2) the owner's phone screenshot path(s) of a finished deep research reply for M21-T4 (Mid, sonnet; its packet reads M21-T2 timing — amend to require the screenshot after the M21-T6 runs, which end 2026-10-03T16:45:11Z, before dispatch). After those: record opinion, run M21-T4 + verifier, view the image, record ### Validation, set REVIEW. Housekeeping due: milestones.md is past 400 lines; archive settled milestones per the template before or at the REVIEW return.
-
-- OWNER OPINION 2026-10-03 (M21-AC1 opinion part, not a gate), recorded verbatim: "Many sources but all source in response are the same". Given by the owner with their phone screenshot of the deep research reply to "What was the cause of World War Two from German perspective" (the M21-T4 reply), not about .harness/evidence/M21-T7-reports.md; asked what to record as their opinion for M21-AC1, the owner chose, verbatim, "Use my phone comment".
-
-- M21-T4 owner's phone screenshot (Mid, NOT_EASILY_VERIFIED) attempt 3 (Mid entry rung) PASS; verifier PASS: both owner images copied unchanged - `shasum -a 256` 9898539ec05d20dd9b17b9e12058f19f8a80f5caf584e0ccfa9fb50772eebf61 (source 789e0a36-image.png = .harness/evidence/M21-AC2-phone-screenshot-1.png) and 14bf64ee2d0697fc97647074ced8affae7e18b944a9fdeb98c4a97ca293233b0 (source 93437419-image.png = .harness/evidence/M21-AC2-phone-screenshot-2.png); `file`: PNG 1179 x 2556 each. Timing (packet amended to the M21-T6 re-runs, see plan Changes during implementation): phone clocks 19:44 and 20:28 BST, source mtimes 2026-10-03T19:45:13+0100 and 2026-10-03T20:28:33+0100, both after the re-runs ended 2026-10-03T16:45:11Z (17:45:11 BST). Items, all VISIBLE: steps (image 2, under "Hide web steps": Planning, Searching..., Reading: bbc.co.uk, scribd.com, en.wikipedia.org, encyclopedia.ushmm.org, scribd.com, politicalscienceview.com, Writing report); status (image 2, "Deep research: complete"); logo citations (image 1, three inline site logos; image 2, one); "Sources (6)" (image 1, expanded, six entries). Question: "What was the cause of World War Two from German perspective"; model qwen3.5:35b-a3b. Orchestrator viewed both images and agrees - .harness/evidence/M21-T4-screenshot-check.md, .harness/evidence/M21-T4-verifier.log. Commit e084c1c.
-- Criteria map: M21-AC1 <- M21-T6 q1/q2/q3/heat entries (bar) + OWNER OPINION entry (opinion, not a gate); M21-AC2 <- M21-T4 entry.
-- Housekeeping: milestones.md is ~710 lines but nothing is archivable - every settled milestone except M20 is already archived, M20 is the most recently settled (protected), M21 is active and M5a is BLOCKED.
-
-### Validation
-
-`cd /Users/ryankenny/Projects/CodingHarnessv2/server && for id in q1 q2 q3 heat; do bun run scripts/ac29-live-run.ts --check-only ../.harness/evidence/M21-T6-$id-stream.txt --log ../.harness/evidence/M21-T6-$id-fr41.log || exit 1; done && cd .. && shasum -a 256 /Users/ryankenny/.claude/uploads/db6a6102-6473-4871-aa04-e895eb948ec7/789e0a36-image.png .harness/evidence/M21-AC2-phone-screenshot-1.png /Users/ryankenny/.claude/uploads/db6a6102-6473-4871-aa04-e895eb948ec7/93437419-image.png .harness/evidence/M21-AC2-phone-screenshot-2.png && (cd server && bun test && bun run typecheck)` - reviewer runs once; offline (re-checks the saved M21-T6 streams against the AC29 bar, no live model call), expects exit 0 with pass true for all four, identical hashes per pair, and the server suite (380 pass at M21-T5) green for the M21-T5 fix. Reviewer views .harness/evidence/M21-AC2-phone-screenshot-1.png and -2.png for M21-AC2. Owner opinion for M21-AC1: OWNER OPINION entry in Evidence.
-
-### Review
-
-Cycle 1: CHANGES REQUIRED, scope RECORD_ONLY (2026-10-03), tier Top (opus) - diff contains a Top-routed task (T5); whole milestone 6d89bfe..00611bc. Per-criterion: AC1 PASS, AC2 PASS. Findings: 0 BLOCKER, 1 IMPORTANT, 1 OPTIONAL; report .harness/reviews/M21-cycle1.md. Pre-correction: 00611bc. Resolved: M21-R1-F1 IMPORTANT (recorded validation `--log` pointed at a nonexistent file) by a record-only correction to `--log ../.harness/evidence/M21-T6-$id-fr41.log` in Validation and state.json; correction 5cfa704; `check-state.py --record-only 00611bc HEAD` exit 0 and the corrected four `--check-only` runs exit 0. M21-R1-F2 OPTIONAL, left open (web-chat read step now shows the post-redirect URL; no mobile test pins it) needs no change. Reviewer re-ran bun test (380 pass), typecheck clean, screenshot hashes match; log .harness/evidence/M21-review.log.
-
-### Review Cycles
-
-0
-
-### Follow-ups
-
-- AC29 amended 2026-10-02 to add the 2026-10-02 heat-pump question: M21-AC1, title and outcome updated at planning on 2026-10-02 to the four-question set. M19g runs the same set before M20 for AC32; M21 re-runs it after M20 because M20 changes the search path. M21-AC2 is unaffected.
-- Owner decision 2026-10-03, selected verbatim: "Note both for later" ("Both are written down as known problems for a later round, and this milestone finishes as planned"). Not fixed in M21; neither gates it. (i) Citation concentration: in the phone reply (.harness/evidence/M21-AC2-phone-screenshot-1.png) all three inline citations point to the same one source ("Lebensraum: Nazi Geopolitics and Expansion Explained") although Sources (6) lists six. (ii) Bot-check pages saved as sources: two of those six sources are titled "Client Challenge" (the scribd.com reads) - apparently a bot-check/challenge page saved as the source instead of the article.
 
 ## M22 — Bot-check and near-empty pages are never listed as sources, and deep research reads another page in their place
 
@@ -655,7 +579,7 @@ Cycle 1: PASS (tier Top, model opus, reason TOP_ROUTED_TASK_IN_DIFF; diff a7e97a
 
 ## M23 — Deep research keeps notes whose quotes differ from the page only trivially, and logs every note it drops
 
-Status: TODO
+Status: IN_PROGRESS
 
 ### Outcome
 
@@ -682,6 +606,8 @@ Pending.
 `.harness/plans/M23.md` — AGREED
 
 ### Baseline
+
+7a37887986ea2bd762ca5d3133466d775c4c3cb3 on m23-quote-match
 
 ### Evidence
 

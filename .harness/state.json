@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_milestone": "M22",
+  "current_milestone": "M23",
   "requirements": {
     "FR9": "M1",
     "FR12": "M1",
@@ -13991,10 +13991,10 @@
         "FR48"
       ],
       "traces": "AC36 (FR48 part: normalised quote match, ellipsis pieces in order, rejection of words not on the page, every drop logged with reason, run-end notes_dropped), FR37 (citation rule otherwise unchanged), FR41 (log line)",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "review_cycles": 0,
       "review_override": null,
-      "baseline": null,
+      "baseline": "7a37887986ea2bd762ca5d3133466d775c4c3cb3 on m23-quote-match",
       "as_built": {
         "artifact": null,
         "result": "PENDING"
