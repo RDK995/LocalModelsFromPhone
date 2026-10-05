@@ -54,6 +54,18 @@ describe("quoteMatch", () => {
       expect(normaliseForQuote('"hello"')).toContain('"hello"'); // curly
     });
 
+    it("normalizes curly apostrophes (U+2018 and U+2019) to straight apostrophes", () => {
+      expect(normaliseForQuote("it’s")).toBe(normaliseForQuote("it's"));
+    });
+
+    it("normalizes curly single quotes to straight single quotes", () => {
+      expect(normaliseForQuote("‘a’")).toBe(normaliseForQuote("'a'"));
+    });
+
+    it("normalizes curly double quotes (U+201C and U+201D) to straight double quotes", () => {
+      expect(normaliseForQuote("“b”")).toBe(normaliseForQuote("\"b\""));
+    });
+
     it("normalizes various dash variants to -", () => {
       // U+2010, U+2011, U+2012, U+2013, U+2014, U+2015, U+2212, U+FE58, U+FE63, U+FF0D
       expect(normaliseForQuote("1919–1939")).toBe("1919-1939"); // U+2013 en dash
@@ -203,6 +215,14 @@ describe("quoteMatch", () => {
       const page = `some text here`;
       const normalisedPage = normaliseForQuote(page);
       expect(quoteOnPage("... ... ...", normalisedPage)).toBe(false);
+    });
+
+    it("matches with curly apostrophe (U+2019)", () => {
+      expect(quoteOnPage("the herd's size", normaliseForQuote("The herd’s size grew"))).toBe(true);
+    });
+
+    it("matches with curly double quotes (U+201C and U+201D)", () => {
+      expect(quoteOnPage("he said \"no\"", normaliseForQuote("He said “no” twice"))).toBe(true);
     });
   });
 });

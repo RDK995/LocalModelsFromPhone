@@ -1,0 +1,43 @@
+=== Task: M23-T1b — Correction to M23-T1: the quote matcher must fold curly quotes and apostrophes ===
+
+Goal: Add U+2018, U+2019, U+201C, U+201D to the quote normalization regexes in normaliseForQuote()
+
+=== Test Results ===
+
+Test 1: bun test src/generations/quoteMatch.test.ts src/http/deepResearchQuotes.test.ts
+Status: PASS
+Result: 57 pass, 0 fail
+Ran 57 tests across 2 files.
+
+Test 2: bun test (full suite)
+Status: PASS  
+Result: 464 pass, 0 fail
+Ran 464 tests across 32 files.
+
+Test 3: bun run typecheck
+Status: PASS
+Exit code: 0
+
+=== Changes Made ===
+
+File: server/src/generations/quoteMatch.ts
+- Line 41: Added ‘’ to single-quote character class
+- Line 43: Added “” to double-quote character class
+
+File: server/src/generations/quoteMatch.test.ts
+- Added test: normalizes curly apostrophes (U+2018 and U+2019) to straight apostrophes
+- Added test: normalizes curly single quotes to straight single quotes  
+- Added test: normalizes curly double quotes (U+201C and U+201D) to straight double quotes
+- Added test: matches with curly apostrophe (U+2019)
+- Added test: matches with curly double quotes (U+201C and U+201D)
+
+=== Verification ===
+
+All acceptance criteria met:
+✓ Curly vs straight quotes are now considered equivalent
+✓ Curly vs straight apostrophes are now considered equivalent
+✓ M23-AC1 requirement fulfilled
+✓ deepResearchQuotes.test.ts tests now pass with curly quotes
+✓ No existing tests weakened
+✓ No new dependencies introduced
+✓ TypeScript type checking passes

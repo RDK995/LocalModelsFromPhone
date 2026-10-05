@@ -37,10 +37,10 @@ export function normaliseForQuote(s: string): string {
   result = removeEmphasisUnderscores(result);
 
   // 3. Normalise quotes and apostrophes
-  // ' ' ‚ ‛ ′ ` ´ → '
-  result = result.replace(/['‚‛′`´]/g, "'");
-  // " " „ ‟ ″ « » → "
-  result = result.replace(/["„‟″«»]/g, '"');
+  // ' ' ‚ ‛ ′ ` ´ ' ' → '
+  result = result.replace(/['‚‛′`´‘’]/g, "'");
+  // " " „ ‟ ″ « » " " → "
+  result = result.replace(/["„‟″«»“”]/g, '"');
 
   // 4. Normalise dashes
   // U+2010 ‐, U+2011 ‑, U+2012 ‒, U+2013 –, U+2014 —, U+2015 ―, U+2212 −, U+FE58 ﹘, U+FE63 ﹣, U+FF0D － → -
