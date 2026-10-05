@@ -579,7 +579,7 @@ Cycle 1: PASS (tier Top, model opus, reason TOP_ROUTED_TASK_IN_DIFF; diff a7e97a
 
 ## M23 — Deep research keeps notes whose quotes differ from the page only trivially, and logs every note it drops
 
-Status: IN_PROGRESS
+Status: REVIEW
 
 ### Outcome
 
@@ -611,18 +611,27 @@ Pending.
 
 ### Evidence
 
-Progress (orchestrator handoff, 2026-10-05):
+```
+M23-T1  — FR48 quote matcher             Cheap, attempt 1, PASS (160530a; .harness/evidence/M23-T1-verifier.log)
+M23-T1b — correction: fold curly quotes  Cheap attempt 1 INTERRUPTED (turn limit; change complete on disk) → verifier PASS
+          U+2018/2019/201C/201D          (aecd491; .harness/evidence/M23-T1b-verifier.log). Defect found by T2 attempt 3.
+M23-T2  — keepNotes uses matcher +        Cheap attempt 1 FAIL (orchestrator: e2e curly test had no curly chars; no e2e
+          POST /v1/chat quote tests       Unicode-compat test) → Cheap attempt 2 INTERRUPTED twice (40-turn limit)
+                                          → Mid attempt 3 FAIL only on the T1 defect → after T1b, verifier PASS on the
+                                          unchanged tree (2006163; .harness/evidence/M23-T2-verifier.log)
+M23-T3  — drop log + notes_dropped        Cheap attempt 1 FAIL (orchestrator: edited existing test (e); inexact quote asserts)
+                                          → Cheap attempt 2 FAIL (test (e) swapped, not restored)
+                                          → Mid attempt 3 PASS (8d6e9a8; .harness/evidence/M23-T3-verifier.log)
+```
 
-```
-M23-T1 — FR48 quote matcher            Cheap, attempt 1, PASS (commit 160530a; .harness/evidence/M23-T1-verifier.log: 33 pass, typecheck 0)
-M23-T2 — keepNotes uses matcher         Cheap attempt 1 FAIL (orchestrator: e2e curly test had no curly chars; no e2e Unicode-compat test)
-                                        Cheap attempt 2 INTERRUPTED twice (40-turn limit, no report)
-                                        → next: Mid attempt 3 (sonnet). Uncommitted in tree: research.ts swap + research.test.ts
-                                          letter-case conversion (both judged correct); deepResearchQuotes.test.ts partly rewritten, not loading
-M23-T3 — drop log + notes_dropped       not started
-```
+- M23-AC1: deepResearchQuotes.test.ts (a) 14 per-difference kept cases (real U+2019/201C/201D/2013/2014/FB01/00A0/FF1x characters, markdown link/image/emphasis) + combined run; (b) "…" and "..." in order; quoteMatch.test.ts unit cases.
+- M23-AC2: deepResearchQuotes.test.ts (c) changed number dropped; (d) reversed ellipsis dropped; (e) FR37 citations and sources.
+- M23-AC3: deepResearchQuotes.test.ts "note dropping" (a) four `deep_research_note_dropped` lines with run = generation id, n, reason, exact quote (collapsed; 200 chars cut to 120; ""); (b) run_end `notes_dropped: 4`, `notes_kept: 1`; (c) all kept: no drop lines, `notes_dropped: 0`. No `invalid_page_number` reason — the server assigns n (plan risk 1).
+- M23-AC4: `cd server && bun test && bun run typecheck` exit 0, 467 pass, tsc clean on 8d6e9a8 (M23-T3 verifier).
 
 ### Validation
+
+`cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck` (reviewer runs once; covers M23-AC1..AC4; focused files: server/src/http/deepResearchQuotes.test.ts, server/src/generations/quoteMatch.test.ts, server/src/http/deepResearchModelCalls.test.ts, server/src/generations/research.test.ts). Last verifier run (M23-T3) exit 0: 467 pass, typecheck clean — .harness/evidence/M23-T3-verifier.log.
 
 ### Review
 
@@ -636,6 +645,8 @@ Pending.
 
 - FR48 out of scope (requirements 2026-10-04): the quote check is not removed or replaced by fuzzy matching beyond the listed normalisations; applies to deep research only.
 - Placed ahead of M5a (2026-10-04, extension for FR47-FR48): M5a is BLOCKED and parked waiting on the owner's Mac reboot check, and /harness:plan and /harness:implement stop at the first BLOCKED milestone, so new work is built before it, as the human decided for M14, M15 and M19b-M21. M5a stays BLOCKED and parked, its record unchanged, and is picked up after M24.
+- quoteMatch.ts step-3 comments list straight characters where the regex now folds U+2018/2019/201C/201D (comment only). The existing quoteMatch.test.ts "curly" case near line 54 uses straight characters; the M23-T1b tests now cover curly folding.
+- Verifiers missed three orchestrator-caught defects in M23 (T2 attempt 1, the T1 curly-quote gap, T3 attempt 1's edit to an existing test): worth tightening the verifier's existing-test-unchanged check.
 
 ## M24 — Real sources and kept notes proven live on the Mac with the owner's World War Two question
 

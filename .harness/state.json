@@ -13991,7 +13991,7 @@
         "FR48"
       ],
       "traces": "AC36 (FR48 part: normalised quote match, ellipsis pieces in order, rejection of words not on the page, every drop logged with reason, run-end notes_dropped), FR37 (citation rule otherwise unchanged), FR41 (log line)",
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "review_cycles": 0,
       "review_override": null,
       "baseline": "7a37887986ea2bd762ca5d3133466d775c4c3cb3 on m23-quote-match",
@@ -14004,25 +14004,33 @@
           "id": "M23-AC1",
           "text": "Server tests through POST /v1/chat with a faked search service and a scripted fake Ollama: a note is kept when its quote differs from the page's stored text only by curly vs straight quotes or apostrophes, dash variants, whitespace, letter case, Unicode compatibility forms, or markdown link, image or emphasis syntax (e.g. `[Treaty of Versailles](https://\u2026)` on the page matches \"Treaty of Versailles\"); a quote containing \"\u2026\" or \"...\" is kept when each piece, normalised, appears on the page in order.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "server/src/http/deepResearchQuotes.test.ts (a) 14 per-difference kept cases + combined run, (b) ellipsis in order (commits 2006163, aecd491 matcher fix); server/src/generations/quoteMatch.test.ts unit cases - .harness/evidence/M23-T2-verifier.log, .harness/evidence/M23-T1b-verifier.log"
+          ]
         },
         {
           "id": "M23-AC2",
           "text": "Server tests through POST /v1/chat: a note is still dropped when its quote's words are not on the page, and when its ellipsis pieces appear on the page only out of order; kept notes' citations behave as FR37 already requires.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "server/src/http/deepResearchQuotes.test.ts (c) changed number dropped, (d) reversed ellipsis dropped, (e) FR37 citations/sources - .harness/evidence/M23-T2-verifier.log"
+          ]
         },
         {
           "id": "M23-AC3",
           "text": "Server tests through POST /v1/chat: each dropped note writes one FR41 log entry carrying the run, the page number, the reason (missing quote, quote not found, invalid page number) and the first ~120 characters of the quote; the run-end log line carries `notes_dropped` equal to the number of dropped notes alongside `notes_kept`.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "server/src/http/deepResearchQuotes.test.ts 'deep research note dropping' (a) four drop lines with run/n/reason/exact quote, (b) run_end notes_dropped 4 notes_kept 1, (c) all kept -> no drop lines, notes_dropped 0 (commit 8d6e9a8) - .harness/evidence/M23-T3-verifier.log. No invalid_page_number reason: server assigns n (plan, agreed)."
+          ]
         },
         {
           "id": "M23-AC4",
           "text": "Ordinary web and switch-off replies are unchanged, and all existing tests pass: `cd server && bun test && bun run typecheck` exit 0.",
           "status": "PENDING",
-          "evidence": []
+          "evidence": [
+            "cd server && bun test && bun run typecheck: exit 0, 467 pass, tsc clean (M23-T3 verifier, final tree 8d6e9a8) - .harness/evidence/M23-T3-verifier.log"
+          ]
         }
       ],
       "tasks": [
@@ -14051,6 +14059,36 @@
               "verifier": "PASS",
               "evidence": ".harness/evidence/M23-T1-verifier.log",
               "note": "quoteMatch.test.ts 33 pass; typecheck exit 0; files within allowed list; tests not weakened"
+            }
+          ],
+          "status": "ACCEPTED"
+        },
+        {
+          "id": "M23-T1b",
+          "title": "Correction to M23-T1: normaliseForQuote folds curly quotes U+2018/2019/201C/201D",
+          "scope": [
+            "M23-AC1"
+          ],
+          "packet": ".harness/tasks/M23-T1b.md",
+          "artifact": ".harness/tasks/M23-T1b.md",
+          "after": [
+            "M23-T1"
+          ],
+          "routing": {
+            "tier": "Cheap",
+            "model": "haiku",
+            "reason_code": "BOUNDED_LOW_RISK",
+            "detail": "two character classes in one pure function plus five stated unit assertions"
+          },
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "INTERRUPTED",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M23-T1b-verifier.log",
+              "note": "worker hit 40-turn limit with no report but its change was complete on disk; orchestrator inspected code points; verifier ran packet Tests line: exit 0, 464 pass, typecheck 0; allowed files only; not weakened. Commit aecd491."
             }
           ],
           "status": "ACCEPTED"
@@ -14091,10 +14129,18 @@
               "model": "haiku",
               "result": "INTERRUPTED",
               "note": "worker stopped at its 40-turn limit with no report; a fresh Cheap continuation from disk also stopped at 40 turns with no report. research.ts and research.test.ts untouched by attempt 2 (still attempt 1's accepted-quality change). server/src/http/deepResearchQuotes.test.ts left partly rewritten and currently failing to load (bun test: 0 pass, 1 fail, 1 error)."
+            },
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "FAIL",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M23-T2-verifier.log",
+              "note": "Worker rewrote deepResearchQuotes.test.ts (19 tests, real U+2019/201C/201D/2013/2014/FB01/00A0/FF1x characters; orchestrator checked code points). Returned FAIL only because 5 tests exposed an M23-T1 defect (curly quotes U+2018/2019/201C/201D not folded; orchestrator reproduced). After correction task M23-T1b (aecd491) the verifier re-ran the packet Tests line on the unchanged T2 tree: exit 0, 464 pass, typecheck 0; files within allowed list; tests not weakened. Accepted at commit 2006163."
             }
           ],
-          "status": "IN_PROGRESS",
-          "next": "Attempt 3 at Mid (sonnet): Cheap rungs spent (attempt 1 FAIL, attempt 2 interrupted twice). Keep research.ts and research.test.ts as they are in the working tree; repair server/src/http/deepResearchQuotes.test.ts so it loads and exercises every FR48 difference end to end: real curly characters on the page with a straight-quote quote; en/em dash page vs '-' quote; whitespace; case; U+FB01 ligature and U+00A0 NBSP; markdown link (Treaty of Versailles), image, emphasis; '\u2026' and '...' ellipsis in order; dropped: words not on page, ellipsis reversed; FR37 citations. Each kept case must fail under the old whitespace-only includes() check. Then verify and commit T2, then run T3."
+          "status": "ACCEPTED"
         },
         {
           "id": "M23-T3",
@@ -14114,15 +14160,49 @@
             "reason_code": "BOUNDED_LOW_RISK",
             "detail": "new log line following logPageSkip pattern, one threaded field, one counter; settled by console.log-capture tests"
           },
-          "attempts": []
+          "attempts": [
+            {
+              "attempt": 1,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "PASS",
+              "orchestrator": "FAIL",
+              "evidence": ".harness/evidence/M23-T3-verifier.log",
+              "note": "production change correct (research.ts NoteDropLog/logNoteDrop/runId/notes_dropped, manager.ts runId: genId, M19g key list). Rejected by orchestrator: changed existing test (e) (note quote straight->curly, removing its FR48 difference) and test (a) did not assert exact quote values. Verifier missed both."
+            },
+            {
+              "attempt": 2,
+              "tier": "Cheap",
+              "model": "haiku",
+              "result": "PASS",
+              "verifier": "FAIL",
+              "evidence": ".harness/evidence/M23-T3-verifier.log",
+              "note": "test (a) exact quote assertions fixed; test (e) swapped sides instead of restored (still a changed existing test)."
+            },
+            {
+              "attempt": 3,
+              "tier": "Mid",
+              "model": "sonnet",
+              "result": "PASS",
+              "verifier": "PASS",
+              "evidence": ".harness/evidence/M23-T3-verifier.log",
+              "note": "Escalated: Mid. test (e) restored to 2006163 form (orchestrator confirmed git diff hunks only at import, parseSSE id, new describe). Packet Tests line exit 0: 467 pass, typecheck clean; allowed files only; not weakened. Commit 8d6e9a8."
+            }
+          ],
+          "status": "ACCEPTED"
         }
       ],
       "reviews": [],
       "findings": [],
-      "validation": [],
+      "validation": [
+        "cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck"
+      ],
       "follow_ups": [
         "FR48 out of scope (requirements 2026-10-04): the quote check is not removed or replaced by fuzzy matching beyond the listed normalisations; applies to deep research only.",
-        "milestones.md 819 -> 743 lines at M23 pickup after archiving settled M21 to .harness/archive/M21.md; still above 400 but M22 (most recently settled), M23/M24 (open) and M5a (BLOCKED) are protected."
+        "milestones.md 819 -> 743 lines at M23 pickup after archiving settled M21 to .harness/archive/M21.md; still above 400 but M22 (most recently settled), M23/M24 (open) and M5a (BLOCKED) are protected.",
+        "quoteMatch.ts step-3 comments list straight characters where the regex now folds U+2018/2019/201C/201D (comment only; cosmetic). quoteMatch.test.ts existing test 'curly' at ~line 54 uses straight characters and so does not test curly folding; the M23-T1b tests now cover it.",
+        "Verifier missed orchestrator-caught defects three times in M23 (T2 attempt 1 test without curly characters, T1 curly-quote gap, T3 attempt 1 edit to an existing test): worth tightening the verifier's existing-test-unchanged check."
       ],
       "complexity_signals": [],
       "ordering_decision": "Placed ahead of M5a (2026-10-04, extension for FR47-FR48): M5a is BLOCKED and parked waiting on the owner's Mac reboot check, and /harness:plan and /harness:implement stop at the first BLOCKED milestone, so new work is built before it, as the human decided for M14, M15 and M19b-M21. M5a stays BLOCKED and parked, its record unchanged, and is picked up after M24.",
