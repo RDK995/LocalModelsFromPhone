@@ -13991,19 +13991,19 @@
         "FR48"
       ],
       "traces": "AC36 (FR48 part: normalised quote match, ellipsis pieces in order, rejection of words not on the page, every drop logged with reason, run-end notes_dropped), FR37 (citation rule otherwise unchanged), FR41 (log line)",
-      "status": "REVIEW",
+      "status": "DONE",
       "review_cycles": 0,
       "review_override": null,
       "baseline": "7a37887986ea2bd762ca5d3133466d775c4c3cb3 on m23-quote-match",
       "as_built": {
-        "artifact": null,
-        "result": "PENDING"
+        "artifact": ".harness/as-built/M23.md",
+        "result": "RECORDED - 7 of 7 files attributed; components C4, C6; 1 edge; no claim mismatches"
       },
       "criteria": [
         {
           "id": "M23-AC1",
           "text": "Server tests through POST /v1/chat with a faked search service and a scripted fake Ollama: a note is kept when its quote differs from the page's stored text only by curly vs straight quotes or apostrophes, dash variants, whitespace, letter case, Unicode compatibility forms, or markdown link, image or emphasis syntax (e.g. `[Treaty of Versailles](https://\u2026)` on the page matches \"Treaty of Versailles\"); a quote containing \"\u2026\" or \"...\" is kept when each piece, normalised, appears on the page in order.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "server/src/http/deepResearchQuotes.test.ts (a) 14 per-difference kept cases + combined run, (b) ellipsis in order (commits 2006163, aecd491 matcher fix); server/src/generations/quoteMatch.test.ts unit cases - .harness/evidence/M23-T2-verifier.log, .harness/evidence/M23-T1b-verifier.log"
           ]
@@ -14011,7 +14011,7 @@
         {
           "id": "M23-AC2",
           "text": "Server tests through POST /v1/chat: a note is still dropped when its quote's words are not on the page, and when its ellipsis pieces appear on the page only out of order; kept notes' citations behave as FR37 already requires.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "server/src/http/deepResearchQuotes.test.ts (c) changed number dropped, (d) reversed ellipsis dropped, (e) FR37 citations/sources - .harness/evidence/M23-T2-verifier.log"
           ]
@@ -14019,7 +14019,7 @@
         {
           "id": "M23-AC3",
           "text": "Server tests through POST /v1/chat: each dropped note writes one FR41 log entry carrying the run, the page number, the reason (missing quote, quote not found, invalid page number) and the first ~120 characters of the quote; the run-end log line carries `notes_dropped` equal to the number of dropped notes alongside `notes_kept`.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "server/src/http/deepResearchQuotes.test.ts 'deep research note dropping' (a) four drop lines with run/n/reason/exact quote, (b) run_end notes_dropped 4 notes_kept 1, (c) all kept -> no drop lines, notes_dropped 0 (commit 8d6e9a8) - .harness/evidence/M23-T3-verifier.log. No invalid_page_number reason: server assigns n (plan, agreed)."
           ]
@@ -14027,7 +14027,7 @@
         {
           "id": "M23-AC4",
           "text": "Ordinary web and switch-off replies are unchanged, and all existing tests pass: `cd server && bun test && bun run typecheck` exit 0.",
-          "status": "PENDING",
+          "status": "PASS",
           "evidence": [
             "cd server && bun test && bun run typecheck: exit 0, 467 pass, tsc clean (M23-T3 verifier, final tree 8d6e9a8) - .harness/evidence/M23-T3-verifier.log"
           ]
@@ -14193,7 +14193,25 @@
           "status": "ACCEPTED"
         }
       ],
-      "reviews": [],
+      "reviews": [
+        {
+          "cycle": 1,
+          "verdict": "PASS",
+          "tier": "Mid",
+          "model": "sonnet",
+          "reason_code": "MID_ROUTED_TASK_IN_DIFF",
+          "diff_range": "7a37887986ea2bd762ca5d3133466d775c4c3cb3..7b10c89",
+          "artifact": null,
+          "review_log": ".harness/evidence/M23-review.log",
+          "findings": "0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL",
+          "per_criterion": {
+            "M23-AC1": "PASS",
+            "M23-AC2": "PASS",
+            "M23-AC3": "PASS",
+            "M23-AC4": "PASS"
+          }
+        }
+      ],
       "findings": [],
       "validation": [
         "cd /Users/ryankenny/Projects/CodingHarnessv2/server && bun test && bun run typecheck"

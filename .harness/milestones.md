@@ -579,7 +579,7 @@ Cycle 1: PASS (tier Top, model opus, reason TOP_ROUTED_TASK_IN_DIFF; diff a7e97a
 
 ## M23 — Deep research keeps notes whose quotes differ from the page only trivially, and logs every note it drops
 
-Status: REVIEW
+Status: DONE
 
 ### Outcome
 
@@ -593,14 +593,14 @@ C4, C6
 
 ### As-Built
 
-Pending.
+`.harness/as-built/M23.md` — RECORDED - 7 of 7 files attributed; components C4, C6; 1 edge; no claim mismatches
 
 ### Acceptance Criteria
 
-- [ ] **M23-AC1**: Server tests through POST /v1/chat with a faked search service and a scripted fake Ollama: a note is kept when its quote differs from the page's stored text only by curly vs straight quotes or apostrophes, dash variants, whitespace, letter case, Unicode compatibility forms, or markdown link, image or emphasis syntax (e.g. `[Treaty of Versailles](https://…)` on the page matches "Treaty of Versailles"); a quote containing "…" or "..." is kept when each piece, normalised, appears on the page in order.
-- [ ] **M23-AC2**: Server tests through POST /v1/chat: a note is still dropped when its quote's words are not on the page, and when its ellipsis pieces appear on the page only out of order; kept notes' citations behave as FR37 already requires.
-- [ ] **M23-AC3**: Server tests through POST /v1/chat: each dropped note writes one FR41 log entry carrying the run, the page number, the reason (missing quote, quote not found, invalid page number) and the first ~120 characters of the quote; the run-end log line carries `notes_dropped` equal to the number of dropped notes alongside `notes_kept`.
-- [ ] **M23-AC4**: Ordinary web and switch-off replies are unchanged, and all existing tests pass: `cd server && bun test && bun run typecheck` exit 0.
+- [x] **M23-AC1**: Server tests through POST /v1/chat with a faked search service and a scripted fake Ollama: a note is kept when its quote differs from the page's stored text only by curly vs straight quotes or apostrophes, dash variants, whitespace, letter case, Unicode compatibility forms, or markdown link, image or emphasis syntax (e.g. `[Treaty of Versailles](https://…)` on the page matches "Treaty of Versailles"); a quote containing "…" or "..." is kept when each piece, normalised, appears on the page in order.
+- [x] **M23-AC2**: Server tests through POST /v1/chat: a note is still dropped when its quote's words are not on the page, and when its ellipsis pieces appear on the page only out of order; kept notes' citations behave as FR37 already requires.
+- [x] **M23-AC3**: Server tests through POST /v1/chat: each dropped note writes one FR41 log entry carrying the run, the page number, the reason (missing quote, quote not found, invalid page number) and the first ~120 characters of the quote; the run-end log line carries `notes_dropped` equal to the number of dropped notes alongside `notes_kept`.
+- [x] **M23-AC4**: Ordinary web and switch-off replies are unchanged, and all existing tests pass: `cd server && bun test && bun run typecheck` exit 0.
 
 ### Plan
 `.harness/plans/M23.md` — AGREED
@@ -635,7 +635,7 @@ M23-T3  — drop log + notes_dropped        Cheap attempt 1 FAIL (orchestrator: 
 
 ### Review
 
-Pending.
+Cycle 1: PASS (tier Mid, model sonnet, reason MID_ROUTED_TASK_IN_DIFF; diff 7a37887..7b10c89; full milestone scope). Per-criterion: M23-AC1..AC4 all PASS. Findings: 0 BLOCKER, 0 IMPORTANT, 0 OPTIONAL. Reviewer re-ran validation at 7b10c89: server 467 pass, typecheck exit 0 — .harness/evidence/M23-review.log. No report written (PASS).
 
 ### Review Cycles
 
